@@ -17,6 +17,7 @@ Key features:
 - Country-specific data processing
 """
 
+import re
 import warnings
 from dataclasses import dataclass
 from datetime import date
@@ -320,6 +321,15 @@ class DataReaders:
 
             df *= 1e6  # Scale to millions
 
+            column_industries = df.columns.get_level_values(1).unique().tolist()
+            row_industries = set(df.index.get_level_values(1).unique())
+            shared_labels = [ind for ind in column_industries if ind in row_industries]
+            industry_pattern = re.compile(r"^[A-Z](?:\d{2}(?:T\d{2})?)?[a-z]?(?:_[A-Z])?$")
+            industries = [ind for ind in shared_labels if industry_pattern.match(ind)]
+            if not industries:
+                raise ValueError("Provincial ICIO data has no matching industries.")
+            icio[simulation_year].industries = industries
+
             all_provinces = []
             for key, value in regions_dict.items():
                 all_provinces.extend(value)
@@ -395,6 +405,46 @@ class DataReaders:
             aggregation_type="Aggregate" if aggregate_industries else "All",
             regions_dict=regions_dict,
         )
+
+        icio_industries = icio[simulation_year].industries
+        missing_in_sea = [industry for industry in icio_industries if industry not in wiod_sea.industries]
+        if missing_in_sea:
+            warnings.warn(
+                "WIOD SEA data is missing industries from ICIO. "
+                "Mapping missing industries to parent SEA categories."
+            )
+
+            def parent_key(industry: str) -> str:
+                return "R_S" if industry.startswith("R_S") else industry[0]
+
+            sea_countries = wiod_sea.df.index.get_level_values(0).unique()
+            sea_fields = wiod_sea.df.columns
+
+            for country in sea_countries:
+                for parent in {parent_key(ind) for ind in missing_in_sea}:
+                    parent_inds = [ind for ind in wiod_sea.industries if parent_key(ind) == parent]
+                    if not parent_inds:
+                        continue
+                    missing_inds = [ind for ind in missing_in_sea if parent_key(ind) == parent]
+                    if not missing_inds:
+                        continue
+                    parent_values = wiod_sea.df.loc[(country, parent_inds), :].sum(axis=0)
+                    weights = value_added_dict[country].loc[missing_inds].copy()
+                    weight_sum = weights.sum()
+                    if weight_sum == 0:
+                        weights = pd.Series(1.0, index=missing_inds)
+                        weight_sum = weights.sum()
+                    weights /= weight_sum
+                    for ind in missing_inds:
+                        wiod_sea.df.loc[(country, ind), :] = parent_values * weights[ind]
+
+            full_index = pd.MultiIndex.from_product(
+                [sea_countries, icio_industries],
+                names=wiod_sea.df.index.names,
+            )
+            wiod_sea.df = wiod_sea.df.reindex(full_index, fill_value=0)
+
+        wiod_sea.industries = icio_industries
 
         reconcile_value_added(
             icio_reader=icio[simulation_year],

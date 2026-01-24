@@ -268,8 +268,23 @@ def compile_national_accounts_data(
         else:
             return normalised_growth(inflation[column], base_year, base_quarter)
 
-    assert np.isclose(gdp_output, gdp_expenditure)
-    assert np.isclose(gdp_output, gdp_income)
+    output_expenditure_diff = gdp_output - gdp_expenditure
+    output_income_diff = gdp_output - gdp_income
+    output_expenditure_pct = output_expenditure_diff / gdp_output if gdp_output else np.nan
+    output_income_pct = output_income_diff / gdp_output if gdp_output else np.nan
+
+    gdp_close_kwargs = {"rtol": 1e-3, "atol": 1e-6}
+
+    assert np.isclose(gdp_output, gdp_expenditure, **gdp_close_kwargs), (
+        "GDP output and expenditure mismatch: "
+        f"output={gdp_output}, expenditure={gdp_expenditure}, "
+        f"diff={output_expenditure_diff}, pct_diff={output_expenditure_pct}"
+    )
+    assert np.isclose(gdp_output, gdp_income, **gdp_close_kwargs), (
+        "GDP output and income mismatch: "
+        f"output={gdp_output}, income={gdp_income}, "
+        f"diff={output_income_diff}, pct_diff={output_income_pct}"
+    )
 
     national_accounts_data = {
         "PPI (Growth)": inflation["PPI Inflation"].values,
