@@ -410,8 +410,7 @@ class DataReaders:
         missing_in_sea = [industry for industry in icio_industries if industry not in wiod_sea.industries]
         if missing_in_sea:
             warnings.warn(
-                "WIOD SEA data is missing industries from ICIO. "
-                "Mapping missing industries to parent SEA categories."
+                "WIOD SEA data is missing industries from ICIO. " "Mapping missing industries to parent SEA categories."
             )
 
             def parent_key(industry: str) -> str:
