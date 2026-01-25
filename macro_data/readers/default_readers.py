@@ -417,7 +417,6 @@ class DataReaders:
                 return "R_S" if industry.startswith("R_S") else industry[0]
 
             sea_countries = wiod_sea.df.index.get_level_values(0).unique()
-            sea_fields = wiod_sea.df.columns
 
             for country in sea_countries:
                 for parent in {parent_key(ind) for ind in missing_in_sea}:
@@ -437,11 +436,12 @@ class DataReaders:
                     for ind in missing_inds:
                         wiod_sea.df.loc[(country, ind), :] = parent_values * weights[ind]
 
-            full_index = pd.MultiIndex.from_product(
-                [sea_countries, icio_industries],
-                names=wiod_sea.df.index.names,
-            )
-            wiod_sea.df = wiod_sea.df.reindex(full_index, fill_value=0)
+        sea_countries = wiod_sea.df.index.get_level_values(0).unique()
+        full_index = pd.MultiIndex.from_product(
+            [sea_countries, icio_industries],
+            names=wiod_sea.df.index.names,
+        )
+        wiod_sea.df = wiod_sea.df.reindex(full_index, fill_value=0)
 
         wiod_sea.industries = icio_industries
 
