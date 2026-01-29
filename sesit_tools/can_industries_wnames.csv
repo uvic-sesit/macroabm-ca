@@ -1,0 +1,51 @@
+Firm_ID,Industry,Industry_Name,Energy
+0,A01,"Agriculture, hunting, forestry",non_energy
+1,A03,Fishing and aquaculture,non_energy
+2,B05a,Coal mining,energy
+3,B05b,Natural gas extraction,energy
+4,B05c,Petroleum crude,energy
+5,B07,"Mining and quarrying, non-energy producing products",non_energy
+6,B09,Mining support service activities,non_energy
+7,C10T12,"Food products, beverages and tobacco",energy
+8,C13T15,"Textiles, textile products, leather and footwear",energy
+9,C16,Wood and products of wood and cork,energy
+10,C17,Paper products and printing,energy
+11,C19,Coke and refined petroleum products,energy
+12,C20,Chemical and chemical products,energy
+13,C21,"Pharmaceuticals, medicinal chemical and botanical products",energy
+14,C22,Rubber and plastics products,energy
+15,C23,Other non-metallic mineral products,energy
+16,C24a,Iron and steel,energy
+17,C24b,Other basic metals,energy
+18,C25,Fabricated metal products,energy
+19,C26,"Computer, electronic and optical equipment",energy
+20,C27,Electrical equipment,energy
+21,C28,"Machinery and equipment, nec ",energy
+22,C29,"Motor vehicles, trailers and semi-trailers",energy
+23,C30,Other transport equipment,energy
+24,C31T33,Manufacturing nec; repair and installation of machinery and equipment,energy
+25,D01a,Hydroelectric power,energy
+26,D01b,Natural gas-fired power generation,energy
+27,D01c,Steam and other thermal power generation,energy
+28,D01d,Solar power generation,energy
+29,D01e,Wind power generation,energy
+30,E,"Water supply; sewerage, waste management and remediation activities",non_energy
+31,F,Construction,non_energy
+32,G,Wholesale and retail trade; repair of motor vehicles,non_energy
+33,H49,Land transport and transport via pipelines,energy
+34,H50,Water transport,energy
+35,H51,Air transport,energy
+36,H52,Warehousing and support activities for transportation,energy
+37,H53,Postal and courier activities,non_energy
+38,I,Accommodation and food service activities,non_energy
+39,J58T60,"Publishing, audiovisual and broadcasting activities",non_energy
+40,J61,Telecommunications,non_energy
+41,J62,IT and other information services,non_energy
+42,K,Financial and insurance activities,non_energy
+43,L,Real estate activities,non_energy
+44,M,"Professional, scientific and technical activities",non_energy
+45,N,Administrative and support services,non_energy
+46,O,Public administration and defence; compulsory social security,non_energy
+47,P,Education,non_energy
+48,Q,Human health and social work activities,non_energy
+49,R_S,"Arts, entertainment, recreation and other",non_energy

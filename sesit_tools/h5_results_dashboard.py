@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import h5py
@@ -8,10 +9,28 @@ import pandas as pd
 import streamlit as st
 
 
-H5_DEFAULT_PATH = r"C:\gitlab\projects\macroabm\output\results_provinces_260124_baseline.h5"
+# Configuration: Set the output folder path here
+OUTPUT_FOLDER = r"C:\gitlab\macroabm-ca\dev\output"
+
+# Path to industry names CSV file
+INDUSTRY_NAMES_CSV = os.path.join(os.path.dirname(__file__), "can_industries_wnames.csv")
 
 
 TreeNode = Dict[str, Any]
+
+
+@st.cache_data(show_spinner=False)
+def load_industry_mapping() -> Dict[int, str]:
+    """Load industry index to name mapping from CSV file."""
+    if not os.path.exists(INDUSTRY_NAMES_CSV):
+        return {}
+    try:
+        df = pd.read_csv(INDUSTRY_NAMES_CSV)
+        # Create mapping from Firm_ID (index) to Industry_Name
+        mapping = dict(zip(df["Firm_ID"], df["Industry_Name"]))
+        return mapping
+    except Exception:
+        return {}
 
 
 def _is_dataset(obj: h5py.HLObject) -> bool:
@@ -114,14 +133,57 @@ def add_can_region(tree: TreeNode) -> List[str]:
     return regions
 
 
-def get_column_labels(h5_file: h5py.File, dataset_path: str) -> Optional[List[str]]:
+def get_column_labels(
+    h5_file: h5py.File, dataset_path: str, industry_mapping: Optional[Dict[int, str]] = None
+) -> Optional[List[str]]:
     columns_path = f"{dataset_path}_columns"
     if columns_path not in h5_file:
         return None
     columns_data = h5_file[columns_path][()]
-    if columns_data.ndim == 2 and columns_data.shape[1] == 2:
-        return [f"[{a}, {b}]" for a, b in columns_data]
-    return [str(x) for x in np.asarray(columns_data).tolist()]
+    columns_array = np.asarray(columns_data)
+    
+    # Handle 2D array (pairs like [agent_id, industry_id])
+    if columns_array.ndim == 2 and columns_array.shape[1] == 2:
+        if industry_mapping:
+            mapped_labels = []
+            for a, b in columns_array:
+                # Map both indices if they're in the mapping
+                idx1 = int(a)
+                idx2 = int(b)
+                name1 = industry_mapping.get(idx1, str(idx1))
+                name2 = industry_mapping.get(idx2, str(idx2))
+                mapped_labels.append(f"[{name1}, {name2}]")
+            return mapped_labels
+        else:
+            return [f"[{int(a)}, {int(b)}]" for a, b in columns_array]
+    
+    # Handle 1D array of indices (industry indices)
+    if columns_array.ndim == 1:
+        if industry_mapping:
+            # Map integer indices directly to industry names
+            mapped_labels = []
+            for idx in columns_array:
+                idx_int = int(idx)
+                mapped_labels.append(industry_mapping.get(idx_int, str(idx_int)))
+            return mapped_labels
+        else:
+            return [str(int(x)) for x in columns_array]
+    
+    # Fallback: convert to list of strings
+    raw_labels = [str(x) for x in columns_array.flatten().tolist()]
+    
+    # Try to map if we have a mapping and labels look like integers
+    if industry_mapping:
+        mapped_labels = []
+        for label in raw_labels:
+            try:
+                idx = int(float(label))
+                mapped_labels.append(industry_mapping.get(idx, label))
+            except (ValueError, TypeError):
+                mapped_labels.append(label)
+        return mapped_labels
+    
+    return raw_labels
 
 
 def load_dataset(file_path: str, dataset_path: str) -> np.ndarray:
@@ -204,6 +266,7 @@ def get_labels_for_dataset(
     h5_file: h5py.File,
     dataset_path: str,
     regions: List[str],
+    industry_mapping: Optional[Dict[int, str]] = None,
 ) -> Optional[List[str]]:
     candidates: List[str] = []
     if dataset_path.startswith("CAN/"):
@@ -222,9 +285,24 @@ def get_labels_for_dataset(
 
     for candidate in candidates:
         if candidate in h5_file:
-            labels = get_column_labels(h5_file, candidate)
+            labels = get_column_labels(h5_file, candidate, industry_mapping)
             if labels:
                 return labels
+            
+            # Fallback: if no _columns dataset exists but we have industry mapping,
+            # check if the dataset has the right number of columns to be industry-indexed
+            if industry_mapping:
+                try:
+                    dataset = h5_file[candidate]
+                    if hasattr(dataset, "shape") and len(dataset.shape) >= 2:
+                        n_cols = dataset.shape[-1]  # Last dimension is columns
+                        n_industries = len(industry_mapping)
+                        # If column count matches number of industries, generate labels
+                        if n_cols == n_industries:
+                            return [industry_mapping.get(i, str(i)) for i in range(n_cols)]
+                except Exception:
+                    pass
+    
     return None
 
 
@@ -300,19 +378,54 @@ def sample_value(data: np.ndarray) -> float:
     return float(data[idx, 0])
 
 
+def find_h5_files_in_folder(folder_path: str) -> List[str]:
+    """Find all .h5 files in the specified folder."""
+    if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
+        return []
+    h5_files = []
+    for file in os.listdir(folder_path):
+        if file.lower().endswith(".h5"):
+            h5_files.append(os.path.join(folder_path, file))
+    return sorted(h5_files)
+
+
 def main() -> None:
     st.set_page_config(page_title="MacroABM Results Explorer", layout="wide")
     st.title("MacroABM Results Explorer")
-    st.write("Select one or more HDF5 files to compare scenarios.")
-
+    
+    # Load industry mapping
+    industry_mapping = load_industry_mapping()
+    
+    # Automatically find all H5 files in the output folder
+    auto_h5_files = find_h5_files_in_folder(OUTPUT_FOLDER)
+    
+    # Create default text with auto-discovered files or empty if none found
+    if auto_h5_files:
+        default_paths_text = "\n".join(auto_h5_files)
+    else:
+        default_paths_text = ""
+    
+    st.write("HDF5 files are automatically loaded from the configured output folder.")
+    st.write(f"**Output folder:** `{OUTPUT_FOLDER}`")
+    if auto_h5_files:
+        st.info(f"Found {len(auto_h5_files)} H5 file(s) in the output folder.")
+    else:
+        st.warning(f"No H5 files found in `{OUTPUT_FOLDER}`. You can manually specify file paths below.")
+    
     raw_paths = st.text_area(
-        "HDF5 file paths (one per line, or comma-separated)",
-        value=H5_DEFAULT_PATH,
+        "HDF5 file paths (one per line, or comma-separated). Leave empty to use auto-discovered files.",
+        value=default_paths_text,
         height=120,
     )
-    file_paths = parse_file_paths(raw_paths)
+    
+    # Use auto-discovered files if text area is empty, otherwise parse the text
+    if raw_paths.strip():
+        file_paths = parse_file_paths(raw_paths)
+    else:
+        file_paths = auto_h5_files
+    
     if not file_paths:
-        st.error("Add at least one HDF5 file path to continue.")
+        st.error("No HDF5 files found. Please check the output folder path or manually specify file paths.")
         return
 
     missing_paths = [path for path in file_paths if not os.path.exists(path)]
@@ -412,7 +525,7 @@ def main() -> None:
                 missing_dataset_files.append(label)
                 continue
 
-            labels = get_labels_for_dataset(h5_file, selected_dataset, regions)
+            labels = get_labels_for_dataset(h5_file, selected_dataset, regions, industry_mapping)
             scenario_data.append(
                 {
                     "label": label,
@@ -451,8 +564,15 @@ def main() -> None:
         data = entry["data"]
         if data.ndim == 2:
             max_columns = max(max_columns, data.shape[1])
+            # Use existing labels if available
             if label_source is None and entry["labels"] and len(entry["labels"]) == data.shape[1]:
                 label_source = entry["labels"]
+            # Fallback: generate labels from industry mapping if column count matches
+            elif label_source is None and not entry["labels"] and industry_mapping:
+                n_cols = data.shape[1]
+                n_industries = len(industry_mapping)
+                if n_cols == n_industries:
+                    label_source = [industry_mapping.get(i, str(i)) for i in range(n_cols)]
 
     selected_idx = 0
     if max_columns > 1:
