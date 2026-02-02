@@ -58,9 +58,40 @@ def get_histogram(values: np.ndarray, scale: Optional[int], bins: int = 40, norm
         else:
             values = values - np.min(values)
     if scale is None:
-        hist, bin_edges = np.histogram(values, bins=bins)
+        scaled_values = values
     else:
-        hist, bin_edges = np.histogram(values / scale, bins=bins)
+        scaled_values = values / scale
+
+    scaled_values = scaled_values[np.isfinite(scaled_values)]
+    if len(scaled_values) == 0:
+        return np.full((2, bins + 1), np.nan)
+
+    min_value = np.min(scaled_values)
+    max_value = np.max(scaled_values)
+    if not np.isfinite(min_value) or not np.isfinite(max_value):
+        return np.full((2, bins + 1), np.nan)
+
+    data_range = max_value - min_value
+    hist_range = None
+    if data_range <= 0:
+        # Widen a zero-width range using nearest representable floats.
+        low = np.nextafter(min_value, -np.inf)
+        high = np.nextafter(max_value, np.inf)
+        if low == high:
+            pad = max(np.finfo(float).tiny * bins, 1e-12)
+            low = min_value - pad
+            high = max_value + pad
+        hist_range = (low, high)
+    elif data_range / bins < np.finfo(float).tiny:
+        # Avoid zero-width bins when the data range is subnormal.
+        pad = max(np.finfo(float).tiny * bins, 1e-12)
+        hist_range = (min_value - pad, max_value + pad)
+
+    try:
+        hist, bin_edges = np.histogram(scaled_values, bins=bins, range=hist_range)
+    except ValueError:
+        # Fallback for extremely narrow ranges that still fail.
+        hist, bin_edges = np.histogram(scaled_values, bins=1, range=hist_range)
     hist = hist.astype(float)
     hist /= hist.sum()
     return np.array([np.concatenate((hist, [np.nan])), bin_edges])
