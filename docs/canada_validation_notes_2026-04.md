@@ -8,6 +8,23 @@ The current active Canada input table is:
 
 This file is the new Link-1997-based provincial IO table produced in the companion `io-disaggregation` workflow.
 
+A tracked validation copy of the exact table currently used on this machine is also included here:
+
+- `docs/canada_validation_inputs/icio_2014_can_provinces_link97_43_b_proxy.csv`
+
+Suggested setup:
+
+1. copy
+   - `docs/canada_validation_inputs/icio_2014_can_provinces_link97_43_b_proxy.csv`
+2. to
+   - `dev/raw_data/icio/icio_2014_can_provinces.csv`
+3. then run the SESIT provincial workflow from `sesit_tools`
+
+Important:
+
+- the model currently reads the legacy runtime filename `icio_2014_can_provinces.csv`
+- so the validated Link-1997 table must be copied into `dev/raw_data/icio/` under that exact name
+
 A few local guardrails and robustness fixes are currently present so the model can read and execute against this new table while some upstream IO-table issues are still being refined.
 
 ## Current temporary or provisional fixes
