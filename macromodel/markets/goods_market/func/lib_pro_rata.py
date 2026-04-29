@@ -138,22 +138,29 @@ def collect_seller_info(
         for transactor in goods_market_participants[country_name]:
             if transactor.transactor_seller_states["Priority"] == 1 or not high_prio_only:
                 if transactor.transactor_seller_states["Value Type"] == ValueType.REAL:
+                    seller_real_cap = np.minimum(
+                        trade_proportions[transactor.transactor_seller_states["Industries"]]
+                        * transactor.transactor_seller_states[init_field],
+                        transactor.transactor_seller_states[rem_field],
+                    )
+                    if np.isnan(seller_real_cap).any():
+                        nan_industries = transactor.transactor_seller_states["Industries"][np.isnan(seller_real_cap)]
+                        raise ValueError(
+                            "NaN in seller_real_cap | "
+                            f"country={country_name} "
+                            f"transactor_type={type(transactor).__name__} "
+                            f"nan_industries={nan_industries.tolist()} "
+                            f"init_nan_count={int(np.isnan(transactor.transactor_seller_states[init_field]).sum())} "
+                            f"rem_nan_count={int(np.isnan(transactor.transactor_seller_states[rem_field]).sum())} "
+                            f"price_nan_count={int(np.isnan(transactor.transactor_seller_states['Prices']).sum())}"
+                        )
                     total_real_supply[country_name] += get_split_sum(
-                        np.minimum(
-                            trade_proportions[transactor.transactor_seller_states["Industries"]]
-                            * transactor.transactor_seller_states[init_field],
-                            transactor.transactor_seller_states[rem_field],
-                        ),
+                        seller_real_cap,
                         transactor.transactor_seller_states["Industries"],
                         n_industries,
                     )
                     total_nominal_supply[country_name] += get_split_sum(
-                        np.minimum(
-                            trade_proportions[transactor.transactor_seller_states["Industries"]]
-                            * transactor.transactor_seller_states[init_field],
-                            transactor.transactor_seller_states[rem_field],
-                        )
-                        * transactor.transactor_seller_states["Prices"],
+                        seller_real_cap * transactor.transactor_seller_states["Prices"],
                         transactor.transactor_seller_states["Industries"],
                         n_industries,
                     )

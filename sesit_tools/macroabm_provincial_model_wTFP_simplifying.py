@@ -1,6 +1,3 @@
-PKL_PATH = "C:/gitlab/projects/macroabm/pkl_files/disagg_sectorprovs_260124.pkl" # @param {"type":"string", "placeholder":"data.pkl"}
-
-
 # Run Simulation
 import macro_data
 from macro_data import configuration_utils
@@ -12,13 +9,26 @@ from macromodel.configurations import SimulationConfiguration, CountryConfigurat
 from macromodel.simulation import Simulation
 
 from macro_data.configuration.region import Region
+from pathlib import Path
 import pickle as pkl
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEV_DIR = REPO_ROOT / "dev"
+PKL_PATH = DEV_DIR / "pkl_files" / "disagg_sectorprovs_260124.pkl"
+
+if not PKL_PATH.exists():
+    raise FileNotFoundError(
+        f"Expected provincial data pickle at {PKL_PATH}. "
+        "Run sesit_tools/macroabm_provincial_data.py first."
+    )
 
 data = DataWrapper.init_from_pickle(PKL_PATH)
 
 TimeSteps = 10
-OUTPUT_Directory = "C:/gitlab/projects/macroabm/output/" 
+OUTPUT_Directory = DEV_DIR / "output"
 OUTPUT_FileName = "results_provinces_260124_wTFP_simple3.h5" 
+OUTPUT_Directory.mkdir(parents=True, exist_ok=True)
 
 COUNTRIES = "CAN" 
 # Define Canadian provinces

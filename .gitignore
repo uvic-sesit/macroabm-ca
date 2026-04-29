@@ -155,6 +155,8 @@ spoof_data/*.md
 
 # Debugging experiments (local only)
 debugging_experiments/
+.pip-cache/
+.tmp/
 
 # Dev folders where large data files are stored
 dev/

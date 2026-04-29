@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import h5py
@@ -10,7 +11,7 @@ import streamlit as st
 
 
 # Configuration: Set the output folder path here
-OUTPUT_FOLDER = r"C:\gitlab\macroabm-ca\dev\output"
+OUTPUT_FOLDER = Path(__file__).resolve().parents[1] / "dev" / "output"
 
 # Path to industry names CSV file
 INDUSTRY_NAMES_CSV = os.path.join(os.path.dirname(__file__), "can_industries_wnames.csv")

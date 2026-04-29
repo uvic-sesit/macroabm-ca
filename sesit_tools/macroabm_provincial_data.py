@@ -1,7 +1,3 @@
-RAW_DATA_PATH = "C:/Users/deven/University of Victoria/SESIT (O) - Documents/SESIT Shared Team/Individual storage/Deven Azevedo/projects/macroABM/raw_data" # @param {"type":"string","placeholder":"data"}
-PKL_PATH = "C:/gitlab/projects/macroabm/pkl_files/disagg_sectorprovs_260124.pkl" # @param {"type":"string", "placeholder":"data.pkl"}
-
-
 import macro_data
 from macro_data import configuration_utils
 from macro_data.configuration.countries import Country as CountryCode
@@ -11,6 +7,20 @@ from macro_data import DataWrapper
 from pathlib import Path
 from macromodel.configurations import SimulationConfiguration, CountryConfiguration
 from macromodel.simulation import Simulation
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEV_DIR = REPO_ROOT / "dev"
+RAW_DATA_PATH = DEV_DIR / "raw_data"
+PKL_PATH = DEV_DIR / "pkl_files" / "disagg_sectorprovs_260124.pkl"
+
+if not RAW_DATA_PATH.exists():
+    raise FileNotFoundError(
+        f"Expected raw data folder at {RAW_DATA_PATH}. "
+        "Create dev/raw_data and place the required model inputs there."
+    )
+
+PKL_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 data_config = configuration_utils.default_data_configuration(

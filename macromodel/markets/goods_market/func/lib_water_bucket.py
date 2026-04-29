@@ -127,7 +127,12 @@ def get_trade_proportions(
 
     # Normalize origin proportions for each destination
     for c2 in range(n_countries):
-        origin_trade_proportions[:, c2] /= np.sum(origin_trade_proportions[:, c2], axis=0)
+        denom = np.sum(origin_trade_proportions[:, c2], axis=0)
+        for g in range(origin_trade_proportions.shape[2]):
+            if denom[g] != 0.0:
+                origin_trade_proportions[:, c2, g] /= denom[g]
+            else:
+                origin_trade_proportions[:, c2, g] = 0.0
 
     # Handle destination trade proportions
     destin_trade_proportions = default_destin_trade_proportions.copy()
@@ -138,7 +143,12 @@ def get_trade_proportions(
 
     # Normalize destination proportions for each origin
     for c1 in range(n_countries):
-        destin_trade_proportions[c1] /= np.sum(destin_trade_proportions[c1], axis=0)
+        denom = np.sum(destin_trade_proportions[c1], axis=0)
+        for g in range(destin_trade_proportions.shape[2]):
+            if denom[g] != 0.0:
+                destin_trade_proportions[c1, :, g] /= denom[g]
+            else:
+                destin_trade_proportions[c1, :, g] = 0.0
 
     return origin_trade_proportions, destin_trade_proportions
 
@@ -759,11 +769,19 @@ def clear_water_bucket(
                     minimum_fill=buyer_minimum_fill_macro,
                 )
                 if np.sum(np.isnan(transactor_total_real_supply)) > 0:
-                    # print(average_goods_price[g], transactor_total_real_supply)
-                    # print(transactor_real_cap)
-                    # print(total_real_demand[country_name][g] / aggr_real_demand[g] * aggr_real_supply[g])
-                    # exit()
-                    raise ValueError("Nan in transactor_total_real_supply")
+                    fill_amount = total_real_demand[country_name][g] / aggr_real_demand[g] * aggr_real_supply[g]
+                    raise ValueError(
+                        "Nan in transactor_total_real_supply | "
+                        f"buyer_country={country_name} industry_index={g} "
+                        f"average_goods_price={average_goods_price[g]} "
+                        f"aggr_real_demand={aggr_real_demand[g]} "
+                        f"aggr_real_supply={aggr_real_supply[g]} "
+                        f"country_real_demand={total_real_demand[country_name][g]} "
+                        f"fill_amount={fill_amount} "
+                        f"cap_nan_count={int(np.isnan(transactor_real_cap).sum())} "
+                        f"cap_inf_count={int(np.isinf(transactor_real_cap).sum())} "
+                        f"cap_sum={float(np.nansum(transactor_real_cap))}"
+                    )
 
                 # Iterate over buyers
                 for i, transactor in enumerate(goods_market_participants[country_name]):
