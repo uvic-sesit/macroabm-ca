@@ -1228,6 +1228,8 @@ class Firms(Agent):
         )
         avg_price = np.divide(nom, real, out=np.zeros(nom.shape), where=real != 0.0)
         avg_price[avg_price == 0.0] = self.ts.current("price_offered")[avg_price == 0.0]
+        # Fallback for sparse provincial sectors with no production and no price history
+        avg_price[avg_price == 0.0] = 1.0
         assert np.all(avg_price > 0.0)
         return avg_price
 
