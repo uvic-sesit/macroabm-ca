@@ -2080,6 +2080,156 @@ class Firms(Agent):
 
         self.base_intermediate_inputs_productivity_matrix[input_index, producing_index] *= 1 + increase_pct
 
+    def link(
+        self,
+        requested_quantities: pd.DataFrame,
+        investment: pd.DataFrame,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+    ) -> None:
+        """Adjust productivity matrices using CIMS linkage data (no file I/O).
+
+        Translates CIMS-requested energy quantities and investment into
+        adjustments on ``base_intermediate_inputs_productivity_matrix`` and
+        ``base_capital_inputs_productivity_matrix``.  The inputs are already
+        per-timestep (divided by ``steps_per_year`` in the extractor).
+
+        This nudges how efficiently each comparable industry uses its
+        energy-bundle inputs toward the CIMS engineering result: where CIMS
+        requests *less* energy than the macroABM currently uses, input
+        productivity is raised, and vice versa; capital productivity follows
+        the CIMS investment signal.
+
+        NOTE: this mutates the *base* coefficient matrices. If firm-level
+        ``intermediate_tech_multipliers`` / ``capital_tech_multipliers`` are
+        active (see :meth:`get_effective_intermediate_coefficients`), the
+        effective coefficients are ``base * multiplier``; the adjustment here
+        still propagates because it changes the base.
+
+        Args:
+            requested_quantities: (industry x good) CIMS demand matrix, indexed
+                by macro industry codes, from :class:`CIMSDataReader`.
+            investment: (industry x good) CIMS investment matrix, same layout.
+            comparable_codes: Industry codes with a CIMS counterpart (rows to
+                update).
+            energy_bundle_codes: Energy-input codes (columns to update).
+        """
+        intermediate_factor = 0.1
+        capital_factor = 0.1
+        capital_investment_boost = 0.1
+
+        industries_list = list(self.industries)
+        industry_idx = self.states["Industry"]
+        n_ind = len(industries_list)
+
+        used_interm = self.ts.current("used_intermediate_inputs")  # (n_firms, n_ind)
+        used_capital = self.ts.current("used_capital_inputs")  # (n_firms, n_ind)
+
+        industry_interm = np.zeros((n_ind, n_ind))
+        industry_capital = np.zeros((n_ind, n_ind))
+        for j in range(n_ind):
+            industry_interm[:, j] = np.bincount(industry_idx, weights=used_interm[:, j], minlength=n_ind)
+            industry_capital[:, j] = np.bincount(industry_idx, weights=used_capital[:, j], minlength=n_ind)
+
+        valid_comparable = [
+            c for c in comparable_codes if c in industries_list and c in requested_quantities.index
+        ]
+        valid_energy = [
+            c for c in energy_bundle_codes if c in industries_list and c in requested_quantities.columns
+        ]
+
+        for i_code in valid_comparable:
+            i = industries_list.index(i_code)
+
+            macro_total = sum(industry_interm[i, industries_list.index(j_code)] for j_code in valid_energy)
+            cims_total = sum(float(requested_quantities.loc[i_code, j_code]) for j_code in valid_energy)
+
+            inv_total = sum(float(investment.loc[i_code, k]) for k in valid_energy)
+            capital_macro_total = sum(industry_capital[i, industries_list.index(k)] for k in valid_energy)
+
+            for j_code in valid_energy:
+                j = industries_list.index(j_code)
+
+                if cims_total != 0:
+                    scaled_rq = float(requested_quantities.loc[i_code, j_code]) * macro_total / cims_total
+                    scaled_inv = float(investment.loc[i_code, j_code]) * (
+                        capital_macro_total / inv_total if inv_total != 0 else 0.0
+                    )
+                else:
+                    scaled_rq = 0.0
+                    scaled_inv = 0.0
+
+                capital_diff = industry_capital[i, j] - scaled_inv
+
+                coeff_interm = self.base_intermediate_inputs_productivity_matrix[j, i]
+                coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
+
+                if scaled_rq == 0:
+                    self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 + intermediate_factor
+                elif (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
+                    self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 - intermediate_factor
+
+                if capital_diff > 0:
+                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 + capital_factor
+                elif capital_diff < 0 and coeff_capital >= 1:
+                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 - capital_factor * (
+                        1 + capital_investment_boost
+                    )
+
+    def get_production_annual(
+        self,
+        current_year: int,
+        sim_start_year: int = 2014,
+        steps_per_year: int = 4,
+        base_year: int = 2015,
+        year_step: int = 5,
+    ) -> pd.DataFrame:
+        """Return annual production by industry for each completed CIMS period.
+
+        Sums the per-step production over the final year of each completed
+        ``year_step``-year block since *base_year* and aggregates from firm to
+        industry level.  Returned as a DataFrame so that the CIMS production
+        writer can build service-request CSVs without any I/O in the model.
+
+        Args:
+            current_year: Calendar year reached by the simulation so far.
+            sim_start_year: Calendar year of simulation step 0.
+            steps_per_year: Simulation steps per calendar year.
+            base_year: First CIMS milestone year; periods start here.
+            year_step: Interval (years) between CIMS milestone years.
+
+        Returns:
+            DataFrame indexed by milestone year (2020, 2025, ...) with industry
+            codes as columns.  Empty if no full period has elapsed yet.
+        """
+        industries_list = list(self.industries)
+        if current_year <= base_year:
+            return pd.DataFrame(columns=industries_list)
+
+        production_history = self.ts.historic("production")
+        industry_idx = self.states["Industry"]
+        n_ind = len(industries_list)
+
+        num_blocks = (current_year - base_year) // year_step
+        if num_blocks == 0:
+            return pd.DataFrame(columns=industries_list)
+
+        base_offset = (base_year - sim_start_year) * steps_per_year
+        years = [base_year + (block + 1) * year_step for block in range(num_blocks)]
+
+        records: dict[int, dict[str, float]] = {}
+        for block, year in enumerate(years):
+            end_idx = base_offset + (block + 1) * year_step * steps_per_year - 1
+            start_idx = end_idx - steps_per_year + 1
+            if end_idx >= len(production_history):
+                break
+            annual = np.zeros(n_ind)
+            for t_idx in range(start_idx, end_idx + 1):
+                annual += np.bincount(industry_idx, weights=production_history[t_idx], minlength=n_ind)
+            records[year] = dict(zip(industries_list, annual))
+
+        return pd.DataFrame.from_dict(records, orient="index")
+
     def compute_productivity_investment(self) -> np.ndarray:
         """Calculate investment above depreciation replacement.
 

@@ -1,0 +1,261 @@
+"""Extract macroABM linkage inputs from standard CIMS result files.
+
+This module replaces the bespoke ``extract_*`` methods that used to live inside
+the CIMS model (``CIMS/model.py`` in the old ``CIMS_v1_fork``).  Instead of
+reaching into CIMS' in-memory graph, it reads the *standard* CSV files that any
+unmodified CIMS run already produces:
+
+* ``{scenario}_results_general.csv`` -- long-format results containing, among
+  other parameters, ``quantity_requested`` (energy/intermediate demand by
+  producing sector and fuel/good target).
+* ``results_tech.csv`` -- technology-level results containing ``capital cost``
+  and ``output`` and -- once the logging template is extended -- ``new_stock``
+  and ``total_stock``.
+
+From these it reconstructs, per CIMS region and milestone year:
+
+* ``requested_quantities`` -- a (macro_code x macro_code) matrix of demand by
+  producing industry (rows) for each input good (columns).
+* ``investment`` -- a (macro_code x macro_code) matrix built by computing each
+  producing sector's total investment ``sum(new_stock * capital_cost / output)``
+  and allocating it across goods in proportion to that sector's requested
+  quantities.
+
+Because the mapping between CIMS and macroABM classifications is loaded from an
+editable CSV (see :mod:`.sector_map`), any sector/fuel that cannot be mapped is
+skipped with a warning rather than raising -- editing the mapping can never
+crash a run.
+
+NOTE FOR CIMS MAINTAINERS:
+    ``new_stock`` and ``total_stock`` are *not* in CIMS' default logging
+    templates.  The linkage adds them to ``results/results_tech.txt`` (a data
+    file, not code).  If a future CIMS version is pulled without that template
+    change, investment/stock extraction will be empty -- this is intentionally
+    degraded (warned), not fatal.  See the linkage documentation.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from .sector_map import SectorMap
+
+logger = logging.getLogger(__name__)
+
+# Parameter names as they appear in the standard CIMS result CSVs.
+_PARAM_QUANTITY = "quantity_requested"
+_PARAM_CAPITAL_COST = "capital cost"
+_PARAM_OUTPUT = "output"
+_PARAM_NEW_STOCK = "new_stock"
+_PARAM_TOTAL_STOCK = "total_stock"
+
+# Columns we rely on in the long-format result files.
+_RESULT_COLUMNS = {"region", "sector", "year", "technology", "parameter", "target", "value"}
+
+
+def _fuel_leaf(target: str) -> str:
+    """Return the leaf name of a CIMS target branch (last dot-separated token)."""
+    return str(target).split(".")[-1].strip()
+
+
+class CIMSResultsExtractor:
+    """Builds macroABM linkage matrices from standard CIMS result files.
+
+    Args:
+        results_dir: Directory holding a CIMS run's result CSVs (the folder
+            ``scenario_runner.py`` writes to, e.g. ``cims/outputs/Reference``).
+        sector_map: Resolved :class:`SectorMap`.  Defaults to the packaged map.
+        steps_per_year: macroABM timesteps per calendar year; annual CIMS values
+            are divided by this to obtain per-step quantities (default 4).
+    """
+
+    def __init__(
+        self,
+        results_dir: str | Path,
+        sector_map: SectorMap | None = None,
+        steps_per_year: int = 4,
+    ) -> None:
+        self.results_dir = Path(results_dir)
+        self.sector_map = sector_map or SectorMap.load()
+        self.steps_per_year = steps_per_year
+        self._general: pd.DataFrame | None = None
+        self._tech: pd.DataFrame | None = None
+
+    # ------------------------------------------------------------------
+    # File loading
+    # ------------------------------------------------------------------
+
+    def _find_general_results(self) -> Path | None:
+        matches = sorted(self.results_dir.glob("*_results_general.csv"))
+        if not matches:
+            logger.warning("No *_results_general.csv found in %s", self.results_dir)
+            return None
+        return matches[0]
+
+    @staticmethod
+    def _read_results(path: Path) -> pd.DataFrame:
+        df = pd.read_csv(path, dtype=str, keep_default_na=False)
+        missing = _RESULT_COLUMNS - set(df.columns)
+        if missing:
+            raise ValueError(f"CIMS results {path} missing column(s): {sorted(missing)}")
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
+        df["year"] = pd.to_numeric(df["year"], errors="coerce")
+        return df
+
+    @property
+    def general(self) -> pd.DataFrame:
+        if self._general is None:
+            path = self._find_general_results()
+            self._general = self._read_results(path) if path else pd.DataFrame()
+        return self._general
+
+    @property
+    def tech(self) -> pd.DataFrame:
+        if self._tech is None:
+            path = self.results_dir / "results_tech.csv"
+            self._tech = self._read_results(path) if path.exists() else pd.DataFrame()
+            if self._tech.empty:
+                logger.warning("No results_tech.csv in %s; investment will be empty.", self.results_dir)
+        return self._tech
+
+    # ------------------------------------------------------------------
+    # Matrix construction
+    # ------------------------------------------------------------------
+
+    def requested_quantities(self, region: str, year: int, industries: list[str]) -> pd.DataFrame:
+        """Build the requested-quantities matrix for one CIMS region and year.
+
+        Rows are producing industries (macro codes), columns are input goods
+        (macro codes); both are reindexed to *industries* with zeros elsewhere.
+        Values are divided by ``steps_per_year``.
+        """
+        matrix = pd.DataFrame(0.0, index=industries, columns=industries)
+        df = self.general
+        if df.empty:
+            return matrix
+
+        mask = (
+            (df["parameter"] == _PARAM_QUANTITY)
+            & (df["region"] == region)
+            & (df["year"] == year)
+            & (df["technology"] == "")
+            & (df["target"] != "")
+            & (df["context"] != "Total" if "context" in df.columns else True)
+        )
+        subset = df[mask]
+
+        unmapped_sectors: set[str] = set()
+        unmapped_fuels: set[str] = set()
+        for _, row in subset.iterrows():
+            macro_row = self.sector_map.cims_sector_to_macro.get(row["sector"])
+            macro_col = self.sector_map.cims_fuel_to_macro.get(_fuel_leaf(row["target"]))
+            if macro_row is None:
+                unmapped_sectors.add(row["sector"])
+                continue
+            if macro_col is None:
+                unmapped_fuels.add(_fuel_leaf(row["target"]))
+                continue
+            if macro_row in matrix.index and macro_col in matrix.columns:
+                value = row["value"]
+                if pd.notna(value):
+                    matrix.loc[macro_row, macro_col] += float(value)
+
+        if unmapped_sectors:
+            logger.debug("[%s %s] unmapped producing sectors: %s", region, year, sorted(unmapped_sectors))
+        if unmapped_fuels:
+            logger.debug("[%s %s] unmapped fuels/goods: %s", region, year, sorted(unmapped_fuels))
+
+        return matrix / float(self.steps_per_year)
+
+    def _sector_investment_totals(self, region: str, year: int) -> dict[str, float]:
+        """Total investment per CIMS sector: sum(new_stock * capital_cost / output)."""
+        df = self.tech
+        if df.empty:
+            return {}
+
+        base = df[(df["region"] == region) & (df["year"] == year) & (df["technology"] != "")]
+        if base.empty:
+            return {}
+
+        pivot = (
+            base[base["parameter"].isin([_PARAM_CAPITAL_COST, _PARAM_OUTPUT, _PARAM_NEW_STOCK])]
+            .pivot_table(
+                index=["sector", "node", "technology"],
+                columns="parameter",
+                values="value",
+                aggfunc="sum",
+            )
+        )
+        for col in (_PARAM_CAPITAL_COST, _PARAM_OUTPUT, _PARAM_NEW_STOCK):
+            if col not in pivot.columns:
+                pivot[col] = np.nan
+
+        output = pivot[_PARAM_OUTPUT].replace(0.0, np.nan)
+        tech_investment = pivot[_PARAM_NEW_STOCK] * pivot[_PARAM_CAPITAL_COST] / output
+        tech_investment = tech_investment.fillna(0.0)
+
+        totals = tech_investment.groupby(level="sector").sum()
+        return {str(sector): float(val) for sector, val in totals.items()}
+
+    def investment(
+        self,
+        region: str,
+        year: int,
+        industries: list[str],
+        requested_quantities: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Build the investment matrix for one CIMS region and year.
+
+        Each producing sector's total investment is allocated across input
+        goods in proportion to its requested quantities, mirroring the old
+        per-technology allocation aggregated to the sector level.
+        """
+        matrix = pd.DataFrame(0.0, index=industries, columns=industries)
+        totals = self._sector_investment_totals(region, year)
+        if not totals:
+            return matrix
+
+        if requested_quantities is None:
+            requested_quantities = self.requested_quantities(region, year, industries)
+
+        for cims_sector, total in totals.items():
+            macro_row = self.sector_map.cims_sector_to_macro.get(cims_sector)
+            if macro_row is None or macro_row not in matrix.index or total == 0.0:
+                continue
+            row_shares = requested_quantities.loc[macro_row]
+            row_sum = row_shares.sum()
+            if row_sum <= 0:
+                continue
+            matrix.loc[macro_row] += (row_shares / row_sum) * (total / float(self.steps_per_year))
+
+        return matrix
+
+    # ------------------------------------------------------------------
+    # Orchestration
+    # ------------------------------------------------------------------
+
+    def process(
+        self,
+        region: str,
+        years: list[int],
+        industries: list[str],
+        export_dir: str | Path,
+        itr: str,
+    ) -> None:
+        """Extract and write processed matrices for every milestone year.
+
+        Writes ``requested_quantities_{itr}_{year}_{region}.csv`` and
+        ``investment_{itr}_{year}_{region}.csv`` to *export_dir*.
+        """
+        export_path = Path(export_dir)
+        export_path.mkdir(parents=True, exist_ok=True)
+        for year in years:
+            rq = self.requested_quantities(region, year, industries)
+            inv = self.investment(region, year, industries, requested_quantities=rq)
+            rq.to_csv(export_path / f"requested_quantities_{itr}_{year}_{region}.csv")
+            inv.to_csv(export_path / f"investment_{itr}_{year}_{region}.csv")
+            logger.info("[%s %s itr=%s] wrote processed requested_quantities + investment", region, year, itr)

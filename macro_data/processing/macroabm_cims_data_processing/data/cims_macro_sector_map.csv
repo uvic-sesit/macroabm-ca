@@ -1,0 +1,51 @@
+macro_code,macro_name,cims_sector,cims_fuel_names,is_energy_bundle,is_cims_comparable,feedback_enabled
+A01,Agriculture,Agriculture,,FALSE,TRUE,TRUE
+A03,Forestry & fishing,Forestry,,FALSE,TRUE,TRUE
+B05a,Coal mining,Coal Mining,Coal,TRUE,TRUE,TRUE
+B05b,Natural gas extraction,Natural Gas Production,Natural Gas,TRUE,TRUE,TRUE
+B05c,Crude petroleum extraction,Petroleum Crude,Crude Oil,TRUE,TRUE,TRUE
+B07,Metal ore mining,Mining,,FALSE,TRUE,TRUE
+B09,Mining support services,Mining,,FALSE,TRUE,TRUE
+C10T12,"Food, beverage & tobacco",Light Industrial,,FALSE,TRUE,TRUE
+C13T15,"Textiles, apparel & leather",Light Industrial,,FALSE,TRUE,TRUE
+C16,Wood products,Light Industrial,,FALSE,TRUE,TRUE
+C17,Pulp & paper,Pulp and Paper,,FALSE,TRUE,TRUE
+C19,Refined petroleum products,Petroleum Refining,Diesel;Gasoline;Heavy Fuel Oil;Light Fuel Oil;Kerosene;LPG;Petroleum Coke,TRUE,TRUE,TRUE
+C20,Chemical products,Chemical Products,,FALSE,TRUE,TRUE
+C21,Pharmaceuticals,Chemical Products,,FALSE,TRUE,TRUE
+C22,Rubber & plastics,Light Industrial,,FALSE,TRUE,TRUE
+C23,Non-metallic mineral products,Industrial Minerals,,FALSE,TRUE,TRUE
+C24a,Iron & steel,Iron and Steel,,FALSE,TRUE,TRUE
+C24b,Non-ferrous metal smelting,Metal Smelting,,FALSE,TRUE,TRUE
+C25,Fabricated metal products,Light Industrial,,FALSE,TRUE,TRUE
+C26,Computer & electronic products,Light Industrial,,FALSE,TRUE,TRUE
+C27,Electrical equipment,Light Industrial,,FALSE,TRUE,TRUE
+C28,Machinery & equipment,Light Industrial,,FALSE,TRUE,TRUE
+C29,Motor vehicles,Light Industrial,,FALSE,TRUE,TRUE
+C30,Other transport equipment,Light Industrial,,FALSE,TRUE,TRUE
+C31T33,"Other manufacturing & repair",Light Industrial,,FALSE,TRUE,TRUE
+D01a,Electricity - hydro,Electricity,Electricity,TRUE,TRUE,TRUE
+D01b,Electricity - fossil,Electricity,,TRUE,TRUE,FALSE
+D01c,Electricity - nuclear,Electricity,Uranium,TRUE,TRUE,FALSE
+D01d,Electricity - renewable,Electricity,,TRUE,TRUE,FALSE
+D01e,Electricity - other & distribution,Electricity,,TRUE,TRUE,FALSE
+E,"Water, sewerage & waste",Waste,,FALSE,TRUE,TRUE
+F,Construction,Construction,,FALSE,TRUE,TRUE
+G,Wholesale & retail trade,Commercial,,FALSE,TRUE,TRUE
+H49,Land transport,Transportation Freight,,FALSE,TRUE,TRUE
+H50,Water transport,Transportation Freight,,FALSE,TRUE,FALSE
+H51,Air transport,Transportation Personal,,FALSE,TRUE,FALSE
+H52,Warehousing & support for transport,Transportation Freight,,FALSE,TRUE,FALSE
+H53,Postal & courier,Commercial,,FALSE,TRUE,FALSE
+I,Accommodation & food services,Commercial,,FALSE,FALSE,FALSE
+J58T60,"Publishing, audiovisual & broadcasting",Commercial,,FALSE,FALSE,FALSE
+J61,Telecommunications,Commercial,,FALSE,FALSE,FALSE
+J62,IT & other information services,Commercial,,FALSE,FALSE,FALSE
+K,Financial & insurance,Commercial,,FALSE,FALSE,FALSE
+L,Real estate,Commercial,,FALSE,FALSE,FALSE
+M,Professional & technical services,Commercial,,FALSE,FALSE,FALSE
+N,Administrative & support services,Commercial,,FALSE,FALSE,FALSE
+O,Public administration & defence,Commercial,,FALSE,FALSE,FALSE
+P,Education,Commercial,,FALSE,FALSE,FALSE
+Q,Human health & social work,Commercial,,FALSE,FALSE,FALSE
+R_S,Arts & other services,Commercial,,FALSE,FALSE,FALSE
