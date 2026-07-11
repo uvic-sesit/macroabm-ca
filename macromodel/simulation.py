@@ -403,8 +403,30 @@ class Simulation:
         Executes the simulation from the current state until t_max iterations
         have been completed. Each iteration represents one time period in the model.
         """
-        for t in range(self.t_max):
-            self.iterate(t)
+        remaining = self.t_max - self.steps_completed
+        if remaining > 0:
+            self.run_steps(remaining)
+
+    @property
+    def steps_completed(self) -> int:
+        """Number of :meth:`iterate` calls completed since the initial state."""
+        first_country = next(iter(self.countries.values()))
+        history = first_country.economy.ts.historic("gdp_output")
+        return max(len(history) - 1, 0)
+
+    def run_steps(self, n_steps: int, *, start_t: int | None = None) -> None:
+        """Advance the simulation by *n_steps* timesteps from its current state."""
+        if n_steps <= 0:
+            return
+        base_t = self.steps_completed if start_t is None else start_t
+        for i in range(n_steps):
+            self.iterate(base_t + i)
+
+    def run_until_total_steps(self, total_steps: int) -> None:
+        """Run until ``steps_completed == total_steps``."""
+        remaining = total_steps - self.steps_completed
+        if remaining > 0:
+            self.run_steps(remaining)
 
     def save_random_seed(self, h5_file: h5py.File) -> None:
         """Save the random seed to the HDF5 file metadata.
