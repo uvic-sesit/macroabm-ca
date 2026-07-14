@@ -18,9 +18,12 @@ From these it reconstructs, per CIMS region and milestone year:
 * ``requested_quantities`` -- a (macro_code x macro_code) matrix of demand by
   producing industry (rows) for each input good (columns).
 * ``investment`` -- a (macro_code x macro_code) matrix built by computing each
-  producing sector's total investment ``sum(new_stock * capital_cost / output)``
-  and allocating it across goods in proportion to that sector's requested
-  quantities.
+  producing sector's total investment
+  ``sum(new_stock * capital_cost / max(output, output_floor))`` and allocating
+  it across goods in proportion to that sector's requested quantities.  The
+  output floor is the configured percentile (default 1st) of positive
+  technology-level outputs for that milestone year (all regions), which stops
+  near-zero ``output`` rows from producing pathological investment spikes.
 
 Because the mapping between CIMS and macroABM classifications is loaded from an
 editable CSV (see :mod:`.sector_map`), any sector/fuel that cannot be mapped is
@@ -57,6 +60,10 @@ _PARAM_TOTAL_STOCK = "total_stock"
 # Columns we rely on in the long-format result files.
 _RESULT_COLUMNS = {"region", "sector", "year", "technology", "parameter", "target", "value"}
 
+# Default lower bound for the investment denominator: 1st percentile of positive
+# technology-level outputs in the milestone year (all CIMS regions).
+_DEFAULT_OUTPUT_FLOOR_PERCENTILE = 1.0
+
 
 def _fuel_leaf(target: str) -> str:
     """Return the leaf name of a CIMS target branch (last dot-separated token)."""
@@ -72,6 +79,10 @@ class CIMSResultsExtractor:
         sector_map: Resolved :class:`SectorMap`.  Defaults to the packaged map.
         steps_per_year: macroABM timesteps per calendar year; annual CIMS values
             are divided by this to obtain per-step quantities (default 4).
+        output_floor_percentile: Percentile (0–100) of positive technology-level
+            ``output`` values used as the investment denominator floor.  Default
+            ``1.0`` (1st percentile).  Set to ``0`` to disable flooring aside from
+            the legacy zero→NaN behaviour.
     """
 
     def __init__(
@@ -79,10 +90,16 @@ class CIMSResultsExtractor:
         results_dir: str | Path,
         sector_map: SectorMap | None = None,
         steps_per_year: int = 4,
+        output_floor_percentile: float = _DEFAULT_OUTPUT_FLOOR_PERCENTILE,
     ) -> None:
+        if not 0.0 <= output_floor_percentile <= 100.0:
+            raise ValueError(
+                f"output_floor_percentile must be in [0, 100], got {output_floor_percentile}"
+            )
         self.results_dir = Path(results_dir)
         self.sector_map = sector_map or SectorMap.load()
         self.steps_per_year = steps_per_year
+        self.output_floor_percentile = float(output_floor_percentile)
         self._general: pd.DataFrame | None = None
         self._tech: pd.DataFrame | None = None
 
@@ -172,8 +189,42 @@ class CIMSResultsExtractor:
 
         return matrix / float(self.steps_per_year)
 
+    def _output_floor(self, year: int) -> float | None:
+        """Return the investment output floor for *year*, or None if disabled/unavailable.
+
+        Uses the configured percentile of strictly positive technology-level
+        ``output`` values across **all regions** for that milestone year so a
+        cluster of near-zero outputs in one province cannot set the floor.
+        """
+        if self.output_floor_percentile <= 0.0:
+            return None
+
+        df = self.tech
+        if df.empty:
+            return None
+
+        outputs = df[
+            (df["year"] == year)
+            & (df["technology"] != "")
+            & (df["parameter"] == _PARAM_OUTPUT)
+        ]["value"]
+        positive = pd.to_numeric(outputs, errors="coerce")
+        positive = positive[np.isfinite(positive) & (positive > 0.0)]
+        if positive.empty:
+            return None
+
+        floor = float(np.percentile(positive.to_numpy(), self.output_floor_percentile))
+        if not np.isfinite(floor) or floor <= 0.0:
+            return None
+        return floor
+
     def _sector_investment_totals(self, region: str, year: int) -> dict[str, float]:
-        """Total investment per CIMS sector: sum(new_stock * capital_cost / output)."""
+        """Total investment per CIMS sector: sum(new_stock * capital_cost / output).
+
+        Near-zero (or zero) technology ``output`` values are replaced by an
+        output floor before division so ``new_stock * capital_cost / output``
+        cannot explode.  See :meth:`_output_floor`.
+        """
         df = self.tech
         if df.empty:
             return {}
@@ -195,8 +246,28 @@ class CIMSResultsExtractor:
             if col not in pivot.columns:
                 pivot[col] = np.nan
 
-        output = pivot[_PARAM_OUTPUT].replace(0.0, np.nan)
-        tech_investment = pivot[_PARAM_NEW_STOCK] * pivot[_PARAM_CAPITAL_COST] / output
+        raw_output = pd.to_numeric(pivot[_PARAM_OUTPUT], errors="coerce")
+        floor = self._output_floor(year)
+        if floor is None:
+            denom = raw_output.replace(0.0, np.nan)
+        else:
+            # Non-positive / missing output → floor; positive-but-tiny → clip up.
+            floored = raw_output.isna() | (raw_output <= 0.0) | (raw_output < floor)
+            n_floored = int(floored.sum())
+            if n_floored:
+                logger.warning(
+                    "[%s %s] applying output floor %.6g (p%s of year-positive outputs) "
+                    "to %d/%d technologies in investment denominator",
+                    region,
+                    year,
+                    floor,
+                    self.output_floor_percentile,
+                    n_floored,
+                    len(raw_output),
+                )
+            denom = raw_output.where(~floored, floor)
+
+        tech_investment = pivot[_PARAM_NEW_STOCK] * pivot[_PARAM_CAPITAL_COST] / denom
         tech_investment = tech_investment.fillna(0.0)
 
         totals = tech_investment.groupby(level="sector").sum()

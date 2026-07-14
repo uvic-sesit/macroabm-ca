@@ -87,15 +87,20 @@ def _write_general_results(path, *, quantity_parameter: str = "quantity_requeste
     pd.DataFrame(rows, columns=cols).to_csv(path / "Reference_results_general.csv", index=False)
 
 
-def _write_tech_results(path):
+def _write_tech_results(path, rows=None):
     """Minimal results_tech.csv with new_stock / capital cost / output for AB / 2025."""
-    rows = [
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "new_stock", "", "", "", "", 10.0),
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "capital cost", "", "", "", "", 2.0),
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "output", "", "", "", "", 1.0),
-    ]
+    if rows is None:
+        rows = [
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "new_stock", "", "", "", "", 10.0),
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "capital cost", "", "", "", "", 2.0),
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "output", "", "", "", "", 1.0),
+        ]
     cols = ["node", "region", "sector", "year", "technology", "parameter", "context", "sub_context", "target", "unit", "value"]
     pd.DataFrame(rows, columns=cols).to_csv(path / "results_tech.csv", index=False)
+
+
+def _tech_row(node, region, sector, year, tech, parameter, value):
+    return (node, region, sector, year, tech, parameter, "", "", "", "", value)
 
 
 def test_extractor_requested_quantities(tmp_path):
@@ -132,6 +137,63 @@ def test_extractor_investment_allocates_by_requested_shares(tmp_path):
     # Allocated across goods by requested shares (Coal 0.8, NG 0.2).
     assert inv.loc["B05a", "B05a"] == pytest.approx(5.0 * 0.8)
     assert inv.loc["B05a", "B05b"] == pytest.approx(5.0 * 0.2)
+
+
+def test_extractor_investment_applies_output_floor_to_near_zero_output(tmp_path):
+    """Near-zero output must not explode investment when a year-wide floor exists."""
+    _write_general_results(tmp_path)
+
+    # Many healthy techs (output=100) across regions set a ~100 floor at p1; one
+    # AB tech has tiny output but non-zero new_stock (Ontario-style singularity).
+    rows = []
+    for i in range(200):
+        region = "ON" if i % 2 == 0 else "AB"
+        node = f"CIMS.CAN.{region}.Other"
+        tech = f"Healthy{i}"
+        rows.extend(
+            [
+                _tech_row(node, region, "Commercial", 2025, tech, "new_stock", 0.0),
+                _tech_row(node, region, "Commercial", 2025, tech, "capital cost", 1.0),
+                _tech_row(node, region, "Commercial", 2025, tech, "output", 100.0),
+            ]
+        )
+    rows.extend(
+        [
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "Tiny", "new_stock", 10.0),
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "Tiny", "capital cost", 2.0),
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "Tiny", "output", 1e-12),
+        ]
+    )
+    _write_tech_results(tmp_path, rows=rows)
+
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4, output_floor_percentile=1.0)
+    floor = extractor._output_floor(2025)
+    assert floor == pytest.approx(100.0)
+
+    rq = extractor.requested_quantities("AB", 2025, INDUSTRIES)
+    inv = extractor.investment("AB", 2025, INDUSTRIES, requested_quantities=rq)
+
+    # Floored investment = 10 * 2 / 100 = 0.2, / steps_per_year = 0.05.
+    assert inv.loc["B05a"].sum() == pytest.approx(0.05)
+    # Without a floor this would be ~2e13 per step; keep a generous sanity bound.
+    assert inv.to_numpy().sum() < 1.0
+
+
+def test_extractor_output_floor_can_be_disabled(tmp_path):
+    _write_general_results(tmp_path)
+    _write_tech_results(
+        tmp_path,
+        rows=[
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "new_stock", 10.0),
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "capital cost", 2.0),
+            _tech_row("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "output", 0.0),
+        ],
+    )
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4, output_floor_percentile=0.0)
+    assert extractor._output_floor(2025) is None
+    inv = extractor.investment("AB", 2025, INDUSTRIES)
+    # Legacy behaviour: exact-zero output → NaN denominator → filled to 0.
+    assert inv.to_numpy().sum() == pytest.approx(0.0)
 
 
 def test_extractor_missing_tech_file_yields_zero_investment(tmp_path):
