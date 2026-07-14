@@ -2120,7 +2120,9 @@ class Firms(Agent):
             intermediate_factor: Damping step applied to intermediate-input
                 productivity when aligning toward CIMS requested quantities.
             capital_factor: Damping step for capital-input productivity when
-                macro capital exceeds the CIMS investment signal.
+                macro capital differs from the CIMS investment signal.
+                Skipped entirely when the CIMS energy-investment total for
+                this industry is zero.
             capital_investment_boost: Extra multiplier on negative capital
                 productivity adjustments.
         """
@@ -2158,20 +2160,20 @@ class Firms(Agent):
 
                 if cims_total != 0:
                     scaled_rq = float(requested_quantities.loc[i_code, j_code]) * macro_total / cims_total
-                    scaled_inv = float(investment.loc[i_code, j_code]) * (
-                        capital_macro_total / inv_total if inv_total != 0 else 0.0
-                    )
                 else:
                     scaled_rq = 0.0
-                    scaled_inv = 0.0
-
-                capital_diff = industry_capital[i, j] - scaled_inv
 
                 coeff_interm = self.base_intermediate_inputs_productivity_matrix[j, i]
-                coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
 
                 if scaled_rq != 0 and (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
                     self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 - intermediate_factor
+
+                if inv_total == 0:
+                    continue
+
+                scaled_inv = float(investment.loc[i_code, j_code]) * (capital_macro_total / inv_total)
+                capital_diff = industry_capital[i, j] - scaled_inv
+                coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
 
                 if capital_diff > 0:
                     self.base_capital_inputs_productivity_matrix[j, i] *= 1 + capital_factor
