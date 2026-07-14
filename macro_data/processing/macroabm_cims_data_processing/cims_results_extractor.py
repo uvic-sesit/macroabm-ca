@@ -6,8 +6,9 @@ reaching into CIMS' in-memory graph, it reads the *standard* CSV files that any
 unmodified CIMS run already produces:
 
 * ``{scenario}_results_general.csv`` -- long-format results containing, among
-  other parameters, ``quantity_requested`` (energy/intermediate demand by
-  producing sector and fuel/good target).
+  other parameters, ``quantity_requested`` or ``requested_quantities`` (energy/
+  intermediate demand by producing sector and fuel/good target; label varies by
+  CIMS version).
 * ``results_tech.csv`` -- technology-level results containing ``capital cost``
   and ``output`` and -- once the logging template is extended -- ``new_stock``
   and ``total_stock``.
@@ -47,7 +48,7 @@ from .sector_map import SectorMap
 logger = logging.getLogger(__name__)
 
 # Parameter names as they appear in the standard CIMS result CSVs.
-_PARAM_QUANTITY = "quantity_requested"
+_PARAM_QUANTITY_NAMES = ("quantity_requested", "requested_quantities")
 _PARAM_CAPITAL_COST = "capital cost"
 _PARAM_OUTPUT = "output"
 _PARAM_NEW_STOCK = "new_stock"
@@ -139,7 +140,7 @@ class CIMSResultsExtractor:
             return matrix
 
         mask = (
-            (df["parameter"] == _PARAM_QUANTITY)
+            (df["parameter"].isin(_PARAM_QUANTITY_NAMES))
             & (df["region"] == region)
             & (df["year"] == year)
             & (df["technology"] == "")

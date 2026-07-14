@@ -70,18 +70,18 @@ def test_sector_map_missing_column_raises(tmp_path):
 # CIMSResultsExtractor
 # ---------------------------------------------------------------------------
 
-def _write_general_results(path):
-    """Minimal results_general.csv with quantity_requested rows for AB / 2025."""
+def _write_general_results(path, *, quantity_parameter: str = "quantity_requested"):
+    """Minimal results_general.csv with quantity rows for AB / 2025."""
     rows = [
         # Coal Mining requests Coal and Natural Gas.
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", "quantity_requested", "", "", "CIMS.Generic Fuels.Coal", "GJ", 400.0),
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", "quantity_requested", "", "", "CIMS.Generic Fuels.Natural Gas", "GJ", 100.0),
+        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", quantity_parameter, "", "", "CIMS.Generic Fuels.Coal", "GJ", 400.0),
+        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", quantity_parameter, "", "", "CIMS.Generic Fuels.Natural Gas", "GJ", 100.0),
         # A 'Total' aggregate row that must be ignored.
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", "quantity_requested", "Total", "", "", "GJ", 500.0),
+        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", quantity_parameter, "Total", "", "", "GJ", 500.0),
         # Light Industrial requests refined product (Diesel -> C19).
-        ("CIMS.CAN.AB.Light Industrial", "AB", "Light Industrial", 2025, "", "quantity_requested", "", "", "CIMS.Generic Fuels.Diesel", "GJ", 80.0),
+        ("CIMS.CAN.AB.Light Industrial", "AB", "Light Industrial", 2025, "", quantity_parameter, "", "", "CIMS.Generic Fuels.Diesel", "GJ", 80.0),
         # A tech-level row that must be ignored at the requested-quantities step.
-        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "SomeTech", "quantity_requested", "", "", "CIMS.Generic Fuels.Coal", "GJ", 999.0),
+        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "SomeTech", quantity_parameter, "", "", "CIMS.Generic Fuels.Coal", "GJ", 999.0),
     ]
     cols = ["node", "region", "sector", "year", "technology", "parameter", "context", "sub_context", "target", "unit", "value"]
     pd.DataFrame(rows, columns=cols).to_csv(path / "Reference_results_general.csv", index=False)
@@ -108,6 +108,16 @@ def test_extractor_requested_quantities(tmp_path):
     assert rq.loc["B05a", "B05b"] == pytest.approx(100.0 / 4)
     # Diesel -> C19 column on Light Industrial row (mapped to C10T12... not in INDUSTRIES) -> skipped.
     # Total row and tech-level row must not leak in.
+    assert rq.loc["B05a"].sum() == pytest.approx(500.0 / 4)
+
+
+def test_extractor_requested_quantities_accepts_requested_quantities_label(tmp_path):
+    _write_general_results(tmp_path, quantity_parameter="requested_quantities")
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+    rq = extractor.requested_quantities("AB", 2025, INDUSTRIES)
+
+    assert rq.loc["B05a", "B05a"] == pytest.approx(400.0 / 4)
+    assert rq.loc["B05a", "B05b"] == pytest.approx(100.0 / 4)
     assert rq.loc["B05a"].sum() == pytest.approx(500.0 / 4)
 
 

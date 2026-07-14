@@ -269,6 +269,10 @@ def build_link_prehook(
     industries: list[str],
     years: list[int],
     itr: str,
+    *,
+    intermediate_factor: float = 0.1,
+    capital_factor: float = 0.1,
+    capital_investment_boost: float = 0.1,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years."""
     energy_codes = sector_map.energy_bundle_for(industries)
@@ -290,6 +294,9 @@ def build_link_prehook(
                 investment=inv,
                 comparable_codes=comparable_codes,
                 energy_bundle_codes=energy_codes,
+                intermediate_factor=intermediate_factor,
+                capital_factor=capital_factor,
+                capital_investment_boost=capital_investment_boost,
             )
             logger.info("link() applied: province=%s cims_region=%s year=%s", province, cims_region, year)
 
@@ -412,6 +419,24 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--cims-base-year", type=int, default=2015)
     p.add_argument("--cims-year-step", type=int, default=5)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument(
+        "--intermediate-factor",
+        type=float,
+        default=0.1,
+        help="Damping step for intermediate-input productivity in firms.link() (default 0.1).",
+    )
+    p.add_argument(
+        "--capital-factor",
+        type=float,
+        default=0.1,
+        help="Damping step for capital-input productivity in firms.link() (default 0.1).",
+    )
+    p.add_argument(
+        "--capital-investment-boost",
+        type=float,
+        default=0.1,
+        help="Extra multiplier on negative capital productivity adjustments (default 0.1).",
+    )
     p.add_argument("--sector-map", type=Path, default=None, help="Override sector-map CSV.")
     p.add_argument("--region-map", type=Path, default=None, help="Override region-map CSV.")
     p.add_argument("--force-rebuild-pickle", action="store_true")
@@ -501,7 +526,16 @@ def main() -> None:
     history_checkpoint = args.history_checkpoint
 
     reader = CIMSDataReader(processed_dir)
-    link_prehook = build_link_prehook(reader, sector_map, industries, years, args.iteration)
+    link_prehook = build_link_prehook(
+        reader,
+        sector_map,
+        industries,
+        years,
+        args.iteration,
+        intermediate_factor=args.intermediate_factor,
+        capital_factor=args.capital_factor,
+        capital_investment_boost=args.capital_investment_boost,
+    )
 
     sim: Simulation | None = None
     if args.warm_start and args.rerun_from_milestone is not None:

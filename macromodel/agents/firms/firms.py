@@ -2086,6 +2086,10 @@ class Firms(Agent):
         investment: pd.DataFrame,
         comparable_codes: list[str],
         energy_bundle_codes: list[str],
+        *,
+        intermediate_factor: float = 0.1,
+        capital_factor: float = 0.1,
+        capital_investment_boost: float = 0.1,
     ) -> None:
         """Adjust productivity matrices using CIMS linkage data (no file I/O).
 
@@ -2113,11 +2117,13 @@ class Firms(Agent):
             comparable_codes: Industry codes with a CIMS counterpart (rows to
                 update).
             energy_bundle_codes: Energy-input codes (columns to update).
+            intermediate_factor: Damping step applied to intermediate-input
+                productivity when aligning toward CIMS requested quantities.
+            capital_factor: Damping step for capital-input productivity when
+                macro capital exceeds the CIMS investment signal.
+            capital_investment_boost: Extra multiplier on negative capital
+                productivity adjustments.
         """
-        intermediate_factor = 0.1
-        capital_factor = 0.1
-        capital_investment_boost = 0.1
-
         industries_list = list(self.industries)
         industry_idx = self.states["Industry"]
         n_ind = len(industries_list)
@@ -2164,9 +2170,7 @@ class Firms(Agent):
                 coeff_interm = self.base_intermediate_inputs_productivity_matrix[j, i]
                 coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
 
-                if scaled_rq == 0:
-                    self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 + intermediate_factor
-                elif (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
+                if scaled_rq != 0 and (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
                     self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 - intermediate_factor
 
                 if capital_diff > 0:
