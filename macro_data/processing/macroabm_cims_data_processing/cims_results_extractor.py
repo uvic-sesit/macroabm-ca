@@ -56,6 +56,20 @@ _PARAM_CAPITAL_COST = "capital cost"
 _PARAM_OUTPUT = "output"
 _PARAM_NEW_STOCK = "new_stock"
 _PARAM_TOTAL_STOCK = "total_stock"
+_PARAM_SERVICE_REQUESTED = "service requested"
+
+# Energy intensity normalises requested quantities by the sector's activity
+# level: the CIMS *Region-level* ``service requested`` driver -- rows with an
+# empty sector/technology whose ``target`` is ``CIMS.CAN.<region>.<sector>``.
+# This is the sector's real final-service demand in its own unit (tonne, PJ,
+# m3, ...), the same quantity the MacroABM->CIMS writer anchors on, so both
+# linkage directions share one activity basis.  The *deeper*
+# ``Type=Sector``/``Type=Service`` nodes are internal service ratios normalised
+# to 1.0 and are deliberately ignored.  (A naive sum of technology-level
+# ``output`` is NOT used: it mixes units -- e.g. GJ of compression + tonne of
+# ore -- across nested tree levels and double-counts competing technologies at
+# each node.)  Because only anchor-relative *ratios* are used downstream, the
+# sector-specific unit cancels.
 
 # Columns we rely on in the long-format result files.
 _RESULT_COLUMNS = {"region", "sector", "year", "technology", "parameter", "target", "value"}
@@ -307,6 +321,114 @@ class CIMSResultsExtractor:
         return matrix
 
     # ------------------------------------------------------------------
+    # Energy intensity (energy per unit sector activity)
+    # ------------------------------------------------------------------
+
+    def _sector_activity(self, region: str, year: int) -> dict[str, float]:
+        """Return each CIMS sector's activity level for *region*/*year*.
+
+        The activity level is the denominator of energy intensity, keyed by CIMS
+        sector name.  It is the Region-level ``service requested`` driver (an
+        empty sector/technology row whose ``target`` is
+        ``CIMS.CAN.<region>.<sector>``); deeper normalised service nodes and
+        higher aggregates are skipped.
+        """
+        df = self.general
+        if df.empty:
+            return {}
+        mask = (
+            (df["parameter"] == _PARAM_SERVICE_REQUESTED)
+            & (df["region"] == region)
+            & (df["year"] == year)
+            & (df["technology"] == "")
+            & (df["sector"] == "")
+            & (df["target"] != "")
+        )
+        subset = df[mask]
+        totals: dict[str, float] = {}
+        for _, row in subset.iterrows():
+            # Region-level rows have target ``CIMS.CAN.<region>.<sector>`` (four
+            # dot-separated tokens); the leaf is the CIMS sector name.  Higher
+            # aggregates (province/national) and deeper normalised service nodes
+            # have a different token count and are skipped.
+            parts = str(row["target"]).split(".")
+            if len(parts) != 4:
+                continue
+            cims_sector = parts[-1].strip()
+            value = row["value"]
+            if cims_sector and pd.notna(value):
+                totals[cims_sector] = totals.get(cims_sector, 0.0) + float(value)
+        return totals
+
+    def energy_intensity(
+        self,
+        region: str,
+        year: int,
+        industries: list[str],
+        requested_quantities: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Build the energy-intensity matrix (energy per unit output) for a region/year.
+
+        Rows are producing industries (macro codes), columns are input goods
+        (macro codes).  Each producing sector's requested quantities are divided
+        by that sector's activity level (see :meth:`_sector_activity`), giving a
+        physical energy-per-unit-output measure.  Sectors with a missing or
+        non-positive activity level are left as zeros (no intensity signal), and
+        the downstream linkage skips zero entries rather than dividing by them.
+        """
+        if requested_quantities is None:
+            requested_quantities = self.requested_quantities(region, year, industries)
+
+        matrix = pd.DataFrame(0.0, index=industries, columns=industries)
+        activity = self._sector_activity(region, year)
+        if not activity:
+            logger.warning(
+                "[%s %s] no Region-level service-requested activity found; energy intensity will be empty.",
+                region, year,
+            )
+            return matrix
+
+        for cims_sector, level in activity.items():
+            macro_row = self.sector_map.cims_sector_to_macro.get(cims_sector)
+            if macro_row is None or macro_row not in matrix.index:
+                continue
+            if not np.isfinite(level) or level <= 0.0:
+                continue
+            matrix.loc[macro_row] = requested_quantities.loc[macro_row] / level
+        return matrix
+
+    def capital_intensity(
+        self,
+        region: str,
+        year: int,
+        industries: list[str],
+        investment: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Build the capital-intensity matrix (investment per unit output) for a region/year.
+
+        Same layout and activity denominator as :meth:`energy_intensity`, but the
+        numerator is the investment matrix.  Used by the intensity-target linkage
+        method to overwrite capital productivity toward the CIMS investment
+        trajectory.
+        """
+        if investment is None:
+            investment = self.investment(region, year, industries)
+
+        matrix = pd.DataFrame(0.0, index=industries, columns=industries)
+        activity = self._sector_activity(region, year)
+        if not activity:
+            return matrix
+
+        for cims_sector, level in activity.items():
+            macro_row = self.sector_map.cims_sector_to_macro.get(cims_sector)
+            if macro_row is None or macro_row not in matrix.index:
+                continue
+            if not np.isfinite(level) or level <= 0.0:
+                continue
+            matrix.loc[macro_row] = investment.loc[macro_row] / level
+        return matrix
+
+    # ------------------------------------------------------------------
     # Orchestration
     # ------------------------------------------------------------------
 
@@ -320,14 +442,22 @@ class CIMSResultsExtractor:
     ) -> None:
         """Extract and write processed matrices for every milestone year.
 
-        Writes ``requested_quantities_{itr}_{year}_{region}.csv`` and
-        ``investment_{itr}_{year}_{region}.csv`` to *export_dir*.
+        Writes ``requested_quantities_{itr}_{year}_{region}.csv``,
+        ``investment_{itr}_{year}_{region}.csv`` and
+        ``energy_intensity_{itr}_{year}_{region}.csv`` to *export_dir*.
         """
         export_path = Path(export_dir)
         export_path.mkdir(parents=True, exist_ok=True)
         for year in years:
             rq = self.requested_quantities(region, year, industries)
             inv = self.investment(region, year, industries, requested_quantities=rq)
+            intensity = self.energy_intensity(region, year, industries, requested_quantities=rq)
+            cap_intensity = self.capital_intensity(region, year, industries, investment=inv)
             rq.to_csv(export_path / f"requested_quantities_{itr}_{year}_{region}.csv")
             inv.to_csv(export_path / f"investment_{itr}_{year}_{region}.csv")
-            logger.info("[%s %s itr=%s] wrote processed requested_quantities + investment", region, year, itr)
+            intensity.to_csv(export_path / f"energy_intensity_{itr}_{year}_{region}.csv")
+            cap_intensity.to_csv(export_path / f"capital_intensity_{itr}_{year}_{region}.csv")
+            logger.info(
+                "[%s %s itr=%s] wrote requested_quantities + investment + energy/capital intensity",
+                region, year, itr,
+            )

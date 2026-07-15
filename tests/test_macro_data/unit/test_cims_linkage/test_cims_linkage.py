@@ -221,6 +221,100 @@ def test_extractor_process_writes_files_and_reader_roundtrip(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# CIMSResultsExtractor: energy / capital intensity (intensity-target linkage)
+# ---------------------------------------------------------------------------
+
+def _write_region_service_requested(path, *, value: float = 2.0):
+    """Append a Region-level 'service requested' row for Coal Mining / AB / 2025.
+
+    Region-level rows have an empty sector and technology and a four-token
+    target ``CIMS.CAN.<region>.<sector>``; the leaf identifies the CIMS sector.
+    """
+    rows = [
+        # Real Region-level activity for Coal Mining (leaf of target).
+        ("CIMS.CAN.AB", "AB", "", 2025, "", "service requested", "", "", "CIMS.CAN.AB.Coal Mining", "tonne", value),
+        # Deeper normalised Type=Sector node (sector non-empty) must be ignored.
+        ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "", "service requested", "", "", "CIMS.CAN.AB.Coal Mining.Final Product", "tonne", 1.0),
+        # Province aggregate (three-token target) must be ignored.
+        ("CIMS.CAN", "CAN", "", 2025, "", "service requested", "", "", "CIMS.CAN.AB", "tonne", 999.0),
+    ]
+    cols = ["node", "region", "sector", "year", "technology", "parameter", "context", "sub_context", "target", "unit", "value"]
+    existing = path / "Reference_results_general.csv"
+    df_new = pd.DataFrame(rows, columns=cols)
+    if existing.exists():
+        df_new.to_csv(existing, mode="a", header=False, index=False)
+    else:
+        df_new.to_csv(existing, index=False)
+
+
+def test_extractor_energy_intensity_service_requested_region_level(tmp_path):
+    """Energy intensity = requested_quantity / Region-level service-requested activity."""
+    _write_general_results(tmp_path)
+    _write_region_service_requested(tmp_path, value=2.0)
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+
+    activity = extractor._sector_activity("AB", 2025)
+    # Only the real Region-level Coal Mining row (2.0) is picked up; the deeper
+    # normalised node and the province aggregate are ignored.
+    assert activity == {"Coal Mining": pytest.approx(2.0)}
+
+    intensity = extractor.energy_intensity("AB", 2025, INDUSTRIES)
+    # rq (per step) Coal=100, NG=25 divided by activity 2.0.
+    assert intensity.loc["B05a", "B05a"] == pytest.approx(50.0)
+    assert intensity.loc["B05a", "B05b"] == pytest.approx(12.5)
+
+
+def test_extractor_energy_intensity_scales_inversely_with_activity(tmp_path):
+    """Doubling the service-requested activity halves intensity for the same demand."""
+    _write_general_results(tmp_path)
+    _write_region_service_requested(tmp_path, value=4.0)
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+    intensity = extractor.energy_intensity("AB", 2025, INDUSTRIES)
+    # Activity 4.0; intensity = 100 / 4 = 25.
+    assert intensity.loc["B05a", "B05a"] == pytest.approx(25.0)
+
+
+def test_extractor_energy_intensity_no_activity_left_zero(tmp_path):
+    """No Region-level service-requested row -> no intensity signal (zeros)."""
+    _write_general_results(tmp_path)  # no service-requested rows written
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+    intensity = extractor.energy_intensity("AB", 2025, INDUSTRIES)
+    assert intensity.loc["B05a"].sum() == pytest.approx(0.0)
+
+
+def test_extractor_capital_intensity(tmp_path):
+    _write_general_results(tmp_path)
+    _write_tech_results(tmp_path)  # investment total = 10*2/1 = 20, /4 = 5, split 0.8/0.2
+    _write_region_service_requested(tmp_path, value=1.0)  # activity denominator = 1.0
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+    cap = extractor.capital_intensity("AB", 2025, INDUSTRIES)
+    # investment / activity (1.0): Coal 5*0.8=4.0, NG 5*0.2=1.0.
+    assert cap.loc["B05a", "B05a"] == pytest.approx(4.0)
+    assert cap.loc["B05a", "B05b"] == pytest.approx(1.0)
+
+
+def test_extractor_process_writes_intensity_and_reader_roundtrip(tmp_path):
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    _write_general_results(results_dir)
+    _write_tech_results(results_dir)
+    _write_region_service_requested(results_dir, value=2.0)
+    export_dir = tmp_path / "cims_data"
+
+    extractor = CIMSResultsExtractor(results_dir, steps_per_year=4)
+    extractor.process("AB", [2025], INDUSTRIES, export_dir, itr="00")
+
+    reader = CIMSDataReader(export_dir)
+    assert reader.intensity_available("00", 2025, "AB")
+    intensity = reader.get_energy_intensity("00", 2025, "AB")
+    # rq 100 / activity 2.0 = 50.
+    assert intensity.loc["B05a", "B05a"] == pytest.approx(50.0)
+    cap = reader.get_capital_intensity("00", 2025, "AB")
+    # investment 4.0 / activity 2.0 = 2.0.
+    assert cap.loc["B05a", "B05a"] == pytest.approx(2.0)
+
+
+# ---------------------------------------------------------------------------
 # CIMSProductionWriter
 # ---------------------------------------------------------------------------
 

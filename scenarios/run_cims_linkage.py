@@ -257,8 +257,12 @@ def extract_cims_inputs(
     itr: str,
     steps_per_year: int,
 ) -> None:
-    """Extract processed requested-quantity/investment matrices for every region."""
-    extractor = CIMSResultsExtractor(cims_results_dir, sector_map=sector_map, steps_per_year=steps_per_year)
+    """Extract processed requested-quantity/investment/intensity matrices for every region."""
+    extractor = CIMSResultsExtractor(
+        cims_results_dir,
+        sector_map=sector_map,
+        steps_per_year=steps_per_year,
+    )
     for region in cims_regions:
         extractor.process(region, years, industries, export_dir, itr)
 
@@ -270,14 +274,26 @@ def build_link_prehook(
     years: list[int],
     itr: str,
     *,
+    method: str = "nudge",
+    anchor_year: int | None = None,
+    reset_multipliers: bool = True,
     intermediate_factor: float = 0.1,
     capital_factor: float = 0.1,
     capital_investment_boost: float = 0.1,
 ):
-    """Create a simulation pre-hook that calls firms.link() at milestone years."""
+    """Create a simulation pre-hook that calls firms.link() at milestone years.
+
+    With ``method="intensity_target"`` the hook also loads the anchor-year and
+    current-year energy/capital intensity matrices and passes them to
+    ``firms.link()`` so it can set energy-per-output directly (index-anchored to
+    ``anchor_year``) instead of nudging.
+    """
     energy_codes = sector_map.energy_bundle_for(industries)
     comparable_codes = sector_map.comparable_for(industries)
     milestone = set(years)
+    method = (method or "nudge").lower()
+    if anchor_year is None and years:
+        anchor_year = min(years)
 
     def link_prehook(sim: Simulation, year: int, month: int) -> None:
         if month != 1 or year not in milestone:
@@ -289,16 +305,43 @@ def build_link_prehook(
                 continue
             rq = reader.get_requested_quantities(itr, year, cims_region)
             inv = reader.get_investment(itr, year, cims_region)
-            country.firms.link(
-                requested_quantities=rq,
-                investment=inv,
-                comparable_codes=comparable_codes,
-                energy_bundle_codes=energy_codes,
-                intermediate_factor=intermediate_factor,
-                capital_factor=capital_factor,
-                capital_investment_boost=capital_investment_boost,
+
+            if method == "intensity_target":
+                if not reader.intensity_available(itr, year, cims_region) or not reader.intensity_available(
+                    itr, anchor_year, cims_region
+                ):
+                    logger.warning(
+                        "intensity_target: intensity matrices missing for region=%s year=%s (or anchor %s); "
+                        "skipping link this milestone.",
+                        cims_region, year, anchor_year,
+                    )
+                    continue
+                country.firms.link(
+                    requested_quantities=rq,
+                    investment=inv,
+                    comparable_codes=comparable_codes,
+                    energy_bundle_codes=energy_codes,
+                    method="intensity_target",
+                    energy_intensity=reader.get_energy_intensity(itr, year, cims_region),
+                    anchor_energy_intensity=reader.get_energy_intensity(itr, anchor_year, cims_region),
+                    capital_intensity=reader.get_capital_intensity(itr, year, cims_region),
+                    anchor_capital_intensity=reader.get_capital_intensity(itr, anchor_year, cims_region),
+                    is_anchor=(year == anchor_year),
+                    reset_multipliers=reset_multipliers,
+                )
+            else:
+                country.firms.link(
+                    requested_quantities=rq,
+                    investment=inv,
+                    comparable_codes=comparable_codes,
+                    energy_bundle_codes=energy_codes,
+                    intermediate_factor=intermediate_factor,
+                    capital_factor=capital_factor,
+                    capital_investment_boost=capital_investment_boost,
+                )
+            logger.info(
+                "link() applied (%s): province=%s cims_region=%s year=%s", method, province, cims_region, year
             )
-            logger.info("link() applied: province=%s cims_region=%s year=%s", province, cims_region, year)
 
     return link_prehook
 
@@ -437,6 +480,27 @@ def parse_args() -> argparse.Namespace:
         default=0.1,
         help="Extra multiplier on negative capital productivity adjustments (default 0.1).",
     )
+    p.add_argument(
+        "--linkage-method",
+        choices=["nudge", "intensity_target"],
+        default="nudge",
+        help="How firms.link() applies CIMS results: legacy 'nudge' or 'intensity_target' "
+             "(directly set energy-per-output, index-anchored to the anchor year).",
+    )
+    p.add_argument(
+        "--intensity-anchor-year",
+        type=int,
+        default=None,
+        help="Anchor year for the intensity-target index (default: first CIMS milestone / "
+             "history boundary). At the anchor year the index is 1 (no shock).",
+    )
+    p.add_argument(
+        "--no-reset-multipliers",
+        dest="reset_multipliers",
+        action="store_false",
+        help="Do not reset firm tech multipliers at milestones (keep intra-period drift on top of the target).",
+    )
+    p.set_defaults(reset_multipliers=True)
     p.add_argument("--sector-map", type=Path, default=None, help="Override sector-map CSV.")
     p.add_argument("--region-map", type=Path, default=None, help="Override region-map CSV.")
     p.add_argument("--force-rebuild-pickle", action="store_true")
@@ -526,12 +590,26 @@ def main() -> None:
     history_checkpoint = args.history_checkpoint
 
     reader = CIMSDataReader(processed_dir)
+    intensity_anchor_year = (
+        args.intensity_anchor_year if args.intensity_anchor_year is not None else args.history_boundary
+    )
+    if args.linkage_method == "intensity_target" and intensity_anchor_year not in years:
+        # The anchor must be a CIMS milestone so its intensity matrix exists;
+        # fall back to the first milestone otherwise.
+        logger.warning(
+            "intensity anchor year %s is not a CIMS milestone %s; using the first milestone %s instead.",
+            intensity_anchor_year, years, years[0] if years else None,
+        )
+        intensity_anchor_year = years[0] if years else intensity_anchor_year
     link_prehook = build_link_prehook(
         reader,
         sector_map,
         industries,
         years,
         args.iteration,
+        method=args.linkage_method,
+        anchor_year=intensity_anchor_year,
+        reset_multipliers=args.reset_multipliers,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,

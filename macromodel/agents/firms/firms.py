@@ -17,6 +17,56 @@ from macromodel.markets.goods_market.value_type import ValueType
 from macromodel.util.function_mapping import functions_from_model, update_functions
 
 
+def _weighted_effective_coefficient(
+    base_coeff: float,
+    multipliers: np.ndarray | None,
+    firms_idx: np.ndarray,
+    input_j: int,
+    production: np.ndarray,
+) -> float | None:
+    """Production-weighted effective coefficient ``base * multiplier`` for one (industry, input).
+
+    The effective intermediate/capital coefficient of a firm is
+    ``base_coeff * multiplier[firm, input_j]``.  This collapses the firms of a
+    single industry to one representative value, weighting by current
+    production (falling back to a simple mean when production is all zero), so
+    that overwriting the coefficient preserves total input use.  Returns
+    ``None`` when there are no firms for the industry.
+    """
+    if firms_idx.size == 0:
+        return None
+    if multipliers is None:
+        return float(base_coeff)
+    mult = np.asarray(multipliers)[firms_idx, input_j].astype(float)
+    weights = production[firms_idx].astype(float) if production is not None else None
+    if weights is None or weights.sum() <= 0.0:
+        mean_mult = float(np.mean(mult)) if mult.size else 1.0
+    else:
+        mean_mult = float(np.average(mult, weights=weights))
+    return float(base_coeff) * mean_mult
+
+
+def _intensity_target_productivity(
+    baseline_eff: float,
+    anchor_intensity: float,
+    current_intensity: float,
+) -> float | None:
+    """Target productivity coefficient for the intensity-target linkage.
+
+    Productivity is the reciprocal of energy-per-output, so a rise in CIMS
+    intensity relative to the anchor year lowers productivity:
+
+        target = baseline_eff * (anchor_intensity / current_intensity)
+
+    Returns ``None`` (leave the coefficient unchanged) when any input is not a
+    usable positive, finite number.
+    """
+    for v in (baseline_eff, anchor_intensity, current_intensity):
+        if v is None or not np.isfinite(v) or v <= 0.0:
+            return None
+    return float(baseline_eff) * (float(anchor_intensity) / float(current_intensity))
+
+
 class Firms(Agent):
     """A collection of producing firms in the economy.
 
@@ -2087,45 +2137,81 @@ class Firms(Agent):
         comparable_codes: list[str],
         energy_bundle_codes: list[str],
         *,
+        method: str = "nudge",
+        energy_intensity: pd.DataFrame | None = None,
+        anchor_energy_intensity: pd.DataFrame | None = None,
+        capital_intensity: pd.DataFrame | None = None,
+        anchor_capital_intensity: pd.DataFrame | None = None,
+        is_anchor: bool = False,
+        reset_multipliers: bool = True,
         intermediate_factor: float = 0.1,
         capital_factor: float = 0.1,
         capital_investment_boost: float = 0.1,
     ) -> None:
         """Adjust productivity matrices using CIMS linkage data (no file I/O).
 
-        Translates CIMS-requested energy quantities and investment into
-        adjustments on ``base_intermediate_inputs_productivity_matrix`` and
-        ``base_capital_inputs_productivity_matrix``.  The inputs are already
-        per-timestep (divided by ``steps_per_year`` in the extractor).
+        Two methods are supported:
 
-        This nudges how efficiently each comparable industry uses its
-        energy-bundle inputs toward the CIMS engineering result: where CIMS
-        requests *less* energy than the macroABM currently uses, input
-        productivity is raised, and vice versa; capital productivity follows
-        the CIMS investment signal.
+        * ``method="nudge"`` (legacy): translates CIMS-requested energy
+          quantities and investment into damped, one-directional *nudges* on the
+          base productivity matrices.  This aligns only the energy *mix* (it
+          rescales CIMS energy to the macro total), by a fixed multiplicative
+          step, and never raises intermediate productivity.
 
-        NOTE: this mutates the *base* coefficient matrices. If firm-level
-        ``intermediate_tech_multipliers`` / ``capital_tech_multipliers`` are
-        active (see :meth:`get_effective_intermediate_coefficients`), the
-        effective coefficients are ``base * multiplier``; the adjustment here
-        still propagates because it changes the base.
+        * ``method="intensity_target"`` (recommended): directly *sets* each
+          comparable industry's energy-per-unit-output coefficient toward the
+          CIMS engineering result, index-anchored to a base/anchor year.  Because
+          the macroABM production technology is Leontief
+          (``used_input = production / productivity``), ``productivity`` is the
+          reciprocal of energy-per-output, so this is a direct assignment rather
+          than a search.  Anchoring on the macroABM's own base-year coefficient
+          keeps the units (monetary IO intensities) and eliminates the base-year
+          level shock that destabilises the ``nudge`` method.  Both the energy
+          (intermediate) and investment (capital) channels are overwritten.
+
+        NOTE: both methods mutate the *base* coefficient matrices.  In
+        ``intensity_target`` mode the affected firm-level tech multipliers are
+        reset to 1 (unless ``reset_multipliers=False``) so the *effective* energy
+        mix equals the CIMS target at each milestone; between milestones the
+        model is free to drift them again (e.g. bundle arbitrage), which is what
+        lets the macroABM substitute across the 5-year period.
 
         Args:
-            requested_quantities: (industry x good) CIMS demand matrix, indexed
-                by macro industry codes, from :class:`CIMSDataReader`.
-            investment: (industry x good) CIMS investment matrix, same layout.
-            comparable_codes: Industry codes with a CIMS counterpart (rows to
-                update).
+            requested_quantities: (industry x good) CIMS demand matrix (nudge).
+            investment: (industry x good) CIMS investment matrix (nudge).
+            comparable_codes: Industry codes with a CIMS counterpart.
             energy_bundle_codes: Energy-input codes (columns to update).
-            intermediate_factor: Damping step applied to intermediate-input
-                productivity when aligning toward CIMS requested quantities.
-            capital_factor: Damping step for capital-input productivity when
-                macro capital differs from the CIMS investment signal.
-                Skipped entirely when the CIMS energy-investment total for
-                this industry is zero.
-            capital_investment_boost: Extra multiplier on negative capital
-                productivity adjustments.
+            method: ``"nudge"`` or ``"intensity_target"``.
+            energy_intensity: current-year energy-per-output matrix
+                (intensity_target).
+            anchor_energy_intensity: anchor-year energy-per-output matrix
+                (intensity_target).
+            capital_intensity / anchor_capital_intensity: same for the capital
+                (investment) channel.
+            is_anchor: True when this call is at the anchor year; captures the
+                macroABM baseline effective coefficients and leaves the model
+                otherwise unchanged (index = 1).
+            reset_multipliers: reset the affected energy-column tech multipliers
+                to 1 at each milestone so the effective mix is overwritten.
+            intermediate_factor / capital_factor / capital_investment_boost:
+                damping steps for the legacy ``nudge`` method.
         """
+        method = (method or "nudge").lower()
+        if method == "intensity_target":
+            self._link_intensity_target(
+                comparable_codes,
+                energy_bundle_codes,
+                energy_intensity=energy_intensity,
+                anchor_energy_intensity=anchor_energy_intensity,
+                capital_intensity=capital_intensity,
+                anchor_capital_intensity=anchor_capital_intensity,
+                is_anchor=is_anchor,
+                reset_multipliers=reset_multipliers,
+            )
+            return
+        if method != "nudge":
+            raise ValueError(f"Unknown link method {method!r}; expected 'nudge' or 'intensity_target'.")
+
         industries_list = list(self.industries)
         industry_idx = self.states["Industry"]
         n_ind = len(industries_list)
@@ -2181,6 +2267,101 @@ class Firms(Agent):
                     self.base_capital_inputs_productivity_matrix[j, i] *= 1 - capital_factor * (
                         1 + capital_investment_boost
                     )
+
+    def _link_intensity_target(
+        self,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+        *,
+        energy_intensity: pd.DataFrame | None,
+        anchor_energy_intensity: pd.DataFrame | None,
+        capital_intensity: pd.DataFrame | None,
+        anchor_capital_intensity: pd.DataFrame | None,
+        is_anchor: bool,
+        reset_multipliers: bool,
+    ) -> None:
+        """Set energy/capital productivity toward the CIMS intensity target.
+
+        See :meth:`link` for the method description.  On the anchor call this
+        captures the macroABM's baseline effective coefficients (production-
+        weighted across firms) and makes no other change; on later milestones it
+        sets ``base[j, i] = baseline_eff[j, i] * anchor_intensity / current_intensity``
+        (productivity is the reciprocal of intensity) and optionally resets the
+        affected firm multipliers to 1.
+        """
+        industries_list = list(self.industries)
+        industry_idx = np.asarray(self.states["Industry"])
+        production = np.asarray(self.ts.current("production")).ravel()
+
+        valid_comparable = [c for c in comparable_codes if c in industries_list]
+        valid_energy = [c for c in energy_bundle_codes if c in industries_list]
+
+        # (base matrix, multiplier state key, current intensity, anchor intensity, baseline attr)
+        channels = [
+            (
+                self.base_intermediate_inputs_productivity_matrix,
+                "intermediate_tech_multipliers",
+                energy_intensity,
+                anchor_energy_intensity,
+                "_link_intermediate_baseline",
+            ),
+            (
+                self.base_capital_inputs_productivity_matrix,
+                "capital_tech_multipliers",
+                capital_intensity,
+                anchor_capital_intensity,
+                "_link_capital_baseline",
+            ),
+        ]
+
+        for base_matrix, mult_key, cur_intensity, anchor_intensity, baseline_attr in channels:
+            if anchor_intensity is None:
+                continue
+            baseline = getattr(self, baseline_attr, None)
+            if baseline is None:
+                baseline = {}
+                setattr(self, baseline_attr, baseline)
+            multipliers = self.states.get(mult_key)
+
+            for i_code in valid_comparable:
+                i = industries_list.index(i_code)
+                firms_i = np.where(industry_idx == i)[0]
+                for j_code in valid_energy:
+                    if j_code not in getattr(anchor_intensity, "columns", []):
+                        continue
+                    if i_code not in anchor_intensity.index:
+                        continue
+                    j = industries_list.index(j_code)
+
+                    if is_anchor or (i_code, j_code) not in baseline:
+                        # Capture the production-weighted effective coefficient
+                        # as the macroABM baseline for this (industry, energy).
+                        eff = _weighted_effective_coefficient(
+                            base_matrix[j, i], multipliers, firms_i, j, production
+                        )
+                        if eff is None or not np.isfinite(eff) or eff <= 0.0:
+                            continue
+                        baseline[(i_code, j_code)] = float(eff)
+
+                    baseline_eff = baseline.get((i_code, j_code))
+                    if baseline_eff is None:
+                        continue
+
+                    a_int = float(anchor_intensity.loc[i_code, j_code])
+                    c_int = (
+                        float(cur_intensity.loc[i_code, j_code])
+                        if cur_intensity is not None
+                        and i_code in cur_intensity.index
+                        and j_code in cur_intensity.columns
+                        else a_int
+                    )
+                    target = _intensity_target_productivity(baseline_eff, a_int, c_int)
+                    if target is None:
+                        continue
+
+                    base_matrix[j, i] = target
+                    if reset_multipliers and multipliers is not None:
+                        multipliers[firms_i, j] = 1.0
 
     def get_production_annual(
         self,

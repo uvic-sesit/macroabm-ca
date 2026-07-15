@@ -34,11 +34,27 @@ class CIMSDataReader:
         """Return the processed investment matrix (rows=producing, cols=good)."""
         return self._read_matrix("investment", itr, year, region)
 
+    def get_energy_intensity(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Return the processed energy-intensity matrix (energy per unit output).
+
+        Rows are producing industries, columns are input goods.  Used by the
+        intensity-target linkage method.
+        """
+        return self._read_matrix("energy_intensity", itr, year, region)
+
+    def get_capital_intensity(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Return the processed capital-intensity matrix (investment per unit output)."""
+        return self._read_matrix("capital_intensity", itr, year, region)
+
     def available(self, itr: str, year: int, region: str) -> bool:
         """True if both processed matrices exist for this iteration/year/region."""
         return self._path("requested_quantities", itr, year, region).exists() and self._path(
             "investment", itr, year, region
         ).exists()
+
+    def intensity_available(self, itr: str, year: int, region: str) -> bool:
+        """True if the processed energy-intensity matrix exists for this iteration/year/region."""
+        return self._path("energy_intensity", itr, year, region).exists()
 
     def _path(self, param: str, itr: str, year: int, region: str) -> Path:
         return self.cims_data_path / f"{param}_{itr}_{year}_{region}.csv"
