@@ -111,7 +111,22 @@ def build_simulation_configuration(
     *,
     timesteps: int,
     seed: int,
+    firms_bundles: list[list[int]] | None = None,
 ) -> SimulationConfiguration:
+    """Build the provincial simulation configuration.
+
+    Args:
+        n_industries: Number of industries in the disaggregated model.
+        timesteps: Total simulation timesteps.
+        seed: Random seed.
+        firms_bundles: Optional list of substitution bundles (each a list of
+            industry indices).  When provided, firms use ``BundledLeontief``
+            production with bundle-weighted input targets, so inputs within a
+            bundle are substitutable and investment arbitrages toward the cheaper
+            member.  Used by the CIMS linkage to make energy carriers
+            substitutable between CIMS milestones.  ``None`` (default) keeps the
+            legacy ``PureLeontief`` behaviour with no substitution.
+    """
     tfp_base_growth_rate = 0.001
     tfp_investment_elasticity = 0.5
     productivity_growth_investment_effectiveness = 0.3
@@ -127,7 +142,9 @@ def build_simulation_configuration(
     config = SimulationConfiguration(
         seed=seed,
         country_configurations={
-            province: CountryConfiguration.n_industry_default(n_industries=n_industries)
+            province: CountryConfiguration.n_industry_default(
+                n_industries=n_industries, firms_bundles=firms_bundles
+            )
             for province in CANADIAN_PROVINCES
         },
         t_max=timesteps,

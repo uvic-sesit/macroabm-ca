@@ -17,6 +17,18 @@ from macromodel.markets.goods_market.value_type import ValueType
 from macromodel.util.function_mapping import functions_from_model, update_functions
 
 
+# Per-industry series written into the lightweight HDF5 for diagnostics
+# (see :meth:`Firms.industry_timeseries_dataframes`).
+_INDUSTRY_TS_SUM_FIELDS = (
+    "production",
+    "estimated_demand",
+    "real_amount_sold",
+    "inventory",
+    "limiting_intermediate_inputs",
+)
+_INDUSTRY_TS_WEIGHTED_FIELDS = {"price": "production"}
+
+
 def _weighted_effective_coefficient(
     base_coeff: float,
     multipliers: np.ndarray | None,
@@ -400,6 +412,48 @@ class Firms(Agent):
 
         return df
 
+    def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
+        """Per-industry time series (timesteps x industries) for lightweight diagnostics.
+
+        Aggregates the firm-level history to industry level so the shallow HDF5
+        can carry a compact, lazily-sliceable per-sector view without a full
+        (multi-GB) simulation save: quantity fields are summed across the firms
+        in each industry; ``price`` is a production-weighted average.  Columns are
+        industry codes.
+        """
+        industry = np.asarray(self.states["Industry"])
+        n_ind = len(self.industries)
+
+        def agg_sum(field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            out = np.zeros((len(hist), n_ind))
+            for t, arr in enumerate(hist):
+                np.add.at(out[t], industry, np.asarray(arr, dtype=float).ravel())
+            return out
+
+        def agg_weighted(field: str, weight_field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            whist = self.ts.historic(weight_field)
+            steps = min(len(hist), len(whist))
+            out = np.zeros((steps, n_ind))
+            for t in range(steps):
+                vals = np.asarray(hist[t], dtype=float).ravel()
+                weights = np.asarray(whist[t], dtype=float).ravel()
+                num = np.zeros(n_ind)
+                den = np.zeros(n_ind)
+                np.add.at(num, industry, vals * weights)
+                np.add.at(den, industry, weights)
+                out[t] = np.divide(num, den, out=np.zeros(n_ind), where=den > 0)
+            return out
+
+        cols = list(self.industries)
+        frames: dict[str, pd.DataFrame] = {}
+        for field in _INDUSTRY_TS_SUM_FIELDS:
+            frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
+        for field, weight_field in _INDUSTRY_TS_WEIGHTED_FIELDS.items():
+            frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+        return frames
+
     def reset(self, configuration: FirmsConfiguration) -> None:
         """Reset the firms to initial state with new configuration.
 
@@ -703,7 +757,7 @@ class Firms(Agent):
         Returns:
             np.ndarray: Target production quantities for each firm
         """
-        return self.functions["target_production"].compute_target_production(
+        target = self.functions["target_production"].compute_target_production(
             current_estimated_demand=self.ts.current("estimated_demand"),
             initial_inventory=self.ts.initial("inventory"),
             previous_inventory=self.ts.current("inventory"),
@@ -720,6 +774,71 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
+        return self._apply_growth_limits(target)
+
+    def set_growth_limits(
+        self,
+        industry_indices,
+        max_growth_per_year: float | None,
+        max_decline_per_year: float | None,
+        steps_per_year: int,
+    ) -> None:
+        """Configure a per-sector production-growth clamp (see :meth:`_apply_growth_limits`).
+
+        Args:
+            industry_indices: industry indices whose firms are growth-limited.
+            max_growth_per_year: cap on annual production growth (e.g. 0.05 = +5%/yr),
+                or ``None`` to leave the upside unbounded.
+            max_decline_per_year: cap on annual production decline (0.05 = -5%/yr),
+                or ``None`` to leave the downside unbounded.
+            steps_per_year: simulation steps per calendar year (defines the trailing
+                reference used for the year-on-year band).
+        """
+        self._growth_limit_indices = np.asarray(list(industry_indices), dtype=int)
+        self._growth_limit_up = None if max_growth_per_year is None else float(max_growth_per_year)
+        self._growth_limit_down = None if max_decline_per_year is None else float(max_decline_per_year)
+        self._growth_limit_steps_per_year = int(steps_per_year)
+
+    def _apply_growth_limits(self, target: np.ndarray) -> np.ndarray:
+        """Clamp target production of listed sectors to a year-on-year growth band.
+
+        For firms in the configured industries, the planned output is bounded to
+        ``[ref*(1-max_decline), ref*(1+max_growth)]`` where ``ref`` is the firm's
+        own production one year (``steps_per_year`` steps) ago -- comparing the
+        same quarter a year back so seasonality cancels.  This imposes production
+        stickiness / adjustment costs on the listed (typically extraction)
+        sectors so their output cannot swing faster than is realistic, keeping
+        both the macro dynamics and the CIMS feedback bounded.
+
+        The clamp is skipped for firms with no meaningful reference (first year of
+        the run, or a currently-idle firm with zero prior output).  Robust to
+        checkpoints written before this feature (missing attributes -> no-op).
+        """
+        indices = getattr(self, "_growth_limit_indices", None)
+        if indices is None or len(indices) == 0:
+            return target
+        up = getattr(self, "_growth_limit_up", None)
+        down = getattr(self, "_growth_limit_down", None)
+        if up is None and down is None:
+            return target
+        steps_per_year = int(getattr(self, "_growth_limit_steps_per_year", 4))
+
+        history = self.ts.historic("production")
+        if len(history) < steps_per_year:
+            return target  # not enough history for a year-ago reference yet
+
+        ref = np.asarray(history[-steps_per_year], dtype=float).ravel()
+        industry = np.asarray(self.states["Industry"])
+        firm_mask = np.isin(industry, indices) & (ref > 0.0)
+        if not firm_mask.any():
+            return target
+
+        out = np.array(target, dtype=float, copy=True)
+        if up is not None:
+            out = np.where(firm_mask, np.minimum(out, ref * (1.0 + up)), out)
+        if down is not None:
+            out = np.where(firm_mask, np.maximum(out, ref * (1.0 - down)), out)
+        return out
 
     def compute_target_intermediate_inputs_production(self) -> np.ndarray:
         """Calculate target intermediate input production levels.

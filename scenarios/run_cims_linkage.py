@@ -391,13 +391,48 @@ def compute_gdp_growth(sim: Simulation) -> dict[str, float]:
     return growth
 
 
+def energy_bundle_indices(sector_map: SectorMap, industries: list[str]) -> list[int]:
+    """Industry indices of the CIMS energy carriers, for a substitution bundle.
+
+    Groups the energy-bundle macro codes present in *industries* (coal, natural
+    gas, crude oil, refined petroleum, electricity) so the macroABM treats them
+    as mutually substitutable inputs.
+    """
+    energy_codes = sector_map.energy_bundle_for(industries)
+    return [industries.index(code) for code in energy_codes]
+
+
+def apply_growth_limits(
+    sim: Simulation,
+    industry_indices: list[int],
+    max_growth_per_year: float | None,
+    max_decline_per_year: float | None,
+    steps_per_year: int,
+) -> None:
+    """Set the per-sector production growth clamp on every province's firms.
+
+    Applied after the simulation is built or restored (and on every iteration),
+    so it also configures sims restored from checkpoints written before the clamp
+    existed.  A no-op when no sectors are given.
+    """
+    if not industry_indices or (max_growth_per_year is None and max_decline_per_year is None):
+        return
+    for country in sim.countries.values():
+        country.firms.set_growth_limits(
+            industry_indices, max_growth_per_year, max_decline_per_year, steps_per_year
+        )
+
+
 def build_simulation(
     data: DataWrapper,
     *,
     timesteps: int,
     seed: int,
+    firms_bundles: list[list[int]] | None = None,
 ) -> Simulation:
-    config = build_simulation_configuration(len(data.industries), timesteps=timesteps, seed=seed)
+    config = build_simulation_configuration(
+        len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles
+    )
     return Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
 
 
@@ -501,6 +536,32 @@ def parse_args() -> argparse.Namespace:
         help="Do not reset firm tech multipliers at milestones (keep intra-period drift on top of the target).",
     )
     p.set_defaults(reset_multipliers=True)
+    p.add_argument(
+        "--energy-substitution",
+        action="store_true",
+        help="Group the CIMS energy carriers into one substitution bundle (BundledLeontief + bundle "
+             "arbitrage) so firms can substitute between energy types on relative price across the "
+             "years between CIMS milestones.",
+    )
+    p.add_argument(
+        "--growth-limit-sectors",
+        type=str,
+        default="",
+        help="Comma-separated macro industry codes whose annual production growth is clamped in the "
+             "macroABM (e.g. 'B05a,B05b,B05c,C19'). Empty disables the clamp.",
+    )
+    p.add_argument(
+        "--growth-limit-up",
+        type=float,
+        default=None,
+        help="Max annual production growth for the clamped sectors (e.g. 0.05 = +5%%/yr). Omit for unbounded upside.",
+    )
+    p.add_argument(
+        "--growth-limit-down",
+        type=float,
+        default=None,
+        help="Max annual production decline for the clamped sectors (e.g. 0.05 = -5%%/yr). Omit for unbounded downside.",
+    )
     p.add_argument("--sector-map", type=Path, default=None, help="Override sector-map CSV.")
     p.add_argument("--region-map", type=Path, default=None, help="Override region-map CSV.")
     p.add_argument("--force-rebuild-pickle", action="store_true")
@@ -572,6 +633,34 @@ def main() -> None:
     industries = list(data.industries)
     logger.info("Loaded provincial data: %d industries, %d provinces", len(industries), len(CANADIAN_PROVINCES))
 
+    firms_bundles: list[list[int]] | None = None
+    if args.energy_substitution:
+        indices = energy_bundle_indices(sector_map, industries)
+        if len(indices) >= 2:
+            firms_bundles = [indices]
+            logger.info(
+                "Energy substitution enabled: bundling %d energy carriers %s (BundledLeontief + arbitrage).",
+                len(indices), sector_map.energy_bundle_for(industries),
+            )
+        else:
+            logger.warning(
+                "Energy substitution requested but only %d energy carrier(s) present; "
+                "substitution needs >= 2, leaving PureLeontief.",
+                len(indices),
+            )
+
+    # Resolve the production growth-limit sectors (macro codes) to industry indices.
+    gl_codes = [c.strip() for c in str(args.growth_limit_sectors).split(",") if c.strip()]
+    gl_indices = [industries.index(c) for c in gl_codes if c in industries]
+    gl_missing = [c for c in gl_codes if c not in industries]
+    if gl_missing:
+        logger.warning("Growth-limit sectors not found in the model industries (ignored): %s", gl_missing)
+    if gl_indices and (args.growth_limit_up is not None or args.growth_limit_down is not None):
+        logger.info(
+            "Production growth clamp enabled for %s: up=%s/yr down=%s/yr.",
+            [industries[i] for i in gl_indices], args.growth_limit_up, args.growth_limit_down,
+        )
+
     logger.info("Extracting CIMS results from %s", args.cims_results_dir)
     extract_cims_inputs(
         cims_results_dir=args.cims_results_dir.resolve(),
@@ -630,6 +719,7 @@ def main() -> None:
         )
         sim.configuration.t_max = total_steps
         sim.prehooks = [link_prehook]
+        apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
         logger.info(
             "Warm restart: continuing from milestone %s (%d/%d steps completed)",
             args.rerun_from_milestone,
@@ -659,6 +749,7 @@ def main() -> None:
         if sim is not None:
             sim.configuration.t_max = total_steps
             sim.prehooks = [link_prehook]
+            apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
             run_with_checkpoints(
                 sim,
                 total_steps=total_steps,
@@ -673,8 +764,9 @@ def main() -> None:
             args.history_boundary,
             history_steps,
         )
-        sim = build_simulation(data, timesteps=total_steps, seed=args.seed)
+        sim = build_simulation(data, timesteps=total_steps, seed=args.seed, firms_bundles=firms_bundles)
         sim.prehooks.append(link_prehook)
+        apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
         run_with_checkpoints(
             sim,
             total_steps=history_steps,
@@ -693,8 +785,9 @@ def main() -> None:
             checkpoint_retention=checkpoint_retention,
         )
     elif sim is None:
-        sim = build_simulation(data, timesteps=total_steps, seed=args.seed)
+        sim = build_simulation(data, timesteps=total_steps, seed=args.seed, firms_bundles=firms_bundles)
         sim.prehooks.append(link_prehook)
+        apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
         logger.info("Running provincial macroABM for %d timesteps", total_steps)
         sim.run()
 

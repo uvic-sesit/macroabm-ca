@@ -320,6 +320,76 @@ class CIMSResultsExtractor:
 
         return matrix
 
+    def _sector_capital_stock_totals(self, region: str, year: int) -> dict[str, float]:
+        """Total capital *stock* value per CIMS sector: sum(total_stock * capital_cost).
+
+        Unlike :meth:`_sector_investment_totals` -- which uses the lumpy annual
+        ``new_stock`` *flow* and therefore needs an output floor to keep it finite
+        -- this uses the durable ``total_stock``.  The capital stock changes only
+        gradually year-on-year (assets are long-lived), so its ratio to the anchor
+        year is smooth, which is the correct basis for a capital-*stock*
+        productivity target.  No per-technology output division and no output
+        floor are applied.
+        """
+        df = self.tech
+        if df.empty:
+            return {}
+        base = df[(df["region"] == region) & (df["year"] == year) & (df["technology"] != "")]
+        if base.empty:
+            return {}
+        pivot = (
+            base[base["parameter"].isin([_PARAM_CAPITAL_COST, _PARAM_TOTAL_STOCK])]
+            .pivot_table(
+                index=["sector", "node", "technology"],
+                columns="parameter",
+                values="value",
+                aggfunc="sum",
+            )
+        )
+        for col in (_PARAM_CAPITAL_COST, _PARAM_TOTAL_STOCK):
+            if col not in pivot.columns:
+                pivot[col] = np.nan
+        tech_capital = (pivot[_PARAM_TOTAL_STOCK] * pivot[_PARAM_CAPITAL_COST]).fillna(0.0)
+        if tech_capital.empty:
+            return {}
+        totals = tech_capital.groupby(level="sector").sum()
+        return {str(sector): float(val) for sector, val in totals.items()}
+
+    def capital_stock(
+        self,
+        region: str,
+        year: int,
+        industries: list[str],
+        requested_quantities: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        """Build the capital-stock matrix (durable capital stock value by sector and good).
+
+        Each producing sector's total capital stock value
+        (``sum(total_stock * capital_cost)``) is allocated across input goods in
+        proportion to its requested quantities -- mirroring :meth:`investment` but
+        on the durable stock rather than the annual flow (so no per-step division
+        and no output floor).
+        """
+        matrix = pd.DataFrame(0.0, index=industries, columns=industries)
+        totals = self._sector_capital_stock_totals(region, year)
+        if not totals:
+            return matrix
+
+        if requested_quantities is None:
+            requested_quantities = self.requested_quantities(region, year, industries)
+
+        for cims_sector, total in totals.items():
+            macro_row = self.sector_map.cims_sector_to_macro.get(cims_sector)
+            if macro_row is None or macro_row not in matrix.index or total == 0.0:
+                continue
+            row_shares = requested_quantities.loc[macro_row]
+            row_sum = row_shares.sum()
+            if row_sum <= 0:
+                continue
+            matrix.loc[macro_row] += (row_shares / row_sum) * total
+
+        return matrix
+
     # ------------------------------------------------------------------
     # Energy intensity (energy per unit sector activity)
     # ------------------------------------------------------------------
@@ -402,17 +472,22 @@ class CIMSResultsExtractor:
         region: str,
         year: int,
         industries: list[str],
-        investment: pd.DataFrame | None = None,
+        capital_stock: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """Build the capital-intensity matrix (investment per unit output) for a region/year.
+        """Build the capital-intensity matrix (capital *stock* per unit activity).
 
         Same layout and activity denominator as :meth:`energy_intensity`, but the
-        numerator is the investment matrix.  Used by the intensity-target linkage
-        method to overwrite capital productivity toward the CIMS investment
-        trajectory.
+        numerator is the durable capital *stock* value (see :meth:`capital_stock`),
+        not the annual investment *flow*.  Because the stock changes only
+        gradually, its year-on-year ratio is smooth, so the intensity-target
+        linkage sets a gently-changing capital-stock target rather than imposing a
+        lumpy one-year investment as an immediate cost (which previously produced
+        large spurious cost/price shocks in extraction sectors).  The MacroABM's
+        own depreciation dynamics then spread that stock's cost over the asset
+        life.
         """
-        if investment is None:
-            investment = self.investment(region, year, industries)
+        if capital_stock is None:
+            capital_stock = self.capital_stock(region, year, industries)
 
         matrix = pd.DataFrame(0.0, index=industries, columns=industries)
         activity = self._sector_activity(region, year)
@@ -425,7 +500,7 @@ class CIMSResultsExtractor:
                 continue
             if not np.isfinite(level) or level <= 0.0:
                 continue
-            matrix.loc[macro_row] = investment.loc[macro_row] / level
+            matrix.loc[macro_row] = capital_stock.loc[macro_row] / level
         return matrix
 
     # ------------------------------------------------------------------
@@ -452,7 +527,8 @@ class CIMSResultsExtractor:
             rq = self.requested_quantities(region, year, industries)
             inv = self.investment(region, year, industries, requested_quantities=rq)
             intensity = self.energy_intensity(region, year, industries, requested_quantities=rq)
-            cap_intensity = self.capital_intensity(region, year, industries, investment=inv)
+            cap_stock = self.capital_stock(region, year, industries, requested_quantities=rq)
+            cap_intensity = self.capital_intensity(region, year, industries, capital_stock=cap_stock)
             rq.to_csv(export_path / f"requested_quantities_{itr}_{year}_{region}.csv")
             inv.to_csv(export_path / f"investment_{itr}_{year}_{region}.csv")
             intensity.to_csv(export_path / f"energy_intensity_{itr}_{year}_{region}.csv")

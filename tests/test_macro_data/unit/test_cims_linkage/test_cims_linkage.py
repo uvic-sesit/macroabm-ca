@@ -88,10 +88,11 @@ def _write_general_results(path, *, quantity_parameter: str = "quantity_requeste
 
 
 def _write_tech_results(path, rows=None):
-    """Minimal results_tech.csv with new_stock / capital cost / output for AB / 2025."""
+    """Minimal results_tech.csv with new_stock / total_stock / capital cost / output for AB / 2025."""
     if rows is None:
         rows = [
             ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "new_stock", "", "", "", "", 10.0),
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "total_stock", "", "", "", "", 50.0),
             ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "capital cost", "", "", "", "", 2.0),
             ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "output", "", "", "", "", 1.0),
         ]
@@ -282,15 +283,36 @@ def test_extractor_energy_intensity_no_activity_left_zero(tmp_path):
     assert intensity.loc["B05a"].sum() == pytest.approx(0.0)
 
 
-def test_extractor_capital_intensity(tmp_path):
+def test_extractor_capital_intensity_uses_capital_stock(tmp_path):
     _write_general_results(tmp_path)
-    _write_tech_results(tmp_path)  # investment total = 10*2/1 = 20, /4 = 5, split 0.8/0.2
+    _write_tech_results(tmp_path)  # total_stock*capital_cost = 50*2 = 100 (durable stock, no floor)
     _write_region_service_requested(tmp_path, value=1.0)  # activity denominator = 1.0
     extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
     cap = extractor.capital_intensity("AB", 2025, INDUSTRIES)
-    # investment / activity (1.0): Coal 5*0.8=4.0, NG 5*0.2=1.0.
-    assert cap.loc["B05a", "B05a"] == pytest.approx(4.0)
-    assert cap.loc["B05a", "B05b"] == pytest.approx(1.0)
+    # capital stock 100 allocated by rq shares (Coal 0.8, NG 0.2), / activity 1.0.
+    assert cap.loc["B05a", "B05a"] == pytest.approx(80.0)
+    assert cap.loc["B05a", "B05b"] == pytest.approx(20.0)
+
+
+def test_extractor_capital_stock_excludes_output_floor(tmp_path):
+    """Capital stock uses total_stock*capital_cost only (no new_stock, no output floor)."""
+    _write_general_results(tmp_path)
+    _write_tech_results(
+        tmp_path,
+        rows=[
+            # Tiny output would blow up the new_stock investment path; the stock
+            # path ignores output entirely, so this must stay finite/simple.
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "total_stock", "", "", "", "", 3.0),
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "capital cost", "", "", "", "", 2.0),
+            ("CIMS.CAN.AB.Coal Mining", "AB", "Coal Mining", 2025, "T1", "output", "", "", "", "", 1e-12),
+        ],
+    )
+    _write_region_service_requested(tmp_path, value=1.0)
+    extractor = CIMSResultsExtractor(tmp_path, steps_per_year=4)
+    cap = extractor.capital_intensity("AB", 2025, INDUSTRIES)
+    # stock = 3*2 = 6, split 0.8/0.2 / activity 1.0 -> not exploded by tiny output.
+    assert cap.loc["B05a", "B05a"] == pytest.approx(4.8)
+    assert cap.loc["B05a", "B05b"] == pytest.approx(1.2)
 
 
 def test_extractor_process_writes_intensity_and_reader_roundtrip(tmp_path):
@@ -310,8 +332,8 @@ def test_extractor_process_writes_intensity_and_reader_roundtrip(tmp_path):
     # rq 100 / activity 2.0 = 50.
     assert intensity.loc["B05a", "B05a"] == pytest.approx(50.0)
     cap = reader.get_capital_intensity("00", 2025, "AB")
-    # investment 4.0 / activity 2.0 = 2.0.
-    assert cap.loc["B05a", "B05a"] == pytest.approx(2.0)
+    # capital stock 100 * Coal share 0.8 / activity 2.0 = 40.
+    assert cap.loc["B05a", "B05a"] == pytest.approx(40.0)
 
 
 # ---------------------------------------------------------------------------

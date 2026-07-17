@@ -496,6 +496,15 @@ class Simulation:
             industry_df = country.firms.industries_dataframe
             df.to_hdf(save_dir / file_name, key=country_name, mode="a")
             industry_df.to_hdf(save_dir / file_name, key=f"{country_name}_industries", mode="a")
+            # Compact per-industry time series for diagnostics.  Best-effort: a
+            # failure here must never break the (convergence-critical) shallow save.
+            try:
+                for field, field_df in country.firms.industry_timeseries_dataframes().items():
+                    field_df.to_hdf(save_dir / file_name, key=f"{country_name}_firms_{field}", mode="a")
+            except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+                logging.getLogger(__name__).warning(
+                    "Per-industry diagnostic export failed for %s: %s", country_name, exc
+                )
 
     def get_country_shallow_output(self, country: str):
         """Get summary statistics for a specific country.

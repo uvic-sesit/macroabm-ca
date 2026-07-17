@@ -3,6 +3,35 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
+def _bundle_aggregate(effective: np.ndarray, substitution_bundle_matrix: np.ndarray) -> np.ndarray:
+    """Aggregate effective input/capital availability within each substitution bundle.
+
+    Equivalent to ``effective @ substitution_bundle_matrix`` for finite inputs,
+    but NaN-safe: the productivity matrices carry ``np.inf`` for inputs an
+    industry does not use, and a plain ``matmul`` evaluates ``inf * 0 = NaN`` for
+    every good that lies *outside* a bundle.  Here each bundle sums only its own
+    goods (using the bundle's weights), so an out-of-bundle good contributes
+    exactly 0 and a bundle containing an ``inf`` (unconstrained) good aggregates
+    to ``inf``.
+
+    Args:
+        effective: (n_firms, n_goods) effective availability, may contain ``inf``.
+        substitution_bundle_matrix: (n_goods, n_bundles) bundle weights (0 outside
+            the bundle, 1/bundle_size inside).
+
+    Returns:
+        (n_firms, n_bundles) aggregated availability, free of ``inf * 0`` NaNs.
+    """
+    n_bundles = substitution_bundle_matrix.shape[1]
+    out = np.zeros((effective.shape[0], n_bundles), dtype=float)
+    for b in range(n_bundles):
+        weights = substitution_bundle_matrix[:, b]
+        members = weights != 0.0
+        if members.any():
+            out[:, b] = effective[:, members] @ weights[members]
+    return out
+
+
 class ProductionSetter(ABC):
     """Abstract base class for determining firms' production processes.
 
@@ -878,11 +907,11 @@ class BundledLeontief(ProductionSetter):
             where=intermediate_inputs_productivity_matrix != np.inf,
         )
 
-        # Apply substitution bundles
-        # Multiply the effective inputs matrix with the substitution bundle matrix
-        # to get bundle-level productivity
+        # Apply substitution bundles to get bundle-level productivity.  Uses a
+        # NaN-safe aggregation (not a plain matmul) because ``effective_inputs``
+        # contains ``inf`` for unused inputs and ``inf * 0`` would be NaN.
         # Note: substitution_bundle_matrix has shape (n_goods, n_bundles)
-        bundle_productivity = np.matmul(effective_inputs, substitution_bundle_matrix)
+        bundle_productivity = _bundle_aggregate(effective_inputs, substitution_bundle_matrix)
 
         # industries with rows at infty are non-existent
         output_mask = np.all((intermediate_inputs_productivity_matrix == np.inf), axis=1)
@@ -928,11 +957,11 @@ class BundledLeontief(ProductionSetter):
             where=capital_inputs_productivity_matrix != np.inf,
         )
 
-        # Apply substitution bundles
-        # Multiply the effective capital matrix with the substitution bundle matrix
-        # to get bundle-level productivity
+        # Apply substitution bundles to get bundle-level productivity.  Uses a
+        # NaN-safe aggregation (not a plain matmul) because ``effective_capital``
+        # contains ``inf`` for unused inputs and ``inf * 0`` would be NaN.
         # Note: substitution_bundle_matrix has shape (n_goods, n_bundles)
-        bundle_productivity = np.matmul(effective_capital, substitution_bundle_matrix)
+        bundle_productivity = _bundle_aggregate(effective_capital, substitution_bundle_matrix)
 
         # Take the minimum over bundles to get the limiting constraint
         return bundle_productivity.min(axis=1)
