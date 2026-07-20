@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from macromodel.util.clamps import clamp_towards as _clamp_towards
+
 
 class DesiredLabourSetter(ABC):
     """Abstract base class for determining firms' desired labor inputs.
@@ -95,14 +97,20 @@ class DefaultDesiredLabourSetter(DesiredLabourSetter):
         Returns:
             np.ndarray: Adjusted labor demand accounting for input complementarities
         """
-        current_target_production = np.minimum(
+        # NOTE: uses the same inf-safe clamp as TargetProductionSetter. The naive form
+        # `target + w*(limit - target)` evaluates 0.0 * inf -> NaN when a firm has no
+        # binding capital constraint (limit = inf) AND the weight is 0.0; np.minimum
+        # then propagates the NaN. Safe at shipped defaults (consider_capital_inputs =
+        # 1.0, and limiting_intermediate_inputs is never inf), but it would fire the
+        # moment either weight is set to 0.0 -- i.e. exactly the "unclamp" experiment.
+        current_target_production = _clamp_towards(
             current_target_production,
-            current_target_production
-            + self.consider_intermediate_inputs * (current_limiting_intermediate_inputs - current_target_production),
+            current_limiting_intermediate_inputs,
+            self.consider_intermediate_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = _clamp_towards(
             current_target_production,
-            current_target_production
-            + self.consider_capital_inputs * (current_limiting_capital_inputs - current_target_production),
+            current_limiting_capital_inputs,
+            self.consider_capital_inputs,
         )
         return current_target_production

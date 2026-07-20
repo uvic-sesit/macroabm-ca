@@ -98,6 +98,35 @@ class TargetProductionSetter(ABC):
         self.capital_inputs_target_considers_capital_inputs = clip(capital_inputs_target_considers_capital_inputs)
         self.capital_inputs_target_considers_capital_inputs = capital_inputs_target_considers_capital_inputs
 
+    @staticmethod
+    def _clamp_towards(
+        target: np.ndarray,
+        limit: np.ndarray,
+        weight: float,
+    ) -> np.ndarray:
+        """Blend `target` toward `limit` by `weight`, clamped so it never raises target.
+
+            result = min(target, target + weight * (limit - target))
+                   = min(target, (1-weight)*target + weight*limit)
+
+        Written this way to avoid a 0 * inf -> NaN hazard. A firm with no binding
+        capital constraint has `limit = inf`; the naive expression then evaluates
+        `0.0 * (inf - target)` = NaN when weight is 0.0, `np.minimum` propagates the
+        NaN, and the caller's `fillna` (firms.py:701) silently rewrites it to **0** --
+        i.e. the firm would order zero inputs and stop producing. An infinite limit
+        means "no constraint", so it must leave `target` untouched at every weight.
+
+        Behaviour is identical to the naive expression wherever `limit` is finite, and
+        for any weight > 0 where it is infinite, so shipped defaults are unaffected.
+        """
+        limit = np.asarray(limit, dtype=float)
+        adjusted = np.where(
+            np.isfinite(limit),
+            target + weight * np.where(np.isfinite(limit), limit - target, 0.0),
+            target,
+        )
+        return np.minimum(target, adjusted)
+
     @abstractmethod
     def compute_target_production(
         self,
@@ -290,23 +319,20 @@ class DefaultTargetProductionSetter(TargetProductionSetter):
         Returns:
             np.ndarray: Adjusted production targets considering input constraints
         """
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.intermediate_inputs_target_considers_labour_inputs
-            * (current_limiting_labour_inputs - current_target_production),
+            current_limiting_labour_inputs,
+            self.intermediate_inputs_target_considers_labour_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.intermediate_inputs_target_considers_intermediate_inputs
-            * (current_limiting_intermediate_inputs - current_target_production),
+            current_limiting_intermediate_inputs,
+            self.intermediate_inputs_target_considers_intermediate_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.intermediate_inputs_target_considers_capital_inputs
-            * (current_limiting_capital_inputs - current_target_production),
+            current_limiting_capital_inputs,
+            self.intermediate_inputs_target_considers_capital_inputs,
         )
 
         return current_target_production
@@ -335,23 +361,20 @@ class DefaultTargetProductionSetter(TargetProductionSetter):
         Returns:
             np.ndarray: Adjusted production targets considering capital constraints
         """
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.capital_inputs_target_considers_labour_inputs
-            * (current_limiting_labour_inputs - current_target_production),
+            current_limiting_labour_inputs,
+            self.capital_inputs_target_considers_labour_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.capital_inputs_target_considers_intermediate_inputs
-            * (current_limiting_intermediate_inputs - current_target_production),
+            current_limiting_intermediate_inputs,
+            self.capital_inputs_target_considers_intermediate_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = self._clamp_towards(
             current_target_production,
-            current_target_production
-            + self.capital_inputs_target_considers_capital_inputs
-            * (current_limiting_capital_inputs - current_target_production),
+            current_limiting_capital_inputs,
+            self.capital_inputs_target_considers_capital_inputs,
         )
 
         return current_target_production
