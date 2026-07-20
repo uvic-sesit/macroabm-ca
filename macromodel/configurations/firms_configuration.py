@@ -108,6 +108,9 @@ class DemandEstimator(BaseModel):
     parameters: dict[str, Any] = {
         "firm_growth_adjustment_speed": 0.0,
         "sectoral_growth_adjustment_speed": 0.0,
+        # alpha: adaptive-expectations smoothing of observed demand.
+        # 1.0 = no smoothing = historical rule, bit-for-bit.
+        "demand_smoothing": 1.0,
     }
 
 
@@ -130,7 +133,8 @@ class DemandForGoods(BaseModel):
 
     name: Literal["DefaultDemandSetter"] = "DefaultDemandSetter"
     path_name: str = "demand_for_goods"
-    parameters: dict[str, Any] = {}
+    # rho: weight on unfulfilled demand in recorded demand. 1.0 = historical rule.
+    parameters: dict[str, Any] = {"unmet_demand_weight": 1.0}
 
 
 class Demography(BaseModel):
@@ -219,7 +223,16 @@ class TargetCapitalInputs(BaseModel):
         "FinancialTargetCapitalInputsSetter"
     )
     path_name: str = "target_capital_inputs"
-    parameters: dict[str, Any] = {"target_capital_inputs_fraction": 0.0, "credit_gap_fraction": 0.0}
+    parameters: dict[str, Any] = {
+        "target_capital_inputs_fraction": 0.0,
+        "credit_gap_fraction": 0.0,
+        # phi: weight on desired (vs realised) production in the reference capital
+        # stock. 0.0 = historical backward-looking rule (shipped default).
+        "forward_looking_reference_fraction": 0.0,
+        # Rolling reference: K_ref = K_{t-1} * (Q_desired / Q_{t-1}) instead of
+        # scaling the base-year stock. False = base-year rule (shipped default).
+        "rolling_reference": False,
+    }
 
 
 class TargetCredit(BaseModel):

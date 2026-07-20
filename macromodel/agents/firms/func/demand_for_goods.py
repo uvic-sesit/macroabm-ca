@@ -49,22 +49,37 @@ class DefaultDemandSetter(DemandSetter):
     been sold if all demand could have been satisfied.
     """
 
+    def __init__(self, unmet_demand_weight: float = 1.0) -> None:
+        """Initialize the default demand setter.
+
+        Args:
+            unmet_demand_weight (float): rho in [0, 1]. Weight firms place on
+                unfulfilled demand when forming recorded demand. 1.0 (default)
+                reproduces the historical rule exactly. Values below 1.0 discount
+                unmet demand for the uncertainty about whether it would persist, and
+                directly scale the gain of the
+                demand -> target -> input orders -> demand loop.
+        """
+        self.unmet_demand_weight = unmet_demand_weight
+
     def compute_demand(
         self,
         sell_real: np.ndarray,
         excess_demand: np.ndarray,
     ) -> np.ndarray:
-        """Calculate total demand using the default additive strategy.
+        """Calculate total demand: sales plus rho-weighted unfulfilled demand.
 
-        Simply sums actual sales and excess demand to get total market demand.
-        This represents the full market interest in each firm's products,
-        regardless of whether that demand could be satisfied.
+            demand = sell_real + rho * excess_demand
+
+        rho = 1.0 (default) is the historical rule. This represents the full market
+        interest in each firm's products, regardless of whether that demand could be
+        satisfied.
 
         Args:
             sell_real (np.ndarray): Actual quantities sold by each firm
             excess_demand (np.ndarray): Unfulfilled demand quantities
 
         Returns:
-            np.ndarray: Total demand as the sum of actual sales and excess demand
+            np.ndarray: Total recorded demand
         """
-        return sell_real + excess_demand
+        return sell_real + self.unmet_demand_weight * excess_demand

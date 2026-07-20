@@ -334,8 +334,20 @@ class Individuals(Agent):
         ).astype(float)
 
     def update_demography(self) -> None:
-        """Update demographic variables for individuals."""
+        """Update demographic variables for individuals.
+
+        Calls, in order: population update, then the workforce entry and exit hooks.
+        The two workforce hooks previously had no call site anywhere, so no
+        implementation of them could ever fire; they are wired here. `NoAging`
+        implements all three as no-ops, so the default path is unchanged.
+        """
         self.ts.n_individuals.append(self.functions["demography"].update(self.ts.current("n_individuals")))
+        self.functions["demography"].individuals_joining_the_workforce(
+            current_individuals_activity=self.states["Activity Status"],
+        )
+        self.functions["demography"].individuals_leaving_the_workforce(
+            current_individuals_activity=self.states["Activity Status"],
+        )
 
     def save_to_h5(self, group: h5py.Group):
         """Save individual time series data to HDF5.
