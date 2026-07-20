@@ -258,14 +258,37 @@ def _match_country_iot_with_sea2(
     # icio_reader.iot.loc[country_name, icio_capital_columns] *= ratio
 
 
+_PROVINCIAL_INVESTMENT = None
+
+
+def _provincial_investment():
+    """Lazily load the optional province-level GFCF-split override (cached)."""
+    global _PROVINCIAL_INVESTMENT
+    if _PROVINCIAL_INVESTMENT is None:
+        from macro_data.readers.economic_data.provincial_investment_reader import (
+            ProvincialInvestmentReader,
+        )
+
+        _PROVINCIAL_INVESTMENT = ProvincialInvestmentReader.from_default()
+    return _PROVINCIAL_INVESTMENT
+
+
 def get_investment_fractions(
     country_names: list[Country | Region],
     eurostat: EuroStatReader,
     proxy_country_dict: dict[Country, Country],
     year: int,
 ) -> dict[Country, dict[str, float]]:
+    provincial = _provincial_investment()
     investment_fractions = {}
     for country_name in country_names:
+        # Province-level GFCF-split override (StatsCan); no-op when no provincial data exists.
+        if provincial.has_region(country_name):
+            override = provincial.get_fractions(country_name, year)
+            if override is not None:
+                investment_fractions[country_name] = override
+                continue
+
         data_country = country_name
         if isinstance(country_name, Region):
             data_country = country_name.parent_country

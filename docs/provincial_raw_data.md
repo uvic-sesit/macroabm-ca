@@ -5,8 +5,9 @@ This document describes the **province-level macro data upgrade** added on the
 processed, the assumptions made, and how it flows through the model.
 
 It covers **item #1** of the provincial-data upgrade priority list (CPI, unemployment,
-house prices, vacancy). Items #2–#5 (sectoral growth, firm size distribution, firm
-financials, household income/saving) are not yet included.
+house prices, vacancy) and **item #6** (investment / GFCF institutional split). Items #2–#5
+were assessed and found to be non-issues in the current single-firm configuration (see
+`provincial_data_comparison.md`).
 
 ---
 
@@ -126,6 +127,54 @@ index. Output span: 1998-Q1 to 2024-Q4 (the model reindexes to what it needs).
 
 ---
 
+## 3b. Investment / GFCF institutional split (item #6)
+
+### What it replaces
+
+The model splits each province's total gross fixed capital formation (from the provincial IO
+table) into **Firm**, **Household**, and **Government** capital formation, using fractions
+from `get_investment_fractions_of_country` (`icio_sea_matching.get_investment_fractions` →
+`split_gfcf_column`). Canada is absent from the Eurostat `investment_percentage_of_gdp`
+series, so the model falls back to **France** — every province received the same French split
+(Firm 0.567 / Household 0.263 / Government 0.170).
+
+### Source and processing
+
+- **Source:** Table **36-10-0222-01**, *Gross domestic product, expenditure-based,
+  provincial and territorial, annual*, **current prices**, 2014
+  ([link](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610022201)).
+- **Institutional mapping** (to match the model's Firm/Household/Government definition, where
+  Eurostat's "Household" = households + NPISH):
+  - **Government** = *General governments gross fixed capital formation*
+  - **Household** = *Residential structures* + *NPISH gross fixed capital formation*
+  - **Firm** = *Business GFCF* − *Residential structures* (= non-residential structures +
+    machinery & equipment + intellectual property products)
+- **Processing:** each component taken at current prices for 2014, per province; fractions =
+  component / (Firm + Household + Government), normalised to sum to 1.
+- **Output:** `new_raw_data/statcan_provincial/provincial_investment_fractions.csv`
+  (`region, year, firm, household, government`).
+
+### Resulting fractions (2014)
+
+| Province | Firm | Household | Government |  | Province | Firm | Household | Government |
+|----------|-----:|----------:|-----------:|--|----------|-----:|----------:|-----------:|
+| AB | 0.755 | 0.166 | 0.080 | | NS | 0.433 | 0.317 | 0.250 |
+| SK | 0.741 | 0.171 | 0.087 | | ON | 0.443 | 0.373 | 0.184 |
+| NL | 0.746 | 0.144 | 0.110 | | QC | 0.449 | 0.336 | 0.215 |
+| MB | 0.542 | 0.274 | 0.184 | | PE | 0.434 | 0.336 | 0.229 |
+| BC | 0.492 | 0.368 | 0.139 | | NB | 0.441 | 0.294 | 0.265 |
+
+Resource provinces (AB, SK, NL) are ~75% firm investment (oil, gas, mining capex) versus the
+0.567 French proxy; housing-heavy provinces (ON, BC) carry more household investment; Atlantic
+provinces carry proportionally more government investment.
+
+### Code
+
+`ProvincialInvestmentReader` (`macro_data/readers/economic_data/provincial_investment_reader.py`)
+loads the file; `get_investment_fractions` in `icio_sea_matching.py` uses the provincial
+fraction where available and otherwise keeps the existing Eurostat/France path. No-op when the
+file is absent or the region is not Canadian.
+
 ## 4. Assumptions and limitations
 
 1. **PPI is left national.** Canada has no provincial Industrial Product Price Index; the
@@ -149,6 +198,13 @@ index. Output span: 1998-Q1 to 2024-Q4 (the model reindexes to what it needs).
 7. **Blend at the series level.** Where provincial data exists it fully replaces the national
    value for that quarter/region; there is no smoothing between the provincial and national
    segments at the 1998 / 2015 boundaries.
+8. **GFCF split — residential ≈ household (item #6).** The expenditure accounts classify
+   residential structures under *business* GFCF and do not separate owner-occupied (household)
+   from rental (corporate) dwellings. Following the standard SNA approximation, all residential
+   structures investment is attributed to the **Household** sector (matching how the model uses
+   *Household Fixed Capital Formation*). This slightly overstates household investment where
+   rental construction is large. Fractions use current-price (nominal) 2014 values and are held
+   fixed across the run, as the model consumes only the base-year split.
 
 ---
 

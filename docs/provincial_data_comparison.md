@@ -187,4 +187,75 @@ items assuming they were live foreign proxies. Tracing the *active single-firm p
 shows #2 is unused, #3 is inert, #4 is already Canadian, and only #5's consumption-weights
 matrix is a live foreign proxy with (modest) impact. The single highest-value **live**
 foreign proxy touching the provincial run is actually item **#6 (investment / GFCF split &
-imputed rent, Eurostat France)** from the priority table, which was outside this batch.
+imputed rent, Eurostat France)** from the priority table, which was outside this batch and is
+implemented and assessed below.
+
+---
+
+# Item #6: investment / GFCF split — impact
+
+This is the one **live** foreign proxy with material impact on the provincial run. The model
+splits each province's total gross fixed capital formation into Firm / Household / Government
+capital formation; with Canada absent from the Eurostat series, every province used the same
+**French** split (Firm 0.567 / Household 0.263 / Government 0.170). It is now replaced with
+province-specific StatsCan fractions (see `provincial_raw_data.md` §3b).
+
+Impact is isolated by comparing the **#1+#6** run against the **#1-only** run (identical apart
+from the GFCF split).
+
+![Item #6 investment split](provincial_comparison_plots/item6_investment_split.png)
+
+## Data level — household share of GFCF (2014 initialisation)
+
+Under #1-only every province initialises with the same household investment share of GFCF
+(≈0.367, from the French split). Under #1+#6 it becomes province-specific:
+
+| Prov | #1 | #1+#6 | Δ |  | Prov | #1 | #1+#6 | Δ |
+|------|---:|------:|---:|--|------|---:|------:|---:|
+| AB | 0.367 | 0.215 | −0.152 | | NS | 0.367 | 0.477 | +0.110 |
+| BC | 0.367 | 0.483 | +0.116 | | ON | 0.367 | 0.513 | +0.146 |
+| MB | 0.367 | 0.387 | +0.020 | | PE | 0.367 | 0.492 | +0.125 |
+| NB | 0.367 | 0.455 | +0.088 | | QC | 0.367 | 0.482 | +0.116 |
+| NL | 0.367 | 0.194 | −0.173 | | SK | 0.367 | 0.224 | −0.143 |
+
+Resource provinces (AB, SK, NL) shift sharply toward **firm** investment; housing/services
+provinces (ON, PE, QC, BC, NS, NB) shift toward **household** investment.
+
+## Simulation — investment composition and GDP
+
+Mean-level percentage change over the 16-quarter run, #1+#6 vs #1:
+
+| Prov | Firm GFCF | Household investment | Nominal GDP |
+|------|----------:|---------------------:|------------:|
+| AB | **+29.0%** | −35.9% | −1.0% |
+| SK | **+43.6%** | −31.1% | +10.9% |
+| NL | **+27.5%** | −44.7% | +3.1% |
+| MB | +10.5% | +14.8% | +16.9% |
+| BC | −19.6% | +34.7% | −3.4% |
+| QC | −23.5% | +35.7% | +5.8% |
+| NS | −15.4% | +30.2% | +13.1% |
+| PE | −22.0% | +27.9% | −8.4% |
+| NB | −23.5% | +15.4% | +2.4% |
+| ON | −24.7% | +43.1% | −0.7% |
+
+- The investment-composition effect is **large and correctly structured**: firm capital
+  formation rises 27–44% in the capex-heavy resource provinces (SK, AB, NL) and falls ~15–25%
+  in the housing-oriented provinces, with household investment moving in mirror image
+  (+28–43% in ON/QC/BC/NS/PE, −31–45% in NL/AB/SK).
+- Nominal GDP shifts by up to ±17% across provinces, so the correction is not merely
+  compositional — it changes provincial output paths (and therefore any CIMS-linkage feedback
+  that depends on provincial firm investment and output).
+
+## Verdict
+
+Item #6 is the highest-impact upgrade in this batch after #1: a genuine live French proxy,
+provincially replaceable with clean StatsCan data, and it materially and defensibly reorders
+provincial investment composition and output. Recommended for retention.
+
+## Caveats
+
+- Same short-horizon / single-seed caveat as above — directional, not a calibrated policy run.
+- The residential ≈ household approximation (§3b, assumption 8) slightly overstates household
+  investment where rental construction is large.
+- Imputed-rent fraction (also Eurostat-proxied) was left unchanged; it is a smaller,
+  second-order channel than the GFCF split.
