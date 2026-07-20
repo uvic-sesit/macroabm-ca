@@ -417,6 +417,42 @@ def test_production_writer_atlantic_aggregation(tmp_path):
     assert float(row["2050"]) == pytest.approx(28.0)
 
 
+def test_production_writer_under_relaxation_blends_with_previous(tmp_path):
+    model_dir = _make_cims_model_dir(tmp_path)  # Coal Mining AB, anchor 2020 = 140
+
+    # Previous iteration's applied feedback: B05a doubles 2020->2050 -> 2050 = 140*2 = 280.
+    prev_dir = tmp_path / "prev"
+    prev_prod = pd.DataFrame({"B05a": {2020: 50.0, 2050: 100.0}})
+    CIMSProductionWriter(model_dir, prev_dir, anchor_year=2020).write({"CAN_AB": prev_prod}, itr="00")
+    prev_2050 = float(pd.read_csv(prev_dir / "macroabm_production" / "macroabm_production_AB.csv", skiprows=1).iloc[0]["2050"])
+    assert prev_2050 == pytest.approx(280.0)
+
+    # Current raw feedback: B05a quadruples -> raw 2050 = 140*4 = 560.
+    out_dir = tmp_path / "out"
+    cur_prod = pd.DataFrame({"B05a": {2020: 50.0, 2050: 200.0}})
+    writer = CIMSProductionWriter(
+        model_dir, out_dir, anchor_year=2020, relaxation=0.3, previous_output_dir=prev_dir
+    )
+    written = writer.write({"CAN_AB": cur_prod}, itr="01")
+    row = pd.read_csv(written[0], skiprows=1).iloc[0]
+    # Blended 2050 = 0.3*560 + 0.7*280 = 364.
+    assert float(row["2050"]) == pytest.approx(364.0)
+    # Anchor year is invariant (140 either way).
+    assert float(row["2020"]) == pytest.approx(140.0)
+    assert "alpha=0.3" in str(row["Comments"])
+
+
+def test_production_writer_relaxation_falls_back_without_previous(tmp_path):
+    model_dir = _make_cims_model_dir(tmp_path)
+    out_dir = tmp_path / "out"
+    cur_prod = pd.DataFrame({"B05a": {2020: 50.0, 2050: 200.0}})  # raw 2050 = 560
+    # relaxation<1 but no previous dir -> no blend, full raw value.
+    writer = CIMSProductionWriter(model_dir, out_dir, anchor_year=2020, relaxation=0.3, previous_output_dir=None)
+    written = writer.write({"CAN_AB": cur_prod}, itr="01")
+    row = pd.read_csv(written[0], skiprows=1).iloc[0]
+    assert float(row["2050"]) == pytest.approx(560.0)
+
+
 # ---------------------------------------------------------------------------
 # LinkageState / convergence
 # ---------------------------------------------------------------------------

@@ -62,6 +62,16 @@ class CIMSProductionWriter:
         policy_name: Name of the generated CIMS policy (folder + file prefix).
         anchor_year: Year at which CIMS' own level is preserved and macroABM
             growth is anchored (default 2020, the first forecast milestone).
+        relaxation: Under-relaxation weight ``alpha`` in ``[0, 1]`` applied to the
+            macroABM->CIMS feedback.  Each service-request value is written as
+            ``alpha * new + (1 - alpha) * previous`` (blended with the previous
+            iteration's *applied* feedback), damping the loop so the two models
+            do not overshoot each other.  ``1.0`` (default) reproduces the old
+            full-overwrite behaviour; smaller values damp harder.
+        previous_output_dir: The previous iteration's feedback ``output_dir``
+            (containing this policy's folder), read to obtain the previous applied
+            values for the blend.  ``None`` (or a missing folder, e.g. iteration 1)
+            disables relaxation for that run.
     """
 
     def __init__(
@@ -71,12 +81,20 @@ class CIMSProductionWriter:
         sector_map: SectorMap | None = None,
         policy_name: str = "macroabm_production",
         anchor_year: int = 2020,
+        relaxation: float = 1.0,
+        previous_output_dir: str | Path | None = None,
     ) -> None:
         self.cims_model_dir = Path(cims_model_dir)
         self.output_dir = Path(output_dir)
         self.sector_map = sector_map or SectorMap.load()
         self.policy_name = policy_name
         self.anchor_year = anchor_year
+        self.relaxation = float(relaxation)
+        self.previous_policy_dir = (
+            Path(previous_output_dir) / policy_name if previous_output_dir is not None else None
+        )
+        # Cache of previous-iteration feedback DataFrames, keyed by CIMS region.
+        self._previous_cache: dict[str, pd.DataFrame | None] = {}
 
     # ------------------------------------------------------------------
     # Public interface
@@ -176,6 +194,33 @@ class CIMSProductionWriter:
             return None
         return matches.iloc[0]
 
+    def _previous_region_df(self, cims_region: str) -> pd.DataFrame | None:
+        """The previous iteration's written feedback CSV for *cims_region* (cached)."""
+        if self.previous_policy_dir is None:
+            return None
+        if cims_region not in self._previous_cache:
+            path = self.previous_policy_dir / f"{self.policy_name}_{cims_region}.csv"
+            if path.exists():
+                self._previous_cache[cims_region] = pd.read_csv(
+                    path, skiprows=1, dtype=str, keep_default_na=False
+                )
+            else:
+                self._previous_cache[cims_region] = None
+        return self._previous_cache[cims_region]
+
+    def _previous_applied_value(self, cims_region: str, cims_sector: str, year_col: str) -> float | None:
+        """Previous iteration's applied service-request value for a sector/year, or None."""
+        df = self._previous_region_df(cims_region)
+        if df is None or year_col not in df.columns:
+            return None
+        matches = df[(df["Sector"] == cims_sector) & (df["Parameter"] == "Service requested")]
+        if matches.empty:
+            return None
+        try:
+            return float(matches.iloc[0][year_col])
+        except (KeyError, ValueError):
+            return None
+
     def _build_row(self, cims_region: str, cims_sector: str, macro_growth: pd.Series) -> dict | None:
         """Build one scaled service-request row dict, or None if unavailable."""
         original = self._read_original_service_row(cims_region, cims_sector)
@@ -201,16 +246,25 @@ class CIMSProductionWriter:
         except (KeyError, ValueError):
             anchor_original = np.nan
 
+        alpha = self.relaxation
         row = {col: original.get(col, "") for col in _HEADER}
         row["Source"] = _SOURCE_TAG
-        row["Comments"] = f"Scaled by macroABM linkage (anchor {self.anchor_year})"
+        relax_note = "" if alpha >= 1.0 else f", relaxation alpha={alpha:g}"
+        row["Comments"] = f"Scaled by macroABM linkage (anchor {self.anchor_year}{relax_note})"
 
         for year_col in _YEAR_COLUMNS:
             year = int(year_col)
             ratio = scale_ratio.get(year)
-            if ratio is not None and not np.isnan(anchor_original):
-                row[year_col] = repr(anchor_original * ratio)
-            # else: keep the original value already copied in.
+            if ratio is None or np.isnan(anchor_original):
+                continue  # keep the original value already copied in (historical years)
+            new_value = anchor_original * ratio
+            # Under-relaxation: blend this iteration's raw target with the
+            # previous iteration's applied value, alpha*new + (1-alpha)*prev.
+            if alpha < 1.0:
+                prev_value = self._previous_applied_value(cims_region, cims_sector, year_col)
+                if prev_value is not None:
+                    new_value = alpha * new_value + (1.0 - alpha) * prev_value
+            row[year_col] = repr(new_value)
         return row
 
     @staticmethod

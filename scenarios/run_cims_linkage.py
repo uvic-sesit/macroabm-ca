@@ -562,6 +562,21 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Max annual production decline for the clamped sectors (e.g. 0.05 = -5%%/yr). Omit for unbounded downside.",
     )
+    p.add_argument(
+        "--feedback-relaxation",
+        type=float,
+        default=1.0,
+        help="Under-relaxation weight alpha in [0,1] for the macroABM->CIMS feedback: "
+             "written = alpha*new + (1-alpha)*previous. 1.0 = full overwrite (default); "
+             "smaller damps the loop (e.g. 0.3).",
+    )
+    p.add_argument(
+        "--previous-feedback-dir",
+        type=Path,
+        default=None,
+        help="Previous iteration's feedback output dir (new_cims_inputs), read to blend the "
+             "feedback under --feedback-relaxation. Omit on iteration 1.",
+    )
     p.add_argument("--sector-map", type=Path, default=None, help="Override sector-map CSV.")
     p.add_argument("--region-map", type=Path, default=None, help="Override region-map CSV.")
     p.add_argument("--force-rebuild-pickle", action="store_true")
@@ -802,7 +817,16 @@ def main() -> None:
         output_dir=args.feedback_dir.resolve(),
         sector_map=sector_map,
         anchor_year=args.cims_base_year + args.cims_year_step,
+        relaxation=args.feedback_relaxation,
+        previous_output_dir=(
+            args.previous_feedback_dir.resolve() if args.previous_feedback_dir is not None else None
+        ),
     )
+    if args.feedback_relaxation < 1.0 and args.previous_feedback_dir is not None:
+        logger.info(
+            "Under-relaxing macroABM->CIMS feedback: alpha=%s, blending with %s",
+            args.feedback_relaxation, args.previous_feedback_dir,
+        )
     written = writer.write(production_by_region, itr=args.iteration)
     logger.info("Wrote %d CIMS feedback policy files", len(written))
 
