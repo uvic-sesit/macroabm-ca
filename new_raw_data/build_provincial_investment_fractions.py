@@ -26,7 +26,7 @@ import pandas as pd
 
 PID = "36100222"
 BULK_URL = f"https://www150.statcan.gc.ca/n1/tbl/csv/{PID}-eng.zip"
-YEAR = "2014"
+MIN_YEAR = 2000  # produce fractions for every available year >= MIN_YEAR (through latest)
 PRICES = "Current prices"
 
 PROVINCES = {
@@ -58,30 +58,39 @@ def download(cache: Path) -> Path:
 def build(cache: Path, out: Path, do_download: bool = True) -> Path:
     csv = download(cache) if do_download else cache / f"{PID}.csv"
     df = pd.read_csv(csv, dtype=str, encoding="utf-8-sig", encoding_errors="replace")
-    df = df[(df["Prices"] == PRICES) & (df["REF_DATE"] == YEAR) & (df["GEO"].isin(PROVINCES))].copy()
+    df = df[(df["Prices"] == PRICES) & (df["GEO"].isin(PROVINCES))].copy()
     df["VALUE"] = pd.to_numeric(df["VALUE"], errors="coerce")
+    df["yr"] = pd.to_numeric(df["REF_DATE"], errors="coerce")
 
-    def val(geo: str, estimate: str) -> float:
-        v = df[(df["GEO"] == geo) & (df["Estimates"] == estimate)]["VALUE"]
+    years = sorted(y for y in df["yr"].dropna().unique() if y >= MIN_YEAR)
+
+    def val(sub: pd.DataFrame, geo: str, estimate: str) -> float:
+        v = sub[(sub["GEO"] == geo) & (sub["Estimates"] == estimate)]["VALUE"]
         return float(v.values[0]) if len(v) else float("nan")
 
     rows = []
-    for geo, code in PROVINCES.items():
-        business = val(geo, BUSINESS)
-        residential = val(geo, RESIDENTIAL)
-        npish = val(geo, NPISH)
-        government = val(geo, GOVERNMENT)
-        firm = business - residential
-        household = residential + (npish if npish == npish else 0.0)  # NaN-safe
-        total = firm + household + government
-        rows.append((code, int(YEAR), round(firm / total, 6), round(household / total, 6),
-                     round(government / total, 6)))
+    for year in years:
+        sub = df[df["yr"] == year]
+        for geo, code in PROVINCES.items():
+            business = val(sub, geo, BUSINESS)
+            residential = val(sub, geo, RESIDENTIAL)
+            npish = val(sub, geo, NPISH)
+            government = val(sub, geo, GOVERNMENT)
+            firm = business - residential
+            household = residential + (npish if npish == npish else 0.0)  # NaN-safe
+            total = firm + household + government
+            if not (total > 0) or firm != firm or household != household:  # skip NaN/degenerate
+                continue
+            rows.append((code, int(year), round(firm / total, 6), round(household / total, 6),
+                         round(government / total, 6)))
 
     panel = pd.DataFrame(rows, columns=["region", "year", "firm", "household", "government"])
+    panel = panel.sort_values(["region", "year"])
     out.mkdir(parents=True, exist_ok=True)
     dest = out / "provincial_investment_fractions.csv"
     panel.to_csv(dest, index=False)
-    print(f"wrote {dest}\n{panel.to_string(index=False)}")
+    print(f"wrote {dest}  ({len(panel)} rows, years {panel['year'].min()}-{panel['year'].max()}, "
+          f"{panel['region'].nunique()} provinces)")
     return dest
 
 

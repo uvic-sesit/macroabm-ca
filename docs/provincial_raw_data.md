@@ -141,7 +141,7 @@ series, so the model falls back to **France** — every province received the sa
 ### Source and processing
 
 - **Source:** Table **36-10-0222-01**, *Gross domestic product, expenditure-based,
-  provincial and territorial, annual*, **current prices**, 2014
+  provincial and territorial, annual*, **current prices**, all years **2000–2024**
   ([link](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610022201)).
 - **Institutional mapping** (to match the model's Firm/Household/Government definition, where
   Eurostat's "Household" = households + NPISH):
@@ -149,12 +149,16 @@ series, so the model falls back to **France** — every province received the sa
   - **Household** = *Residential structures* + *NPISH gross fixed capital formation*
   - **Firm** = *Business GFCF* − *Residential structures* (= non-residential structures +
     machinery & equipment + intellectual property products)
-- **Processing:** each component taken at current prices for 2014, per province; fractions =
-  component / (Firm + Household + Government), normalised to sum to 1.
+- **Processing:** for every year 2000–2024, each component is taken at current prices per
+  province; fractions = component / (Firm + Household + Government), normalised to sum to 1.
 - **Output:** `new_raw_data/statcan_provincial/provincial_investment_fractions.csv`
-  (`region, year, firm, household, government`).
+  (`region, year, firm, household, government`), one row per province × year (250 rows).
+  `ProvincialInvestmentReader.get_fractions(region, year)` selects the row matching the run's
+  base year (clamping to the nearest available year if out of range), so the split tracks the
+  actual investment cycle (e.g. Alberta's firm share falls from 0.755 in 2014 to ~0.63 by
+  2020–2024 as the oil-investment boom faded).
 
-### Resulting fractions (2014)
+### Resulting fractions (2014 — illustrative base year)
 
 | Province | Firm | Household | Government |  | Province | Firm | Household | Government |
 |----------|-----:|----------:|-----------:|--|----------|-----:|----------:|-----------:|
@@ -203,8 +207,23 @@ file is absent or the region is not Canadian.
    from rental (corporate) dwellings. Following the standard SNA approximation, all residential
    structures investment is attributed to the **Household** sector (matching how the model uses
    *Household Fixed Capital Formation*). This slightly overstates household investment where
-   rental construction is large. Fractions use current-price (nominal) 2014 values and are held
-   fixed across the run, as the model consumes only the base-year split.
+   rental construction is large. Fractions use current-price (nominal) values; the model
+   consumes the base-year split, held fixed across the run.
+
+## Start-year flexibility
+
+The provincial data is now multi-year so the model inputs support a range of start years:
+- **#1 macro series:** quarterly **1998–2024** (vacancy 2015+).
+- **#6 investment fractions:** annual **2000–2024**.
+
+Both readers select by the run's base year, so changing the start year automatically picks the
+right vintage. **However**, the provincial start year is still pinned to **2014** by the
+provincial IO table itself: `DataReaders.from_raw_data` raises *"Only 2014 is supported for
+this reader"* in the `use_provincial_can_reader` branch, because the provincial IO/trade matrix
+(`icio_2014_can_provinces.csv`) is a 2014 table. To actually start the provincial model in
+another year you would additionally need a provincial IO table for that year (or a rebasing
+step). The multi-year #1/#6 data removes the *data-side* obstacle and already feeds the
+calibration history; the remaining constraint is the IO base year.
 
 ---
 

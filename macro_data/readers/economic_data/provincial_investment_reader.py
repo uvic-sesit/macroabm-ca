@@ -22,6 +22,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 
@@ -67,5 +68,9 @@ class ProvincialInvestmentReader:
         if key not in self._by_region:
             return None
         sub = self._by_region[key]
-        row = sub.loc[year] if year in sub.index else sub.iloc[(sub.index - year).abs().argmin()]
+        if year in sub.index:
+            row = sub.loc[year]
+        else:  # clamp to the nearest available year
+            years = np.asarray(sub.index, dtype=float)
+            row = sub.iloc[int(np.abs(years - year).argmin())]
         return {"Firm": float(row["firm"]), "Household": float(row["household"]), "Government": float(row["government"])}
