@@ -113,3 +113,78 @@ province's own inflation, labour-market slack and house-price path.
 - CPI dispersion is slightly *lower* under NEW: real provincial CPI inflation is more
   homogeneous than the model's endogenous CPI was — plausible, since Canadian provincial
   inflation is fairly synchronized.
+
+---
+
+# Items #2–5: impact assessment
+
+Before collecting any data, each item was traced through the **active** provincial build
+path (single firm per industry, `"Default"` firm constructor, `create_all_exogenous_data`
+disabled). Unlike #1, most of #2–#5 turn out to be either not consumed, inert under the
+current configuration, or already sourced from Canadian data. Evidence and verdicts:
+
+## #2 Sectoral output growth (Eurostat `perc_growth_sector`, France) — NO IMPACT (dead path)
+
+- `get_perc_sectoral_growth` is called only inside `DataReaders.get_exogenous_data`
+  (`default_readers.py:574`).
+- The active pipeline builds exogenous data via `ExogenousCountryData.from_data_readers`;
+  the alternative `create_all_exogenous_data` is commented out (`data_wrapper.py:248`).
+- The one live consumer of `get_exogenous_data` is the central government
+  (`default_synthetic_central_government.py:128`), which uses only `log_inflation` and
+  `unemployment_rate` (via `get_benefits_inflation_data`) — never `sectoral_growth`.
+- **Verdict:** provincializing sectoral growth changes nothing until the model is re-wired
+  to consume it. Not integrated.
+
+## #3 Firm size distribution (ONS UK zeta) — INERT in current config
+
+- Firm-size zetas distribute employees across firms in `firm_tools`, driven by
+  `Number of Firms` per industry.
+- Under `single_firm_per_industry=True` (the run's setting), `Number of Firms = 1` for
+  every industry (`industry_extraction.py:143`), so there is nothing to distribute.
+- **Verdict:** zero impact while single-firm. A genuine data-quality issue (UK firm sizes
+  used for Canada) only in **multi-firm** runs. Canadian Business Counts (33-10-1014,
+  available by province) is the correct replacement and can be wired for that case.
+
+## #4 Firm deposits & debt — ALREADY Canadian (national)
+
+- The `"Default"` firm constructor sets total firm deposits and debt from
+  `eurostat.get_total_nonfin_firm_deposits/debt(country_name)` with `country_name = CAN`
+  (`default_synthetic_firms.py:202-205`).
+- Eurostat's `nasa_10_f_bs.csv` is the **OECD-extended** financial-accounts file and
+  **contains Canada** (`geo = CA`, alongside US, JP, MX, KR, …). For 2014 it returns
+  Canadian non-financial-corporate loans ≈ 1.35 trillion CAD and deposits ≈ 0.66 trillion
+  CAD (national-currency units).
+- **Verdict:** firm balance-sheet aggregates are already Canadian national data, delivered
+  through the Eurostat reader — not a French proxy. Provincial firm balance sheets are not
+  publicly available, so no provincial upgrade is possible; a newer StatsCan QSFS
+  (33-10-0225) vintage would be only a marginal refresh.
+
+## #5 Household income & saving — mostly already Canadian; one French residue
+
+- **Saving rates:** fitted by regression on the Canadian provincial HFCS micro-data
+  (`New_Household_provincial.csv`) in `hfcs_synthetic_population.set_household_saving_rates`
+  — already Canadian and provincial.
+- **Disposable income / balance sheets:** from the same Canadian HFCS micro-data.
+- The remaining foreign proxy is the **consumption-weights-by-income-quantile** matrix
+  (`get_household_consumption_by_income_quantile`), which logs *"Overwriting Consumption
+  Weights by Income with French Data"* (`oecd_economic_data.py:1034`). It controls how each
+  income group splits spending across sectors.
+- **Verdict:** the only live foreign proxy in #5 is the consumption-weights matrix
+  (replaceable with the Canadian Survey of Household Spending, national by income quintile;
+  a provincial × quintile × sector version is thin). Modest impact on demand composition.
+
+## Summary
+
+| Item | Live in current config? | Source today | Upgrade available | Impact if applied |
+|------|------------------------|--------------|-------------------|-------------------|
+| #2 Sectoral growth | **No** (dead path) | Eurostat FR (unused) | — | None until re-wired |
+| #3 Firm size | **No** (single-firm) | ONS UK | Business Counts (prov.) | None single-firm; matters multi-firm |
+| #4 Firm deposits/debt | Yes | Eurostat **CA** (already Canadian) | StatsCan QSFS (marginal) | Negligible (already CA) |
+| #5 Consumption weights by income | Yes | **French** | SHS national (prov. thin) | Modest (demand mix) |
+
+This is a materially different picture from the source-provenance audit, which ranked these
+items assuming they were live foreign proxies. Tracing the *active single-firm pipeline*
+shows #2 is unused, #3 is inert, #4 is already Canadian, and only #5's consumption-weights
+matrix is a live foreign proxy with (modest) impact. The single highest-value **live**
+foreign proxy touching the provincial run is actually item **#6 (investment / GFCF split &
+imputed rent, Eurostat France)** from the priority table, which was outside this batch.
