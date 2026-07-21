@@ -47,6 +47,39 @@ The **national aggregate is roughly preserved** (~1.7–1.9%/yr). Both commits a
 **reallocating activity across provinces**, not by moving the national total — which is the
 expected and desirable behaviour of a provincial-composition correction.
 
+## Validation against StatsCan (national)
+
+The two headline series are compared to observed StatsCan data over the overlapping years
+(2014–2024). The candidate baseline is a **smooth** path (no COVID shock) and runs to ~2027;
+the shaded region is beyond the StatsCan data.
+
+### Real GVA / GDP over time
+
+![National real GVA vs StatsCan](provincial_comparison_plots/cb_gva_vs_statcan.png)
+
+Indexed to 2014 = 100 (model real GVA at base-year prices vs StatsCan real GDP, chained
+2017\$). The model reproduces the **trend growth** well — ~1.7–1.9%/yr against Canada's
+~1.9%/yr average, and both start and (roughly) end together. As a smooth baseline it does
+**not** capture the 2020 COVID contraction and 2021–22 rebound, so by 2024 it sits a little
+below the actual (model ≈ 115–117 vs StatsCan 120). The **+#1** arm tracks the observed path
+most closely.
+
+### Unemployment over time
+
+![National unemployment vs StatsCan](provincial_comparison_plots/cb_unemp_vs_statcan.png)
+
+Model national unemployment (**labour-force-weighted** using 2014 provincial weights, so it is
+comparable to StatsCan's national rate) vs StatsCan Canada seasonally-adjusted rate. The model
+**starts well-aligned** (~7.5% vs 7.2% in 2014), runs modestly high in 2016–2019, misses the
+COVID spike, and co-moves with the actual (~6–8%) through 2024.
+
+**The long-horizon behaviour is unrealistic and should not be read as a forecast:** past ~2024
+the model unemployment drifts down to **2–3%** (the full-employment ceiling) while the actual
+rate holds at ~6–7%. This is the limitation `INTERIM_GROWTH_BASELINE.md` flags explicitly;
+treat model unemployment as informative only through the **medium term**, and rely on the
+*initial conditions and relative cross-province differences* rather than the absolute
+long-horizon level.
+
 ## Per-province real GVA growth (%/yr)
 
 ![Provincial real GVA](provincial_comparison_plots/cb_real_gva.png)
