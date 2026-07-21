@@ -82,7 +82,16 @@ long-horizon level.
 
 ## Per-province real GVA growth (%/yr)
 
-![Provincial real GVA](provincial_comparison_plots/cb_real_gva.png)
+Each panel is one province; the lines are the three simulation arms plus that province's
+observed StatsCan real GDP (chained 2017\$, indexed 2014 = 100).
+
+![Real GVA by province](provincial_comparison_plots/cb_real_gva_by_province.png)
+
+The per-province view exposes where the smooth baseline fits and where it does not: the model
+tracks StatsCan reasonably for MB, SK, NB and NS, but **undershoots** the strong observed growth
+in BC and PE and **overshoots** the weak observed paths in NL and AB (both resource-driven — the
+2015–2016 and 2020 oil declines that a shock-free baseline cannot reproduce). #1 and #6 shift the
+provincial trajectories (below) but do not add the missing cyclical/commodity shocks.
 
 | Prov | Baseline | +#1 | +#1+#6 | Δ from #1 | Δ from #6 |
 |------|---------:|----:|-------:|----------:|----------:|
@@ -111,11 +120,15 @@ spread (Nova Scotia breaks out); **+#1+#6** re-sorts the leaders toward NL/PE.
 
 ## Unemployment
 
-![Provincial unemployment](provincial_comparison_plots/cb_unemployment.png)
+Each panel is one province; the lines are the three simulation arms plus that province's
+observed StatsCan unemployment rate (seasonally adjusted).
+
+![Unemployment by province](provincial_comparison_plots/cb_unemployment_by_province.png)
 
 - **Initial conditions:** under Baseline every province starts at the same ~7% national rate;
   under **+#1** they start at their true 2014 levels (AB/SK ~4.5%, NL ~13%, PE ~13%) — the
-  realistic provincial spread.
+  realistic provincial spread, matching each StatsCan series' 2014 starting point (visible as
+  the green/blue arms sitting on the black line at the left of each panel).
 - **Full-employment ceiling (important caveat):** over 53 quarters the candidate baseline drives
   most provinces toward **0% unemployment** (the long-horizon full-employment ceiling that
   `INTERIM_GROWTH_BASELINE.md` explicitly flags as unresolved). Consequently the *endpoint*
