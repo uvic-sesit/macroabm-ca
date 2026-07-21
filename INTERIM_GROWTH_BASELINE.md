@@ -42,20 +42,41 @@ documented bug fixes change behaviour, and only on the specific defective paths.
 
 `macromodel/configurations/growth_baseline_preset.py` carries the machine-readable
 parameter set (`CANDIDATE_GROWTH_BASELINE`) and `apply_candidate_growth_baseline(...)`.
+The labour-supply path is an **on/off switch like the other mechanisms**: the observed
+provincial labour-force index is **bundled** (`scripts/data/labour_force_index_2014_2024.json`,
+~4 KB), so `use_observed_labour_path=True` loads it automatically — no data assembly.
 
 ```python
 from macromodel.configurations import CountryConfiguration
 from macromodel.configurations.growth_baseline_preset import apply_candidate_growth_baseline
 
 cfg = CountryConfiguration.n_industry_default(n_industries=43)
-apply_candidate_growth_baseline(cfg, labour_force_index=my_quarterly_index, demography_seed=0)
+# candidate baseline with the bundled observed labour path for Ontario, 53q:
+apply_candidate_growth_baseline(cfg, use_observed_labour_path=True, province="CAN_ON", n_quarters=54)
+# ...or pass your own index explicitly: apply_candidate_growth_baseline(cfg, labour_force_index=[...])
+# ...or omit it entirely -> stays on the legacy NoAging default (fixed labour force).
 ```
 
-**Data dependency (NOT bundled in this branch):** the baseline additionally needs a
-provincial DataWrapper pickle and an observed provincial labour-force index (derived from
-StatCan LFS 14-10-0327). These live in the group's shared/local storage, not in Git.
-Without a labour path, the preset falls back to `NoAging` (fixed labour force) — see the
-module docstring.
+### Turnkey runner
+
+`scripts/run_candidate_baseline.py` runs the whole thing and prints the headline
+national result:
+
+```
+uv run python scripts/run_candidate_baseline.py [path/to/datawrapper.pkl] --quarters 53 --seed 0
+uv run python scripts/run_candidate_baseline.py ... --legacy      # shipped defaults, for A/B
+```
+
+### Data dependencies
+
+- **Labour-force index — BUNDLED** (`scripts/data/...json`). Rebuild from raw LFS with
+  `uv run python scripts/build_labour_force_index.py [path/to/14100327.csv]`
+  (defaults to `../raw_data/14100327.csv`, then `dev/statcan/14100327.csv`).
+- **DataWrapper pickle — NOT bundled** (large; rebuildable from `raw_data` via the tracked
+  `macro_data` pipeline / the `build_macrodata` CI workflow). The runner defaults to
+  `dev/pkl_files/disagg_sectorprovs_2026_07_10_default.pkl`; pass a path if yours differs.
+- **Raw StatCan LFS (`14100327.csv`)** is placed in the shared `../raw_data/` for the SESIT
+  team (not committed — `raw_data` is gitignored); it is only needed to *rebuild* the index.
 
 ## Running the tests
 
@@ -69,7 +90,8 @@ uv run python -m pytest tests/test_macromodel/unit/test_util/test_clamps.py \
 
 The new tests cover: inf-safe clamps, demand smoothing (alpha), unmet-demand weighting
 (rho), the rolling capital reference and its safeguards, the exogenous labour-force path
-and workforce-entry hooks, and the histogram robustness fix.
+and workforce-entry hooks, the histogram robustness fix, and the candidate-baseline preset
++ bundled labour-index loader.
 
 ## Provisional status
 
