@@ -865,3 +865,47 @@ During conflict resolution:
 If you are unsure whether a conflict hunk is Canada-specific or shared framework code, check
 whether the same file exists in the upstream repository and whether the Canadian change has
 already been merged there.
+
+### 11.3 Reporting findings and contributing back
+
+Beta testers interact only with the Canadian fork
+([uvic-sesit/macroabm-ca](https://github.com/uvic-sesit/macroabm-ca)). SESIT triages what
+comes in and, where appropriate, carries changes upstream to INET — you never have to file
+on the INET repository yourself.
+
+**Always raise an issue first.** Every change starts as an issue, not a pull request. Open
+an issue describing what you found or want to change, and we discuss it together in the
+thread. Only once we have collectively agreed that it is actionable — and decided whether it
+is CA-specific or a candidate to raise upstream — does it become a pull request. This keeps
+review focused, avoids work on changes we haven't aligned on, and gives every PR a clear
+issue it resolves. Please do not open a PR without a linked, discussed issue.
+
+**Raising something (Issues).** Use the repository's **Issues** tab. Two forms are provided:
+
+- **Bug / reproducible defect** — the model or data pipeline does the wrong thing and you can
+  reproduce it. Include the steps/command, the preset or config, the province(s) affected,
+  and your branch + short commit SHA (`git rev-parse --short HEAD`).
+- **Beta-test finding / question** — an observation, modelling question, or idea that isn't
+  yet a confirmed defect. Say what you saw, the data vintage/scenario, and — if you have a
+  sense — how general you think it is.
+
+Please do not paste restricted data or large outputs into an issue; summarize and, if needed,
+share those separately with SESIT. SESIT discusses the issue with you in the thread and
+decides whether it becomes actionable work.
+
+**Proposing a change (Pull Requests).** For concrete code, config, data-processing, testing,
+or documentation changes:
+
+1. Open (or link) an issue first, then branch off `main` — never push directly to `main`.
+2. Open a PR into the Canadian `main`. The PR template asks you to **classify** the change:
+   - **CA-specific** — Canadian model logic, calibration, or data; stays on this fork.
+   - **Upstream candidate** — a generic `macromodel`/`macro_data` change with no Canada
+     specificity. SESIT re-files these upstream after merge (see Section 11.2).
+   - **Docs / validation only** — no runtime behaviour change.
+3. State the **default / backward-compatibility impact**: new mechanisms should be opt-in and
+   reproduce prior results when not enabled.
+4. Add or update **tests**, run `uv run pytest` and `ruff` locally, and confirm no local
+   paths, credentials, or restricted/large data are included.
+
+CI (style plus the model, data, and calibration test suites) runs automatically on every PR
+and must pass before review. A change is merged after one SESIT review and green CI.
