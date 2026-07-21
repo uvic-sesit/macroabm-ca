@@ -10,6 +10,20 @@ from dataclasses import dataclass
 from macro_data.configuration.countries import Country
 from macro_data.readers import DataReaders
 
+_PROVINCIAL_TAX = None
+
+
+def _provincial_tax():
+    """Lazily load the optional province-level effective-tax-rate override (cached)."""
+    global _PROVINCIAL_TAX
+    if _PROVINCIAL_TAX is None:
+        from macro_data.readers.economic_data.provincial_tax_reader import (
+            ProvincialTaxReader,
+        )
+
+        _PROVINCIAL_TAX = ProvincialTaxReader.from_default()
+    return _PROVINCIAL_TAX
+
 
 @dataclass
 class TaxData:
@@ -52,14 +66,32 @@ class TaxData:
         Returns:
             TaxData: Instance containing tax rates and financial metrics for the specified
                     country and year.
+
+        Note:
+            Province-level effective corporate/personal income tax rates (StatsCan) override
+            the national statutory/proxy rates where a provincial data file is present. The
+            override is a no-op for national runs and non-Canadian countries, so those paths
+            are unchanged. See ``ProvincialTaxReader`` and ``docs/provincial_raw_data.md``.
         """
+        profit_tax = readers.oecd_econ.read_tau_firm(country, year)
+        income_tax = readers.oecd_econ.read_tau_income(country, year)
+
+        provincial = _provincial_tax()
+        if provincial.has_region(country):
+            corporate_override = provincial.get_corporate_rate(country, year)
+            if corporate_override is not None:
+                profit_tax = corporate_override
+            income_override = provincial.get_personal_income_rate(country, year)
+            if income_override is not None:
+                income_tax = income_override
+
         return cls(
             value_added_tax=readers.world_bank.get_tau_vat(country, year),
             export_tax=readers.get_export_taxes(country, year),
             employer_social_insurance_tax=readers.oecd_econ.read_tau_sif(country, year),
             employee_social_insurance_tax=readers.oecd_econ.read_tau_siw(country, year),
-            profit_tax=readers.oecd_econ.read_tau_firm(country, year),
-            income_tax=readers.oecd_econ.read_tau_income(country, year),
+            profit_tax=profit_tax,
+            income_tax=income_tax,
             risk_premium=readers.eurostat.firm_risk_premium(country, year),
             capital_formation_tax=readers.eurostat.taxrate_on_capital_formation(country, year),
         )

@@ -9,6 +9,9 @@ house prices, vacancy) and **item #6** (investment / GFCF institutional split). 
 were assessed and found to be non-issues in the current single-firm configuration (see
 `provincial_data_comparison.md`).
 
+It also covers a later **effective tax-rate** upgrade — province-specific corporate and
+personal income tax rates (Section 3c) — added after items #1/#6.
+
 ---
 
 ## 1. Why this upgrade exists
@@ -179,6 +182,85 @@ loads the file; `get_investment_fractions` in `icio_sea_matching.py` uses the pr
 fraction where available and otherwise keeps the existing Eurostat/France path. No-op when the
 file is absent or the region is not Canadian.
 
+## 3c. Effective corporate & personal income tax rates
+
+### What it replaces
+
+Both income tax rates were national-only for every province, because the tax readers collapse a
+`Region` to its parent country before lookup:
+
+- **Corporate (`profit_tax`):** `OECDEconData.read_tau_firm` returned Canada's single **statutory
+  combined** corporate income tax rate (`COMB_CIT_RATE`, ~26.5%) for all ten provinces.
+- **Personal (`income_tax`):** `OECDEconData.read_tau_income` returned a **hard-coded `0.09`** for
+  Canada (the real OECD data path is commented out), for all ten provinces.
+
+### Why *effective* rates (not statutory)
+
+The model applies a tax rate **flat** — `rate × base`, with no brackets, deductions,
+small-business rate, capital-cost allowance or federal abatement — everywhere it uses one:
+`CentralGovernment.compute_taxes` (government revenue), `Firms.compute_corporate_taxes_paid`
+and `Banks.compute_equity` (corporate tax paid), and the income-tax term on wages + rent +
+financial income. The rates are set **once** from `TaxData` and are never re-estimated during
+the simulation. Consequently the scalar the model needs is the **effective** rate: feeding a
+statutory marginal rate would overstate tax paid and government revenue (real effective
+corporate burden is well below the ~26.5% statutory rate because of the small-business rate and
+deductions). Both provincial series are therefore built as effective rates — tax actually paid
+divided by the relevant income base — from the StatsCan Provincial and Territorial Economic
+Accounts (PTEA).
+
+### Source and processing
+
+All three tables are annual PTEA series downloaded from the StatsCan bulk-CSV endpoint.
+
+| Rate | Definition | Source table(s) & member |
+|------|-----------|--------------------------|
+| **Corporate** | corporate income tax paid ÷ corporate net operating surplus | **numerator:** 36-10-0450, `Estimates = "From corporations and government business enterprises, liabilities"` at `Levels of government = "General governments"` (federal + provincial/territorial + local, consolidated, allocated by province) ([link](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610045001)). **denominator:** 36-10-0221, `Estimates = "Net operating surplus: corporations"` ([link](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610022101)). |
+| **Personal** | household personal income tax ÷ primary household income | 36-10-0224, `Estimates = "Personal income tax"` ÷ `Estimates = "Primary household income"` ([link](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610022401)). |
+
+- **Pooled multi-year window.** Each rate for year *Y* is `Σ numerator / Σ denominator` over a
+  **centered 5-year window** (*Y*−2 … *Y*+2, clamped at the panel edges), **not** a single-year
+  ratio. This is essential for the corporate rate: corporate net operating surplus collapses in
+  downturns (e.g. Alberta in the 2015–16 oil bust), so a single-year tax/surplus ratio spikes to
+  implausible values (>70 %) purely because the denominator is momentarily tiny. Pooling recovers
+  the structural effective rate and roughly halves the year-to-year volatility. The same window
+  is applied to the (already stable) personal rate for methodological consistency.
+- **Consolidated levels of government.** The corporate numerator uses the `General governments`
+  level so that both federal and provincial corporate income tax raised in a province are
+  counted; using only the provincial-government level would omit the (larger) federal share.
+- **Coverage:** **2007–2024** (36-10-0450 begins in 2007). The provincial model consumes the
+  base-year (2014) value; `ProvincialTaxReader` clamps to the nearest available year for
+  out-of-range start years.
+- **Output:** `new_raw_data/statcan_provincial/provincial_tax_rates.csv`
+  (`region, year, corporate_tax_rate, personal_income_tax_rate`, decimals), one row per
+  province × year (180 rows).
+
+### Resulting effective rates (2014 — the model's base year)
+
+| Province | Corporate | Personal |  | Province | Corporate | Personal |
+|----------|----------:|---------:|--|----------|----------:|---------:|
+| AB | 0.297 | 0.178 | | NS | 0.466 | 0.174 |
+| BC | 0.289 | 0.160 | | ON | 0.278 | 0.177 |
+| MB | 0.185 | 0.172 | | PE | 0.197 | 0.169 |
+| NB | 0.197 | 0.160 | | QC | 0.281 | 0.190 |
+| NL | 0.101 | 0.181 | | SK | 0.138 | 0.163 |
+
+Personal effective rates are tightly clustered (16–19 %). Corporate effective rates span a wide,
+economically-coherent range: resource provinces with low provincial CIT and large, volatile
+surplus bases sit low (**NL 0.10, SK 0.14**), while **Nova Scotia (0.47)** is the high outlier —
+it levied the highest provincial general CIT (16 % in 2014) on a small, volatile corporate base
+with a large government-business-enterprise presence, so its *effective* rate sits above the
+statutory combined rate. This NS value is a genuine (documented) data characteristic, not an
+error; see the volatility caveat in Section 4.
+
+### Code
+
+`ProvincialTaxReader` (`macro_data/readers/economic_data/provincial_tax_reader.py`) loads the
+file; `TaxData.from_readers` (`macro_data/processing/country_data/tax_data.py`) uses the
+provincial effective rate where available and otherwise keeps the existing OECD statutory/proxy
+path. No-op (falls back to national) when the file is absent, the region is not a Canadian
+province, or the rate is missing. The reader is loaded once via a cached module-level singleton
+(the same lazy-loading style as the item-#6 investment override).
+
 ## 4. Assumptions and limitations
 
 1. **PPI is left national.** Canada has no provincial Industrial Product Price Index; the
@@ -209,6 +291,27 @@ file is absent or the region is not Canadian.
    *Household Fixed Capital Formation*). This slightly overstates household investment where
    rental construction is large. Fractions use current-price (nominal) values; the model
    consumes the base-year split, held fixed across the run.
+9. **Effective, not statutory, tax rates (tax section).** Both income tax rates are computed as
+   tax-paid ÷ income-base ratios, because the model applies the rate flat with no bracket or
+   deduction machinery (see Section 3c). They therefore capture the *actual* average burden, not
+   the legislated marginal rate. A consequence is that switching national Canada from the OECD
+   statutory corporate rate (~26.5 %) to the effective rate is itself a corporate-revenue *level*
+   change, independent of the cross-province variation; the comparison report separates the two.
+10. **Corporate rate volatility (tax section).** Corporate net operating surplus is volatile, so
+    even after the 5-year pooling the corporate effective rate carries more noise than the
+    personal rate, and small provinces (PE, NS, NL) are the noisiest. The pooled series is the
+    intended input; the raw single-year ratios (recoverable by setting `WINDOW_HALF = 0` in the
+    build script) should not be used, as downturn years produce >70 % artefacts.
+11. **Model base ≠ accounts base (tax section).** The effective rate is measured against the
+    national-accounts income base, but the model applies it to its own *endogenous* profit /
+    income base, which need not equal the accounts aggregate. The rate is therefore the correct
+    *concept* for the model but will not reproduce observed dollar tax revenue exactly.
+12. **Corporate base includes government business enterprises (tax section).** Both the corporate
+    tax numerator ("… and government business enterprises") and the net-operating-surplus
+    denominator include GBEs (e.g. provincial power / liquor corporations), so numerator and
+    denominator are consistent. Personal income tax is levied by all levels of government and the
+    denominator (primary household income = compensation + net mixed income + net property income)
+    matches the model's income-tax base (wages + rent + financial income), excluding transfers.
 
 ## Start-year flexibility
 
@@ -246,14 +349,22 @@ Rebuilding the pickle with the override active and diffing against the pre-upgra
 ## 6. Regenerating the data
 
 ```bash
-# 1. Download the four StatsCan tables (bulk CSV) and process to the tidy panel.
+# 1a. Download the four StatsCan tables (bulk CSV) and process to the #1 macro panel.
 python new_raw_data/build_provincial_macro_series.py
 
-# 2. Rebuild the provincial pickle (override activates automatically when the file exists).
+# 1b. Rebuild the #6 investment-fraction panel.
+python new_raw_data/build_provincial_investment_fractions.py
+
+# 1c. Rebuild the effective tax-rate panel (Section 3c).
+python new_raw_data/build_provincial_tax_rates.py
+
+# 2. Rebuild the provincial pickle (all overrides activate automatically when the files exist).
 python scenarios/run_canada_provincial.py --input-path <raw_data> --skip-simulation \
     --pkl-path <out>/data_provincial_model_NEW.pkl --force-rebuild-pickle
 ```
 
-The processing script and exact filter definitions are recorded in Section 3; the
-StatsCan table PIDs are `18100004` (CPI), `14100287` (LFS), `18100205` (NHPI),
-`14100325` (JVWS).
+The processing scripts and exact filter definitions are recorded in Sections 3, 3b and 3c; the
+StatsCan table PIDs are `18100004` (CPI), `14100287` (LFS), `18100205` (NHPI), `14100325`
+(JVWS) for #1, `36100222` for #6, and `36100450` / `36100221` / `36100224` for the tax rates.
+A read-only copy of the tax build script also lives in `docs/processing_scripts/` per the
+documentation request; the canonical, runnable copy is `new_raw_data/build_provincial_tax_rates.py`.
