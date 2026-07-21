@@ -1,6 +1,6 @@
 # Interim real-growth baseline — reviewable branch
 
-**Branch:** `validation/endogenous-real-growth-baseline`
+**Branch:** `real-growth-baseline`
 **Status:** interim / provisional. **No decision has been made** about merging to
 MacroABM-CA `main` or upstreaming any general change to INET. This branch exists so
 colleagues can review the model changes before those decisions.
