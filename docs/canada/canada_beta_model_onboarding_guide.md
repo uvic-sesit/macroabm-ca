@@ -910,3 +910,52 @@ or documentation changes:
 
 CI (style plus the model, data, and calibration test suites) runs automatically on every PR
 and must pass before review. A change is merged after one SESIT review and green CI.
+
+#### Filling in the PR template
+
+When you open a pull request, GitHub automatically loads the PR template into the
+description box — you do not need to copy anything; just edit it in place. A few mechanics:
+
+- **Guidance comments** written as `<!-- ... -->` do not appear in the rendered PR. Follow
+  them, then leave or delete them — readers never see them either way.
+- **Checkboxes** (`- [ ]`) are ticked by putting an `x` between the brackets (`- [x]`), or by
+  clicking them directly once the PR is open.
+- **Classification** — tick **exactly one** box. This is the routing signal: `CA-specific`
+  stays on the fork, `Upstream candidate` is re-filed to INET after merge, `Docs / validation
+  only` changes no runtime behaviour.
+- **Default & backward-compatibility** — tick "no change to shipped defaults" only if a run
+  that does not opt in reproduces prior results exactly; otherwise tick the second box and
+  justify the change in the summary.
+- Fill the **summary**, **tests & results**, and the final **checklist**; leave a field blank
+  only if it genuinely does not apply, and say so.
+
+A minimal filled example for a CA-specific bug fix:
+
+```markdown
+## Linked issue
+Closes #42
+
+## Classification
+- [x] CA-specific
+- [ ] Upstream candidate
+- [ ] Docs / validation only
+
+## Summary of changes
+Excludes social-housing rent from the rental-income-tax base in
+synthetic_central_government (fixes the double-count in #42).
+
+## Default & backward-compatibility impact
+- [x] No change to shipped defaults (legacy runs reproduce exactly)
+
+## Tests & results
+Added test_rental_income_tax_excludes_social_housing; `uv run pytest` green.
+
+## Checklist
+- [x] Tests added/updated and passing locally
+- [x] Style passes (ruff)
+- [x] No local paths, temporary outputs, credentials, or restricted/large data
+```
+
+A PR that arrives with the template blank or unticked will be sent back to be completed
+before review — the classification and backward-compatibility answers are what a reviewer
+reads first.
