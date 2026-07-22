@@ -169,3 +169,95 @@ elevated while the full-employment ceiling pulls the unemployment std back down 
   allocation is aggregation-dependent.
 - Built with the standard disagg-sector-province config (single firm/bank/government per province,
   `constructor="Default"`, proxy FRA, 2014 base); the pkl itself is not committed (large).
+
+---
+
+# Effective income tax data: incremental comparison
+
+A later commit added **province-specific effective corporate and personal income tax rates**
+(StatsCan PTEA; see `provincial_raw_data.md` §3c). They replace the national values every province
+used before — a **statutory** combined corporate rate (~26.5%) and a **hard-coded 0.09** personal
+rate — with effective rates that vary widely (2014 corporate: NL ~0.10 … NS 0.47; personal
+~0.16–0.19). Two incremental comparisons were run on the **same candidate baseline** (53q, seed 0),
+each differing only in the pkl, with firm + household investment now captured:
+
+- **Comparison 1:** Baseline → Baseline **+ tax**
+- **Comparison 2:** +#1+#6 → +#1+#6 **+ tax**
+
+## National aggregate
+
+| Arm | Real GVA growth (%/yr) |
+|-----|----------------------:|
+| Baseline | 1.76 |
+| Baseline + tax | 1.91 |
+| +#1+#6 | 1.74 |
+| +#1+#6 + tax | 1.71 |
+
+At the national level the tax correction is **roughly neutral** on growth (+0.15 pp on the pure
+baseline, −0.03 pp on top of #1+#6). National **total investment** moves **+8.5%** (Comparison 1)
+and **+1.4%** (Comparison 2). As with #1/#6, the action is in the **provincial composition**, not
+the national total.
+
+## Comparison 1 — Baseline vs + tax
+
+![Comparison 1: real GVA by province](provincial_comparison_plots/tax_c1_gva_by_province.png)
+
+| Prov | GVA growth (base → +tax) | Δ GVA (pp/yr) | Δ mean unemp (pp) | Total investment %Δ |
+|------|:------------------------:|--------------:|------------------:|--------------------:|
+| ON | 2.18 → 2.22 | +0.04 | +0.5 | +1.9 |
+| QC | 0.86 → 1.10 | +0.24 | −0.7 | +10.2 |
+| AB | 1.63 → 1.69 | +0.06 | −1.5 | −2.9 |
+| BC | 1.85 → 2.73 | +0.87 | −2.0 | +80.8 |
+| MB | 2.42 → 1.55 | −0.87 | +1.6 | −16.4 |
+| SK | 1.55 → 1.25 | −0.30 | +0.4 | −24.0 |
+| NS | 2.18 → 2.55 | +0.37 | −0.4 | +44.1 |
+| NB | 2.27 → 2.15 | −0.12 | +0.6 | +20.9 |
+| NL | 1.19 → 1.46 | +0.27 | −0.2 | +19.4 |
+| PE | 1.33 → 2.46 | +1.13 | −1.7 | +112.1 |
+
+## Comparison 2 — +#1+#6 vs +#1+#6 + tax
+
+![Comparison 2: real GVA by province](provincial_comparison_plots/tax_c2_gva_by_province.png)
+
+| Prov | GVA growth (#1+#6 → +tax) | Δ GVA (pp/yr) | Δ mean unemp (pp) | Total investment %Δ |
+|------|:-------------------------:|--------------:|------------------:|--------------------:|
+| ON | 1.54 → 1.31 | −0.23 | −0.6 | −5.1 |
+| QC | 1.63 → 1.62 | −0.01 | −1.4 | −1.1 |
+| AB | 1.81 → 1.56 | −0.25 | −0.8 | +5.4 |
+| BC | 2.13 → 2.45 | +0.32 | +2.5 | −14.3 |
+| MB | 1.61 → 1.71 | +0.10 | −3.2 | +7.3 |
+| SK | 1.86 → 2.53 | +0.67 | −0.5 | +52.7 |
+| NS | 1.78 → 2.48 | +0.71 | −2.1 | +4.3 |
+| NB | 2.09 → 2.75 | +0.66 | −1.9 | +74.8 |
+| NL | 2.91 → 2.89 | −0.01 | +0.1 | −7.8 |
+| PE | 2.86 → 2.39 | −0.47 | +0.2 | −9.5 |
+
+## Marginal effect summary (GDP, unemployment, investment)
+
+![Tax marginal effects by province](provincial_comparison_plots/tax_marginal_effects.png)
+
+## Interpretation
+
+1. **Investment is by far the most tax-sensitive metric.** Total provincial investment swings from
+   −24% to +112% (Comparison 1) — much larger than the GDP-growth (±~1 pp/yr) or unemployment
+   (±1–3 pp) responses. This is expected: the effective corporate rate directly scales firm net
+   income and hence investment, and it moves a long way from the uniform 26.5% statutory rate
+   (down sharply for NL/MB/NB/PE, up for NS).
+2. **National-neutral, provincially heterogeneous** — like #1/#6, the tax correction reallocates
+   activity across provinces rather than moving the national aggregate.
+3. **The direction is state-dependent.** Several provinces flip sign between Comparison 1 and 2
+   (e.g. BC investment +81% vs −14%; PE +112% vs −10%): the tax effect interacts with the
+   investment composition that #6 already changed, and with the labour path. That interaction is
+   real, but at a single seed it is also partly noise.
+
+## Caveats (tax)
+
+- **Single seed, and investment is volatile.** The per-province investment magnitudes are
+  **directional only** — the sign flips between the two comparisons show how sensitive they are to
+  state and seed. A multi-seed sweep is needed before treating any province-level tax number as
+  quantitative.
+- **A level correction is mixed in with the provincialization.** The tax arm changes *both* the
+  concept (statutory→effective corporate; and 0.09→~0.17 personal, which roughly **doubles** the
+  household income-tax rate) *and* the cross-province variation. So part of every effect here is the
+  national-level effective-rate correction, not pure provincial reallocation.
+- The full-employment-ceiling and provisional-baseline caveats from the #1/#6 section apply here too.
