@@ -68,11 +68,15 @@ class TaxData:
                     country and year.
 
         Note:
-            Province-level effective corporate/personal income tax rates (StatsCan) override
-            the national statutory/proxy rates where a provincial data file is present. The
-            override is a no-op for national runs and non-Canadian countries, so those paths
-            are unchanged. See ``ProvincialTaxReader`` and ``docs/provincial_raw_data.md``.
+            Province-level effective corporate income, personal income, and consumption
+            (sales / VAT) tax rates (StatsCan) override the national statutory/proxy rates where
+            a provincial data file is present. The override is a no-op for national runs and
+            non-Canadian countries, so those paths are unchanged. The sales-tax override targets
+            ``value_added_tax`` because the model applies that rate as a flat wedge on final
+            household consumption (no staged VAT / input credits), which is mechanically a
+            retail sales tax. See ``ProvincialTaxReader`` and ``docs/provincial_raw_data.md``.
         """
+        value_added_tax = readers.world_bank.get_tau_vat(country, year)
         profit_tax = readers.oecd_econ.read_tau_firm(country, year)
         income_tax = readers.oecd_econ.read_tau_income(country, year)
 
@@ -84,9 +88,12 @@ class TaxData:
             income_override = provincial.get_personal_income_rate(country, year)
             if income_override is not None:
                 income_tax = income_override
+            sales_override = provincial.get_sales_tax_rate(country, year)
+            if sales_override is not None:
+                value_added_tax = sales_override
 
         return cls(
-            value_added_tax=readers.world_bank.get_tau_vat(country, year),
+            value_added_tax=value_added_tax,
             export_tax=readers.get_export_taxes(country, year),
             employer_social_insurance_tax=readers.oecd_econ.read_tau_sif(country, year),
             employee_social_insurance_tax=readers.oecd_econ.read_tau_siw(country, year),

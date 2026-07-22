@@ -1,8 +1,10 @@
 """Provincial effective-tax-rate incremental comparison (candidate baseline).
 
-Produces the two comparisons requested for the effective corporate/personal income tax
-upgrade, using the same candidate growth baseline and per-province capture as
-`run_candidate_baseline.py`:
+Produces the two comparisons requested for the effective tax-rate upgrade, using the same
+candidate growth baseline and per-province capture as `run_candidate_baseline.py`. The "+tax"
+arm carries ALL THREE province-specific effective rates in `provincial_tax_rates.csv` at once
+(corporate `profit_tax`, personal `income_tax`, and sales/consumption `value_added_tax`), since
+they share one data file and are gated together:
 
   Comparison 1 (tax vs original baseline):        Baseline            vs  +tax
   Comparison 2 (tax on top of #1+#6):             +#1+#6              vs  +#1+#6+tax
@@ -215,9 +217,11 @@ def main() -> None:
     lines += ["", "![Comparison 2](provincial_comparison_plots/tax_unemployment_by_province.png)", "",
               "## Caveats", "",
               "- Single seed; per-province trajectories carry seed noise (confirm with a sweep).",
-              "- The national corporate rate shifts statutory→effective in the tax arm, so part of the "
-              "corporate-side movement in Comparison 1 is this concept correction, not cross-province "
-              "reallocation. Comparison 2 isolates the tax effect on top of #1+#6.",
+              "- The +tax arm changes all three effective rates at once (corporate profit_tax, "
+              "personal income_tax, sales value_added_tax). The national corporate rate shifts "
+              "statutory→effective and the national VAT shifts to an effective consumption rate, so "
+              "part of the movement in Comparison 1 is this concept correction, not cross-province "
+              "reallocation. Comparison 2 isolates the combined tax effect on top of #1+#6.",
               "- Full-employment ceiling compresses long-horizon unemployment (see the candidate-baseline doc).",
               ""]
     DOC.write_text("\n".join(lines), encoding="utf-8")

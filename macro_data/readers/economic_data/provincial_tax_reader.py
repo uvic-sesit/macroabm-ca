@@ -1,13 +1,13 @@
 """
 Optional province-level effective-tax-rate override reader.
 
-Supplies province-specific *effective* corporate and personal income tax rates for the
-Canadian provincial model. Without this override, both rates collapse a :class:`Region`
-to its ``parent_country`` and every province receives the same national value:
-``read_tau_firm`` returns Canada's single statutory combined corporate rate, and
-``read_tau_income`` returns a hard-coded 0.09. This reader replaces those with
-province-specific effective rates derived from the StatsCan Provincial and Territorial
-Economic Accounts.
+Supplies province-specific *effective* corporate income, personal income, and consumption
+(sales / VAT) tax rates for the Canadian provincial model. Without this override, all three
+rates collapse a :class:`Region` to its ``parent_country`` and every province receives the
+same national value: ``read_tau_firm`` returns Canada's single statutory combined corporate
+rate, ``read_tau_income`` returns a hard-coded 0.09, and ``get_tau_vat`` returns one national
+VAT figure. This reader replaces those with province-specific effective rates derived from the
+StatsCan Provincial and Territorial Economic Accounts.
 
 Why effective (not statutory): the model applies a tax rate *flat* (``rate x base``, with no
 brackets, deductions, small-business rate or abatement) when it computes government revenue
@@ -19,9 +19,9 @@ the existing national/proxy behaviour (national and non-Canadian runs are unaffe
 Data file
 ---------
 ``<repo_root>/new_raw_data/statcan_provincial/provincial_tax_rates.csv`` with columns:
-``region, year, corporate_tax_rate, personal_income_tax_rate`` (decimals). One row per
-province x year (2007-2024). See ``docs/provincial_raw_data.md`` (tax section) for the full
-provenance and assumptions.
+``region, year, corporate_tax_rate, personal_income_tax_rate, sales_tax_rate`` (decimals). One
+row per province x year (2007-2024). See ``docs/provincial_raw_data.md`` (tax section) for the
+full provenance and assumptions.
 """
 
 from __future__ import annotations
@@ -87,3 +87,12 @@ class ProvincialTaxReader:
     def get_personal_income_rate(self, region, year: int) -> Optional[float]:
         """Effective personal income tax rate for the region/year, or None."""
         return self._rate(region, year, "personal_income_tax_rate")
+
+    def get_sales_tax_rate(self, region, year: int) -> Optional[float]:
+        """Effective consumption (sales / VAT) tax rate for the region/year, or None.
+
+        The model applies ``value_added_tax`` as a flat wedge on final household consumption
+        (no staged VAT / input credits), so this effective consumption-tax rate is the correct
+        input whether the province levies a retail sales tax (PST) or a VAT-type tax (GST/HST/QST).
+        """
+        return self._rate(region, year, "sales_tax_rate")
