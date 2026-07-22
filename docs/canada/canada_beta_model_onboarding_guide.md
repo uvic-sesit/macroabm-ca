@@ -21,6 +21,7 @@ Main-branch documentation:
 - [Project documentation index](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/index.md)
 - [Installation guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/installation.md)
 - [Quickstart guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/quickstart.md)
+- [Model factsheet](macroabm_ca_model_factsheet.md) — a point-in-time characterization of the model's design (GMMI questionnaire)
 
 The examples below use repository-relative paths. Raw data, generated pickles, H5 outputs,
 and validation artifacts are intentionally treated as local files outside the committed
