@@ -22,7 +22,8 @@ Design goals
 
 Data file
 ---------
-``<repo_root>/new_raw_data/statcan_provincial/provincial_macro_series.csv`` with columns:
+``<raw_data>/canadian_inputs/provincial_macro_series.csv`` (in the raw_data bundle, not the
+model repo) with columns:
 ``region, date, cpi_inflation, unemployment_rate, hpi_nominal_growth, vacancy_rate``.
 
 - ``region``            model region code (e.g. ``CAN_AB``)
@@ -63,24 +64,30 @@ class ProvincialMacroReader:
     def available(self) -> bool:
         return len(self._by_region) > 0
 
-    @classmethod
-    def default_path(cls) -> Path:
-        """Resolve the default provincial data file relative to the repository root.
+    FILENAME = "provincial_macro_series.csv"
 
-        ``.../macro_data/readers/economic_data/provincial_macro_reader.py``
-        -> parents[3] is the repository root that also contains ``new_raw_data``.
+    @classmethod
+    def default_path(cls, raw_data_path: Path | str) -> Path:
+        """Resolve the provincial data file under the raw_data bundle:
+        ``<raw_data>/canadian_inputs/provincial_macro_series.csv``.
         """
-        return (
-            Path(__file__).resolve().parents[3]
-            / "new_raw_data"
-            / "statcan_provincial"
-            / "provincial_macro_series.csv"
-        )
+        return Path(raw_data_path) / "canadian_inputs" / cls.FILENAME
 
     @classmethod
-    def from_default(cls, path: Optional[Path | str] = None) -> "ProvincialMacroReader":
-        """Load the provincial panel, or an empty (no-op) reader if the file is absent."""
-        path = Path(path) if path is not None else cls.default_path()
+    def from_default(
+        cls, raw_data_path: Optional[Path | str] = None, path: Optional[Path | str] = None
+    ) -> "ProvincialMacroReader":
+        """Load the provincial panel, or an empty (no-op) reader if the file is absent.
+
+        Pass ``raw_data_path`` (the raw_data bundle root) to resolve the default location, or
+        an explicit ``path``. With neither (or if the file is missing), returns a no-op reader
+        and the caller keeps the national/proxy behaviour.
+        """
+        if path is None and raw_data_path is not None:
+            path = cls.default_path(raw_data_path)
+        if path is None:
+            return cls(None)
+        path = Path(path)
         if not path.exists():
             return cls(None)
         panel = pd.read_csv(path, parse_dates=["date"])

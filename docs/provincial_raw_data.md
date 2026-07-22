@@ -39,23 +39,26 @@ from different labour-market conditions.
 
 ## 2. What was changed
 
-### 2.1 Data (this branch, not committed to `raw_data`)
+### 2.1 Data (in the `raw_data` bundle, not the model repo)
 
-A single processed panel is written to a **temporary** folder so it never overwrites the
-canonical `raw_data`:
+The processed provincial panels live in the shared `raw_data` bundle under a `canadian_inputs/`
+folder (flat, one CSV per input), **not** in the model repo — keeping the repo fully downstream
+of `raw_data`:
 
 ```
-dependencies/macroabm-ca/new_raw_data/statcan_provincial/provincial_macro_series.csv
+<raw_data>/canadian_inputs/provincial_macro_series.csv
 ```
 
 Columns: `region, date, cpi_inflation, unemployment_rate, hpi_nominal_growth, vacancy_rate`.
+The reproducible build scripts (`build_provincial_*.py`) live alongside the CSVs in
+`<raw_data>/canadian_inputs/`, since they are upstream of the data they produce.
 
 ### 2.2 Code (minimal, backward-compatible)
 
 | File | Change |
 |------|--------|
 | `macro_data/readers/economic_data/provincial_macro_reader.py` | **New.** `ProvincialMacroReader` loads the panel and blends provincial values over a national series where available. |
-| `macro_data/readers/default_readers.py` | Constructs `ProvincialMacroReader.from_default()` and attaches it to `DataReaders.provincial_macro`. |
+| `macro_data/readers/default_readers.py` | Constructs `ProvincialMacroReader.from_default(raw_data_path=...)` from `<raw_data>/canadian_inputs/` and attaches it to `DataReaders.provincial_macro`. |
 | `macro_data/readers/exogenous_data.py` | Three override hooks: CPI (in `from_data_readers`), house-price growth (in `from_data_readers`), unemployment + vacancy (in `prepare_labour_stats`). |
 
 The override is **opt-in by data presence**: if `provincial_macro_series.csv` is absent,
@@ -154,7 +157,7 @@ series, so the model falls back to **France** — every province received the sa
     machinery & equipment + intellectual property products)
 - **Processing:** for every year 2000–2024, each component is taken at current prices per
   province; fractions = component / (Firm + Household + Government), normalised to sum to 1.
-- **Output:** `new_raw_data/statcan_provincial/provincial_investment_fractions.csv`
+- **Output:** `<raw_data>/canadian_inputs/provincial_investment_fractions.csv`
   (`region, year, firm, household, government`), one row per province × year (250 rows).
   `ProvincialInvestmentReader.get_fractions(region, year)` selects the row matching the run's
   base year (clamping to the nearest available year if out of range), so the split tracks the
@@ -246,7 +249,7 @@ All series are annual PTEA tables downloaded from the StatsCan bulk-CSV endpoint
 - **Coverage:** **2007–2024** (36-10-0450 begins in 2007). The provincial model consumes the
   base-year (2014) value; `ProvincialTaxReader` clamps to the nearest available year for
   out-of-range start years.
-- **Output:** `new_raw_data/statcan_provincial/provincial_tax_rates.csv`
+- **Output:** `<raw_data>/canadian_inputs/provincial_tax_rates.csv`
   (`region, year, corporate_tax_rate, personal_income_tax_rate, sales_tax_rate`, decimals), one
   row per province × year (180 rows).
 
@@ -378,23 +381,28 @@ Rebuilding the pickle with the override active and diffing against the pre-upgra
 
 ## 6. Regenerating the data
 
+The build scripts live in the `raw_data` bundle at `<raw_data>/canadian_inputs/` (upstream of
+the model repo) and write their CSVs into that same folder (flat):
+
 ```bash
+# Run from <raw_data>/canadian_inputs/
 # 1a. Download the four StatsCan tables (bulk CSV) and process to the #1 macro panel.
-python new_raw_data/build_provincial_macro_series.py
+python build_provincial_macro_series.py
 
 # 1b. Rebuild the #6 investment-fraction panel.
-python new_raw_data/build_provincial_investment_fractions.py
+python build_provincial_investment_fractions.py
 
 # 1c. Rebuild the effective tax-rate panel (Section 3c).
-python new_raw_data/build_provincial_tax_rates.py
+python build_provincial_tax_rates.py
 
 # 2. Rebuild the provincial pickle (all overrides activate automatically when the files exist).
 python scenarios/run_canada_provincial.py --input-path <raw_data> --skip-simulation \
     --pkl-path <out>/data_provincial_model_NEW.pkl --force-rebuild-pickle
 ```
 
-The processing scripts and exact filter definitions are recorded in Sections 3, 3b and 3c; the
-StatsCan table PIDs are `18100004` (CPI), `14100287` (LFS), `18100205` (NHPI), `14100325`
-(JVWS) for #1, `36100222` for #6, and `36100450` / `36100221` / `36100224` for the tax rates.
-A read-only copy of the tax build script also lives in `docs/processing_scripts/` per the
-documentation request; the canonical, runnable copy is `new_raw_data/build_provincial_tax_rates.py`.
+The readers resolve these files from `<raw_data>/canadian_inputs/` via
+`DataReaders.from_raw_data` (each is a no-op if its file is absent, so national/proxy runs and
+non-Canadian `raw_data` bundles are unaffected). The processing scripts and exact filter
+definitions are recorded in Sections 3, 3b and 3c; the StatsCan table PIDs are `18100004` (CPI),
+`14100287` (LFS), `18100205` (NHPI), `14100325` (JVWS) for #1, `36100222` for #6, and
+`36100450` / `36100221` / `36100224` for the tax rates.

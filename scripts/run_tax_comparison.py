@@ -9,20 +9,19 @@ they share one data file and are gated together:
   Comparison 1 (tax vs original baseline):        Baseline            vs  +tax
   Comparison 2 (tax on top of #1+#6):             +#1+#6              vs  +#1+#6+tax
 
-Each *arm* is a DataWrapper pickle that differs ONLY in which provincial `new_raw_data`
-files were present when it was built (the overrides bake into the pkl at build time, exactly
-as documented in `provincial_candidate_baseline_comparison.md`). This script does NOT build
-the pkls — build them with your normal provincial builder while staging `new_raw_data` so
-that each arm sees only its files, e.g.:
+Each *arm* is a DataWrapper pickle that differs ONLY in which provincial input files were
+present in ``<raw_data>/canadian_inputs/`` when it was built (the overrides bake into the pkl
+at build time, exactly as documented in `provincial_candidate_baseline_comparison.md`). This
+script does NOT build the pkls — build them with your normal provincial builder while staging
+``<raw_data>/canadian_inputs/`` so that each arm sees only its files, e.g.:
 
     # Arm "baseline": temporarily move ALL three provincial CSVs out of
-    #   new_raw_data/statcan_provincial/, then:
+    #   <raw_data>/canadian_inputs/, then:
     python scenarios/run_canada_provincial.py --input-path <raw_data> --skip-simulation \
         --pkl-path <out>/arm_baseline.pkl --force-rebuild-pickle
     # Arm "tax": stage only provincial_tax_rates.csv -> arm_tax.pkl
     # Arm "macro_inv": stage provincial_macro_series.csv + provincial_investment_fractions.csv
     # Arm "macro_inv_tax": stage all three CSVs
-    # (see build_arms() below for a helper that automates the staging + build)
 
 Then run:
     python scripts/run_tax_comparison.py \

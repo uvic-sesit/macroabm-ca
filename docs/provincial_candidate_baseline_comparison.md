@@ -22,8 +22,8 @@ here the reference is the colleague's `real-growth-baseline` candidate preset.
 
 All three arms use the **identical** candidate-baseline simulation config; they differ **only**
 in the DataWrapper pickle. Because the provincial overrides are gated on the presence of the
-`new_raw_data` files, the arms were produced from the **same code** (branch tip) by toggling
-which provincial data is present at build time:
+`<raw_data>/canadian_inputs/` files, the arms were produced from the **same code** (branch tip)
+by toggling which provincial data is present at build time:
 
 | Arm | Provincial data in the pkl | Corresponds to |
 |-----|----------------------------|----------------|

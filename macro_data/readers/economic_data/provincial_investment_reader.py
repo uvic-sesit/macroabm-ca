@@ -13,8 +13,9 @@ the existing Eurostat/proxy behaviour. See ``docs/canada/provincial_raw_data.md`
 
 Data file
 ---------
-``<repo_root>/new_raw_data/statcan_provincial/provincial_investment_fractions.csv`` with
-columns: ``region, year, firm, household, government`` (fractions sum to 1).
+``<raw_data>/canadian_inputs/provincial_investment_fractions.csv`` (in the raw_data bundle,
+not the model repo) with columns: ``region, year, firm, household, government`` (fractions
+sum to 1).
 """
 
 from __future__ import annotations
@@ -39,18 +40,27 @@ class ProvincialInvestmentReader:
     def available(self) -> bool:
         return len(self._by_region) > 0
 
-    @classmethod
-    def default_path(cls) -> Path:
-        return (
-            Path(__file__).resolve().parents[3]
-            / "new_raw_data"
-            / "statcan_provincial"
-            / "provincial_investment_fractions.csv"
-        )
+    FILENAME = "provincial_investment_fractions.csv"
 
     @classmethod
-    def from_default(cls, path: Optional[Path | str] = None) -> "ProvincialInvestmentReader":
-        path = Path(path) if path is not None else cls.default_path()
+    def default_path(cls, raw_data_path: Path | str) -> Path:
+        """``<raw_data>/canadian_inputs/provincial_investment_fractions.csv``."""
+        return Path(raw_data_path) / "canadian_inputs" / cls.FILENAME
+
+    @classmethod
+    def from_default(
+        cls, raw_data_path: Optional[Path | str] = None, path: Optional[Path | str] = None
+    ) -> "ProvincialInvestmentReader":
+        """Load the fractions, or a no-op reader if the file is absent.
+
+        Pass ``raw_data_path`` (the raw_data bundle root) to resolve the default location, or
+        an explicit ``path``. With neither (or if the file is missing), returns a no-op reader.
+        """
+        if path is None and raw_data_path is not None:
+            path = cls.default_path(raw_data_path)
+        if path is None:
+            return cls(None)
+        path = Path(path)
         if not path.exists():
             return cls(None)
         return cls(pd.read_csv(path))

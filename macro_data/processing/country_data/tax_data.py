@@ -10,20 +10,6 @@ from dataclasses import dataclass
 from macro_data.configuration.countries import Country
 from macro_data.readers import DataReaders
 
-_PROVINCIAL_TAX = None
-
-
-def _provincial_tax():
-    """Lazily load the optional province-level effective-tax-rate override (cached)."""
-    global _PROVINCIAL_TAX
-    if _PROVINCIAL_TAX is None:
-        from macro_data.readers.economic_data.provincial_tax_reader import (
-            ProvincialTaxReader,
-        )
-
-        _PROVINCIAL_TAX = ProvincialTaxReader.from_default()
-    return _PROVINCIAL_TAX
-
 
 @dataclass
 class TaxData:
@@ -80,8 +66,8 @@ class TaxData:
         profit_tax = readers.oecd_econ.read_tau_firm(country, year)
         income_tax = readers.oecd_econ.read_tau_income(country, year)
 
-        provincial = _provincial_tax()
-        if provincial.has_region(country):
+        provincial = readers.provincial_tax
+        if provincial is not None and provincial.has_region(country):
             corporate_override = provincial.get_corporate_rate(country, year)
             if corporate_override is not None:
                 profit_tax = corporate_override
