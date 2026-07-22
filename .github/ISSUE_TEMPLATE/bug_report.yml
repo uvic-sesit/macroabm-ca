@@ -1,0 +1,51 @@
+name: Bug / reproducible defect
+description: Something in the model or data pipeline behaves incorrectly and you can reproduce it.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For open-ended questions or beta-test observations that aren't yet a clear defect,
+        use the **Beta-test finding / question** form instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you observed, and what you expected instead.
+      placeholder: Expected X; got Y.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps, command, or script. Include the config/preset used.
+      placeholder: |
+        1. uv run python scripts/run_candidate_baseline.py --quarters 53 --seed 0
+        2. ...
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: scope
+    attributes:
+      label: Province(s) / configuration affected
+      description: e.g. CAN_QC, or "all provinces", or a specific preset.
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Branch and short commit SHA (git rev-parse --short HEAD), and data vintage if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Paste the error output if any. This will be formatted automatically.
+      render: shell
+    validations:
+      required: false
