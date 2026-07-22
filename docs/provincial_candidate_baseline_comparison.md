@@ -1,263 +1,233 @@
 # Provincial Data — Candidate Baseline Incremental Comparison
 
-How each provincial-data commit changes provincial dynamics **under the candidate growth
-baseline** (`scripts/run_candidate_baseline.py`), used here as the reference scenario. This
-complements `provincial_data_comparison.md` (which used a shorter energy-substitution run);
-here the reference is the colleague's `real-growth-baseline` candidate preset.
+This document measures how each **provincial-data upgrade** changes the model's provincial
+dynamics under the candidate growth baseline, and how the results compare to observed
+Statistics Canada data. Four data changes are assessed, added one at a time.
 
-## Reference scenario
+## The four provincial-data changes
 
-`scripts/run_candidate_baseline.py` / `apply_candidate_growth_baseline`:
+Each change replaces a national (or foreign-proxy) input — previously applied identically to
+every province — with province-specific Statistics Canada data. See `provincial_raw_data.md`
+for full provenance.
 
-- Provincial model (10 provinces × 43 sectors), **candidate growth baseline** preset:
-  opt-in firm/labour mechanisms, **observed provincial labour-force paths**
-  (`use_observed_labour_path=True`), common **+2%/yr household-demand overlay**, exogenous
-  national-accounts held flat past the ~2023Q4 data tail.
-- Horizon **53 quarters**, **seed 0**, per-province demography seeds per the runner convention.
-- Headline metric: **double-deflated real GVA** (real output − real intermediate, at base-year
-  prices), plus unemployment. A capture-runner mirroring the turnkey runner records the same
-  quantities **per province**.
+| # | Change | What it replaces (same value for all 10 provinces before) | Provincial source |
+|---|--------|-----------------------------------------------------------|-------------------|
+| **1** | **Macro series** | National CPI, unemployment, house-price and vacancy series stamped onto every province (house-price/vacancy were degenerate/empty for Canada) | Provincial CPI (18‑10‑0004), LFS (14‑10‑0287), New Housing Price Index (18‑10‑0205), Job Vacancy survey (14‑10‑0325) |
+| **2** | **GFCF split** | A single **French** (Eurostat) split of investment across firms / households / government (0.567 / 0.263 / 0.170) | Provincial expenditure-based GDP (36‑10‑0222) |
+| **3** | **Effective income tax** | National **statutory** combined corporate rate (~26.5%) and a hard-coded 0.09 personal rate | PTEA effective corporate/personal rates (36‑10‑0450 / 36‑10‑0221 / 36‑10‑0224) |
+| **4** | **Sales tax** | A single national VAT rate applied as a flat consumption wedge | PTEA effective consumption (sales/VAT) rate |
 
-## Method — incremental arms
+## Reference scenario and method
 
-All three arms use the **identical** candidate-baseline simulation config; they differ **only**
-in the DataWrapper pickle. Because the provincial overrides are gated on the presence of the
-`<raw_data>/canadian_inputs/` files, the arms were produced from the **same code** (branch tip)
-by toggling which provincial data is present at build time:
+The reference scenario is the candidate growth baseline (`scripts/run_candidate_baseline.py` /
+`apply_candidate_growth_baseline`): the 10-province × 43-sector model with the observed
+provincial labour-force paths, a common +2%/yr household-demand overlay, exogenous national
+accounts held flat past the ~2023Q4 data tail, run **53 quarters at seed 0**. A capture-runner
+mirroring it records, **per province**, double-deflated real GVA (real output − real intermediate
+at base-year prices), unemployment, and total investment (firm GFCF + household investment).
 
-| Arm | Provincial data in the pkl | Corresponds to |
-|-----|----------------------------|----------------|
-| **Baseline** | none (national/proxy, replicated to provinces) | `real-growth-baseline` behaviour |
-| **+#1** | provincial macro series (CPI, unemployment, house prices, vacancy) | commit `b3056cf` |
-| **+#1+#6** | + provincial GFCF split (firm/household/government) | commit `20a5e00` (+ `216319f`) |
+The four changes are assessed **cumulatively** — each arm adds one change on top of the previous,
+so each change's section reports the *incremental* effect of that change alone:
 
-> The other two commits are **non-functional for results**: the #2–5 commit (`8e68b7e`) is
-> documentation only, and the multi-year #6 commit (`216319f`) is byte-identical to #6 at the
-> 2014 base year, so neither changes this run. They are therefore not separate arms.
+| Arm | Provincial data baked into the pickle |
+|-----|---------------------------------------|
+| **Baseline** | none (national/proxy, replicated to provinces) |
+| **+1** | + macro series |
+| **+1+2** | + GFCF split |
+| **+1+2+3** | + income tax |
+| **+1+2+3+4** | + sales tax |
 
-## National result (sum of provinces)
+All arms share the identical simulation config and differ only in the pickle (built by staging
+which `<raw_data>/canadian_inputs/` files are present). The sales-tax commit only *added* a
+`sales_tax_rate` column — the effective corporate/personal rates are byte-identical between the
+income-tax and sales-tax arms — so arm `+1+2+3+4` isolates the sales tax exactly.
 
-| Arm | Real GVA growth (%/yr) | Real GVA level | Mean unemployment, final |
-|-----|----------------------:|----------------|-------------------------:|
-| Baseline | 1.76 | 465B → 584B | 3.4% |
-| +#1 | 1.90 | 470B → 601B | 3.8% |
-| +#1+#6 | 1.74 | 470B → 588B | 1.8% |
+## National overview vs StatsCan
 
-The **national aggregate is roughly preserved** (~1.7–1.9%/yr). Both commits act mainly by
-**reallocating activity across provinces**, not by moving the national total — which is the
-expected and desirable behaviour of a provincial-composition correction.
+![National: cumulative arms vs StatsCan](provincial_comparison_plots/cum_national_vs_statcan.png)
 
-## Validation against StatsCan (national)
+| Arm | Real GVA growth (%/yr) | Mean unemployment |
+|-----|----------------------:|------------------:|
+| Baseline | 1.76 | 6.8% |
+| +1 (macro) | 1.90 | 7.1% |
+| +1+2 (GFCF) | 1.74 | 7.5% |
+| +1+2+3 (income tax) | 1.71 | 6.7% |
+| +1+2+3+4 (sales tax) | 1.68 | 8.4% |
 
-The two headline series are compared to observed StatsCan data over the overlapping years
-(2014–2024). The candidate baseline is a **smooth** path (no COVID shock) and runs to ~2027;
-the shaded region is beyond the StatsCan data.
+At the national level every change is small on growth (the four arms sit within ~0.2 pp/yr of
+each other) and the whole stack tracks the observed StatsCan real-GDP **trend** (~1.8%/yr), while
+— as a smooth baseline — missing the 2020 COVID contraction and rebound. The changes act mainly by
+**reallocating activity across provinces**, and (for the tax changes) by shifting the
+consumption/investment mix. National unemployment drifts up as the tax wedges are added.
 
-### Real GVA / GDP over time
+The per-province build-up against StatsCan (all five arms per panel):
 
-![National real GVA vs StatsCan](provincial_comparison_plots/cb_gva_vs_statcan.png)
+![Real GVA by province: cumulative arms vs StatsCan](provincial_comparison_plots/cum_gva_by_province.png)
 
-Indexed to 2014 = 100 (model real GVA at base-year prices vs StatsCan real GDP, chained
-2017\$). The model reproduces the **trend growth** well — ~1.7–1.9%/yr against Canada's
-~1.9%/yr average, and both start and (roughly) end together. As a smooth baseline it does
-**not** capture the 2020 COVID contraction and 2021–22 rebound, so by 2024 it sits a little
-below the actual (model ≈ 115–117 vs StatsCan 120). The **+#1** arm tracks the observed path
-most closely.
-
-### Unemployment over time
-
-![National unemployment vs StatsCan](provincial_comparison_plots/cb_unemp_vs_statcan.png)
-
-Model national unemployment (**labour-force-weighted** using 2014 provincial weights, so it is
-comparable to StatsCan's national rate) vs StatsCan Canada seasonally-adjusted rate. The model
-**starts well-aligned** (~7.5% vs 7.2% in 2014), runs modestly high in 2016–2019, misses the
-COVID spike, and co-moves with the actual (~6–8%) through 2024.
-
-**The long-horizon behaviour is unrealistic and should not be read as a forecast:** past ~2024
-the model unemployment drifts down to **2–3%** (the full-employment ceiling) while the actual
-rate holds at ~6–7%. This is the limitation `INTERIM_GROWTH_BASELINE.md` flags explicitly;
-treat model unemployment as informative only through the **medium term**, and rely on the
-*initial conditions and relative cross-province differences* rather than the absolute
-long-horizon level.
-
-## Per-province real GVA growth (%/yr)
-
-Each panel is one province; the lines are the three simulation arms plus that province's
-observed StatsCan real GDP (chained 2017\$, indexed 2014 = 100).
-
-![Real GVA by province](provincial_comparison_plots/cb_real_gva_by_province.png)
-
-The per-province view exposes where the smooth baseline fits and where it does not: the model
-tracks StatsCan reasonably for MB, SK, NB and NS, but **undershoots** the strong observed growth
-in BC and PE and **overshoots** the weak observed paths in NL and AB (both resource-driven — the
-2015–2016 and 2020 oil declines that a shock-free baseline cannot reproduce). #1 and #6 shift the
-provincial trajectories (below) but do not add the missing cyclical/commodity shocks.
-
-| Prov | Baseline | +#1 | +#1+#6 | Δ from #1 | Δ from #6 |
-|------|---------:|----:|-------:|----------:|----------:|
-| AB | 1.63 | 1.53 | 1.81 | −0.09 | **+0.28** |
-| BC | 1.85 | 1.08 | 2.13 | **−0.77** | **+1.05** |
-| MB | 2.42 | 1.82 | 1.61 | −0.60 | −0.20 |
-| NB | 2.27 | 2.37 | 2.09 | +0.10 | −0.27 |
-| NL | 1.19 | 2.23 | 2.91 | **+1.05** | **+0.67** |
-| NS | 2.18 | 3.25 | 1.78 | **+1.07** | **−1.48** |
-| ON | 2.18 | 2.26 | 1.54 | +0.08 | **−0.72** |
-| PE | 1.33 | 1.61 | 2.86 | +0.27 | **+1.25** |
-| QC | 0.86 | 1.91 | 1.63 | **+1.05** | −0.28 |
-| SK | 1.55 | 1.72 | 1.86 | +0.17 | +0.15 |
-
-- **#1 (provincial macro series)** reorders provincial growth by up to ±1 pp/yr: Quebec,
-  Newfoundland & Labrador and Nova Scotia gain ~+1 pp, British Columbia and Manitoba lose
-  ~0.6–0.8 pp. The change is driven by each province's own inflation, labour-market slack and
-  house-price path (previously all provinces shared the national series).
-- **#6 (GFCF split)** reallocates growth toward the investment-heavy provinces: Prince Edward
-  Island +1.25, British Columbia +1.05, Newfoundland & Labrador +0.67; Nova Scotia −1.48 and
-  Ontario −0.72. This follows from the firm/household investment-composition correction (see
-  `provincial_data_comparison.md`, item #6).
-
-In the plot, the baseline provinces grow in a tight, roughly arbitrary band; **+#1** widens the
-spread (Nova Scotia breaks out); **+#1+#6** re-sorts the leaders toward NL/PE.
-
-## Unemployment
-
-Each panel is one province; the lines are the three simulation arms plus that province's
-observed StatsCan unemployment rate (seasonally adjusted).
-
-![Unemployment by province](provincial_comparison_plots/cb_unemployment_by_province.png)
-
-- **Initial conditions:** under Baseline every province starts at the same ~7% national rate;
-  under **+#1** they start at their true 2014 levels (AB/SK ~4.5%, NL ~13%, PE ~13%) — the
-  realistic provincial spread, matching each StatsCan series' 2014 starting point (visible as
-  the green/blue arms sitting on the black line at the left of each panel).
-- **Full-employment ceiling (important caveat):** over 53 quarters the candidate baseline drives
-  most provinces toward **0% unemployment** (the long-horizon full-employment ceiling that
-  `INTERIM_GROWTH_BASELINE.md` explicitly flags as unresolved). Consequently the *endpoint*
-  unemployment is compressed and less informative than the **initial and mid-horizon** paths.
-- Where the ceiling does **not** bind, the commits still matter: Prince Edward Island stays the
-  high-unemployment outlier throughout, and **#6 changes its endgame** — its rate peaks lower and
-  falls to ~12% (vs ~25% under baseline/#1), consistent with #6 raising PE's household-investment
-  share. Ontario retains ~6% residual unemployment under #6.
-
-Cross-province dispersion (mean over the run):
-
-| Metric | Baseline | +#1 | +#1+#6 |
-|--------|---------:|----:|-------:|
-| Unemployment (std) | 0.039 | **0.054** | 0.041 |
-| Real GVA index (CV) | 0.025 | **0.031** | 0.031 |
-
-#1 increases provincial dispersion in both unemployment and real GVA; #6 keeps GVA dispersion
-elevated while the full-employment ceiling pulls the unemployment std back down at long horizon.
-
-## Interpretation
-
-1. Under the candidate baseline, the provincial-data upgrades behave as a **provincial-composition
-   correction**: the national aggregate is preserved while provincial growth and labour-market
-   paths are re-sorted by up to ±1–1.5 pp/yr.
-2. **#1** is the larger and cleaner effect on *labour-market initial conditions and dispersion*;
-   **#6** is the larger effect on *investment-led growth reallocation* (PE, BC, NL up; NS, ON down).
-3. Both effects are economically coherent and trace directly to the province-specific inputs.
-
-## Caveats
-
-- **Single seed.** These are seed-0 runs. The candidate baseline is documented as robust across
-  five seeds in aggregate, but individual provincial trajectories carry seed noise — treat the
-  per-province numbers as directional, and confirm with a multi-seed sweep before quantitative use.
-- **Full-employment ceiling** compresses long-horizon unemployment (see above); the mid-horizon
-  and initial-condition differences are the reliable signal.
-- **Provisional baseline.** Per `INTERIM_GROWTH_BASELINE.md`, the candidate baseline is for model
-  development and controlled comparison, not yet validated for quantitative inference; provincial
-  allocation is aggregation-dependent.
-- Built with the standard disagg-sector-province config (single firm/bank/government per province,
-  `constructor="Default"`, proxy FRA, 2014 base); the pkl itself is not committed (large).
+> **Read the long horizon with care.** Past ~2024 (shaded) the candidate baseline drifts toward a
+> full-employment ceiling — see Caveats. The reliable signal is the **initial conditions and
+> 2014–2024 comparison to StatsCan**, not the absolute end-of-horizon level.
 
 ---
 
-# Effective income tax data: incremental comparison
+# Change 1 — Macro series
 
-A later commit added **province-specific effective corporate and personal income tax rates**
-(StatsCan PTEA; see `provincial_raw_data.md` §3c). They replace the national values every province
-used before — a **statutory** combined corporate rate (~26.5%) and a **hard-coded 0.09** personal
-rate — with effective rates that vary widely (2014 corporate: NL ~0.10 … NS 0.47; personal
-~0.16–0.19). Two incremental comparisons were run on the **same candidate baseline** (53q, seed 0),
-each differing only in the pkl, with firm + household investment now captured:
+Replaces the national CPI / unemployment / house-price / vacancy series (previously stamped onto
+every province) with province-specific StatsCan series. Its clearest effect is on **labour-market
+initial conditions**: provinces now start at their true 2014 unemployment rates (AB/SK ~4.5%,
+NL/PE ~13%) instead of a uniform ~7%.
 
-- **Comparison 1:** Baseline → Baseline **+ tax**
-- **Comparison 2:** +#1+#6 → +#1+#6 **+ tax**
+![Change 1: real GVA by province vs StatsCan](provincial_comparison_plots/change1_gva_by_province.png)
 
-## National aggregate
+![Unemployment by province: cumulative arms vs StatsCan](provincial_comparison_plots/cum_unemp_by_province.png)
 
-| Arm | Real GVA growth (%/yr) |
-|-----|----------------------:|
-| Baseline | 1.76 |
-| Baseline + tax | 1.91 |
-| +#1+#6 | 1.74 |
-| +#1+#6 + tax | 1.71 |
+Incremental effect (Baseline → +macro):
 
-At the national level the tax correction is **roughly neutral** on growth (+0.15 pp on the pure
-baseline, −0.03 pp on top of #1+#6). National **total investment** moves **+8.5%** (Comparison 1)
-and **+1.4%** (Comparison 2). As with #1/#6, the action is in the **provincial composition**, not
-the national total.
+| Prov | GVA growth (%/yr) | Δ GVA (pp) | Δ mean unemp (pp) | Investment %Δ |
+|------|:-----------------:|-----------:|------------------:|--------------:|
+| ON | 2.18 → 2.26 | +0.08 | −0.5 | +24 |
+| QC | 0.86 → 1.91 | +1.05 | −1.0 | +68 |
+| AB | 1.63 → 1.53 | −0.09 | −3.0 | −17 |
+| BC | 1.85 → 1.08 | −0.77 | +1.4 | −19 |
+| MB | 2.42 → 1.82 | −0.60 | −1.6 | −22 |
+| SK | 1.55 → 1.72 | +0.17 | −1.6 | −29 |
+| NS | 2.18 → 3.25 | +1.07 | −0.6 | +69 |
+| NB | 2.27 → 2.37 | +0.10 | +1.7 | +23 |
+| NL | 1.19 → 2.23 | +1.05 | +3.2 | +63 |
+| PE | 1.33 → 1.61 | +0.27 | +4.7 | +15 |
 
-## Comparison 1 — Baseline vs + tax
+- In the unemployment panel, the +macro line (green) snaps onto each province's **StatsCan
+  starting level** in 2014 — the realistic provincial spread that the baseline lacked.
+- Provincial growth re-sorts by up to ±1 pp/yr (QC, NL, NS gain; BC, MB lose), driven by each
+  province's own inflation and labour-market slack.
 
-![Comparison 1: real GVA by province](provincial_comparison_plots/tax_c1_gva_by_province.png)
+---
 
-| Prov | GVA growth (base → +tax) | Δ GVA (pp/yr) | Δ mean unemp (pp) | Total investment %Δ |
-|------|:------------------------:|--------------:|------------------:|--------------------:|
-| ON | 2.18 → 2.22 | +0.04 | +0.5 | +1.9 |
-| QC | 0.86 → 1.10 | +0.24 | −0.7 | +10.2 |
-| AB | 1.63 → 1.69 | +0.06 | −1.5 | −2.9 |
-| BC | 1.85 → 2.73 | +0.87 | −2.0 | +80.8 |
-| MB | 2.42 → 1.55 | −0.87 | +1.6 | −16.4 |
-| SK | 1.55 → 1.25 | −0.30 | +0.4 | −24.0 |
-| NS | 2.18 → 2.55 | +0.37 | −0.4 | +44.1 |
-| NB | 2.27 → 2.15 | −0.12 | +0.6 | +20.9 |
-| NL | 1.19 → 1.46 | +0.27 | −0.2 | +19.4 |
-| PE | 1.33 → 2.46 | +1.13 | −1.7 | +112.1 |
+# Change 2 — GFCF split
 
-## Comparison 2 — +#1+#6 vs +#1+#6 + tax
+Replaces the single **French** firm/household/government split of investment with province-specific
+shares from the provincial expenditure accounts. Resource provinces become much more
+firm-investment-heavy (AB ~0.75 firm share vs 0.57 French); housing-oriented provinces carry more
+household investment.
 
-![Comparison 2: real GVA by province](provincial_comparison_plots/tax_c2_gva_by_province.png)
+![Change 2: real GVA by province vs StatsCan](provincial_comparison_plots/change2_gva_by_province.png)
 
-| Prov | GVA growth (#1+#6 → +tax) | Δ GVA (pp/yr) | Δ mean unemp (pp) | Total investment %Δ |
-|------|:-------------------------:|--------------:|------------------:|--------------------:|
-| ON | 1.54 → 1.31 | −0.23 | −0.6 | −5.1 |
-| QC | 1.63 → 1.62 | −0.01 | −1.4 | −1.1 |
-| AB | 1.81 → 1.56 | −0.25 | −0.8 | +5.4 |
-| BC | 2.13 → 2.45 | +0.32 | +2.5 | −14.3 |
-| MB | 1.61 → 1.71 | +0.10 | −3.2 | +7.3 |
-| SK | 1.86 → 2.53 | +0.67 | −0.5 | +52.7 |
-| NS | 1.78 → 2.48 | +0.71 | −2.1 | +4.3 |
-| NB | 2.09 → 2.75 | +0.66 | −1.9 | +74.8 |
-| NL | 2.91 → 2.89 | −0.01 | +0.1 | −7.8 |
-| PE | 2.86 → 2.39 | −0.47 | +0.2 | −9.5 |
+Incremental effect (+macro → +GFCF):
 
-## Marginal effect summary (GDP, unemployment, investment)
+| Prov | GVA growth (%/yr) | Δ GVA (pp) | Δ mean unemp (pp) | Investment %Δ |
+|------|:-----------------:|-----------:|------------------:|--------------:|
+| ON | 2.26 → 1.54 | −0.72 | +4.2 | −39 |
+| QC | 1.91 → 1.63 | −0.28 | +0.3 | −31 |
+| AB | 1.53 → 1.81 | +0.28 | +1.0 | −17 |
+| BC | 1.08 → 2.13 | +1.05 | −5.0 | +88 |
+| MB | 1.82 → 1.61 | −0.20 | +2.1 | −13 |
+| SK | 1.72 → 1.86 | +0.15 | +0.0 | +29 |
+| NS | 3.25 → 1.78 | −1.48 | +3.2 | −59 |
+| NB | 2.37 → 2.09 | −0.27 | +1.7 | −39 |
+| NL | 2.23 → 2.91 | +0.67 | −1.5 | +43 |
+| PE | 1.61 → 2.86 | +1.25 | −2.7 | +39 |
 
-![Tax marginal effects by province](provincial_comparison_plots/tax_marginal_effects.png)
+- This is the largest **investment-composition** effect of the four changes: total provincial
+  investment swings from −59% (NS) to +88% (BC), following the firm/household reallocation.
+- Growth reallocates toward the provinces whose investment mix rises (BC, PE, NL, SK up; NS, ON
+  down).
+
+---
+
+# Change 3 — Effective income tax
+
+Replaces the national **statutory** combined corporate rate (~26.5%) and hard-coded 0.09 personal
+rate with province-specific **effective** rates from the PTEA (2014 corporate: NL ~0.10 … NS 0.47;
+personal ~0.16–0.19). Because the model applies tax rates flat, the effective rate is the correct
+scalar; the correction both changes the national average and adds cross-province variation.
+
+![Change 3: real GVA by province vs StatsCan](provincial_comparison_plots/change3_gva_by_province.png)
+
+Incremental effect (+GFCF → +income tax):
+
+| Prov | GVA growth (%/yr) | Δ GVA (pp) | Δ mean unemp (pp) | Investment %Δ |
+|------|:-----------------:|-----------:|------------------:|--------------:|
+| ON | 1.54 → 1.31 | −0.23 | −0.6 | −5 |
+| QC | 1.63 → 1.62 | −0.01 | −1.4 | −1 |
+| AB | 1.81 → 1.56 | −0.25 | −0.8 | +5 |
+| BC | 2.13 → 2.45 | +0.32 | +2.5 | −14 |
+| MB | 1.61 → 1.71 | +0.10 | −3.2 | +7 |
+| SK | 1.86 → 2.53 | +0.67 | −0.5 | +53 |
+| NS | 1.78 → 2.48 | +0.71 | −2.1 | +4 |
+| NB | 2.09 → 2.75 | +0.66 | −1.9 | +75 |
+| NL | 2.91 → 2.89 | −0.01 | +0.1 | −8 |
+| PE | 2.86 → 2.39 | −0.47 | +0.2 | −10 |
+
+- Investment is the most tax-sensitive channel: provinces whose **effective corporate rate falls
+  below the old 26.5% statutory rate** (NL, MB, NB, SK) get more firm net income and invest more;
+  the direction is heterogeneous and, at a single seed, noisy.
+
+The incremental investment effect of each change side-by-side (changes 3 and 4 are the tax
+changes):
+
+![Incremental effect on provincial investment, by change](provincial_comparison_plots/cum_investment_marginal.png)
+
+---
+
+# Change 4 — Sales tax
+
+Replaces the single national VAT rate with a province-specific **effective consumption-tax rate**
+(2014: AB ~0.035 — GST-only — vs ~0.07–0.10 elsewhere). The model applies it as a flat wedge on
+final household consumption, so provinces with a low effective rate (Alberta) get a consumption
+boost and high-rate provinces a drag.
+
+![Change 4: real GVA by province vs StatsCan](provincial_comparison_plots/change4_gva_by_province.png)
+
+Incremental effect (+income tax → +sales tax):
+
+| Prov | GVA growth (%/yr) | Δ GVA (pp) | Δ mean unemp (pp) | Investment %Δ |
+|------|:-----------------:|-----------:|------------------:|--------------:|
+| ON | 1.31 → 1.21 | −0.10 | +1.1 | +4 |
+| QC | 1.62 → 1.82 | +0.20 | +1.4 | +32 |
+| AB | 1.56 → 1.98 | +0.42 | +0.6 | +41 |
+| BC | 2.45 → 1.89 | −0.57 | +0.2 | +6 |
+| MB | 1.71 → 2.65 | +0.94 | +1.6 | +60 |
+| SK | 2.53 → 2.21 | −0.32 | +1.2 | +36 |
+| NS | 2.48 → 1.57 | −0.91 | +3.4 | −2 |
+| NB | 2.75 → 1.42 | −1.33 | +3.7 | −39 |
+| NL | 2.89 → 1.91 | −0.99 | +1.4 | −32 |
+| PE | 2.39 → 1.73 | −0.66 | +2.8 | +4 |
+
+- Alberta gains (lowest consumption tax → more consumption/investment); several high-rate
+  provinces (NB, NS, NL) lose growth and gain unemployment as the consumption wedge dampens demand.
+- The sales-tax wedge is the change that most clearly **raises national unemployment** (6.7% →
+  8.4% mean), consistent with a consumption drag.
+
+---
 
 ## Interpretation
 
-1. **Investment is by far the most tax-sensitive metric.** Total provincial investment swings from
-   −24% to +112% (Comparison 1) — much larger than the GDP-growth (±~1 pp/yr) or unemployment
-   (±1–3 pp) responses. This is expected: the effective corporate rate directly scales firm net
-   income and hence investment, and it moves a long way from the uniform 26.5% statutory rate
-   (down sharply for NL/MB/NB/PE, up for NS).
-2. **National-neutral, provincially heterogeneous** — like #1/#6, the tax correction reallocates
-   activity across provinces rather than moving the national aggregate.
-3. **The direction is state-dependent.** Several provinces flip sign between Comparison 1 and 2
-   (e.g. BC investment +81% vs −14%; PE +112% vs −10%): the tax effect interacts with the
-   investment composition that #6 already changed, and with the labour path. That interaction is
-   real, but at a single seed it is also partly noise.
+1. **Each change is a provincial-composition correction.** The national growth aggregate barely
+   moves (1.68–1.90%/yr across all arms); what changes is *which* provinces lead and the
+   consumption/investment mix.
+2. **The changes target different channels.** #1 fixes labour-market initial conditions; #2 is the
+   biggest investment-composition mover; #3 shifts firm investment via effective corporate rates;
+   #4 shifts consumption (and unemployment) via the effective sales rate.
+3. **Against StatsCan (2014–2024),** the model reproduces provincial growth *trends* well for
+   several provinces and poorly for the resource provinces whose observed paths are dominated by
+   oil-price shocks a smooth baseline cannot produce (AB, NL). #1 clearly improves the match of
+   provincial unemployment *levels*.
 
-## Caveats (tax)
+## Caveats
 
-- **Single seed, and investment is volatile.** The per-province investment magnitudes are
-  **directional only** — the sign flips between the two comparisons show how sensitive they are to
-  state and seed. A multi-seed sweep is needed before treating any province-level tax number as
-  quantitative.
-- **A level correction is mixed in with the provincialization.** The tax arm changes *both* the
-  concept (statutory→effective corporate; and 0.09→~0.17 personal, which roughly **doubles** the
-  household income-tax rate) *and* the cross-province variation. So part of every effect here is the
-  national-level effective-rate correction, not pure provincial reallocation.
-- The full-employment-ceiling and provisional-baseline caveats from the #1/#6 section apply here too.
+- **Single seed.** All runs are seed 0. The candidate baseline is documented as robust across five
+  seeds in aggregate, but per-province trajectories — especially the **investment** magnitudes —
+  carry seed noise and are **directional only**. Confirm with a multi-seed sweep before any
+  province-level quantitative use.
+- **Full-employment ceiling.** Past ~2024 the baseline drives most provinces toward 0%
+  unemployment (flagged in `INTERIM_GROWTH_BASELINE.md`), so end-of-horizon unemployment is
+  compressed; rely on initial conditions and the 2014–2024 window.
+- **Tax changes mix a level correction with provincialization.** #3 and #4 change both the national
+  concept (statutory→effective corporate; the personal rate ~doubles from 0.09; a national→
+  provincial consumption wedge) *and* the cross-province variation, so part of each tax effect is a
+  national-level correction, not pure reallocation.
+- **Provisional baseline.** Per `INTERIM_GROWTH_BASELINE.md`, this baseline is for model
+  development and controlled comparison, not yet validated for quantitative inference; provincial
+  allocation is aggregation-dependent.
+- Built with the standard disagg-sector-province config (single firm/bank/government per province,
+  `constructor="Default"`, proxy FRA, 2014 base); pickles are not committed (large).
