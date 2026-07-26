@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from macromodel.util.clamps import clamp_towards as _clamp_towards
+
 
 class ExcessDemandSetter(ABC):
     """Abstract base class for determining firms' excess demand levels.
@@ -123,21 +125,27 @@ class ConstrainedExcessDemandSetter(ExcessDemandSetter):
         Returns:
             np.ndarray: Feasible production targets after all constraints
         """
-        target_production = np.minimum(
+        # Each clamp blends the target toward the SPARE capacity implied by an input
+        # (`limit - current_production`). Uses the shared inf-safe helper: the naive
+        # form evaluates 0.0 * inf -> NaN for a firm with no binding constraint
+        # (limit = inf) when the weight is 0.0, and unlike the target-input setters
+        # `compute_maximum_excess_demand` is NOT fillna-guarded, so the NaN would flow
+        # straight into `Remaining Excess Goods` and corrupt goods-market clearing.
+        # Identical to the naive form wherever the limit is finite, at every weight.
+        target_production = _clamp_towards(
             target_production,
-            target_production
-            + self.consider_labour_inputs * ((limiting_labour_inputs - current_production) - target_production),
+            limiting_labour_inputs - current_production,
+            self.consider_labour_inputs,
         )
-        target_production = np.minimum(
+        target_production = _clamp_towards(
             target_production,
-            target_production
-            + self.consider_intermediate_inputs
-            * ((limiting_intermediate_inputs - current_production) - target_production),
+            limiting_intermediate_inputs - current_production,
+            self.consider_intermediate_inputs,
         )
-        target_production = np.minimum(
+        target_production = _clamp_towards(
             target_production,
-            target_production
-            + self.consider_capital_inputs * ((limiting_capital_inputs - current_production) - target_production),
+            limiting_capital_inputs - current_production,
+            self.consider_capital_inputs,
         )
 
         return target_production

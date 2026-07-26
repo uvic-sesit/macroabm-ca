@@ -39,6 +39,9 @@ from macro_data.readers.economic_data.imf_reader import IMFReader
 from macro_data.readers.economic_data.oecd_economic_data import OECDEconData
 from macro_data.readers.economic_data.ons_reader import ONSReader
 from macro_data.readers.economic_data.policy_rates import PolicyRatesReader
+from macro_data.readers.economic_data.provincial_investment_reader import ProvincialInvestmentReader
+from macro_data.readers.economic_data.provincial_macro_reader import ProvincialMacroReader
+from macro_data.readers.economic_data.provincial_tax_reader import ProvincialTaxReader
 from macro_data.readers.economic_data.world_bank_reader import WorldBankReader
 from macro_data.readers.emission_fraction.emission_fraction_reader import EmissionsFractionReader
 from macro_data.readers.emissions.emissions_reader import CH4EmissionsReaderCAN, EmissionsReader
@@ -207,6 +210,9 @@ class DataReaders:
     emission_fractions: Optional[EmissionsFractionReader] = None
     exo_prices: Optional[SectorExoPricesReader] = None
     ch4_emissions: Optional[CH4EmissionsReaderCAN] = None
+    provincial_macro: Optional[ProvincialMacroReader] = None
+    provincial_investment: Optional[ProvincialInvestmentReader] = None
+    provincial_tax: Optional[ProvincialTaxReader] = None
     regions_dict: Optional[dict[Country, list[Region]]] = None
 
     @classmethod
@@ -253,10 +259,16 @@ class DataReaders:
 
         eu_only = list(set(eu_only).union(set(proxy_eu)))
 
+        # Optional province-level GFCF-split override (StatsCan), resolved from the raw_data
+        # bundle at <raw_data>/canadian_inputs/. No-op if the file is absent (national/proxy runs).
+        provincial_investment = ProvincialInvestmentReader.from_default(raw_data_path=raw_data_path)
+
         def get_investment_year(year: int, country_names_: Optional[list[Country | Region]] = None):
             if country_names_ is None:
                 country_names_ = country_names
-            return get_investment_fractions(country_names_, eurostat, proxy_country_dict, year)
+            return get_investment_fractions(
+                country_names_, eurostat, proxy_country_dict, year, provincial_reader=provincial_investment
+            )
 
         icio = {
             year: ICIOReader.agg_from_csv(
@@ -491,6 +503,13 @@ class DataReaders:
         if datapaths.ch4_emissions_path is not None and datapaths.ch4_emissions_path.exists():
             ch4_emissions = CH4EmissionsReaderCAN.read_data(datapaths.ch4_emissions_path)
 
+        # Optional province-level overrides (StatsCan), resolved from the raw_data bundle at
+        # <raw_data>/canadian_inputs/. Each is a no-op if its file is absent, so national/proxy
+        # runs (and non-Canadian raw_data bundles) are unaffected. The investment reader is
+        # constructed earlier (it feeds the ICIO GFCF split); macro and tax are attached here.
+        provincial_macro = ProvincialMacroReader.from_default(raw_data_path=raw_data_path)
+        provincial_tax = ProvincialTaxReader.from_default(raw_data_path=raw_data_path)
+
         return cls(
             icio=icio,
             wiod_sea=wiod_sea,
@@ -510,6 +529,9 @@ class DataReaders:
             emission_fractions=emission_fractions,
             exo_prices=exo_prices,
             ch4_emissions=ch4_emissions,
+            provincial_macro=provincial_macro,
+            provincial_investment=provincial_investment,
+            provincial_tax=provincial_tax,
             regions_dict=regions_dict,
         )
 

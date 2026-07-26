@@ -1301,6 +1301,10 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
             previous_good_prices=good_prices,
             extra_taxes=extra_taxes,
+            # Unclamped, demand-driven production target. Used only by the
+            # reference-capital-stock rule when forward_looking_reference_fraction > 0;
+            # ignored at the default of 0.0.
+            unconstrained_target_production=self.ts.current("target_production"),
         )
 
     def compute_unconstrained_demand_for_capital_inputs_value(self, current_good_prices: np.ndarray) -> np.ndarray:

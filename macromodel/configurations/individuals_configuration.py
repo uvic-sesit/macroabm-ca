@@ -6,10 +6,16 @@ from pydantic import BaseModel
 class DemographyFunction(BaseModel):
     """
     The function for setting individual demography.
+
+    "NoAging" (default, shipped) freezes population and participation entirely.
+    "ExogenousLabourForcePath" is opt-in: it drives the labour force along a supplied
+    quarterly index by reclassifying existing NOT_ECONOMICALLY_ACTIVE individuals as
+    UNEMPLOYED (and back). It creates no individuals and resizes no arrays. With no
+    `labour_force_index` parameter it is inert and behaves as NoAging.
     """
 
     path_name: str = "demography"
-    name: Literal["NoAging"] = "NoAging"
+    name: Literal["NoAging", "ExogenousLabourForcePath"] = "NoAging"
     parameters: dict[str, Any] = {}
 
 

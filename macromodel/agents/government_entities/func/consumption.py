@@ -71,6 +71,7 @@ class GovernmentConsumptionSetter(ABC):
         self.consistency = consistency
         self.default_growth = default_growth
         self.fixed_total_government_consumption = None
+        self.fixed_consumption_weights = None
         self.buffer = 20
 
     @abstractmethod
@@ -486,11 +487,19 @@ class ExogenousGovernmentConsumptionSetter(GovernmentConsumptionSetter):
                 "ExogenousGovernmentConsumptionSetter: non-finite exogenous government consumption with "
                 f"current_time={current_time}, value={exogenous_total_consumption[current_time]}"
             )
-        consumption_weights = _normalise_government_consumption_weights(previous_desired_government_consumption)
+        # The industry composition is held fixed at its initial value. Deriving
+        # weights from the previous (price-adjusted) desired vector feeds the
+        # per-industry price ratio back into the weights each period, so any
+        # persistent relative-price gap compounds exponentially and the basket
+        # drifts out of its core sectors entirely.
+        if self.fixed_consumption_weights is None:
+            self.fixed_consumption_weights = _normalise_government_consumption_weights(
+                previous_desired_government_consumption
+            )
         return (
             (1 + expected_inflation)
             * current_good_prices
             / initial_good_prices
             * exogenous_total_consumption[current_time]
-            * consumption_weights
+            * self.fixed_consumption_weights
         )
