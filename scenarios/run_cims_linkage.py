@@ -32,6 +32,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from macro_data import DataWrapper
 from macro_data.processing.macroabm_cims_data_processing import (
@@ -40,7 +41,17 @@ from macro_data.processing.macroabm_cims_data_processing import (
     SectorMap,
 )
 from macro_data.readers.cims_data import CIMSDataReader
+from macromodel.configurations.growth_baseline_preset import apply_candidate_growth_baseline
 from macromodel.simulation import Simulation
+
+# Candidate-baseline household-demand overlay (matches scripts/run_candidate_baseline.py).
+_HH_DEMAND_COLS = [
+    "Real Household Consumption (Value)",
+    "Household Consumption (Value)",
+    "Real Household Investment (Value)",
+    "Household Investment (Value)",
+]
+_HOUSEHOLD_DEMAND_GROWTH = 0.02
 
 # Reuse the proven provincial configuration helpers.  Support running both as a
 # module (``python -m scenarios.run_cims_linkage``) and as a file
@@ -423,17 +434,68 @@ def apply_growth_limits(
         )
 
 
+def _extend_exogenous_national_accounts(model: Simulation, required_length: int) -> None:
+    """Hold the last observed exogenous national-accounts quarter flat past the data tail."""
+    for country in model.countries.values():
+        frame = country.exogenous.national_accounts_during.copy()
+        if len(frame) >= required_length:
+            continue
+        last_index = frame.index[-1]
+        rows, index = [], []
+        for step in range(required_length - len(frame)):
+            rows.append(frame.iloc[-1].copy())
+            index.append(last_index + pd.DateOffset(months=3 * (step + 1)))
+        country.exogenous.national_accounts_during = pd.concat(
+            [frame, pd.DataFrame(rows, index=index)], axis=0
+        )
+
+
+def _apply_household_demand_overlay(
+    model: Simulation,
+    growth_rate: float = _HOUSEHOLD_DEMAND_GROWTH,
+) -> None:
+    """Apply the candidate-baseline exogenous household demand growth overlay."""
+    for country in model.countries.values():
+        frame = country.exogenous.national_accounts_during
+        fac = (1.0 + growth_rate) ** (np.arange(len(frame)) / 4.0)
+        for col in _HH_DEMAND_COLS:
+            if col in frame.columns:
+                frame[col] = frame[col].values * fac
+
+
 def build_simulation(
     data: DataWrapper,
     *,
     timesteps: int,
     seed: int,
     firms_bundles: list[list[int]] | None = None,
+    use_candidate_baseline: bool = False,
 ) -> Simulation:
+    """Build a provincial Simulation, optionally with the candidate growth baseline.
+
+    When ``use_candidate_baseline`` is True, applies the provisional real-growth
+    preset from ``growth_baseline_preset`` (observed labour paths, exogenous
+    government/household setters, demand/capital mechanisms) plus the turnkey
+    post-build overlays (flat NA extension past the data tail and +2%/yr HH demand).
+    """
     config = build_simulation_configuration(
         len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles
     )
-    return Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
+    if use_candidate_baseline:
+        logger.info("Applying candidate growth baseline (observed labour path + HH overlay)")
+        for i, province in enumerate(CANADIAN_PROVINCES):
+            apply_candidate_growth_baseline(
+                config.country_configurations[province],
+                use_observed_labour_path=True,
+                province=_province_code(province),
+                n_quarters=timesteps + 1,
+                demography_seed=1000 + i + 100 * seed,
+            )
+    sim = Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
+    if use_candidate_baseline:
+        _extend_exogenous_national_accounts(sim, required_length=timesteps + 1)
+        _apply_household_demand_overlay(sim)
+    return sim
 
 
 EXPORT_CHECKPOINT_NAME = "simulation_export.pkl"
@@ -580,6 +642,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--sector-map", type=Path, default=None, help="Override sector-map CSV.")
     p.add_argument("--region-map", type=Path, default=None, help="Override region-map CSV.")
     p.add_argument("--force-rebuild-pickle", action="store_true")
+    p.add_argument(
+        "--use-candidate-baseline",
+        action="store_true",
+        help="Apply the provisional real-growth candidate baseline (observed labour path + HH overlay).",
+    )
     p.add_argument("--warm-start", action="store_true",
                    help="Enable milestone checkpointing and partial reruns.")
     p.add_argument("--history-boundary", type=int, default=2020,
@@ -779,7 +846,13 @@ def main() -> None:
             args.history_boundary,
             history_steps,
         )
-        sim = build_simulation(data, timesteps=total_steps, seed=args.seed, firms_bundles=firms_bundles)
+        sim = build_simulation(
+            data,
+            timesteps=total_steps,
+            seed=args.seed,
+            firms_bundles=firms_bundles,
+            use_candidate_baseline=args.use_candidate_baseline,
+        )
         sim.prehooks.append(link_prehook)
         apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
         run_with_checkpoints(
@@ -800,7 +873,13 @@ def main() -> None:
             checkpoint_retention=checkpoint_retention,
         )
     elif sim is None:
-        sim = build_simulation(data, timesteps=total_steps, seed=args.seed, firms_bundles=firms_bundles)
+        sim = build_simulation(
+            data,
+            timesteps=total_steps,
+            seed=args.seed,
+            firms_bundles=firms_bundles,
+            use_candidate_baseline=args.use_candidate_baseline,
+        )
         sim.prehooks.append(link_prehook)
         apply_growth_limits(sim, gl_indices, args.growth_limit_up, args.growth_limit_down, args.steps_per_year)
         logger.info("Running provincial macroABM for %d timesteps", total_steps)
