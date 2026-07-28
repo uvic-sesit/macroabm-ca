@@ -93,6 +93,77 @@ The new tests cover: inf-safe clamps, demand smoothing (alpha), unmet-demand wei
 and workforce-entry hooks, the histogram robustness fix, and the candidate-baseline preset
 + bundled labour-index loader.
 
+## Checkpoint 2026-07-27 — household, fiscal, and productivity status
+
+Verified from code/config/git history (not memory). Branch `real-growth-baseline`, HEAD
+`06ef683`, tag `checkpoint/pre-productivity-2026-07-22` at `48dea36`.
+
+### Growth & supply (commit status)
+The demand-memory, rolling-capital-reference, internal-growth-transmission and observed
+labour-path mechanisms above are **committed as code and as an opt-in preset**
+(`growth_baseline_preset.py`, runner `run_candidate_baseline.py`; last touched `e2e6e25`).
+They are **not shipped config defaults** — verified legacy defaults still ship
+(`demand_smoothing` 1.0, `unmet_demand_weight` 1.0, `excess_demand.consider_capital_inputs`
+1.0, `firm/sectoral_growth_adjustment_speed` 0.0, `target_capital_inputs_fraction` 0.0,
+`rolling_reference` False, gov consumption `AutoregressiveGovernmentConsumptionSetter`,
+demography `NoAging`). The preset overrides these. Approx. real-GVA growth of the current
+**structural** provisional baseline (disposable closure + candidate levers + `NoOpTFPGrowth`,
+3 seeds, 53q): **~1.0%/yr** (vs the earlier `ExogenousHouseholdConsumption` candidate arm
+~1.7–1.9%/yr). Main remaining limits: long-horizon full-employment ceiling, investment
+benchmark and labour-level calibration unresolved, aggregation-dependent provincial allocation.
+
+### Household demand — `DisposableIncomeHouseholdConsumption` (COMMITTED, `06ef683`)
+- Implemented and committed with focused tests (`test_disposable_consumption.py`).
+- Consumption responds to **after-tax disposable income**: `disposable = expected_income −
+  income_tax·((1−SI)·employee_income + financial_income) − SI·employee_income`, floored at 0
+  (mirrors `CentralGovernment.compute_taxes`). Higher personal tax/SI lowers consumption.
+- **Transfers** are untaxed and retained in full → raise household resources and consumption.
+- The existing **propensity distribution is preserved unchanged** (the rule only nets income
+  and forwards `saving_rates`; falls back to gross if income components absent).
+- Propensity `(1−s)≈0.611` is **provisional**, `1 − HFCS(goods+services/gross income)` —
+  **NOT an SNA saving-rate calibration**. Housing/rent overlap and APC re-centring remain
+  **deferred**.
+- **Availability vs default:** available and tested, but the **repository default is still
+  `DefaultHouseholdConsumption`** (the disposable rule is a selectable option, not the default).
+
+### Government & public finance — passive fiscal closure (present stage)
+- Government consumption stays on the **exogenous** path for the provisional baseline (preset
+  selects `ExogenousGovernmentConsumptionSetter`; national-accounts path held flat past the tail).
+- Taxes and social contributions are **endogenous** to activity (`compute_taxes`); revenue
+  aggregates them (`compute_revenue`).
+- `deficit = benefits + gov_spending + interest − revenue`; extra revenue **reduces the
+  deficit / raises the surplus**. `debt_{t+1} = debt_t + deficit`; `interest = policy_rate·debt`.
+- **No debt cap, borrowing limit, or fiscal-reaction rule is active** (verified absent).
+- This is a coherent **passive fiscal closure** for this stage: taxes/benefits endogenous,
+  government consumption exogenous, deficit accumulates into debt with no policy feedback.
+
+### Productivity / TFP (correction UNCOMMITTED; NoOp remains default)
+- **Original defect:** `Firms.compute_productivity_investment` returns net capital investment
+  (`max(0, capital_bought − replacement)`), fed to TFP via `compute_tfp_growth` **regardless of
+  the planner** — so ordinary capital investment drove TFP even under
+  `NoProductivityInvestmentPlanner` (TFP ballooned to ~2.69× over 53q).
+- **Narrow gating correction** (`firms.py`, uncommitted): `Firms._investment_drives_tfp()` is
+  True only when a real planner is active; `compute_tfp_growth` uses **zero** productivity
+  investment under the No-op planner. `NoOpTFPGrowth` stays **bit-for-bit** (full-sim NoOp arm
+  reproduces exactly); investment-induced TFP is **preserved as an explicit opt-in** (select
+  `Simple`/`Optimal` planner). Covered by `test_tfp_investment_gating.py`.
+- Clean `SimpleTFPGrowth` at `0.0025`/q follows the intended geometric path
+  (`(1.0025)^53 = 1.1415`, matched exactly).
+- **Three-seed findings (clean Simple vs NoOp):** labour-per-output −0.96%/yr, unit-cost growth
+  −0.42pp/yr and PPI −0.43pp/yr (price transmission via the labour-cost channel — traced through
+  factor inputs and unit costs, not inferred from `prices.py`), profit/GVA +3.2pp, real GVA
+  ≈ unchanged (−0.04pp), unemployment +1.1pp. Numerically stable (0 NaN, 0 neg-K). Intermediate-
+  per-output is unchanged **by design** (intermediate efficiency is the separate
+  `technical_coefficients_growth` lever).
+- **Interpretation:** this configuration is **demand-constrained** — productivity expands
+  *efficient supply*, but final demand does not rise enough to absorb materially higher
+  production, so the gain surfaces as lower labour input, modest disinflation and better margins
+  rather than extra output. Demand growth could later come from population growth translated into
+  household demand, disposable-income growth, exports, government demand, investment expectations,
+  transfers, or credit — **none implemented now**.
+- **`NoOpTFPGrowth` remains the default.** Clean TFP is an **available diagnostic/scenario**, not
+  the selected baseline growth fix.
+
 ## Provisional status
 
 The baseline is **robust across five seeds** and suitable for **model development and
