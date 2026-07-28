@@ -123,6 +123,46 @@ class RestOfTheWorld(Agent):
         self.assume_zero_growth = assume_zero_growth
         self.assume_zero_noise = assume_zero_noise
         self.configuration = configuration
+        # Industry indices whose ROW exports (= domestic imports) are share-capped.
+        # Empty by default, so behaviour is unchanged unless set_import_limits() is called.
+        self._import_limited_industries: list[int] = []
+
+    def set_import_limits(self, industry_indices) -> None:
+        """Cap ROW exports of the given industries so their import *share* cannot grow.
+
+        The rest of the world is an unconstrained residual supplier: whenever domestic
+        firms cannot meet demand for a good, ROW fills the gap.  That is realistic for
+        tradeable goods but not for ones where the intent is to force the domestic
+        sector to build capacity (e.g. electricity under an electrification scenario) --
+        there, unconstrained imports silently absorb the entire demand increase and the
+        domestic sector never expands.
+
+        Limited industries have their desired real exports clamped to the base-year
+        level scaled by the aggregate production index, i.e. imports may still grow with
+        the economy but their share of it cannot rise above the base-year share.
+
+        Args:
+            industry_indices: industry indices to cap; empty/None clears all limits.
+        """
+        self._import_limited_industries = sorted({int(i) for i in (industry_indices or [])})
+
+    def _apply_import_limits(self, aggregate_country_production_index: float) -> None:
+        """Clamp the current desired real exports of import-limited industries in place.
+
+        No-op unless :meth:`set_import_limits` has been called.  The cap grows with
+        ``aggregate_country_production_index`` so it constrains the *share*, not the level.
+        """
+        if not self._import_limited_industries:
+            return
+        current = np.array(self.ts.current("desired_exports_real"), dtype=float)
+        initial = np.array(self.ts.initial("desired_exports_real"), dtype=float)
+        index = float(aggregate_country_production_index)
+        if not np.isfinite(index) or index <= 0.0:
+            index = 1.0
+        for g in self._import_limited_industries:
+            if 0 <= g < current.size:
+                current[g] = min(current[g], initial[g] * index)
+        self.ts.desired_exports_real[-1] = current
 
     @classmethod
     def from_pickled_row(
@@ -336,6 +376,9 @@ class RestOfTheWorld(Agent):
                 )
             )
         assert np.all(self.ts.current("desired_exports_real") >= 0.0)
+        # Cap import-limited industries before the quantities become sellable goods,
+        # so the goods market simply sees less ROW supply (no clearing changes needed).
+        self._apply_import_limits(aggregate_country_production_index)
         self.set_goods_to_sell(
             np.array(
                 reduce(

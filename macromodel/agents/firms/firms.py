@@ -25,8 +25,32 @@ _INDUSTRY_TS_SUM_FIELDS = (
     "real_amount_sold",
     "inventory",
     "limiting_intermediate_inputs",
+    # The capital-side constraint.  Without it the shallow summary cannot say whether a
+    # supply-constrained run is short of intermediate inputs or of capital, which is the
+    # first question to ask of any collapse; the full multi-GB save was previously the
+    # only way to see it.
+    "limiting_capital_inputs",
+    # Wage decomposition.  The labour share is wages / value added, and wages are
+    # employment x wage rate -- without both terms the shallow summary cannot say whether a
+    # rising labour share comes from hiring or from a spiralling wage *rate*, which is the
+    # first question to ask of any wage-driven collapse.
+    "total_wage",
+    "number_of_employees",
 )
-_INDUSTRY_TS_WEIGHTED_FIELDS = {"price": "production"}
+_INDUSTRY_TS_WEIGHTED_FIELDS = {
+    "price": "production",
+    # Employment-weighted: these are per-worker/intensive quantities, so summing them
+    # across firms would be meaningless.
+    "real_wage_per_capita": "number_of_employees",
+    "wage_tightness_markup": "number_of_employees",
+    # The two productivity terms wages are indexed to.  set_employee_income multiplies
+    # each stayer's wage by current/prev labour_productivity_factor, and set_offered_wage
+    # multiplies by that ratio *and* the TFP multiplier -- so without these series the
+    # shallow summary cannot say which productivity term (if either) is driving a wage
+    # spiral, only that one is happening.
+    "labour_productivity_factor": "number_of_employees",
+    "labour_productivity": "number_of_employees",
+}
 
 
 def _weighted_effective_coefficient(

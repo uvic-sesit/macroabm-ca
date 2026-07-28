@@ -434,6 +434,35 @@ def apply_growth_limits(
         )
 
 
+def apply_import_limits(sim: Simulation, industry_indices: list[int]) -> None:
+    """Cap ROW exports (= domestic imports) of the given industries at their base-year share.
+
+    Applied after the simulation is built or restored (and on every iteration), so it
+    also configures sims restored from checkpoints written before the cap existed.
+    A no-op when no sectors are given.  See
+    :meth:`RestOfTheWorld.set_import_limits` for the semantics.
+    """
+    if not industry_indices:
+        return
+    sim.rest_of_the_world.set_import_limits(industry_indices)
+
+
+def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
+    """Resolve a comma-separated list of macro sector codes to industry indices.
+
+    Unknown codes are skipped with a warning rather than failing the run, matching how
+    the growth-limit sector list is handled.
+    """
+    wanted = [c.strip() for c in str(codes or "").split(",") if c.strip()]
+    indices: list[int] = []
+    for code in wanted:
+        if code in industries:
+            indices.append(industries.index(code))
+        else:
+            logger.warning("Import/growth limit sector %r not in model industries; ignoring.", code)
+    return indices
+
+
 def _extend_exogenous_national_accounts(model: Simulation, required_length: int) -> None:
     """Hold the last observed exogenous national-accounts quarter flat past the data tail."""
     for country in model.countries.values():
@@ -470,8 +499,21 @@ def build_simulation(
     seed: int,
     firms_bundles: list[list[int]] | None = None,
     use_candidate_baseline: bool = False,
+    labour_force_growth: float | None = None,
+    capital_target_fraction: float | None = None,
+    capital_rolling_reference: bool | None = None,
+    household_demand_growth: float | None = None,
+    wage_tightness_markup_scale: float | None = None,
+    max_work_effort: float | None = None,
+    link_wages_to_tfp: bool | None = None,
+    tfp_base_growth_rate: float | None = None,
+    tfp_investment_effectiveness: float | None = None,
 ) -> Simulation:
     """Build a provincial Simulation, optionally with the candidate growth baseline.
+
+    ``labour_force_growth`` continues the observed labour-force index past its 2024 data
+    tail at a constant annual rate instead of freezing it, so labour supply can expand
+    over the projection (see ``observed_labour_force_index``).
 
     When ``use_candidate_baseline`` is True, applies the provisional real-growth
     preset from ``growth_baseline_preset`` (observed labour paths, exogenous
@@ -490,11 +532,92 @@ def build_simulation(
                 province=_province_code(province),
                 n_quarters=timesteps + 1,
                 demography_seed=1000 + i + 100 * seed,
+                labour_force_growth=labour_force_growth,
+                capital_target_fraction=capital_target_fraction,
+                capital_rolling_reference=capital_rolling_reference,
             )
+    if wage_tightness_markup_scale is not None:
+        # Diagnostic clamp on the wage spiral.  Firms mark offered wages up by recent
+        # hiring shortfalls, scaled by this factor (shipped default 0.5); measured wage
+        # rates rise ~47% over two years against 8% CPI once the labour market is tight.
+        # 0.0 removes the tightness channel entirely -- a test of whether the spiral is
+        # what destabilises the run, NOT a proposed behavioural change.
+        for province in CANADIAN_PROVINCES:
+            cc = config.country_configurations[province]
+            cc.firms.functions.offered_wage_setter.parameters[
+                "labour_market_tightness_markup_scale"
+            ] = float(wage_tightness_markup_scale)
+        logger.info(
+            "Wage tightness markup scale overridden to %s (shipped default 0.5)",
+            wage_tightness_markup_scale,
+        )
+    if max_work_effort is not None:
+        # Incumbent wages are indexed to the work-effort productivity factor:
+        # set_employee_income multiplies each stayer's wage by
+        # current_labour_productivity_factor / prev_labour_productivity_factor every
+        # quarter.  That factor is min(max_increase_in_work_effort, target /
+        # (labour x industry_productivity)), so when firms are input-constrained it
+        # climbs toward its ceiling and drags wages up with it -- compounding, and
+        # independent of labour-market tightness.  Lowering the ceiling toward 1.0
+        # pins the ratio at 1 and freezes that channel.  DIAGNOSTIC: it also removes
+        # firms' ability to raise output via work effort, so it is not a pure wage clamp.
+        for province in CANADIAN_PROVINCES:
+            cc = config.country_configurations[province]
+            cc.firms.functions.labour_productivity.parameters[
+                "max_increase_in_work_effort"
+            ] = float(max_work_effort)
+        logger.info(
+            "Max increase in work effort overridden to %s (shipped default 1.5)",
+            max_work_effort,
+        )
+    if link_wages_to_tfp is not None:
+        # The live wage formula is a LEVEL formula:
+        #   real_wage = (1 + markup) * tfp_multiplier * labour_productivity_factor
+        #               * initial_wage_per_capita / tax
+        # The markup ships inert (scale 0.0) and the productivity factor was measured
+        # FALLING 13.5% over 2024-2026 while real wages rose 30.1%, so the TFP multiplier
+        # is the only term left that can account for the rise (implied ~2.04 -> 3.07,
+        # i.e. ~52x the configured 0.1%/quarter base rate).  Setting this False pins the
+        # TFP term in wage setting only; TFP's effect on production is untouched.
+        for province in CANADIAN_PROVINCES:
+            cc = config.country_configurations[province]
+            cc.firms.functions.wage_setter.parameters["link_wages_to_tfp"] = bool(link_wages_to_tfp)
+        logger.info(
+            "Wage-TFP link set to %s (shipped behaviour: True)",
+            bool(link_wages_to_tfp),
+        )
+    if tfp_base_growth_rate is not None or tfp_investment_effectiveness is not None:
+        # TFP calibration.  run_canada_provincial hard-codes base 0.001/quarter with
+        # SimpleTFPGrowth investment_effectiveness 0.3; the resulting multiplier was
+        # measured compounding at ~5.24%/quarter (~52x base), and since wages are
+        # multiplied by it that is the source of the wage spiral.
+        for province in CANADIAN_PROVINCES:
+            firms = config.country_configurations[province].firms
+            if tfp_base_growth_rate is not None:
+                firms.parameters.tfp_base_growth_rate = float(tfp_base_growth_rate)
+            if tfp_investment_effectiveness is not None:
+                firms.functions.productivity_growth.parameters["investment_effectiveness"] = float(
+                    tfp_investment_effectiveness
+                )
+        logger.info(
+            "TFP calibration overridden: base_growth=%s investment_effectiveness=%s",
+            tfp_base_growth_rate,
+            tfp_investment_effectiveness,
+        )
+
     sim = Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
     if use_candidate_baseline:
         _extend_exogenous_national_accounts(sim, required_length=timesteps + 1)
-        _apply_household_demand_overlay(sim)
+        # The overlay's default (+2%/yr) outruns labour-supply growth (~0.72%/yr), so firms
+        # bid wages up against a hard supply limit and the labour share climbs without
+        # bound.  Overridable so the two can be tested at compatible rates.
+        _apply_household_demand_overlay(
+            sim,
+            growth_rate=(
+                _HOUSEHOLD_DEMAND_GROWTH if household_demand_growth is None
+                else float(household_demand_growth)
+            ),
+        )
     return sim
 
 

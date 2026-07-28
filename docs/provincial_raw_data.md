@@ -10,7 +10,11 @@ were assessed and found to be non-issues in the current single-firm configuratio
 `provincial_data_comparison.md`).
 
 It also covers a later **effective tax-rate** upgrade — province-specific corporate income,
-personal income, and consumption (sales/VAT) tax rates (Section 3c) — added after items #1/#6.
+personal income, and consumption (sales/VAT) tax rates (Section 3c) — added after items #1/#6,
+and a **labour-compensation calibration** (Section 3d, part of item #7) that corrects the
+initial wage bill: the WIOD SEA source is effectively empty for Canada and was being proxied
+from France, giving an initial labour share of 84.4% against Canada's observed 49.8% and
+leaving firms loss-making from the first simulated year.
 
 ---
 
@@ -283,6 +287,94 @@ sales). No-op (falls back to national) when the file is absent, the region is no
 province, or a rate is missing. The reader is loaded once via a cached module-level singleton
 (the same lazy-loading style as the item-#6 investment override).
 
+## 3d. Labour compensation — calibrating the initial wage bill (item #7)
+
+### What it replaces
+
+Firms' initial wage bills come from `industry_vectors["Labour Compensation in LCU"]`, built in
+`macro_data/readers/util/industry_extraction.py` from the **WIOD Socio-Economic Accounts**
+(`raw_data/wiod_sea/wiod_sea.csv`). For Canada that source is effectively **empty**: of 56
+industry rows for 2014, exactly **one** is non-zero — *A03, "Fishing and aquaculture"* — and
+SEA's Canadian `VA` series is zero in **every** year. The Canadian `COMP` series is also
+implausible over time (2,171 → 748 → 602 → 700 across 2000–2014, when Canadian compensation
+actually grew steadily).
+
+| country | `COMP` rows (2014) | non-null | **> 0** |
+|---------|-------------------:|---------:|--------:|
+| **CAN** | 56 | 6 | **1** |
+| FRA | 56 | 5 | **4** |
+| USA | 56 | 1 | **0** |
+| DEU | 56 | 2 | **1** |
+
+The vector is therefore filled through `proxy_country_dict={"CAN": "FRA"}`
+(`scenarios/run_canada_provincial.py`) from French data that is itself only 4-of-56 populated,
+and then applied against Canadian provincial IO value added.
+
+### Why it matters
+
+**Value added is already accurate** — the model's total ($1.7332T annualised) matches StatCan
+2014 value added ($1.7303T) to **0.17%**. The mismatch lands entirely on the labour side:
+
+| | labour share of value added |
+|---|---:|
+| Model, before this change | **84.4%** |
+| Canada, observed (StatCan) | **49.8%** |
+
+Firms are consequently **loss-making in the first simulated year**, before any scenario
+mechanism acts. The share then drifts upward, crosses **100% around 2023** — wages exceeding
+the value firms create — and the economy has no margin to absorb any shock.
+
+### Source and processing
+
+`<raw_data>/3610000101_customizedLayoutData - <year> - processed.csv` — the **same StatCan
+supply-use extract the provincial IO table was built from**, so numerator and denominator come
+from one source and the resulting share is consistent by construction. Value-added components
+(column `Total use`, $ thousands, Canada 2014):
+
+| component | value |
+|---|---:|
+| **Wages and salaries** | **861,052,898** |
+| Gross mixed income | 227,170,359 |
+| Gross operating surplus | 557,797,503 |
+| Taxes on production | 89,918,751 |
+| Subsidies on production | −5,597,127 |
+| **= Value added** | **1,730,342,384** |
+
+giving a labour share of **861,052,898 / 1,730,342,384 = 49.76%**. The existing labour
+compensation vector is rescaled by a single scalar onto that share, per province.
+
+### Code
+
+`ProvincialLabourReader` (`macro_data/readers/economic_data/provincial_labour_reader.py`)
+reads the share; `DataReaders.from_raw_data` attaches it as `provincial_labour`;
+`get_industry_data` applies `rescale()` to `Labour Compensation in LCU` (and recomputes the
+USD column) right after the industry vectors are built. No-op — falling back to the existing
+SEA/proxy path — when the file is absent, unreadable, or yields a share outside a plausible
+band, so national and non-Canadian runs are unaffected.
+
+### Assumptions and limitations
+
+1. **Level only, not composition.** A single scalar is applied per province, so the *relative*
+   industry distribution still comes from the SEA/French proxy. Mapping StatCan's ~533
+   detailed industries onto the model's 43 codes needs a concordance that is not present in
+   the bundle (`icio/mappings.json` is the model's own `A → [A01, A03]` aggregation, and
+   `…to icio_can_2014_disagg.csv` is a flow matrix, not a lookup). Building that concordance
+   is the natural follow-up and would replace this rescale with a true per-industry vector.
+2. **Cross-province labour-share variation is equalised.** Before the change it ranged from
+   70.4% (AB) to 91.9% (PE), but that spread is an artefact of French data apportioned by IO
+   value added, not observed Canadian variation — so no genuine information is lost. Real
+   provincial variation (Alberta's lower labour share, for instance) would require StatCan
+   provincial compensation, e.g. 36-10-0221 / 36-10-0480.
+3. **Wages and salaries, not full compensation of employees.** Employers' social contributions
+   are excluded, so this is a mild *under*-statement of true compensation; the model separately
+   grosses wages by `tau_sif` when firms pay them. Including **gross mixed income** as labour
+   would instead give 62.9% — self-employment income genuinely mixes labour and capital
+   returns, and wages-only is the conservative, convention-matching choice.
+4. **A 2014 base-year share, held fixed.** The share is read for the IO table's base year and
+   applied at initialisation only; it does not vary over the simulation.
+5. **Plausibility guard.** A share outside 35–70% is refused with a warning rather than
+   applied, so a wrong file, column or unit change cannot silently recalibrate the model.
+
 ## 4. Assumptions and limitations
 
 1. **PPI is left national.** Canada has no provincial Industrial Product Price Index; the
@@ -394,6 +486,11 @@ python build_provincial_investment_fractions.py
 
 # 1c. Rebuild the effective tax-rate panel (Section 3c).
 python build_provincial_tax_rates.py
+
+# 1d. Labour compensation (Section 3d) needs NO build step: the reader consumes the StatCan
+#     supply-use extract already at the raw_data root
+#     (3610000101_customizedLayoutData - <year> - processed.csv), the same file the
+#     provincial IO table was built from.
 
 # 2. Rebuild the provincial pickle (all overrides activate automatically when the files exist).
 python scenarios/run_canada_provincial.py --input-path <raw_data> --skip-simulation \

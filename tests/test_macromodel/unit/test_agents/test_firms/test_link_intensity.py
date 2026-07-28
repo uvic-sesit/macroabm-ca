@@ -253,6 +253,13 @@ def test_industry_timeseries_dataframes_aggregates_by_industry():
         "real_amount_sold": [np.array([1.0, 1.0, 1.0]), np.array([2.0, 2.0, 2.0])],
         "inventory": [np.array([0.0, 0.0, 0.0]), np.array([1.0, 1.0, 1.0])],
         "limiting_intermediate_inputs": [np.array([9.0, 9.0, 9.0]), np.array([9.0, 9.0, 9.0])],
+        "limiting_capital_inputs": [np.array([6.0, 6.0, 6.0]), np.array([7.0, 7.0, 7.0])],
+        "total_wage": [np.array([3.0, 7.0, 5.0]), np.array([4.0, 8.0, 6.0])],
+        "number_of_employees": [np.array([1.0, 3.0, 2.0]), np.array([2.0, 2.0, 4.0])],
+        "real_wage_per_capita": [np.array([3.0, 7.0, 5.0]), np.array([2.0, 4.0, 1.5])],
+        "wage_tightness_markup": [np.array([1.0, 1.0, 1.0]), np.array([1.1, 1.3, 1.2])],
+        "labour_productivity_factor": [np.array([1.0, 1.0, 1.0]), np.array([1.2, 1.4, 1.1])],
+        "labour_productivity": [np.array([2.0, 2.0, 2.0]), np.array([3.0, 5.0, 4.0])],
         "price": [np.array([10.0, 20.0, 7.0]), np.array([10.0, 10.0, 5.0])],
     }
     f = types.SimpleNamespace(
@@ -268,6 +275,21 @@ def test_industry_timeseries_dataframes_aggregates_by_industry():
     assert frames["production"].loc[1, "A"] == pytest.approx(8.0)   # 4+4
     # Price is production-weighted within A at t=0: (2*10 + 3*20)/(2+3) = 16.
     assert frames["price"].loc[0, "A"] == pytest.approx(16.0)
+    # The capital-side constraint is exported too, so a shallow-only run can tell whether
+    # capital or intermediate inputs are the binding constraint.
+    assert frames["limiting_capital_inputs"].loc[0, "A"] == pytest.approx(12.0)  # 6+6
+    assert frames["limiting_capital_inputs"].loc[1, "B"] == pytest.approx(7.0)   # single firm
+    # Wage decomposition: extensive terms sum, per-worker terms are employment-weighted.
+    assert frames["total_wage"].loc[0, "A"] == pytest.approx(10.0)          # 3+7
+    assert frames["number_of_employees"].loc[0, "A"] == pytest.approx(4.0)  # 1+3
+    # (1*3 + 3*7)/(1+3) = 6.0
+    assert frames["real_wage_per_capita"].loc[0, "A"] == pytest.approx(6.0)
+    # (2*1.1 + 2*1.3)/(2+2) = 1.2
+    assert frames["wage_tightness_markup"].loc[1, "A"] == pytest.approx(1.2)
+    # The productivity terms wages are indexed to are employment-weighted too:
+    # (2*1.2 + 2*1.4)/(2+2) = 1.3, and (1*2 + 3*2)/(1+3) = 2.0.
+    assert frames["labour_productivity_factor"].loc[1, "A"] == pytest.approx(1.3)
+    assert frames["labour_productivity"].loc[0, "A"] == pytest.approx(2.0)
     assert frames["price"].loc[0, "B"] == pytest.approx(7.0)
     assert list(frames["inventory"].columns) == industries
 

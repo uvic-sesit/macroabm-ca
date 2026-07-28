@@ -2,9 +2,9 @@
 
 This document measures how each **provincial-data upgrade** changes the model's provincial
 dynamics under the candidate growth baseline, and how the results compare to observed
-Statistics Canada data. Four data changes are assessed, added one at a time.
+Statistics Canada data. Five data changes are assessed, added one at a time.
 
-## The four provincial-data changes
+## The provincial-data changes
 
 Each change replaces a national (or foreign-proxy) input — previously applied identically to
 every province — with province-specific Statistics Canada data. See `provincial_raw_data.md`
@@ -16,6 +16,7 @@ for full provenance.
 | **2** | **GFCF split** | A single **French** (Eurostat) split of investment across firms / households / government (0.567 / 0.263 / 0.170) | Provincial expenditure-based GDP (36‑10‑0222) |
 | **3** | **Effective income tax** | National **statutory** combined corporate rate (~26.5%) and a hard-coded 0.09 personal rate | PTEA effective corporate/personal rates (36‑10‑0450 / 36‑10‑0221 / 36‑10‑0224) |
 | **4** | **Sales tax** | A single national VAT rate applied as a flat consumption wedge | PTEA effective consumption (sales/VAT) rate |
+| **5** | **Labour compensation** | A **French**-proxied wage bill (WIOD SEA is empty for Canada: 1 of 56 industries non-zero), giving an 84.4% initial labour share | StatCan supply-use extract — the same source as the IO table (49.8%) |
 
 ## Reference scenario and method
 
@@ -213,12 +214,81 @@ Incremental effect (+income tax → +sales tax):
    oil-price shocks a smooth baseline cannot produce (AB, NL). #1 clearly improves the match of
    provincial unemployment *levels*.
 
+---
+
+# Change 5 — Labour compensation (initial wage bill)
+
+Replaces the **WIOD SEA** labour-compensation vector — which for Canada is effectively empty
+(1 of 56 industry rows non-zero for 2014) and is therefore filled from the **French** proxy —
+with a rescale onto Canada's observed labour share, taken from the same StatCan supply-use
+extract the provincial IO table was built from. See `provincial_raw_data.md` §3d.
+
+This change differs in kind from #1–#4: it is **not** a provincial-composition correction but a
+**national level correction to firms' initial balance sheets**.
+
+### What it fixes
+
+Value added was already accurate — the model's total ($1.7332T annualised) matches StatCan 2014
+value added ($1.7303T) to 0.17% — so the entire error sat on the labour side:
+
+| | labour share of value added | initial firm profits (all provinces, annualised) |
+|---|---:|---:|
+| Before | **84.44%** | **−35,075,722,142** |
+| After | **49.76%** | **+565,994,798,402** |
+| StatCan observed | 49.76% | — |
+
+**Firms go from loss-making to profitable at initialisation.** Value added is byte-identical
+between the two pickles, so this is a clean single-variable change.
+
+### Incremental effect (53q, seed 0)
+
+| Arm | Real GVA | GVA growth (%/yr) | Unemployment (start → end) |
+|-----|---------|------------------:|---------------------------:|
+| Pre-fix (84.4% labour share) | 470.0B → 582.7B | **1.67** | 8.3% → 4.9% |
+| **+5 (labour compensation)** | 470.0B → 578.6B | **1.61** | 8.3% → **2.5%** |
+
+- **Headline growth barely moves** (−0.06 pp/yr), consistent with #1–#4: the national aggregate
+  is insensitive to each individual data change.
+- **Unemployment falls further** (4.9% → 2.5%): profitable firms hire more, pushing the run
+  harder into the documented full-employment ceiling. End-of-horizon unemployment should be read
+  with the existing ceiling caveat, not as an improvement.
+
+### Why the 53-quarter horizon *understates* this change
+
+This is the important qualification. At 53 quarters the pre-fix model looks healthy — 1.67%/yr
+growth, unemployment falling to 4.9% — and the 84.4% labour share does not surface in any
+headline number. It becomes visible only at longer horizons: the labour share drifts upward from
+its already-inflated start, crosses **100% around 2023** (wages exceeding the value firms
+create), and at the ~89-quarter horizon used by the CER–macroABM runs the economy collapses
+entirely (43/43 sectors below 5% of their 2020 level; see
+`../../docs/cer_macroabm/results_assessment_2026.md` in M3-linkages).
+
+**Implication for Changes 1–4 above:** all four were measured on this same defect, on a horizon
+too short to expose it. Their numbers remain valid as *relative* comparisons between data
+changes — each arm shares the identical starting distortion — but none of them was a test of
+whether the underlying calibration was sound, and the absolute levels inherit the distortion.
+Re-running the four arms on the corrected pickle would be needed before treating any absolute
+figure here as calibrated.
+
+### Method note
+
+Arms measured with `scripts/run_candidate_baseline.py` at 53 quarters, seed 0 — the reference
+scenario for this document. The pre-fix arm reproduces the published range (1.68–1.90%/yr) at
+1.67%/yr, confirming the harness matches. Only **national** aggregates are reported: the
+per-province capture-runner used for #1–#4 lives in the validation workspace and is not in this
+repo, so no per-province table is given for this change.
+
 ## Caveats
 
 - **Single seed.** All runs are seed 0. The candidate baseline is documented as robust across five
   seeds in aggregate, but per-province trajectories — especially the **investment** magnitudes —
   carry seed noise and are **directional only**. Confirm with a multi-seed sweep before any
   province-level quantitative use.
+- **Changes 1-4 were measured before Change 5.** Their arms all carry the 84.4% labour share and
+  loss-making initial firms (see Change 5). The relative comparisons between them remain valid —
+  every arm shares the same distortion — but absolute levels inherit it, and the 53-quarter
+  horizon is too short for the defect to surface. Re-run on the corrected pickle before using
+  any absolute figure.
 - **Full-employment ceiling.** Past ~2024 the baseline drives most provinces toward 0%
   unemployment (flagged in `INTERIM_GROWTH_BASELINE.md`), so end-of-horizon unemployment is
   compressed; rely on initial conditions and the 2014–2024 window.
