@@ -32,7 +32,6 @@ class FirmWageSetter(ABC):
         labour_market_tightness_markup_scale: float,
         markup_time_span: int,
         max_increase_in_work_effort: float,
-        link_wages_to_tfp: bool = True,
     ):
         """Initialize the wage setter with markup parameters.
 
@@ -43,16 +42,10 @@ class FirmWageSetter(ABC):
                 calculating labor market tightness markup
             max_increase_in_work_effort (float): Maximum allowed increase
                 in work effort-based wage adjustments
-            link_wages_to_tfp (bool): Whether wages are multiplied by the firm's
-                TFP multiplier.  ``True`` reproduces shipped behaviour.  ``False``
-                pins the TFP term at 1.0 in wage setting *only*, leaving TFP's
-                effect on production untouched -- a diagnostic for separating
-                "wages track technical progress" from TFP's real output effect.
         """
         self.labour_market_tightness_markup_scale = labour_market_tightness_markup_scale
         self.markup_time_span = markup_time_span
         self.max_increase_in_work_effort = max_increase_in_work_effort
-        self.link_wages_to_tfp = link_wages_to_tfp
 
     @abstractmethod
     def compute_wage_tightness_markup(
@@ -309,7 +302,7 @@ class WorkEffortFirmWageSetter(FirmWageSetter):
         emp_ind = corresponding_firm >= 0
 
         # Include TFP multiplier in wage calculation if provided
-        if current_tfp_multiplier is not None and self.link_wages_to_tfp:
+        if current_tfp_multiplier is not None:
             tfp_factor = current_tfp_multiplier
         else:
             tfp_factor = np.ones_like(current_wage_tightness_markup)
@@ -372,7 +365,7 @@ class WorkEffortFirmWageSetter(FirmWageSetter):
         )
 
         # Include TFP multiplier if provided
-        if current_tfp_multiplier is not None and self.link_wages_to_tfp:
+        if current_tfp_multiplier is not None:
             tfp_factor = current_tfp_multiplier
         else:
             tfp_factor = np.ones_like(current_wage_tightness_markup)

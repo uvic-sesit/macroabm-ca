@@ -129,7 +129,14 @@ def build_simulation_configuration(
     """
     tfp_base_growth_rate = 0.001
     tfp_investment_elasticity = 0.5
-    productivity_growth_investment_effectiveness = 0.3
+    # 0.01, down from 0.3.  At 0.3 the investment-driven TFP term compounds to ~19.6%/yr
+    # (a 20x multiplier by 2035, vs Canadian MFP growth of ~0-1%/yr); since wages are
+    # multiplied by the TFP multiplier this destabilises any long CER-linkage run.  A
+    # 20-arm sweep found every setting <= 0.05 healthy and every setting >= 0.1
+    # collapsing (chaotically near 0.1); 0.01 gives TFP +0.6%/yr, a 49.6% labour share
+    # and 4.6% unemployment by 2035.  See M3-linkages
+    # docs/cer_macroabm/results_assessment_2026.md (TFP calibration sweep).
+    productivity_growth_investment_effectiveness = 0.01
     technical_coefficients_investment_effectiveness = 0.3
     diminishing_returns_factor = 0.1
     hurdle_rate = 0.01
