@@ -505,6 +505,24 @@ class Simulation:
                 logging.getLogger(__name__).warning(
                     "Per-industry diagnostic export failed for %s: %s", country_name, exc
                 )
+        # Rest-of-the-world sales by industry == the countries' imports by industry.  The
+        # shallow summary otherwise carries only an economy-wide Imports total, which
+        # cannot say whether a sector is meeting demand domestically or importing it --
+        # the central question for the CER electricity linkage.  Best-effort, as above.
+        try:
+            import pandas as pd
+
+            row_ts = self.rest_of_the_world.ts
+            imports_by_industry = pd.DataFrame(np.array(row_ts.historic("exports_real")))
+            imports_by_industry.to_hdf(save_dir / file_name, key="row_imports_real", mode="a")
+            # ROW's *offered* exports, as distinct from what it actually sells.  The
+            # import cap clamps this quantity, so the two series together are what say
+            # whether a non-binding cap means "imports are genuinely constrained" or
+            # "the cap is anchored above realised trade and has no teeth".
+            desired = pd.DataFrame(np.array(row_ts.historic("desired_exports_real")))
+            desired.to_hdf(save_dir / file_name, key="row_desired_exports_real", mode="a")
+        except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+            logging.getLogger(__name__).warning("ROW import export failed: %s", exc)
 
     def get_country_shallow_output(self, country: str):
         """Get summary statistics for a specific country.

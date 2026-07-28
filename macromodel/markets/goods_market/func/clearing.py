@@ -164,6 +164,20 @@ class GoodsMarketClearer(ABC):
         self.price_markup = price_markup
         self.remedy_rounding_errors = remedy_rounding_errors
         self.allow_additional_row_exports = allow_additional_row_exports
+        # Industries excluded from the additional-ROW-exports backstop.  That backstop
+        # adds to ROW's "Real Amount sold" without reference to "Initial Goods", so
+        # capping ROW's desired exports (RestOfTheWorld.set_import_limits) does not bind
+        # unless the backstop is suppressed for the same industries.  Empty by default,
+        # so behaviour is unchanged unless set_import_limited_industries() is called.
+        self._import_limited_industries: set[int] = set()
+
+    def set_import_limited_industries(self, industry_indices) -> None:
+        """Exclude industries from the additional-ROW-exports backstop.
+
+        Args:
+            industry_indices: industry indices to exclude; empty/None clears the set.
+        """
+        self._import_limited_industries = {int(i) for i in (industry_indices or [])}
 
     @staticmethod
     def prepare(goods_market_participants: dict[str, list[Agent]]) -> None:
@@ -883,6 +897,11 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
         # Distribute additional exports by industry
         for g in range(n_industries):
             if aggr_real_supply[g] == 0.0 or additional_real_demand[g] == 0.0:
+                continue
+            # Import-limited industries must meet unmet demand domestically rather than
+            # from ROW's residual backstop -- otherwise the cap on desired exports is
+            # refilled here and has no effect.
+            if g in self._import_limited_industries:
                 continue
 
             # Process each country's high-priority buyers

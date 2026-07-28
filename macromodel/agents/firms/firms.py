@@ -436,6 +436,18 @@ class Firms(Agent):
 
         return df
 
+    def set_capacity_unconstrained_industries(self, industry_indices) -> None:
+        """Remove the capital ceiling on the given industries (diagnostic).
+
+        Used to bound the supply-side linkage question: if a sector's capacity were free,
+        how much would it produce on the demand signal alone?  Production remains limited
+        by intermediate inputs and demand, so this does not create goods from nothing.
+
+        Args:
+            industry_indices: industry indices to leave uncapped; empty/None clears.
+        """
+        self._capacity_unconstrained_industries = sorted({int(i) for i in (industry_indices or [])})
+
     def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
         """Per-industry time series (timesteps x industries) for lightweight diagnostics.
 
@@ -663,6 +675,19 @@ class Firms(Agent):
                 substitution_bundle_matrix=self.substitution_bundles,
             )
         )
+        # Diagnostic: lift the capital ceiling for named industries.  Sector D's
+        # production was measured sitting within 0.1% of limiting_capital_inputs in every
+        # year from 2026, i.e. pinned to its capital ceiling, so relaxing that ceiling
+        # asks "how much would this sector produce if capacity were free?" without
+        # fabricating goods -- intermediate inputs and demand still bind.  No-op unless
+        # set_capacity_unconstrained_industries() has been called.
+        _uncon = getattr(self, "_capacity_unconstrained_industries", None)
+        if _uncon:
+            lim_cap = self.ts.limiting_capital_inputs[-1]
+            industry_of_firm = self.states["Industry"]
+            for g in _uncon:
+                lim_cap[industry_of_firm == g] = np.inf
+            self.ts.limiting_capital_inputs[-1] = lim_cap
         self.ts.target_production.append(
             self.compute_target_production(
                 bank_overdraft_rate_on_firm_deposits=bank_overdraft_rate_on_firm_deposits,
@@ -2291,6 +2316,7 @@ class Firms(Agent):
         anchor_capital_intensity: pd.DataFrame | None = None,
         is_anchor: bool = False,
         reset_multipliers: bool = True,
+        activity_consistent: bool = False,
         intermediate_factor: float = 0.1,
         capital_factor: float = 0.1,
         capital_investment_boost: float = 0.1,
@@ -2348,6 +2374,7 @@ class Firms(Agent):
             self._link_intensity_target(
                 comparable_codes,
                 energy_bundle_codes,
+                activity_consistent=activity_consistent,
                 energy_intensity=energy_intensity,
                 anchor_energy_intensity=anchor_energy_intensity,
                 capital_intensity=capital_intensity,
@@ -2426,6 +2453,7 @@ class Firms(Agent):
         anchor_capital_intensity: pd.DataFrame | None,
         is_anchor: bool,
         reset_multipliers: bool,
+        activity_consistent: bool = False,
     ) -> None:
         """Set energy/capital productivity toward the CIMS intensity target.
 
@@ -2442,6 +2470,15 @@ class Firms(Agent):
 
         valid_comparable = [c for c in comparable_codes if c in industries_list]
         valid_energy = [c for c in energy_bundle_codes if c in industries_list]
+
+        # Anchor-year output per comparable sector, for activity-consistent targeting.
+        if not hasattr(self, "_link_anchor_production"):
+            self._link_anchor_production: dict[str, float] = {}
+        if is_anchor:
+            for i_code in valid_comparable:
+                firms_i = np.where(industry_idx == industries_list.index(i_code))[0]
+                if firms_i.size:
+                    self._link_anchor_production[i_code] = float(production[firms_i].sum())
 
         # (base matrix, multiplier state key, current intensity, anchor intensity, baseline attr)
         channels = [
@@ -2505,6 +2542,19 @@ class Firms(Agent):
                     target = _intensity_target_productivity(baseline_eff, a_int, c_int)
                     if target is None:
                         continue
+
+                    # Activity-consistent mode: the intensity matrices then carry CER's
+                    # fuel *level* (denominator fixed at the anchor year), so the target
+                    # must be divided through by the macroABM's own output growth for this
+                    # sector -- otherwise energy = coefficient x output re-multiplies by an
+                    # activity path CER's demand already contains.  Productivity is the
+                    # reciprocal of the input coefficient, hence the ratio appears
+                    # multiplicatively here.
+                    if activity_consistent:
+                        anchor_prod = self._link_anchor_production.get(i_code)
+                        current_prod = float(production[firms_i].sum()) if firms_i.size else 0.0
+                        if anchor_prod and anchor_prod > 0.0 and current_prod > 0.0:
+                            target *= current_prod / anchor_prod
 
                     base_matrix[j, i] = target
                     if reset_multipliers and multipliers is not None:

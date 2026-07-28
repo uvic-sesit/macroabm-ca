@@ -291,6 +291,7 @@ def build_link_prehook(
     intermediate_factor: float = 0.1,
     capital_factor: float = 0.1,
     capital_investment_boost: float = 0.1,
+    activity_consistent: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -339,6 +340,7 @@ def build_link_prehook(
                     anchor_capital_intensity=reader.get_capital_intensity(itr, anchor_year, cims_region),
                     is_anchor=(year == anchor_year),
                     reset_multipliers=reset_multipliers,
+                    activity_consistent=activity_consistent,
                 )
             else:
                 country.firms.link(
@@ -445,6 +447,32 @@ def apply_import_limits(sim: Simulation, industry_indices: list[int]) -> None:
     if not industry_indices:
         return
     sim.rest_of_the_world.set_import_limits(industry_indices)
+    # Clamping ROW's desired exports is not sufficient on its own: the goods market has
+    # an unmet-demand backstop that adds to ROW's realised sales without reference to
+    # the quantity it offered, so a capped sector was simply refilled there (measured at
+    # up to 32x offered supply for sector D after the 2030 milestone).  Suppress the
+    # backstop for the same industries.
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is not None and hasattr(clearer, "set_import_limited_industries"):
+        clearer.set_import_limited_industries(industry_indices)
+    else:
+        logger.warning(
+            "Goods-market clearer does not support import limits; ROW's additional-exports "
+            "backstop will refill capped sectors and the cap will not bind."
+        )
+
+
+def apply_capacity_unconstrained(sim: Simulation, industry_indices: list[int]) -> None:
+    """Lift the capital ceiling on the given industries in every province (diagnostic).
+
+    Phase 0 of the supply-side linkage: sector D's production was measured pinned to its
+    capital ceiling (within 0.1% of ``limiting_capital_inputs`` every year from 2026), so
+    this asks how far it would get with capacity free.  A no-op when no sectors are given.
+    """
+    if not industry_indices:
+        return
+    for country in sim.countries.values():
+        country.firms.set_capacity_unconstrained_industries(industry_indices)
 
 
 def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
