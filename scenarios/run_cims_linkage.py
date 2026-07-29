@@ -291,6 +291,7 @@ def build_link_prehook(
     intermediate_factor: float = 0.1,
     capital_factor: float = 0.1,
     capital_investment_boost: float = 0.1,
+    linkage_owns_coefficients: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -339,6 +340,7 @@ def build_link_prehook(
                     anchor_capital_intensity=reader.get_capital_intensity(itr, anchor_year, cims_region),
                     is_anchor=(year == anchor_year),
                     reset_multipliers=reset_multipliers,
+                    linkage_owns_coefficients=linkage_owns_coefficients,
                 )
             else:
                 country.firms.link(
@@ -680,6 +682,13 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help="Do not reset firm tech multipliers at milestones (keep intra-period drift on top of the target).",
     )
+    p.add_argument(
+        "--linkage-owns-coefficients",
+        action="store_true",
+        help="Hold endogenous technical-coefficient growth off the (industry, input) "
+             "pairs the linkage writes, so the CIMS/CER intensity path is authoritative "
+             "for those and drift applies only to unlinked coefficients.",
+    )
     p.set_defaults(reset_multipliers=True)
     p.add_argument(
         "--energy-substitution",
@@ -864,6 +873,7 @@ def main() -> None:
         method=args.linkage_method,
         anchor_year=intensity_anchor_year,
         reset_multipliers=args.reset_multipliers,
+        linkage_owns_coefficients=args.linkage_owns_coefficients,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,

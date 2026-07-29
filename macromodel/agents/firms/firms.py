@@ -2294,6 +2294,7 @@ class Firms(Agent):
         anchor_capital_intensity: pd.DataFrame | None = None,
         is_anchor: bool = False,
         reset_multipliers: bool = True,
+        linkage_owns_coefficients: bool = False,
         intermediate_factor: float = 0.1,
         capital_factor: float = 0.1,
         capital_investment_boost: float = 0.1,
@@ -2357,6 +2358,7 @@ class Firms(Agent):
                 anchor_capital_intensity=anchor_capital_intensity,
                 is_anchor=is_anchor,
                 reset_multipliers=reset_multipliers,
+                linkage_owns_coefficients=linkage_owns_coefficients,
             )
             return
         if method != "nudge":
@@ -2429,6 +2431,7 @@ class Firms(Agent):
         anchor_capital_intensity: pd.DataFrame | None,
         is_anchor: bool,
         reset_multipliers: bool,
+        linkage_owns_coefficients: bool = False,
     ) -> None:
         """Set energy/capital productivity toward the CIMS intensity target.
 
@@ -2442,9 +2445,15 @@ class Firms(Agent):
         industries_list = list(self.industries)
         industry_idx = np.asarray(self.states["Industry"])
         production = np.asarray(self.ts.current("production")).ravel()
+        self._linkage_owns_coefficients = bool(linkage_owns_coefficients)
 
         valid_comparable = [c for c in comparable_codes if c in industries_list]
         valid_energy = [c for c in energy_bundle_codes if c in industries_list]
+
+        # (industry, input) pairs this linkage writes, per multiplier state.  Used to hold
+        # endogenous technical growth off coefficients the linkage owns.
+        if not hasattr(self, "_linkage_owned_pairs"):
+            self._linkage_owned_pairs: dict[str, set[tuple[int, int]]] = {}
 
         # (base matrix, multiplier state key, current intensity, anchor intensity, baseline attr)
         channels = [
@@ -2510,6 +2519,7 @@ class Firms(Agent):
                         continue
 
                     base_matrix[j, i] = target
+                    self._linkage_owned_pairs.setdefault(mult_key, set()).add((i, j))
                     if reset_multipliers and multipliers is not None:
                         multipliers[firms_i, j] = 1.0
 
@@ -2678,6 +2688,30 @@ class Firms(Agent):
         tfp_growth = self.compute_tfp_growth()
         self.states["tfp_multiplier"] *= 1 + tfp_growth
 
+    def _mask_linkage_owned(self, growth: np.ndarray, multiplier_key: str) -> np.ndarray:
+        """Zero technical-coefficient growth on (industry, input) pairs the linkage owns.
+
+        A no-op unless :meth:`link` was called with ``linkage_owns_coefficients=True``,
+        and only for pairs the linkage has actually written.
+
+        Args:
+            growth: multiplier growth rates, shape (n_firms, n_industries).
+            multiplier_key: which multiplier state the growth applies to.
+
+        Returns:
+            The growth array with linkage-owned entries set to zero.
+        """
+        if not getattr(self, "_linkage_owns_coefficients", False):
+            return growth
+        pairs = getattr(self, "_linkage_owned_pairs", {}).get(multiplier_key)
+        if not pairs:
+            return growth
+        industry_idx = np.asarray(self.states["Industry"])
+        masked = np.array(growth, copy=True)
+        for i, j in pairs:
+            masked[industry_idx == i, j] = 0.0
+        return masked
+
     def update_technical_coefficients(self) -> None:
         """Update technical coefficient multipliers based on computed growth rates.
 
@@ -2725,6 +2759,15 @@ class Firms(Agent):
             production=self.ts.current("production"),
             prices=self.ts.current("price"),  # Use current firm prices as proxy for industry prices
         )
+
+        # Coefficients the energy linkage sets are owned by it: CIMS/CER already supply a
+        # full intensity path for those (industry, input) pairs, one that embeds the
+        # efficiency improvement they assume.  Letting endogenous technical growth also
+        # move them double-counts efficiency and makes the linkage's own baseline stale
+        # between milestones -- which is what produced the step change measured two
+        # quarters after each milestone.  Growth still applies to every unlinked pair.
+        intermediate_growth = self._mask_linkage_owned(intermediate_growth, "intermediate_tech_multipliers")
+        capital_growth = self._mask_linkage_owned(capital_growth, "capital_tech_multipliers")
 
         # Apply growth to multipliers
         self.states["intermediate_tech_multipliers"] *= 1 + intermediate_growth
