@@ -292,6 +292,7 @@ def build_link_prehook(
     capital_factor: float = 0.1,
     capital_investment_boost: float = 0.1,
     linkage_owns_coefficients: bool = False,
+    capacity_floor: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -317,6 +318,25 @@ def build_link_prehook(
                 continue
             rq = reader.get_requested_quantities(itr, year, cims_region)
             inv = reader.get_investment(itr, year, cims_region)
+
+            if capacity_floor and reader.capacity_available(itr, year, cims_region):
+                # CER's installed-capacity path, applied as a floor on the power sector's
+                # reference capital stock.  The end-use demand file cannot supply this --
+                # end use is not supply -- so it comes from the separate capacity dataset.
+                cap = reader.get_generation_capacity(itr, year, cims_region)
+                col = cap.columns[0]
+                floored = {
+                    industries.index(code): float(cap.loc[code, col])
+                    for code in cap.index
+                    if code in industries and float(cap.loc[code, col]) > 0.0
+                }
+                for idx, value in floored.items():
+                    country.firms.set_capacity_floor([idx], value)
+                if floored:
+                    logger.info(
+                        "capacity floor: region=%s year=%s indices=%s index=%.3f",
+                        cims_region, year, sorted(floored), next(iter(floored.values())),
+                    )
 
             if method == "intensity_target":
                 if not reader.intensity_available(itr, year, cims_region) or not reader.intensity_available(
@@ -518,6 +538,7 @@ def build_simulation(
     capital_target_fraction: float | None = None,
     capital_rolling_reference: bool | None = None,
     household_demand_growth: float | None = None,
+    exogenous_energy_prices: bool = False,
     tfp_base_growth_rate: float | None = None,
     tfp_investment_effectiveness: float | None = None,
 ) -> Simulation:
@@ -548,6 +569,17 @@ def build_simulation(
                 capital_target_fraction=capital_target_fraction,
                 capital_rolling_reference=capital_rolling_reference,
             )
+    if exogenous_energy_prices:
+        # CER supplies price trajectories for the energy bundle; pin those industries'
+        # prices to them so the endogenous price channel cannot feed back into demand.
+        # SectorExogenousPriceSetter overrides only the industries present as columns in
+        # the attached SectorExoPrices table -- everything else keeps DefaultPriceSetter.
+        for province in CANADIAN_PROVINCES:
+            config.country_configurations[province].firms.functions.prices.name = (
+                "SectorExogenousPriceSetter"
+            )
+        logger.info("Exogenous energy prices enabled (SectorExogenousPriceSetter)")
+
     if tfp_base_growth_rate is not None or tfp_investment_effectiveness is not None:
         # TFP calibration.  run_canada_provincial hard-codes base 0.001/quarter with
         # SimpleTFPGrowth investment_effectiveness 0.3; the resulting multiplier was
@@ -688,6 +720,13 @@ def parse_args() -> argparse.Namespace:
         help="Hold endogenous technical-coefficient growth off the (industry, input) "
              "pairs the linkage writes, so the CIMS/CER intensity path is authoritative "
              "for those and drift applies only to unlinked coefficients.",
+    )
+    p.add_argument(
+        "--capacity-floor",
+        action="store_true",
+        help="Floor the power sector's reference capital stock at CER's installed-capacity "
+             "path, so the capacity build shows up as investment and lifts the capital "
+             "ceiling on generation.",
     )
     p.set_defaults(reset_multipliers=True)
     p.add_argument(
@@ -874,6 +913,7 @@ def main() -> None:
         anchor_year=intensity_anchor_year,
         reset_multipliers=args.reset_multipliers,
         linkage_owns_coefficients=args.linkage_owns_coefficients,
+        capacity_floor=args.capacity_floor,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,

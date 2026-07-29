@@ -439,6 +439,27 @@ class Firms(Agent):
 
         return df
 
+    def set_capacity_floor(self, industry_indices, index: float | None) -> None:
+        """Floor the reference capital stock of the given industries at ``initial * index``.
+
+        Turns an exogenous capacity path (CER's installed-capacity dataset) into
+        investment: the capital target rises, firms buy capital, and the capital ceiling
+        on production rises with it.  A no-op when the configured target-capital function
+        does not support it.
+
+        Args:
+            industry_indices: industries to floor; empty/None clears the floor.
+            index: capacity index relative to initial capital stock.
+        """
+        fn = self.functions.get("target_capital_inputs")
+        if fn is None or not hasattr(fn, "set_minimum_capital_stock"):
+            return
+        if not industry_indices or index is None:
+            fn.set_minimum_capital_stock(None, None)
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        fn.set_minimum_capital_stock(mask, float(index))
+
     def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
         """Per-industry time series (timesteps x industries) for lightweight diagnostics.
 

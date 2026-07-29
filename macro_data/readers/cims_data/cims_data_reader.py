@@ -46,6 +46,14 @@ class CIMSDataReader:
         """Return the processed capital-intensity matrix (investment per unit output)."""
         return self._read_matrix("capital_intensity", itr, year, region)
 
+    def get_generation_capacity(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Return the power-sector capacity index (one column, indexed by industry)."""
+        return self._read_matrix("generation_capacity", itr, year, region)
+
+    def capacity_available(self, itr: str, year: int, region: str) -> bool:
+        """True if the processed capacity index exists for this iteration/year/region."""
+        return self._path("generation_capacity", itr, year, region).exists()
+
     def available(self, itr: str, year: int, region: str) -> bool:
         """True if both processed matrices exist for this iteration/year/region."""
         return self._path("requested_quantities", itr, year, region).exists() and self._path(

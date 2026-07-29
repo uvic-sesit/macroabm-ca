@@ -54,6 +54,10 @@ class TargetCapitalInputsSetter(ABC):
                 is by construction fully forward-looking in the numerator.
         """
         self.target_capital_inputs_fraction = target_capital_inputs_fraction
+        # Optional floor on the reference capital stock, used by the energy linkage to
+        # drive capacity investment in the sectors it covers.  Inert until set.
+        self._min_capital_firms: np.ndarray | None = None
+        self._min_capital_index: float | None = None
         self.credit_gap_fraction = credit_gap_fraction
         self.forward_looking_reference_fraction = forward_looking_reference_fraction
         self.rolling_reference = rolling_reference
@@ -61,6 +65,39 @@ class TargetCapitalInputsSetter(ABC):
         self.zero_prev_production_count = 0
         self.zero_prev_capital_count = 0
         self.zero_prev_capital_active_count = 0
+
+    def set_minimum_capital_stock(self, firm_mask, index: float | None) -> None:
+        """Floor the reference capital stock of selected firms at ``initial * index``.
+
+        The energy linkage uses this to turn an exogenous capacity path into investment:
+        raising the reference stock raises the capital target, so firms buy capital and
+        the capital ceiling on production rises endogenously.  ``index=None`` clears it.
+
+        Args:
+            firm_mask: boolean mask over firms, or None to clear.
+            index: capacity index relative to the firms' initial capital stock.
+        """
+        if firm_mask is None or index is None:
+            self._min_capital_firms = None
+            self._min_capital_index = None
+            return
+        self._min_capital_firms = np.asarray(firm_mask, dtype=bool)
+        self._min_capital_index = float(index)
+
+    def _apply_minimum_capital_stock(
+        self, reference_capital_stock: np.ndarray, initial_capital_inputs_stock: np.ndarray
+    ) -> np.ndarray:
+        """Apply the capacity floor to a reference stock.  No-op unless configured."""
+        if self._min_capital_firms is None or self._min_capital_index is None:
+            return reference_capital_stock
+        mask = self._min_capital_firms
+        if mask.shape[0] != reference_capital_stock.shape[0]:
+            return reference_capital_stock
+        floored = np.array(reference_capital_stock, copy=True)
+        floored[mask] = np.maximum(
+            floored[mask], initial_capital_inputs_stock[mask] * self._min_capital_index
+        )
+        return floored
 
     def _reference_capital_stock(
         self,
@@ -336,6 +373,9 @@ class FinancialTargetCapitalInputsSetter(TargetCapitalInputsSetter):
             prev_capital_inputs_stock=prev_capital_inputs_stock,
             initial_capital_inputs_stock=initial_capital_inputs_stock,
             initial_production=initial_production,
+        )
+        reference_capital_stock = self._apply_minimum_capital_stock(
+            reference_capital_stock, initial_capital_inputs_stock
         )
 
         # Take current stock of capital inputs into accounts
