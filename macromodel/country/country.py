@@ -751,6 +751,8 @@ class Country:
                     "unemployment_benefits_by_individual"
                 )[0],
                 tau_vat=self.central_government.states["Value-added Tax"],
+                income_tax=self.central_government.states["Income Tax"],
+                employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
                 assume_zero_growth=self.assume_zero_growth,
                 prices=self.firms.ts.current("price"),
                 initial_prices=self.firms.ts.initial("price"),

@@ -57,12 +57,26 @@ def get_histogram(values: np.ndarray, scale: Optional[int], bins: int = 40, norm
             values = (values - np.min(values)) / diff
         else:
             values = values - np.min(values)
-    if scale is None:
-        hist, bin_edges = np.histogram(values, bins=bins)
+    scaled = values if scale is None else values / scale
+    # Guard against non-finite values and degenerate ranges. np.histogram
+    # raises "Too many bins for data range" when the (finite) range cannot be
+    # split into `bins` finite-sized bins (all-equal values, inf/overflow).
+    # A diagnostic histogram must never crash the simulation, so fall back to
+    # a single-populated-bin histogram in those cases.
+    finite = scaled[np.isfinite(scaled)]
+    if len(finite) == 0:
+        return np.full((2, bins + 1), np.nan)
+    vmin, vmax = float(np.min(finite)), float(np.max(finite))
+    if vmax - vmin <= 0.0:
+        bin_edges = np.linspace(vmin, vmin + 1.0, bins + 1)
+        hist = np.zeros(bins, dtype=float)
+        hist[0] = len(finite)
     else:
-        hist, bin_edges = np.histogram(values / scale, bins=bins)
-    hist = hist.astype(float)
-    hist /= hist.sum()
+        hist, bin_edges = np.histogram(finite, bins=bins, range=(vmin, vmax))
+        hist = hist.astype(float)
+    total = hist.sum()
+    if total > 0:
+        hist /= total
     return np.array([np.concatenate((hist, [np.nan])), bin_edges])
 
 

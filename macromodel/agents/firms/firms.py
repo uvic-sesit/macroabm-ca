@@ -10,6 +10,9 @@ from macro_data.readers.emission_fraction.emission_fraction_reader import Emissi
 from macro_data.readers.exo_prices import SectorExoPrices
 from macromodel.agents.agent import Agent
 from macromodel.agents.firms.firm_ts import FirmTimeSeries
+from macromodel.agents.firms.func.productivity_investment_planner import (
+    NoProductivityInvestmentPlanner,
+)
 from macromodel.agents.firms.utils.create_bundle_matrix import create_bundle_matrix
 from macromodel.configurations import FirmsConfiguration
 from macromodel.markets.credit_market.credit_market import CreditMarket
@@ -1132,6 +1135,10 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
             previous_good_prices=good_prices,
             extra_taxes=extra_taxes,
+            # Unclamped, demand-driven production target. Used only by the
+            # reference-capital-stock rule when forward_looking_reference_fraction > 0;
+            # ignored at the default of 0.0.
+            unconstrained_target_production=self.ts.current("target_production"),
         )
 
     def compute_unconstrained_demand_for_capital_inputs_value(self, current_good_prices: np.ndarray) -> np.ndarray:
@@ -2126,6 +2133,19 @@ class Firms(Agent):
         # Store in time series
         self.ts.executed_productivity_investment.append(executed_investment)
 
+    def _investment_drives_tfp(self) -> bool:
+        """Whether realized capital investment is allowed to feed TFP growth.
+
+        Investment-induced TFP is an explicit opt-in tied to the configured
+        productivity-investment planner. Under the default
+        ``NoProductivityInvestmentPlanner`` ordinary net capital investment must
+        NOT enter TFP growth (it already raises capacity via the capital stock),
+        so a configured base TFP rate is followed cleanly. Selecting a real
+        planner (Simple/Optimal) re-enables the investment-induced channel.
+        """
+        planner = self.functions.get("productivity_investment_planner")
+        return planner is not None and not isinstance(planner, NoProductivityInvestmentPlanner)
+
     def compute_tfp_growth(self) -> np.ndarray:
         """Calculate TFP growth rates for all firms.
 
@@ -2133,15 +2153,21 @@ class Firms(Agent):
         TFP growth based on:
         - Current TFP levels
         - Current production
-        - Executed productivity investment (if available, otherwise computed)
+        - Executed productivity investment (only when a productivity-investment
+          planner is active; otherwise held at zero so the base trend is clean)
         - Configuration parameters
 
         Returns:
             np.ndarray: TFP growth rates for each firm
         """
-        # Use executed productivity investment if available (from time series),
-        # otherwise fall back to computing it
-        if len(self.ts.executed_productivity_investment) > 0:
+        # Ordinary net capital investment feeds TFP growth only when a
+        # productivity-investment planner is explicitly enabled. With the No-op
+        # planner the investment term is held at zero, leaving the configured
+        # base growth rate as the sole driver of TFP.
+        if not self._investment_drives_tfp():
+            productivity_investment = np.zeros_like(self.states["tfp_multiplier"])
+        elif len(self.ts.executed_productivity_investment) > 0:
+            # Use executed productivity investment if available (from time series),
             productivity_investment = self.ts.current("executed_productivity_investment")
         else:
             # Fallback for initial period or if execute_productivity_investment wasn't called

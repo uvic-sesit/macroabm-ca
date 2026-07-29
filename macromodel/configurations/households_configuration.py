@@ -87,9 +87,12 @@ class ConsumptionFunction(BaseModel):
     """
 
     path_name: str = "consumption"
-    name: Literal["DefaultHouseholdConsumption", "ExogenousHouseholdConsumption", "CESHouseholdConsumption"] = (
-        "DefaultHouseholdConsumption"
-    )
+    name: Literal[
+        "DefaultHouseholdConsumption",
+        "ExogenousHouseholdConsumption",
+        "CESHouseholdConsumption",
+        "DisposableIncomeHouseholdConsumption",
+    ] = "DefaultHouseholdConsumption"
     parameters: dict[str, Any] = {
         "consumption_smoothing_fraction": 0.0,
         "consumption_smoothing_window": 12,

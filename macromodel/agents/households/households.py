@@ -625,6 +625,8 @@ class Households(Agent):
         per_capita_unemployment_benefits: float,
         tau_vat: float,
         assume_zero_growth: bool,
+        income_tax: float = 0.0,
+        employee_social_insurance_tax: float = 0.0,
         prices: Optional[np.ndarray] = None,
         initial_prices: Optional[np.ndarray] = None,
         taxes: Optional[np.ndarray] = None,
@@ -686,6 +688,10 @@ class Households(Agent):
                 taxes=taxes,
                 initial_taxes=initial_taxes,
                 bundle_matrix=self.bundle_matrix,
+                income_tax=income_tax,
+                employee_social_insurance_tax=employee_social_insurance_tax,
+                employee_income=self.ts.current("expected_income_employee"),
+                financial_income=self.ts.current("expected_income_financial_assets"),
             )
 
     def compute_target_investment(

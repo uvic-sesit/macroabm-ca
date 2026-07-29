@@ -27,6 +27,7 @@ class DemandEstimator(ABC):
         self,
         sectoral_growth_adjustment_speed: float,
         firm_growth_adjustment_speed: float,
+        demand_smoothing: float = 1.0,
     ):
         """Initialize the demand estimator with adjustment speeds.
 
@@ -38,6 +39,10 @@ class DemandEstimator(ABC):
         self.sectoral_growth_adjustment_speed = sectoral_growth_adjustment_speed
         self.firm_growth_adjustment_speed = max(0.0, min(1.0, firm_growth_adjustment_speed))
         self.firm_growth_adjustment_speed = firm_growth_adjustment_speed
+        # alpha: adaptive-expectations adjustment speed. 1.0 = no smoothing = the
+        # historical rule exactly. See compute_estimated_demand.
+        self.demand_smoothing = demand_smoothing
+        self._smoothed_demand = None
 
     @abstractmethod
     def compute_estimated_demand(
@@ -96,8 +101,32 @@ class DefaultDemandEstimator(DemandEstimator):
             np.ndarray: Estimated future demand for each firm, incorporating both
                        overall economic conditions and firm-specific factors
         """
+        # Adaptive expectations (Nerlove): smooth the observed demand before
+        # extrapolating it.
+        #
+        #     D^smooth_t = (1 - alpha) * D^smooth_{t-1} + alpha * previous_demand_t
+        #     estimated_demand = (1 + s*g)(1 + f*g_f) * D^smooth_t
+        #
+        # alpha = 1.0 (default) => D^smooth_t == previous_demand_t, i.e. exactly the
+        # historical rule, bit-for-bit.
+        #
+        # Why this matters here: `previous_demand` is NOT exogenous. Firms are
+        # goods-market buyers whose orders are keyed to target_production, which is
+        # itself this forecast -- so demand -> target -> input orders -> demand is a
+        # closed loop running through the Leontief matrix and the capital accelerator.
+        # alpha is one of the few things holding that loop's gain below 1. NOTE a
+        # stable AR(1) expectation does NOT imply a stable full system: the eigenvalue
+        # (1-alpha) governs the expectation alone, not the loop it sits inside.
+        previous_demand = np.asarray(previous_demand, dtype=float)
+        if self.demand_smoothing >= 1.0 or self._smoothed_demand is None:
+            self._smoothed_demand = previous_demand
+        else:
+            self._smoothed_demand = (
+                1.0 - self.demand_smoothing
+            ) * self._smoothed_demand + self.demand_smoothing * previous_demand
+
         return (
             (1 + self.sectoral_growth_adjustment_speed * current_estimated_growth)
             * (1 + self.firm_growth_adjustment_speed * estimated_growth_by_firm)
-            * previous_demand
+            * self._smoothed_demand
         )

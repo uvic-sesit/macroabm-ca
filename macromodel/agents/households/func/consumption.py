@@ -120,6 +120,7 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
         taxes: np.ndarray = None,  # Ignored in default consumption
         initial_taxes: np.ndarray = None,  # Ignored in default consumption
         bundle_matrix: np.ndarray = None,  # Ignored in default consumption
+        **kwargs,  # absorbs income_tax / employee_social_insurance_tax / employee_income / financial_income
     ) -> np.ndarray:
         """Calculate target consumption using default behavior.
 
@@ -236,6 +237,54 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
         return np.maximum(0.0, target_consumption)
 
 
+class DisposableIncomeHouseholdConsumption(DefaultHouseholdConsumption):
+    """Endogenous consumption driven by after-tax DISPOSABLE income.
+
+    Identical to ``DefaultHouseholdConsumption`` (same benefit/smoothing floors, weight
+    allocation and VAT wedge) except that the income entering the consumption target is net
+    of the personal income tax and employee social-insurance contribution the government
+    levies on this household (mirrors ``CentralGovernment.compute_taxes``):
+
+        disposable = expected_income
+                     - income_tax * ((1 - employee_social_insurance_tax) * employee_income + financial_income)
+                     - employee_social_insurance_tax * employee_income
+
+    Rental income is already recorded net of income tax in ``expected_income``; social
+    transfers are untaxed and therefore retained in full. If the income components are not
+    supplied (e.g. a direct call), it falls back to gross income and reduces to the default
+    rule. It does not rescale the aggregate to any external path, so household allocation
+    preserves the (disposable-income) aggregate total.
+    """
+
+    @staticmethod
+    def disposable_income(income, employee_income, financial_income, income_tax, employee_social_insurance_tax):
+        income = np.asarray(income, dtype=float)
+        if employee_income is None or financial_income is None:
+            return income
+        employee_income = np.asarray(employee_income, dtype=float)
+        financial_income = np.asarray(financial_income, dtype=float)
+        personal_income_tax = income_tax * (
+            (1.0 - employee_social_insurance_tax) * employee_income + financial_income
+        )
+        social_contributions = employee_social_insurance_tax * employee_income
+        return np.maximum(0.0, income - personal_income_tax - social_contributions)
+
+    def compute_target_consumption(
+        self,
+        *args,
+        income,
+        employee_income=None,
+        financial_income=None,
+        income_tax=0.0,
+        employee_social_insurance_tax=0.0,
+        **kwargs,
+    ):
+        disposable = self.disposable_income(
+            income, employee_income, financial_income, income_tax, employee_social_insurance_tax
+        )
+        return super().compute_target_consumption(*args, income=disposable, **kwargs)
+
+
 class CESHouseholdConsumption(HouseholdConsumption):
     """CES (Constant Elasticity of Substitution) household consumption implementation.
 
@@ -280,6 +329,7 @@ class CESHouseholdConsumption(HouseholdConsumption):
         taxes: np.ndarray = None,
         initial_taxes: np.ndarray = None,
         bundle_matrix: np.ndarray = None,
+        **kwargs,  # absorbs disposable-income inputs (ignored here)
     ) -> np.ndarray:
         """Calculate target consumption using CES substitution within bundles.
 
@@ -469,6 +519,7 @@ class ExogenousHouseholdConsumption(HouseholdConsumption):
         taxes: np.ndarray = None,  # Ignored in exogenous consumption
         initial_taxes: np.ndarray = None,  # Ignored in exogenous consumption
         bundle_matrix: np.ndarray = None,  # Ignored in exogenous consumption
+        **kwargs,  # absorbs disposable-income inputs (ignored here)
     ) -> np.ndarray:
         """Calculate target consumption using exogenous targets.
 
