@@ -293,6 +293,7 @@ def build_link_prehook(
     capital_investment_boost: float = 0.1,
     linkage_owns_coefficients: bool = False,
     capacity_floor: bool = False,
+    transition_capital: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -348,6 +349,9 @@ def build_link_prehook(
                         cims_region, year, anchor_year,
                     )
                     continue
+                tc = None
+                if transition_capital and reader.transition_capital_available(itr, year, cims_region):
+                    tc = reader.get_transition_capital(itr, year, cims_region)
                 country.firms.link(
                     requested_quantities=rq,
                     investment=inv,
@@ -361,6 +365,7 @@ def build_link_prehook(
                     is_anchor=(year == anchor_year),
                     reset_multipliers=reset_multipliers,
                     linkage_owns_coefficients=linkage_owns_coefficients,
+                    transition_capital=tc,
                 )
             else:
                 country.firms.link(
@@ -722,6 +727,13 @@ def parse_args() -> argparse.Namespace:
              "for those and drift applies only to unlinked coefficients.",
     )
     p.add_argument(
+        "--transition-capital",
+        action="store_true",
+        help="Charge sectors the capital cost of switching fuel: raises their machinery, "
+             "equipment and construction requirements, so how fast they can switch is "
+             "paced by what they can finance rather than by the fuel price alone.",
+    )
+    p.add_argument(
         "--capacity-floor",
         action="store_true",
         help="Floor the power sector's reference capital stock at CER's installed-capacity "
@@ -914,6 +926,7 @@ def main() -> None:
         reset_multipliers=args.reset_multipliers,
         linkage_owns_coefficients=args.linkage_owns_coefficients,
         capacity_floor=args.capacity_floor,
+        transition_capital=args.transition_capital,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,

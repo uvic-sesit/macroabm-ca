@@ -2316,6 +2316,7 @@ class Firms(Agent):
         is_anchor: bool = False,
         reset_multipliers: bool = True,
         linkage_owns_coefficients: bool = False,
+        transition_capital=None,
         intermediate_factor: float = 0.1,
         capital_factor: float = 0.1,
         capital_investment_boost: float = 0.1,
@@ -2380,6 +2381,7 @@ class Firms(Agent):
                 is_anchor=is_anchor,
                 reset_multipliers=reset_multipliers,
                 linkage_owns_coefficients=linkage_owns_coefficients,
+                transition_capital=transition_capital,
             )
             return
         if method != "nudge":
@@ -2453,6 +2455,7 @@ class Firms(Agent):
         is_anchor: bool,
         reset_multipliers: bool,
         linkage_owns_coefficients: bool = False,
+        transition_capital=None,
     ) -> None:
         """Set energy/capital productivity toward the CIMS intensity target.
 
@@ -2543,6 +2546,78 @@ class Firms(Agent):
                     self._linkage_owned_pairs.setdefault(mult_key, set()).add((i, j))
                     if reset_multipliers and multipliers is not None:
                         multipliers[firms_i, j] = 1.0
+
+        if transition_capital is not None:
+            self._apply_transition_capital(
+                transition_capital,
+                valid_comparable,
+                industries_list,
+                industry_idx,
+                production,
+                is_anchor=is_anchor,
+                reset_multipliers=reset_multipliers,
+            )
+
+    def _apply_transition_capital(
+        self,
+        transition_capital,
+        valid_comparable: list[str],
+        industries_list: list[str],
+        industry_idx: np.ndarray,
+        production: np.ndarray,
+        *,
+        is_anchor: bool,
+        reset_multipliers: bool,
+    ) -> None:
+        """Raise a sector's capital requirement for the equipment that lets it switch fuel.
+
+        Without this, changing the energy mix costs only the fuel price difference, so
+        energy demand responds to price far more sharply than any real economy could -- a
+        firm cannot burn electricity instead of diesel without first buying the equipment.
+        The uplift multiplies the sector's baseline requirement for machinery, electrical
+        equipment and construction, so productivity (its reciprocal) is divided by
+        ``1 + uplift``.
+
+        Crucially this needs no new rate rule: the model's existing capital machinery does
+        the pacing.  ``compute_target_capital_inputs`` already applies firms' own financial
+        constraints and ``limiting_capital_inputs`` already gates production on installed
+        capital, so how fast a sector can switch falls out of what it can finance.  A no-op
+        when no table is supplied.
+        """
+        if transition_capital is None or getattr(transition_capital, "empty", True):
+            return
+        cap_matrix = self.base_capital_inputs_productivity_matrix
+        cap_multipliers = self.states.get("capital_tech_multipliers")
+        if not hasattr(self, "_link_transition_baseline"):
+            self._link_transition_baseline: dict[tuple[str, str], float] = {}
+
+        for i_code in valid_comparable:
+            if i_code not in transition_capital.columns:
+                continue
+            i = industries_list.index(i_code)
+            firms_i = np.where(industry_idx == i)[0]
+            for j_code in transition_capital.index:
+                if j_code not in industries_list:
+                    continue
+                uplift = float(transition_capital.loc[j_code, i_code])
+                if not np.isfinite(uplift) or uplift <= 0.0:
+                    continue
+                j = industries_list.index(j_code)
+                key = (i_code, j_code)
+                if is_anchor or key not in self._link_transition_baseline:
+                    eff = _weighted_effective_coefficient(
+                        cap_matrix[j, i], cap_multipliers, firms_i, j, production
+                    )
+                    if eff is None or not np.isfinite(eff) or eff <= 0.0:
+                        continue
+                    self._link_transition_baseline[key] = float(eff)
+                baseline_eff = self._link_transition_baseline.get(key)
+                if baseline_eff is None or baseline_eff <= 0.0:
+                    continue
+                cap_matrix[j, i] = baseline_eff / (1.0 + uplift)
+                self._linkage_owned_pairs.setdefault("capital_tech_multipliers", set()).add((i, j))
+                if reset_multipliers and cap_multipliers is not None:
+                    cap_multipliers[firms_i, j] = 1.0
 
     def get_production_annual(
         self,

@@ -50,6 +50,14 @@ class CIMSDataReader:
         """Return the power-sector capacity index (one column, indexed by industry)."""
         return self._read_matrix("generation_capacity", itr, year, region)
 
+    def get_transition_capital(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Return the fuel-switching capital uplift (capital good x consuming sector)."""
+        return self._read_matrix("transition_capital", itr, year, region)
+
+    def transition_capital_available(self, itr: str, year: int, region: str) -> bool:
+        """True if the processed transition-capital table exists."""
+        return self._path("transition_capital", itr, year, region).exists()
+
     def capacity_available(self, itr: str, year: int, region: str) -> bool:
         """True if the processed capacity index exists for this iteration/year/region."""
         return self._path("generation_capacity", itr, year, region).exists()
