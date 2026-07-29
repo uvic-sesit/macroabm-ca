@@ -55,7 +55,21 @@ class TimeSeries:
         Raises:
             KeyError: If the variable doesn't exist in the time series
         """
-        return self.dicts[item]
+        # Avoid infinite recursion while pickle restores __dict__ (dicts may
+        # not exist yet when __getattr__ is consulted for attribute lookup).
+        try:
+            dicts = object.__getattribute__(self, "dicts")
+        except AttributeError as exc:
+            raise AttributeError(item) from exc
+        if item not in dicts:
+            raise AttributeError(item)
+        return dicts[item]
+
+    def __getstate__(self):
+        return {"dicts": self.dicts}
+
+    def __setstate__(self, state):
+        self.dicts = state["dicts"]
 
     def __setitem__(self, key, value):
         """Set or create a new time series with an initial value.

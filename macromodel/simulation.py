@@ -403,8 +403,30 @@ class Simulation:
         Executes the simulation from the current state until t_max iterations
         have been completed. Each iteration represents one time period in the model.
         """
-        for t in range(self.t_max):
-            self.iterate(t)
+        remaining = self.t_max - self.steps_completed
+        if remaining > 0:
+            self.run_steps(remaining)
+
+    @property
+    def steps_completed(self) -> int:
+        """Number of :meth:`iterate` calls completed since the initial state."""
+        first_country = next(iter(self.countries.values()))
+        history = first_country.economy.ts.historic("gdp_output")
+        return max(len(history) - 1, 0)
+
+    def run_steps(self, n_steps: int, *, start_t: int | None = None) -> None:
+        """Advance the simulation by *n_steps* timesteps from its current state."""
+        if n_steps <= 0:
+            return
+        base_t = self.steps_completed if start_t is None else start_t
+        for i in range(n_steps):
+            self.iterate(base_t + i)
+
+    def run_until_total_steps(self, total_steps: int) -> None:
+        """Run until ``steps_completed == total_steps``."""
+        remaining = total_steps - self.steps_completed
+        if remaining > 0:
+            self.run_steps(remaining)
 
     def save_random_seed(self, h5_file: h5py.File) -> None:
         """Save the random seed to the HDF5 file metadata.
@@ -474,6 +496,33 @@ class Simulation:
             industry_df = country.firms.industries_dataframe
             df.to_hdf(save_dir / file_name, key=country_name, mode="a")
             industry_df.to_hdf(save_dir / file_name, key=f"{country_name}_industries", mode="a")
+            # Compact per-industry time series for diagnostics.  Best-effort: a
+            # failure here must never break the (convergence-critical) shallow save.
+            try:
+                for field, field_df in country.firms.industry_timeseries_dataframes().items():
+                    field_df.to_hdf(save_dir / file_name, key=f"{country_name}_firms_{field}", mode="a")
+            except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+                logging.getLogger(__name__).warning(
+                    "Per-industry diagnostic export failed for %s: %s", country_name, exc
+                )
+        # Rest-of-the-world sales by industry == the countries' imports by industry.  The
+        # shallow summary otherwise carries only an economy-wide Imports total, which
+        # cannot say whether a sector is meeting demand domestically or importing it --
+        # the central question for the CER electricity linkage.  Best-effort, as above.
+        try:
+            import pandas as pd
+
+            row_ts = self.rest_of_the_world.ts
+            imports_by_industry = pd.DataFrame(np.array(row_ts.historic("exports_real")))
+            imports_by_industry.to_hdf(save_dir / file_name, key="row_imports_real", mode="a")
+            # ROW's *offered* exports, as distinct from what it actually sells.  The
+            # import cap clamps this quantity, so the two series together are what say
+            # whether a non-binding cap means "imports are genuinely constrained" or
+            # "the cap is anchored above realised trade and has no teeth".
+            desired = pd.DataFrame(np.array(row_ts.historic("desired_exports_real")))
+            desired.to_hdf(save_dir / file_name, key="row_desired_exports_real", mode="a")
+        except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+            logging.getLogger(__name__).warning("ROW import export failed: %s", exc)
 
     def get_country_shallow_output(self, country: str):
         """Get summary statistics for a specific country.

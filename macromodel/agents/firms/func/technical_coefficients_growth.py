@@ -250,6 +250,12 @@ class SimpleTechnicalGrowth(TechnicalCoefficientsGrowth):
             industry = firm_industries[i]
             effective_coefficients[i, :] = base_coefficients[industry, :] * current_multipliers[i, :]
 
+        # Unused inputs carry inf productivity; zero them so that production * inf
+        # (or 0 * inf for idle firms) does not raise/propagate NaN.  These entries
+        # end up excluded by the reference-cost mask below regardless, so growth
+        # rates are unchanged -- this only removes the spurious warning.
+        effective_coefficients[~np.isfinite(effective_coefficients)] = 0.0
+
         # Calculate quantities used: quantity_ij = production_i * effective_coefficient_ij
         # For intermediate inputs, quantity = production * coefficient (inputs needed per unit output)
         quantities = production[:, np.newaxis] * effective_coefficients
@@ -312,6 +318,12 @@ class SimpleTechnicalGrowth(TechnicalCoefficientsGrowth):
         for i in range(n_firms):
             industry = firm_industries[i]
             effective_coefficients[i, :] = base_coefficients[industry, :] * current_multipliers[i, :]
+
+        # Unused inputs carry inf productivity; zero them so that production * inf
+        # (or 0 * inf for idle firms) does not raise/propagate NaN.  These entries
+        # end up excluded by the reference-cost mask below regardless, so growth
+        # rates are unchanged -- this only removes the spurious warning.
+        effective_coefficients[~np.isfinite(effective_coefficients)] = 0.0
 
         # Calculate quantities used: quantity_ij = production_i * effective_coefficient_ij
         # For capital inputs, quantity = production * coefficient (capital needed per unit output)

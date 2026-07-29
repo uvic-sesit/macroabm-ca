@@ -41,6 +41,7 @@ from macro_data.readers.economic_data.ons_reader import ONSReader
 from macro_data.readers.economic_data.policy_rates import PolicyRatesReader
 from macro_data.readers.economic_data.provincial_investment_reader import ProvincialInvestmentReader
 from macro_data.readers.economic_data.provincial_macro_reader import ProvincialMacroReader
+from macro_data.readers.economic_data.provincial_labour_reader import ProvincialLabourReader
 from macro_data.readers.economic_data.provincial_tax_reader import ProvincialTaxReader
 from macro_data.readers.economic_data.world_bank_reader import WorldBankReader
 from macro_data.readers.emission_fraction.emission_fraction_reader import EmissionsFractionReader
@@ -213,6 +214,7 @@ class DataReaders:
     provincial_macro: Optional[ProvincialMacroReader] = None
     provincial_investment: Optional[ProvincialInvestmentReader] = None
     provincial_tax: Optional[ProvincialTaxReader] = None
+    provincial_labour: Optional[ProvincialLabourReader] = None
     regions_dict: Optional[dict[Country, list[Region]]] = None
 
     @classmethod
@@ -509,6 +511,7 @@ class DataReaders:
         # constructed earlier (it feeds the ICIO GFCF split); macro and tax are attached here.
         provincial_macro = ProvincialMacroReader.from_default(raw_data_path=raw_data_path)
         provincial_tax = ProvincialTaxReader.from_default(raw_data_path=raw_data_path)
+        provincial_labour = ProvincialLabourReader.from_default(raw_data_path=raw_data_path)
 
         return cls(
             icio=icio,
@@ -532,6 +535,7 @@ class DataReaders:
             provincial_macro=provincial_macro,
             provincial_investment=provincial_investment,
             provincial_tax=provincial_tax,
+            provincial_labour=provincial_labour,
             regions_dict=regions_dict,
         )
 

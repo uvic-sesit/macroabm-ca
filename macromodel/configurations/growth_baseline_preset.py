@@ -34,11 +34,20 @@ _LABOUR_BASE_YEAR = 2014
 
 
 def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
-                                uniform: bool = False) -> dict[str, list[float]] | list[float]:
+                                uniform: bool = False,
+                                post_sample_growth: Optional[float] = None,
+                                ) -> dict[str, list[float]] | list[float]:
     """Quarterly observed labour-force index (base 1.0 at t0), interpolated to n_quarters.
 
-    Reads the bundled annual index and linearly interpolates annual -> quarterly, holding
-    the last observed year flat thereafter (mirrors the exogenous national-accounts tail).
+    Reads the bundled annual index and linearly interpolates annual -> quarterly.  Past the
+    last observed year the index is, by default, held **flat** (mirroring the exogenous
+    national-accounts tail).
+
+    That default freezes labour supply for the whole projection: the bundled index ends in
+    2024, so a run to 2035 has eleven years of zero labour-force growth while demand keeps
+    rising.  In the candidate baseline that drives unemployment to 0.00% and leaves the
+    economy with no slack.  ``post_sample_growth`` continues the index at a constant annual
+    rate instead, so labour supply can expand over the projection.
 
     Args:
         n_quarters: number of quarters required (e.g. t_max + 1).
@@ -46,6 +55,9 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
             else a dict of all provinces.
         uniform: if True, every province gets the national (sum-of-provinces) index -- the
             control that removes province-specific labour variation.
+        post_sample_growth: annual labour-force growth applied after the last observed
+            year (e.g. ``0.0072`` for CER EF2026's +0.72%/yr population path).  ``None``
+            keeps the historical flat-tail behaviour.
 
     Raises:
         FileNotFoundError: if the bundled JSON is missing (rebuild with
@@ -62,6 +74,15 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
     def _interp(annual_by_year: dict[str, float]) -> list[float]:
         vals = np.array([annual_by_year[str(y)] for y in years], dtype=float)
         idx = np.interp(grid, year_q, vals)   # np.interp holds the endpoints flat outside the range
+        if post_sample_growth:
+            # Re-grow the flat tail at a constant annual rate, compounding quarterly from
+            # the last in-sample observation rather than from the start of the flat region.
+            last_obs_q = year_q[-1]
+            tail = grid > last_obs_q
+            if tail.any():
+                quarters_past = grid[tail] - last_obs_q
+                idx = idx.copy()
+                idx[tail] = vals[-1] * (1.0 + post_sample_growth) ** (quarters_past / 4.0)
         return (idx / idx[0]).tolist()
 
     if uniform:
@@ -123,6 +144,9 @@ def apply_candidate_growth_baseline(
     province: Optional[str] = None,
     n_quarters: Optional[int] = None,
     uniform_labour_path: bool = False,
+    labour_force_growth: Optional[float] = None,
+    capital_target_fraction: Optional[float] = None,
+    capital_rolling_reference: Optional[bool] = None,
 ):
     """Apply the candidate growth baseline (opt-in overrides) to one CountryConfiguration.
 
@@ -152,7 +176,16 @@ def apply_candidate_growth_baseline(
     fc.demand_for_goods.parameters.update(p["demand_for_goods"])
     fc.excess_demand.parameters.update(p["excess_demand"])
     fc.target_production.parameters.update(p["target_production"])
-    fc.target_capital_inputs.parameters.update(p["target_capital_inputs"])
+    # The preset activates the capital-accumulation rule (fraction 0.1, rolling reference),
+    # which the shipped defaults leave inert (fraction 0.0).  Both are overridable so the
+    # capital channel can be switched off without disturbing the rest of the baseline --
+    # the diagnostic for whether a large linkage capital-intensity signal is what binds.
+    capital_params = dict(p["target_capital_inputs"])
+    if capital_target_fraction is not None:
+        capital_params["target_capital_inputs_fraction"] = float(capital_target_fraction)
+    if capital_rolling_reference is not None:
+        capital_params["rolling_reference"] = bool(capital_rolling_reference)
+    fc.target_capital_inputs.parameters.update(capital_params)
 
     country_config.government_entities.functions.consumption.name = p["government_consumption_setter"]
     country_config.households.functions.consumption.name = p["household_consumption_setter"]
@@ -162,7 +195,8 @@ def apply_candidate_growth_baseline(
         if province is None or n_quarters is None:
             raise ValueError("use_observed_labour_path=True requires `province` and `n_quarters`.")
         labour_force_index = observed_labour_force_index(
-            n_quarters=n_quarters, province=province, uniform=uniform_labour_path)
+            n_quarters=n_quarters, province=province, uniform=uniform_labour_path,
+            post_sample_growth=labour_force_growth)
 
     if labour_force_index is not None:
         country_config.individuals.functions.demography.name = p["demography"]

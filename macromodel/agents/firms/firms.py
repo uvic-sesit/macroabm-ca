@@ -20,6 +20,92 @@ from macromodel.markets.goods_market.value_type import ValueType
 from macromodel.util.function_mapping import functions_from_model, update_functions
 
 
+# Per-industry series written into the lightweight HDF5 for diagnostics
+# (see :meth:`Firms.industry_timeseries_dataframes`).
+_INDUSTRY_TS_SUM_FIELDS = (
+    "production",
+    "estimated_demand",
+    "real_amount_sold",
+    "inventory",
+    "limiting_intermediate_inputs",
+    # The capital-side constraint.  Without it the shallow summary cannot say whether a
+    # supply-constrained run is short of intermediate inputs or of capital, which is the
+    # first question to ask of any collapse; the full multi-GB save was previously the
+    # only way to see it.
+    "limiting_capital_inputs",
+    # Wage decomposition.  The labour share is wages / value added, and wages are
+    # employment x wage rate -- without both terms the shallow summary cannot say whether a
+    # rising labour share comes from hiring or from a spiralling wage *rate*, which is the
+    # first question to ask of any wage-driven collapse.
+    "total_wage",
+    "number_of_employees",
+)
+_INDUSTRY_TS_WEIGHTED_FIELDS = {
+    "price": "production",
+    # Employment-weighted: these are per-worker/intensive quantities, so summing them
+    # across firms would be meaningless.
+    "real_wage_per_capita": "number_of_employees",
+    "wage_tightness_markup": "number_of_employees",
+    # The two productivity terms wages are indexed to.  set_employee_income multiplies
+    # each stayer's wage by current/prev labour_productivity_factor, and set_offered_wage
+    # multiplies by that ratio *and* the TFP multiplier -- so without these series the
+    # shallow summary cannot say which productivity term (if either) is driving a wage
+    # spiral, only that one is happening.
+    "labour_productivity_factor": "number_of_employees",
+    "labour_productivity": "number_of_employees",
+}
+
+
+def _weighted_effective_coefficient(
+    base_coeff: float,
+    multipliers: np.ndarray | None,
+    firms_idx: np.ndarray,
+    input_j: int,
+    production: np.ndarray,
+) -> float | None:
+    """Production-weighted effective coefficient ``base * multiplier`` for one (industry, input).
+
+    The effective intermediate/capital coefficient of a firm is
+    ``base_coeff * multiplier[firm, input_j]``.  This collapses the firms of a
+    single industry to one representative value, weighting by current
+    production (falling back to a simple mean when production is all zero), so
+    that overwriting the coefficient preserves total input use.  Returns
+    ``None`` when there are no firms for the industry.
+    """
+    if firms_idx.size == 0:
+        return None
+    if multipliers is None:
+        return float(base_coeff)
+    mult = np.asarray(multipliers)[firms_idx, input_j].astype(float)
+    weights = production[firms_idx].astype(float) if production is not None else None
+    if weights is None or weights.sum() <= 0.0:
+        mean_mult = float(np.mean(mult)) if mult.size else 1.0
+    else:
+        mean_mult = float(np.average(mult, weights=weights))
+    return float(base_coeff) * mean_mult
+
+
+def _intensity_target_productivity(
+    baseline_eff: float,
+    anchor_intensity: float,
+    current_intensity: float,
+) -> float | None:
+    """Target productivity coefficient for the intensity-target linkage.
+
+    Productivity is the reciprocal of energy-per-output, so a rise in CIMS
+    intensity relative to the anchor year lowers productivity:
+
+        target = baseline_eff * (anchor_intensity / current_intensity)
+
+    Returns ``None`` (leave the coefficient unchanged) when any input is not a
+    usable positive, finite number.
+    """
+    for v in (baseline_eff, anchor_intensity, current_intensity):
+        if v is None or not np.isfinite(v) or v <= 0.0:
+            return None
+    return float(baseline_eff) * (float(anchor_intensity) / float(current_intensity))
+
+
 class Firms(Agent):
     """A collection of producing firms in the economy.
 
@@ -353,6 +439,48 @@ class Firms(Agent):
 
         return df
 
+    def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
+        """Per-industry time series (timesteps x industries) for lightweight diagnostics.
+
+        Aggregates the firm-level history to industry level so the shallow HDF5
+        can carry a compact, lazily-sliceable per-sector view without a full
+        (multi-GB) simulation save: quantity fields are summed across the firms
+        in each industry; ``price`` is a production-weighted average.  Columns are
+        industry codes.
+        """
+        industry = np.asarray(self.states["Industry"])
+        n_ind = len(self.industries)
+
+        def agg_sum(field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            out = np.zeros((len(hist), n_ind))
+            for t, arr in enumerate(hist):
+                np.add.at(out[t], industry, np.asarray(arr, dtype=float).ravel())
+            return out
+
+        def agg_weighted(field: str, weight_field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            whist = self.ts.historic(weight_field)
+            steps = min(len(hist), len(whist))
+            out = np.zeros((steps, n_ind))
+            for t in range(steps):
+                vals = np.asarray(hist[t], dtype=float).ravel()
+                weights = np.asarray(whist[t], dtype=float).ravel()
+                num = np.zeros(n_ind)
+                den = np.zeros(n_ind)
+                np.add.at(num, industry, vals * weights)
+                np.add.at(den, industry, weights)
+                out[t] = np.divide(num, den, out=np.zeros(n_ind), where=den > 0)
+            return out
+
+        cols = list(self.industries)
+        frames: dict[str, pd.DataFrame] = {}
+        for field in _INDUSTRY_TS_SUM_FIELDS:
+            frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
+        for field, weight_field in _INDUSTRY_TS_WEIGHTED_FIELDS.items():
+            frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+        return frames
+
     def reset(self, configuration: FirmsConfiguration) -> None:
         """Reset the firms to initial state with new configuration.
 
@@ -656,7 +784,7 @@ class Firms(Agent):
         Returns:
             np.ndarray: Target production quantities for each firm
         """
-        return self.functions["target_production"].compute_target_production(
+        target = self.functions["target_production"].compute_target_production(
             current_estimated_demand=self.ts.current("estimated_demand"),
             initial_inventory=self.ts.initial("inventory"),
             previous_inventory=self.ts.current("inventory"),
@@ -673,6 +801,71 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
+        return self._apply_growth_limits(target)
+
+    def set_growth_limits(
+        self,
+        industry_indices,
+        max_growth_per_year: float | None,
+        max_decline_per_year: float | None,
+        steps_per_year: int,
+    ) -> None:
+        """Configure a per-sector production-growth clamp (see :meth:`_apply_growth_limits`).
+
+        Args:
+            industry_indices: industry indices whose firms are growth-limited.
+            max_growth_per_year: cap on annual production growth (e.g. 0.05 = +5%/yr),
+                or ``None`` to leave the upside unbounded.
+            max_decline_per_year: cap on annual production decline (0.05 = -5%/yr),
+                or ``None`` to leave the downside unbounded.
+            steps_per_year: simulation steps per calendar year (defines the trailing
+                reference used for the year-on-year band).
+        """
+        self._growth_limit_indices = np.asarray(list(industry_indices), dtype=int)
+        self._growth_limit_up = None if max_growth_per_year is None else float(max_growth_per_year)
+        self._growth_limit_down = None if max_decline_per_year is None else float(max_decline_per_year)
+        self._growth_limit_steps_per_year = int(steps_per_year)
+
+    def _apply_growth_limits(self, target: np.ndarray) -> np.ndarray:
+        """Clamp target production of listed sectors to a year-on-year growth band.
+
+        For firms in the configured industries, the planned output is bounded to
+        ``[ref*(1-max_decline), ref*(1+max_growth)]`` where ``ref`` is the firm's
+        own production one year (``steps_per_year`` steps) ago -- comparing the
+        same quarter a year back so seasonality cancels.  This imposes production
+        stickiness / adjustment costs on the listed (typically extraction)
+        sectors so their output cannot swing faster than is realistic, keeping
+        both the macro dynamics and the CIMS feedback bounded.
+
+        The clamp is skipped for firms with no meaningful reference (first year of
+        the run, or a currently-idle firm with zero prior output).  Robust to
+        checkpoints written before this feature (missing attributes -> no-op).
+        """
+        indices = getattr(self, "_growth_limit_indices", None)
+        if indices is None or len(indices) == 0:
+            return target
+        up = getattr(self, "_growth_limit_up", None)
+        down = getattr(self, "_growth_limit_down", None)
+        if up is None and down is None:
+            return target
+        steps_per_year = int(getattr(self, "_growth_limit_steps_per_year", 4))
+
+        history = self.ts.historic("production")
+        if len(history) < steps_per_year:
+            return target  # not enough history for a year-ago reference yet
+
+        ref = np.asarray(history[-steps_per_year], dtype=float).ravel()
+        industry = np.asarray(self.states["Industry"])
+        firm_mask = np.isin(industry, indices) & (ref > 0.0)
+        if not firm_mask.any():
+            return target
+
+        out = np.array(target, dtype=float, copy=True)
+        if up is not None:
+            out = np.where(firm_mask, np.minimum(out, ref * (1.0 + up)), out)
+        if down is not None:
+            out = np.where(firm_mask, np.maximum(out, ref * (1.0 - down)), out)
+        return out
 
     def compute_target_intermediate_inputs_production(self) -> np.ndarray:
         """Calculate target intermediate input production levels.
@@ -2086,6 +2279,293 @@ class Firms(Agent):
         input_index = self.industries.index(input_industry)
 
         self.base_intermediate_inputs_productivity_matrix[input_index, producing_index] *= 1 + increase_pct
+
+    def link(
+        self,
+        requested_quantities: pd.DataFrame,
+        investment: pd.DataFrame,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+        *,
+        method: str = "nudge",
+        energy_intensity: pd.DataFrame | None = None,
+        anchor_energy_intensity: pd.DataFrame | None = None,
+        capital_intensity: pd.DataFrame | None = None,
+        anchor_capital_intensity: pd.DataFrame | None = None,
+        is_anchor: bool = False,
+        reset_multipliers: bool = True,
+        intermediate_factor: float = 0.1,
+        capital_factor: float = 0.1,
+        capital_investment_boost: float = 0.1,
+    ) -> None:
+        """Adjust productivity matrices using CIMS linkage data (no file I/O).
+
+        Two methods are supported:
+
+        * ``method="nudge"`` (legacy): translates CIMS-requested energy
+          quantities and investment into damped, one-directional *nudges* on the
+          base productivity matrices.  This aligns only the energy *mix* (it
+          rescales CIMS energy to the macro total), by a fixed multiplicative
+          step, and never raises intermediate productivity.
+
+        * ``method="intensity_target"`` (recommended): directly *sets* each
+          comparable industry's energy-per-unit-output coefficient toward the
+          CIMS engineering result, index-anchored to a base/anchor year.  Because
+          the macroABM production technology is Leontief
+          (``used_input = production / productivity``), ``productivity`` is the
+          reciprocal of energy-per-output, so this is a direct assignment rather
+          than a search.  Anchoring on the macroABM's own base-year coefficient
+          keeps the units (monetary IO intensities) and eliminates the base-year
+          level shock that destabilises the ``nudge`` method.  Both the energy
+          (intermediate) and investment (capital) channels are overwritten.
+
+        NOTE: both methods mutate the *base* coefficient matrices.  In
+        ``intensity_target`` mode the affected firm-level tech multipliers are
+        reset to 1 (unless ``reset_multipliers=False``) so the *effective* energy
+        mix equals the CIMS target at each milestone; between milestones the
+        model is free to drift them again (e.g. bundle arbitrage), which is what
+        lets the macroABM substitute across the 5-year period.
+
+        Args:
+            requested_quantities: (industry x good) CIMS demand matrix (nudge).
+            investment: (industry x good) CIMS investment matrix (nudge).
+            comparable_codes: Industry codes with a CIMS counterpart.
+            energy_bundle_codes: Energy-input codes (columns to update).
+            method: ``"nudge"`` or ``"intensity_target"``.
+            energy_intensity: current-year energy-per-output matrix
+                (intensity_target).
+            anchor_energy_intensity: anchor-year energy-per-output matrix
+                (intensity_target).
+            capital_intensity / anchor_capital_intensity: same for the capital
+                (investment) channel.
+            is_anchor: True when this call is at the anchor year; captures the
+                macroABM baseline effective coefficients and leaves the model
+                otherwise unchanged (index = 1).
+            reset_multipliers: reset the affected energy-column tech multipliers
+                to 1 at each milestone so the effective mix is overwritten.
+            intermediate_factor / capital_factor / capital_investment_boost:
+                damping steps for the legacy ``nudge`` method.
+        """
+        method = (method or "nudge").lower()
+        if method == "intensity_target":
+            self._link_intensity_target(
+                comparable_codes,
+                energy_bundle_codes,
+                energy_intensity=energy_intensity,
+                anchor_energy_intensity=anchor_energy_intensity,
+                capital_intensity=capital_intensity,
+                anchor_capital_intensity=anchor_capital_intensity,
+                is_anchor=is_anchor,
+                reset_multipliers=reset_multipliers,
+            )
+            return
+        if method != "nudge":
+            raise ValueError(f"Unknown link method {method!r}; expected 'nudge' or 'intensity_target'.")
+
+        industries_list = list(self.industries)
+        industry_idx = self.states["Industry"]
+        n_ind = len(industries_list)
+
+        used_interm = self.ts.current("used_intermediate_inputs")  # (n_firms, n_ind)
+        used_capital = self.ts.current("used_capital_inputs")  # (n_firms, n_ind)
+
+        industry_interm = np.zeros((n_ind, n_ind))
+        industry_capital = np.zeros((n_ind, n_ind))
+        for j in range(n_ind):
+            industry_interm[:, j] = np.bincount(industry_idx, weights=used_interm[:, j], minlength=n_ind)
+            industry_capital[:, j] = np.bincount(industry_idx, weights=used_capital[:, j], minlength=n_ind)
+
+        valid_comparable = [
+            c for c in comparable_codes if c in industries_list and c in requested_quantities.index
+        ]
+        valid_energy = [
+            c for c in energy_bundle_codes if c in industries_list and c in requested_quantities.columns
+        ]
+
+        for i_code in valid_comparable:
+            i = industries_list.index(i_code)
+
+            macro_total = sum(industry_interm[i, industries_list.index(j_code)] for j_code in valid_energy)
+            cims_total = sum(float(requested_quantities.loc[i_code, j_code]) for j_code in valid_energy)
+
+            inv_total = sum(float(investment.loc[i_code, k]) for k in valid_energy)
+            capital_macro_total = sum(industry_capital[i, industries_list.index(k)] for k in valid_energy)
+
+            for j_code in valid_energy:
+                j = industries_list.index(j_code)
+
+                if cims_total != 0:
+                    scaled_rq = float(requested_quantities.loc[i_code, j_code]) * macro_total / cims_total
+                else:
+                    scaled_rq = 0.0
+
+                coeff_interm = self.base_intermediate_inputs_productivity_matrix[j, i]
+
+                if scaled_rq != 0 and (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
+                    self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 - intermediate_factor
+
+                if inv_total == 0:
+                    continue
+
+                scaled_inv = float(investment.loc[i_code, j_code]) * (capital_macro_total / inv_total)
+                capital_diff = industry_capital[i, j] - scaled_inv
+                coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
+
+                if capital_diff > 0:
+                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 + capital_factor
+                elif capital_diff < 0 and coeff_capital >= 1:
+                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 - capital_factor * (
+                        1 + capital_investment_boost
+                    )
+
+    def _link_intensity_target(
+        self,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+        *,
+        energy_intensity: pd.DataFrame | None,
+        anchor_energy_intensity: pd.DataFrame | None,
+        capital_intensity: pd.DataFrame | None,
+        anchor_capital_intensity: pd.DataFrame | None,
+        is_anchor: bool,
+        reset_multipliers: bool,
+    ) -> None:
+        """Set energy/capital productivity toward the CIMS intensity target.
+
+        See :meth:`link` for the method description.  On the anchor call this
+        captures the macroABM's baseline effective coefficients (production-
+        weighted across firms) and makes no other change; on later milestones it
+        sets ``base[j, i] = baseline_eff[j, i] * anchor_intensity / current_intensity``
+        (productivity is the reciprocal of intensity) and optionally resets the
+        affected firm multipliers to 1.
+        """
+        industries_list = list(self.industries)
+        industry_idx = np.asarray(self.states["Industry"])
+        production = np.asarray(self.ts.current("production")).ravel()
+
+        valid_comparable = [c for c in comparable_codes if c in industries_list]
+        valid_energy = [c for c in energy_bundle_codes if c in industries_list]
+
+        # (base matrix, multiplier state key, current intensity, anchor intensity, baseline attr)
+        channels = [
+            (
+                self.base_intermediate_inputs_productivity_matrix,
+                "intermediate_tech_multipliers",
+                energy_intensity,
+                anchor_energy_intensity,
+                "_link_intermediate_baseline",
+            ),
+            (
+                self.base_capital_inputs_productivity_matrix,
+                "capital_tech_multipliers",
+                capital_intensity,
+                anchor_capital_intensity,
+                "_link_capital_baseline",
+            ),
+        ]
+
+        for base_matrix, mult_key, cur_intensity, anchor_intensity, baseline_attr in channels:
+            if anchor_intensity is None:
+                continue
+            baseline = getattr(self, baseline_attr, None)
+            if baseline is None:
+                baseline = {}
+                setattr(self, baseline_attr, baseline)
+            multipliers = self.states.get(mult_key)
+
+            for i_code in valid_comparable:
+                i = industries_list.index(i_code)
+                firms_i = np.where(industry_idx == i)[0]
+                for j_code in valid_energy:
+                    if j_code not in getattr(anchor_intensity, "columns", []):
+                        continue
+                    if i_code not in anchor_intensity.index:
+                        continue
+                    j = industries_list.index(j_code)
+
+                    if is_anchor or (i_code, j_code) not in baseline:
+                        # Capture the production-weighted effective coefficient
+                        # as the macroABM baseline for this (industry, energy).
+                        eff = _weighted_effective_coefficient(
+                            base_matrix[j, i], multipliers, firms_i, j, production
+                        )
+                        if eff is None or not np.isfinite(eff) or eff <= 0.0:
+                            continue
+                        baseline[(i_code, j_code)] = float(eff)
+
+                    baseline_eff = baseline.get((i_code, j_code))
+                    if baseline_eff is None:
+                        continue
+
+                    a_int = float(anchor_intensity.loc[i_code, j_code])
+                    c_int = (
+                        float(cur_intensity.loc[i_code, j_code])
+                        if cur_intensity is not None
+                        and i_code in cur_intensity.index
+                        and j_code in cur_intensity.columns
+                        else a_int
+                    )
+                    target = _intensity_target_productivity(baseline_eff, a_int, c_int)
+                    if target is None:
+                        continue
+
+                    base_matrix[j, i] = target
+                    if reset_multipliers and multipliers is not None:
+                        multipliers[firms_i, j] = 1.0
+
+    def get_production_annual(
+        self,
+        current_year: int,
+        sim_start_year: int = 2014,
+        steps_per_year: int = 4,
+        base_year: int = 2015,
+        year_step: int = 5,
+    ) -> pd.DataFrame:
+        """Return annual production by industry for each completed CIMS period.
+
+        Sums the per-step production over the final year of each completed
+        ``year_step``-year block since *base_year* and aggregates from firm to
+        industry level.  Returned as a DataFrame so that the CIMS production
+        writer can build service-request CSVs without any I/O in the model.
+
+        Args:
+            current_year: Calendar year reached by the simulation so far.
+            sim_start_year: Calendar year of simulation step 0.
+            steps_per_year: Simulation steps per calendar year.
+            base_year: First CIMS milestone year; periods start here.
+            year_step: Interval (years) between CIMS milestone years.
+
+        Returns:
+            DataFrame indexed by milestone year (2020, 2025, ...) with industry
+            codes as columns.  Empty if no full period has elapsed yet.
+        """
+        industries_list = list(self.industries)
+        if current_year <= base_year:
+            return pd.DataFrame(columns=industries_list)
+
+        production_history = self.ts.historic("production")
+        industry_idx = self.states["Industry"]
+        n_ind = len(industries_list)
+
+        num_blocks = (current_year - base_year) // year_step
+        if num_blocks == 0:
+            return pd.DataFrame(columns=industries_list)
+
+        base_offset = (base_year - sim_start_year) * steps_per_year
+        years = [base_year + (block + 1) * year_step for block in range(num_blocks)]
+
+        records: dict[int, dict[str, float]] = {}
+        for block, year in enumerate(years):
+            end_idx = base_offset + (block + 1) * year_step * steps_per_year - 1
+            start_idx = end_idx - steps_per_year + 1
+            if end_idx >= len(production_history):
+                break
+            annual = np.zeros(n_ind)
+            for t_idx in range(start_idx, end_idx + 1):
+                annual += np.bincount(industry_idx, weights=production_history[t_idx], minlength=n_ind)
+            records[year] = dict(zip(industries_list, annual))
+
+        return pd.DataFrame.from_dict(records, orient="index")
 
     def compute_productivity_investment(self) -> np.ndarray:
         """Calculate investment above depreciation replacement.
