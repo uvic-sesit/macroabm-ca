@@ -505,6 +505,61 @@ class Simulation:
                 logging.getLogger(__name__).warning(
                     "Per-industry diagnostic export failed for %s: %s", country_name, exc
                 )
+        # Demand decomposition for any good: who buys it, per timestep.  The overshoot
+        # investigation needs demand for a good attributed across purchaser classes
+        # (firms' intermediate use, firms' capital purchases, household consumption,
+        # household investment, exports) -- the aggregate series cannot say which class
+        # drives a divergence.  Firms' series are REAL amounts; household and trade
+        # series are NOMINAL LCU and need deflating by the good's price in analysis.
+        try:
+            import pandas as pd
+
+            for country_name, country in self.countries.items():
+                cols = list(country.firms.industries)
+                for key, arr in (
+                    ("firms_intermediate_bought_by_good",
+                     np.array(country.firms.ts.historic("real_amount_bought_as_intermediate_inputs")).sum(axis=1)),
+                    ("firms_capital_bought_by_good",
+                     np.array(country.firms.ts.historic("real_amount_bought_as_capital_goods")).sum(axis=1)),
+                    ("households_consumption_by_good",
+                     np.array(country.households.ts.historic("industry_consumption"))),
+                    ("households_investment_by_good",
+                     np.array(country.households.ts.historic("investment")).sum(axis=1)),
+                    ("exports_by_good", np.array(country.economy.ts.historic("exports"))),
+                    ("imports_by_good", np.array(country.economy.ts.historic("imports"))),
+                ):
+                    if arr.ndim != 2 or arr.shape[1] != len(cols):
+                        continue
+                    pd.DataFrame(np.nan_to_num(arr), columns=cols).to_hdf(
+                        save_dir / file_name, key=f"{country_name}_{key}", mode="a"
+                    )
+            # For linkage-owned goods (the energy bundle), also split firms' intermediate
+            # purchases by the CONSUMING industry -- the class totals above cannot say
+            # whether one linked sector's coefficient path drives an aggregate divergence.
+            for country_name, country in self.countries.items():
+                owned = getattr(country.firms, "_linkage_owned_pairs", None)
+                if not owned:
+                    continue
+                goods = sorted({j for prs in owned.values() for (_i, j) in prs})
+                arr = np.array(country.firms.ts.historic("real_amount_bought_as_intermediate_inputs"))
+                if arr.ndim != 3:
+                    continue
+                industry_idx = np.asarray(country.firms.states["Industry"])
+                cols = list(country.firms.industries)
+                for j in goods:
+                    mat = np.zeros((arr.shape[0], len(cols)))
+                    for i in range(len(cols)):
+                        sel = industry_idx == i
+                        if sel.any():
+                            mat[:, i] = np.nan_to_num(arr[:, sel, j]).sum(axis=1)
+                    pd.DataFrame(mat, columns=cols).to_hdf(
+                        save_dir / file_name,
+                        key=f"{country_name}_intermediate_{cols[j]}_by_industry",
+                        mode="a",
+                    )
+        except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+            logging.getLogger(__name__).warning("Demand-decomposition export failed: %s", exc)
+
         # Rest-of-the-world sales by industry == the countries' imports by industry.  The
         # shallow summary otherwise carries only an economy-wide Imports total, which
         # cannot say whether a sector is meeting demand domestically or importing it --

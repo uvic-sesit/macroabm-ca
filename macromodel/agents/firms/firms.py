@@ -2316,6 +2316,7 @@ class Firms(Agent):
         is_anchor: bool = False,
         reset_multipliers: bool = True,
         linkage_owns_coefficients: bool = False,
+        additive_intensity: bool = False,
         transition_capital=None,
         intermediate_factor: float = 0.1,
         capital_factor: float = 0.1,
@@ -2381,6 +2382,7 @@ class Firms(Agent):
                 is_anchor=is_anchor,
                 reset_multipliers=reset_multipliers,
                 linkage_owns_coefficients=linkage_owns_coefficients,
+                additive_intensity=additive_intensity,
                 transition_capital=transition_capital,
             )
             return
@@ -2455,6 +2457,7 @@ class Firms(Agent):
         is_anchor: bool,
         reset_multipliers: bool,
         linkage_owns_coefficients: bool = False,
+        additive_intensity: bool = False,
         transition_capital=None,
     ) -> None:
         """Set energy/capital productivity toward the CIMS intensity target.
@@ -2538,7 +2541,31 @@ class Firms(Agent):
                         and j_code in cur_intensity.columns
                         else a_int
                     )
-                    target = _intensity_target_productivity(baseline_eff, a_int, c_int)
+                    if additive_intensity and mult_key == "intermediate_tech_multipliers":
+                        # Additive share increments.  Ratio targeting multiplies CER's
+                        # intensity growth onto the model's own baseline coefficient,
+                        # which explodes wherever the two bases differ: the model's H49
+                        # electricity share of energy is 6.1% against CER transport's
+                        # 0.27% (H49 spans rail, transit and pipelines; CER transport is
+                        # road-dominated), so CER's x15 share growth drove H49 to 74%
+                        # electric and a x58 rise in its electricity use -- measured as
+                        # the ENTIRE economy-wide overshoot (+118pp of firms' +112%).
+                        # Adding CER's absolute share change, scaled by the sector's own
+                        # anchor-year total-energy coefficient, transfers CER's mix
+                        # change at the model's energy level instead: zero at the anchor
+                        # (no discontinuity), symmetric for declining fuels, floored so
+                        # a coefficient cannot go negative.
+                        coeff_base = 1.0 / baseline_eff
+                        sector_energy_coeff = sum(
+                            1.0 / baseline[(i_code, jj)]
+                            for jj in valid_energy
+                            if (i_code, jj) in baseline and baseline[(i_code, jj)] > 0.0
+                        )
+                        coeff_t = coeff_base + sector_energy_coeff * (c_int - a_int)
+                        coeff_t = max(coeff_t, 0.01 * coeff_base)
+                        target = 1.0 / coeff_t
+                    else:
+                        target = _intensity_target_productivity(baseline_eff, a_int, c_int)
                     if target is None:
                         continue
 

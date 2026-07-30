@@ -294,6 +294,7 @@ def build_link_prehook(
     linkage_owns_coefficients: bool = False,
     capacity_floor: bool = False,
     transition_capital: bool = False,
+    additive_intensity: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -365,6 +366,7 @@ def build_link_prehook(
                     is_anchor=(year == anchor_year),
                     reset_multipliers=reset_multipliers,
                     linkage_owns_coefficients=linkage_owns_coefficients,
+                    additive_intensity=additive_intensity,
                     transition_capital=tc,
                 )
             else:
@@ -727,6 +729,14 @@ def parse_args() -> argparse.Namespace:
              "for those and drift applies only to unlinked coefficients.",
     )
     p.add_argument(
+        "--additive-intensity",
+        action="store_true",
+        help="Apply CER/CIMS fuel-mix changes as ADDITIVE share increments on the "
+             "sector's own total-energy coefficient, instead of multiplying the model's "
+             "baseline by the intensity ratio. Ratio targeting explodes wherever model "
+             "and CER base-year fuel shares differ.",
+    )
+    p.add_argument(
         "--transition-capital",
         action="store_true",
         help="Charge sectors the capital cost of switching fuel: raises their machinery, "
@@ -927,6 +937,7 @@ def main() -> None:
         linkage_owns_coefficients=args.linkage_owns_coefficients,
         capacity_floor=args.capacity_floor,
         transition_capital=args.transition_capital,
+        additive_intensity=args.additive_intensity,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,
