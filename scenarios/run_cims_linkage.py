@@ -278,6 +278,10 @@ def extract_cims_inputs(
         extractor.process(region, years, industries, export_dir, itr)
 
 
+# Macro industry standing in for households in the CER sector map (residential proxy).
+_HOUSEHOLD_PROXY_ROW = "L"
+
+
 def build_link_prehook(
     reader: CIMSDataReader,
     sector_map: SectorMap,
@@ -295,6 +299,7 @@ def build_link_prehook(
     capacity_floor: bool = False,
     transition_capital: bool = False,
     additive_intensity: bool = False,
+    household_energy_shares: bool = False,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
@@ -350,6 +355,32 @@ def build_link_prehook(
                         cims_region, year, anchor_year,
                     )
                     continue
+                if household_energy_shares:
+                    # Households allocate spending with a fixed weight vector, so the
+                    # linkage never reaches them.  Apply CER's residential fuel-share
+                    # changes to the household budget the same way additive_intensity
+                    # applies sector shares to firm coefficients.  The residential proxy
+                    # row of the energy-intensity matrix IS CER's residential fuel mix.
+                    ei_now = reader.get_energy_intensity(itr, year, cims_region)
+                    ei_anchor = reader.get_energy_intensity(itr, anchor_year, cims_region)
+                    hh_row = _HOUSEHOLD_PROXY_ROW
+                    if hh_row in ei_now.index and hh_row in ei_anchor.index:
+                        increments = {}
+                        for j_code in energy_codes:
+                            if j_code in ei_now.columns and j_code in ei_anchor.columns:
+                                delta = float(ei_now.loc[hh_row, j_code]) - float(
+                                    ei_anchor.loc[hh_row, j_code]
+                                )
+                                if abs(delta) > 1e-12:
+                                    increments[industries.index(j_code)] = delta
+                        if increments:
+                            country.households.apply_energy_share_increments(increments)
+                            logger.info(
+                                "household energy shares: region=%s year=%s deltas=%s",
+                                cims_region, year,
+                                {industries[k]: round(v, 5) for k, v in increments.items()},
+                            )
+
                 tc = None
                 if transition_capital and reader.transition_capital_available(itr, year, cims_region):
                     tc = reader.get_transition_capital(itr, year, cims_region)
@@ -729,6 +760,13 @@ def parse_args() -> argparse.Namespace:
              "for those and drift applies only to unlinked coefficients.",
     )
     p.add_argument(
+        "--household-energy-shares",
+        action="store_true",
+        help="Apply CER's residential fuel-share changes to the household consumption "
+             "weight vector. Without it the linkage never reaches households: their fuel "
+             "mix stays frozen at the base year while firms follow CER.",
+    )
+    p.add_argument(
         "--additive-intensity",
         action="store_true",
         help="Apply CER/CIMS fuel-mix changes as ADDITIVE share increments on the "
@@ -938,6 +976,7 @@ def main() -> None:
         capacity_floor=args.capacity_floor,
         transition_capital=args.transition_capital,
         additive_intensity=args.additive_intensity,
+        household_energy_shares=args.household_energy_shares,
         intermediate_factor=args.intermediate_factor,
         capital_factor=args.capital_factor,
         capital_investment_boost=args.capital_investment_boost,

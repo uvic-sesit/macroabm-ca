@@ -694,6 +694,73 @@ class Households(Agent):
                 financial_income=self.ts.current("expected_income_financial_assets"),
             )
 
+    def apply_energy_share_increments(self, increments: dict[int, float]) -> None:
+        """Shift the household budget between energy goods by CER's own share changes.
+
+        Households allocate spending with a FIXED ``consumption_weights`` vector, so
+        nothing in the energy linkage reaches them: firms' coefficients follow CER while
+        households' fuel mix stays frozen at its base year.  Measured consequence -- real
+        household electricity consumption falls 13.5% over 2020-2035 against CER
+        residential at +1.2%.
+
+        This is the household analogue of ``additive_intensity`` on the firm side: CER's
+        ABSOLUTE change in a fuel's share of residential energy, scaled by the household
+        energy budget at the anchor, is added to that good's weight.  Increments across
+        fuels sum to ~zero (they are shares of the same total), so the energy block's
+        share of the budget is preserved and non-energy weights are untouched; the block
+        is renormalised to absorb rounding.  Weights are floored at zero.
+
+        Args:
+            increments: {industry index: change in that fuel's share of residential
+                energy since the anchor year}.
+        """
+        if not increments:
+            return
+        idx = sorted(increments)
+        if not hasattr(self, "_energy_weight_anchor"):
+            self._energy_weight_anchor = {
+                "flat": np.array(self.consumption_weights, dtype=float, copy=True),
+                "by_income": np.array(self.consumption_weights_by_income, dtype=float, copy=True),
+            }
+
+        n_industries = int(np.asarray(self.consumption_weights).shape[0])
+        for key, target in (
+            ("flat", "consumption_weights"),
+            ("by_income", "consumption_weights_by_income"),
+        ):
+            anchor = self._energy_weight_anchor[key]
+            current = np.array(anchor, dtype=float, copy=True)
+            if anchor.ndim == 1:
+                block = float(anchor[idx].sum())
+                if block <= 0.0:
+                    continue
+                for j in idx:
+                    current[j] = max(0.0, anchor[j] + block * float(increments[j]))
+                new_block = current[idx].sum()
+                if new_block > 0.0:
+                    current[idx] *= block / new_block
+            else:
+                # The by-income weights are (industries x income quantiles) -- industries
+                # are NOT on the last axis.  Locate the industry axis rather than assume
+                # it; guessing wrong is an IndexError at best and silent mis-indexing at
+                # worst if the two dimensions ever coincide.
+                axes = [a for a, size in enumerate(anchor.shape) if size == n_industries]
+                if not axes:
+                    continue
+                ax = axes[0]
+                moved = np.moveaxis(current, ax, 0)
+                anchor_moved = np.moveaxis(anchor, ax, 0)
+                block = anchor_moved[idx].sum(axis=0)
+                if not np.any(block > 0.0):
+                    continue
+                for j in idx:
+                    moved[j] = np.maximum(0.0, anchor_moved[j] + block * float(increments[j]))
+                new_block = moved[idx].sum(axis=0)
+                scale = np.divide(block, new_block, out=np.ones_like(block), where=new_block > 0.0)
+                moved[idx] *= scale
+                current = np.moveaxis(moved, 0, ax)
+            setattr(self, target, current)
+
     def compute_target_investment(
         self,
         expected_inflation: float,
