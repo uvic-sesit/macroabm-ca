@@ -439,6 +439,56 @@ class Firms(Agent):
 
         return df
 
+    def set_transmission_loss_rate(self, good_index: int, rate: float) -> None:
+        """Gross up every BUYER's requirement for a good by its transmission loss rate.
+
+        The model has no transmission losses: electricity production tracks electricity
+        demand exactly, so it cannot reach CER's generation path, which exceeds CER's
+        end-use demand by 13.8% (2020) to 17.4% (2035).
+
+        The physically obvious representation -- the power sector consuming its own output
+        -- does NOT work here. A self-input cannot bootstrap in a sequential model: firms
+        must purchase inputs before producing, so D needs D that does not yet exist,
+        production falls, less D exists, and it spirals. Measured: -100% production and
+        43/43 sectors dead, with D->D use stuck at 4.2% instead of the intended 7%.
+
+        Grossing up the buyers is equivalent in accounting -- generation = delivered /
+        (1 - rate) either way -- with no circularity, and is arguably the better reading,
+        since transmission loss is something the buyer pays for rather than something the
+        generator consumes.
+
+        Applied to EVERY buyer of the good, not only the linkage-owned pairs. Losses are a
+        property of the grid, not of the CER scenario, so restricting them to the four
+        linked sectors covered barely a fifth of electricity demand and lifted production
+        by 0.5pp instead of the ~7pp intended. The producing sector itself is excluded --
+        that is the self-input case, which cannot bootstrap in a sequential model.
+        """
+        if rate is None or not np.isfinite(rate) or not (0.0 < rate < 0.9):
+            return
+        j = int(good_index)
+        factor = 1.0 / (1.0 - float(rate))
+        base = self.base_intermediate_inputs_productivity_matrix
+        # Every industry that actually uses this good: a finite, positive productivity
+        # entry. inf marks "this industry does not use it".
+        row = np.asarray(base[j], dtype=float)
+        buyers = [
+            i for i in range(base.shape[1])
+            if i != j and np.isfinite(row[i]) and row[i] > 0.0
+        ]
+        if not buyers:
+            return
+        if not hasattr(self, "_loss_grossed_baseline"):
+            self._loss_grossed_baseline: dict[tuple[int, int], float] = {}
+        for i in buyers:
+            key = (i, j)
+            # Store the pre-loss coefficient so repeated milestone calls re-derive from it
+            # rather than compounding the gross-up.
+            if key not in self._loss_grossed_baseline:
+                self._loss_grossed_baseline[key] = float(base[j, i])
+            productivity = self._loss_grossed_baseline[key]
+            if np.isfinite(productivity) and productivity > 0.0:
+                base[j, i] = productivity / factor
+
     def set_capacity_floor(self, industry_indices, index: float | None) -> None:
         """Floor the reference capital stock of the given industries at ``initial * index``.
 

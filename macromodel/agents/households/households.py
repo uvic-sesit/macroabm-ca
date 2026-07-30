@@ -695,7 +695,10 @@ class Households(Agent):
             )
 
     def apply_energy_share_increments(
-        self, increments: dict[int, float], relative_prices: dict[int, float] | None = None
+        self,
+        increments: dict[int, float],
+        relative_prices: dict[int, float] | None = None,
+        loss_rates: dict[int, float] | None = None,
     ) -> None:
         """Shift the household budget between energy goods by CER's own share changes.
 
@@ -726,9 +729,21 @@ class Households(Agent):
             relative_prices: {industry index: that good's price relative to its anchor-year
                 price}. Omitted => weights are treated as real shares directly (previous
                 behaviour).
+            loss_rates: {industry index: transmission loss rate}. Applied to the REAL
+                share target, before the price conversion -- households must purchase
+                more than they consume because some is lost in transmission. Applying it
+                to the finished nominal weight instead double-counts against the price
+                conversion: measured as household electricity jumping +10.9% -> +35.9%
+                from a 7.5% gross-up.
         """
-        if not increments:
+        if not increments and not loss_rates:
             return
+        # A fuel with a loss rate but no share increment still needs grossing up, so the
+        # index set is the union.  Keying off `increments` alone would drop the loss
+        # silently in any region where CER happens to report no residential share change.
+        increments = dict(increments or {})
+        for j in loss_rates or {}:
+            increments.setdefault(int(j), 0.0)
         idx = sorted(increments)
         if not hasattr(self, "_energy_weight_anchor"):
             self._energy_weight_anchor = {
@@ -755,6 +770,15 @@ class Households(Agent):
                 new_block = current[idx].sum()
                 if new_block > 0.0:
                     current[idx] *= block / new_block
+                # Losses are applied AFTER renormalisation.  Inside the loop they would be
+                # scaled straight back out, since the block is renormalised to its anchor
+                # total -- correct for share increments (fuel shares are of one total),
+                # wrong for losses, which legitimately raise energy's share of the budget:
+                # households must buy more to consume the same.
+                for j in idx:
+                    rate = float((loss_rates or {}).get(j, 0.0))
+                    if 0.0 < rate < 0.9:
+                        current[j] /= 1.0 - rate
             else:
                 # The by-income weights are (industries x income quantiles) -- industries
                 # are NOT on the last axis.  Locate the industry axis rather than assume
@@ -777,6 +801,11 @@ class Households(Agent):
                 new_block = moved[idx].sum(axis=0)
                 scale = np.divide(block, new_block, out=np.ones_like(block), where=new_block > 0.0)
                 moved[idx] *= scale
+                # See the flat-vector branch: after renormalisation, not inside it.
+                for j in idx:
+                    rate = float((loss_rates or {}).get(j, 0.0))
+                    if 0.0 < rate < 0.9:
+                        moved[j] = moved[j] / (1.0 - rate)
                 current = np.moveaxis(moved, 0, ax)
             setattr(self, target, current)
 

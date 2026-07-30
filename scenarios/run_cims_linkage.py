@@ -297,6 +297,7 @@ def build_link_prehook(
     capital_investment_boost: float = 0.1,
     linkage_owns_coefficients: bool = False,
     capacity_floor: bool = False,
+    electricity_own_use: bool = False,
     transition_capital: bool = False,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
@@ -363,6 +364,19 @@ def build_link_prehook(
                     # row of the energy-intensity matrix IS CER's residential fuel mix.
                     ei_now = reader.get_energy_intensity(itr, year, cims_region)
                     ei_anchor = reader.get_energy_intensity(itr, anchor_year, cims_region)
+                    # Transmission losses belong to the same weight write, not a second
+                    # pass over it.  Households buy in NOMINAL budget shares, so grossing
+                    # up the finished weight compounds against the real->nominal price
+                    # conversion below instead of composing with it: measured as real
+                    # household electricity +10.9% -> +35.9% off a 7.5% loss rate.  Passed
+                    # in here, the gross-up lands on the REAL share target, before pricing.
+                    hh_loss: dict[int, float] = {}
+                    if electricity_own_use and reader.own_use_available(itr, year, cims_region):
+                        ou_hh = reader.get_electricity_own_use(itr, year, cims_region)
+                        col_hh = ou_hh.columns[0]
+                        for code in ou_hh.index:
+                            if code in industries and float(ou_hh.loc[code, col_hh]) > 0.0:
+                                hh_loss[industries.index(code)] = float(ou_hh.loc[code, col_hh])
                     hh_row = _HOUSEHOLD_PROXY_ROW
                     if hh_row in ei_now.index and hh_row in ei_anchor.index:
                         increments = {}
@@ -373,7 +387,7 @@ def build_link_prehook(
                                 )
                                 if abs(delta) > 1e-12:
                                     increments[industries.index(j_code)] = delta
-                        if increments:
+                        if increments or hh_loss:
                             # Relative price of each fuel vs its anchor year, so CER's
                             # REAL (PJ) shares are converted to the nominal budget weights
                             # that deliver them.
@@ -390,7 +404,9 @@ def build_link_prehook(
                                 base = country.firms._hh_anchor_prices.setdefault(k, now)
                                 if base > 0 and np.isfinite(now):
                                     rel[k] = now / base
-                            country.households.apply_energy_share_increments(increments, rel or None)
+                            country.households.apply_energy_share_increments(
+                                increments, rel or None, loss_rates=hh_loss or None
+                            )
                             logger.info(
                                 "household energy shares: region=%s year=%s deltas=%s",
                                 cims_region, year,
@@ -416,6 +432,17 @@ def build_link_prehook(
                     additive_intensity=additive_intensity,
                     transition_capital=tc,
                 )
+
+                if electricity_own_use and reader.own_use_available(itr, year, cims_region):
+                    # AFTER link(): the gross-up applies to the linkage-owned coefficients,
+                    # which link() has just written, and needs _linkage_owned_pairs populated.
+                    ou = reader.get_electricity_own_use(itr, year, cims_region)
+                    col = ou.columns[0]
+                    for code in ou.index:
+                        if code in industries and float(ou.loc[code, col]) > 0.0:
+                            country.firms.set_transmission_loss_rate(
+                                industries.index(code), float(ou.loc[code, col])
+                            )
             else:
                 country.firms.link(
                     requested_quantities=rq,
@@ -791,6 +818,13 @@ def parse_args() -> argparse.Namespace:
              "and CER base-year fuel shares differ.",
     )
     p.add_argument(
+        "--electricity-own-use",
+        action="store_true",
+        help="Give the power sector a transmission-loss coefficient on its own output, so "
+             "generation exceeds delivered demand as it does in reality. Without it, model "
+             "production tracks demand exactly and cannot reach CER's generation path.",
+    )
+    p.add_argument(
         "--transition-capital",
         action="store_true",
         help="Charge sectors the capital cost of switching fuel: raises their machinery, "
@@ -990,6 +1024,7 @@ def main() -> None:
         reset_multipliers=args.reset_multipliers,
         linkage_owns_coefficients=args.linkage_owns_coefficients,
         capacity_floor=args.capacity_floor,
+        electricity_own_use=args.electricity_own_use,
         transition_capital=args.transition_capital,
         additive_intensity=args.additive_intensity,
         household_energy_shares=args.household_energy_shares,

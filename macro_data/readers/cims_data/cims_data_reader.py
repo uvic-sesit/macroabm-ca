@@ -58,6 +58,14 @@ class CIMSDataReader:
         """True if the processed transition-capital table exists."""
         return self._path("transition_capital", itr, year, region).exists()
 
+    def get_electricity_own_use(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Return the power sector's own-use (transmission loss) rate by industry."""
+        return self._read_matrix("electricity_own_use", itr, year, region)
+
+    def own_use_available(self, itr: str, year: int, region: str) -> bool:
+        """True if the processed own-use table exists."""
+        return self._path("electricity_own_use", itr, year, region).exists()
+
     def capacity_available(self, itr: str, year: int, region: str) -> bool:
         """True if the processed capacity index exists for this iteration/year/region."""
         return self._path("generation_capacity", itr, year, region).exists()
