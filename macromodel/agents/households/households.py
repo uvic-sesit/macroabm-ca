@@ -694,7 +694,9 @@ class Households(Agent):
                 financial_income=self.ts.current("expected_income_financial_assets"),
             )
 
-    def apply_energy_share_increments(self, increments: dict[int, float]) -> None:
+    def apply_energy_share_increments(
+        self, increments: dict[int, float], relative_prices: dict[int, float] | None = None
+    ) -> None:
         """Shift the household budget between energy goods by CER's own share changes.
 
         Households allocate spending with a FIXED ``consumption_weights`` vector, so
@@ -710,9 +712,20 @@ class Households(Agent):
         share of the budget is preserved and non-energy weights are untouched; the block
         is renormalised to absorb rounding.  Weights are floored at zero.
 
+        ``consumption_weights`` are NOMINAL budget shares, so a fixed weight buys more
+        real quantity as a good becomes relatively cheaper -- measured under CER's
+        exogenous prices as household electricity rising +43.1% real against +75.5%
+        nominal. CER's shares are PJ shares, i.e. real. Passing ``relative_prices``
+        converts the real target to the nominal weight that delivers it
+        (``weight ~ real_share x price``), so households buy CER's mix rather than
+        whatever the price wedge implies.
+
         Args:
             increments: {industry index: change in that fuel's share of residential
                 energy since the anchor year}.
+            relative_prices: {industry index: that good's price relative to its anchor-year
+                price}. Omitted => weights are treated as real shares directly (previous
+                behaviour).
         """
         if not increments:
             return
@@ -735,7 +748,10 @@ class Households(Agent):
                 if block <= 0.0:
                     continue
                 for j in idx:
-                    current[j] = max(0.0, anchor[j] + block * float(increments[j]))
+                    real_target = anchor[j] + block * float(increments[j])
+                    if relative_prices:
+                        real_target *= float(relative_prices.get(j, 1.0))
+                    current[j] = max(0.0, real_target)
                 new_block = current[idx].sum()
                 if new_block > 0.0:
                     current[idx] *= block / new_block
@@ -754,7 +770,10 @@ class Households(Agent):
                 if not np.any(block > 0.0):
                     continue
                 for j in idx:
-                    moved[j] = np.maximum(0.0, anchor_moved[j] + block * float(increments[j]))
+                    real_target = anchor_moved[j] + block * float(increments[j])
+                    if relative_prices:
+                        real_target = real_target * float(relative_prices.get(j, 1.0))
+                    moved[j] = np.maximum(0.0, real_target)
                 new_block = moved[idx].sum(axis=0)
                 scale = np.divide(block, new_block, out=np.ones_like(block), where=new_block > 0.0)
                 moved[idx] *= scale

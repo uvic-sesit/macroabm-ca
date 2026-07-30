@@ -525,6 +525,11 @@ class Simulation:
                      np.array(country.households.ts.historic("industry_consumption"))),
                     ("households_investment_by_good",
                      np.array(country.households.ts.historic("investment")).sum(axis=1)),
+                    # Government buys goods too.  Omitting it made the 2020 purchase
+                    # total 4.2% short of supply, which biased every growth rate computed
+                    # off that base upward -- the identity closes to 1.00 once included.
+                    ("government_consumption_by_good",
+                     np.array(country.government_entities.ts.historic("consumption_in_usd"))),
                     ("exports_by_good", np.array(country.economy.ts.historic("exports"))),
                     ("imports_by_good", np.array(country.economy.ts.historic("imports"))),
                 ):

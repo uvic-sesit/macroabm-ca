@@ -374,7 +374,23 @@ def build_link_prehook(
                                 if abs(delta) > 1e-12:
                                     increments[industries.index(j_code)] = delta
                         if increments:
-                            country.households.apply_energy_share_increments(increments)
+                            # Relative price of each fuel vs its anchor year, so CER's
+                            # REAL (PJ) shares are converted to the nominal budget weights
+                            # that deliver them.
+                            prices_now = np.asarray(country.firms.ts.current("price")).ravel()
+                            ind_of_firm = np.asarray(country.firms.states["Industry"])
+                            if not hasattr(country.firms, "_hh_anchor_prices"):
+                                country.firms._hh_anchor_prices = {}
+                            rel = {}
+                            for k in increments:
+                                sel = ind_of_firm == k
+                                if not sel.any():
+                                    continue
+                                now = float(np.nanmean(prices_now[sel]))
+                                base = country.firms._hh_anchor_prices.setdefault(k, now)
+                                if base > 0 and np.isfinite(now):
+                                    rel[k] = now / base
+                            country.households.apply_energy_share_increments(increments, rel or None)
                             logger.info(
                                 "household energy shares: region=%s year=%s deltas=%s",
                                 cims_region, year,
