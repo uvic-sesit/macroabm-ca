@@ -694,6 +694,87 @@ class Households(Agent):
                 financial_income=self.ts.current("expected_income_financial_assets"),
             )
 
+    def anchor_energy_quantities(
+        self,
+        targets: dict[int, float],
+        prices: dict[int, float],
+        max_step: float = 2.0,
+    ) -> None:
+        """Pin households' REAL consumption of a good to an external quantity path.
+
+        ``apply_energy_share_increments`` sets a nominal budget weight, which does not
+        pin a real quantity once relative prices move -- and under CER's exogenous price
+        path they move a long way.  Electricity's real price falls to 74.3% of a CPI the
+        model generates itself (CER supplies the electricity price, the model's CPI is
+        driven by fossil prices), so households buy roughly 1/0.743 more of it than the
+        share implies.  Measured against CER residential: +16.0% vs +1.2% under Current
+        Measures and +61.1% vs +5.7% under Net-zero, with the budget share actually
+        FALLING 5.6% in the latter.  Setting shares cannot fix that; the target has to be
+        the quantity.
+
+        This is the household analogue of ``linkage_owns_coefficients`` for firms: CER
+        owns the quantity path, the model owns everything else.
+
+        Args:
+            targets: {industry index: desired real quantity as an index on the anchor}.
+            prices: {industry index: that good's current price}, to convert the observed
+                nominal spend into a real quantity.
+            max_step: per-call bound on the weight adjustment.  The correction reads last
+                period's realised consumption, so it is one step behind; the bound stops
+                a large price jump turning that lag into an overshoot.
+        """
+        if not targets or not prices:
+            return
+        try:
+            nominal = np.asarray(self.ts.current("industry_consumption"), dtype=float).ravel()
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return
+        if nominal.size == 0:
+            return
+
+        if not hasattr(self, "_energy_quantity_anchor"):
+            self._energy_quantity_anchor = {}
+        # The correction must be CUMULATIVE and stored, because
+        # apply_energy_share_increments rebuilds the weights from their anchor on every
+        # milestone.  A per-call multiplier would be discarded by that rebuild and the
+        # weight would oscillate between corrected and uncorrected: the correction lands,
+        # consumption comes back on target, the next call therefore computes a step of
+        # 1.0, the rebuild drops the old factor, and consumption overshoots again.
+        if not hasattr(self, "_energy_quantity_multiplier"):
+            self._energy_quantity_multiplier = {}
+
+        weights = np.array(self.consumption_weights, dtype=float, copy=True)
+        by_income = np.array(self.consumption_weights_by_income, dtype=float, copy=True)
+        n_industries = int(weights.shape[0])
+
+        for j, index in targets.items():
+            j = int(j)
+            price = float(prices.get(j, 0.0))
+            if j >= nominal.size or price <= 0.0 or not np.isfinite(index) or index <= 0.0:
+                continue
+            realised = float(nominal[j]) / price
+            if not np.isfinite(realised) or realised <= 0.0:
+                continue
+            anchor = self._energy_quantity_anchor.setdefault(j, realised)
+            if anchor <= 0.0:
+                continue
+            desired = anchor * float(index)
+            # `realised` already embeds the multiplier in force last period, so the ratio
+            # is the ADDITIONAL factor needed and compounds onto the stored one.
+            step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            mult = float(self._energy_quantity_multiplier.get(j, 1.0)) * step
+            mult = float(min(max(mult, 1e-3), 1e3))
+            self._energy_quantity_multiplier[j] = mult
+            weights[j] *= mult
+            axes = [a for a, size in enumerate(by_income.shape) if size == n_industries]
+            if axes:
+                moved = np.moveaxis(by_income, axes[0], 0)
+                moved[j] *= mult
+                by_income = np.moveaxis(moved, 0, axes[0])
+
+        self.consumption_weights = weights
+        self.consumption_weights_by_income = by_income
+
     def apply_energy_share_increments(
         self,
         increments: dict[int, float],

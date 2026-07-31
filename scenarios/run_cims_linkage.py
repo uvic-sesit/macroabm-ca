@@ -298,6 +298,7 @@ def build_link_prehook(
     linkage_owns_coefficients: bool = False,
     capacity_floor: bool = False,
     electricity_own_use: bool = False,
+    household_energy_quantities: bool = False,
     transition_capital: bool = False,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
@@ -412,6 +413,41 @@ def build_link_prehook(
                                 cims_region, year,
                                 {industries[k]: round(v, 5) for k, v in increments.items()},
                             )
+
+                if household_energy_quantities:
+                    # CER owns households' REAL electricity path, the model owns the rest.
+                    # rq[L, D] is households' electricity demand INCLUDING passenger
+                    # transport, since the passenger split routes personal-vehicle
+                    # electricity to the residential proxy -- so it, not CER's published
+                    # residential series, is the right target for this channel.
+                    rq_anchor = reader.get_requested_quantities(itr, anchor_year, cims_region)
+                    hh_targets: dict[int, float] = {}
+                    for j_code in energy_codes:
+                        if (
+                            _HOUSEHOLD_PROXY_ROW in rq.index and j_code in rq.columns
+                            and _HOUSEHOLD_PROXY_ROW in rq_anchor.index
+                            and j_code in rq_anchor.columns
+                        ):
+                            base = float(rq_anchor.loc[_HOUSEHOLD_PROXY_ROW, j_code])
+                            now = float(rq.loc[_HOUSEHOLD_PROXY_ROW, j_code])
+                            if base > 0.0 and np.isfinite(now) and now > 0.0:
+                                hh_targets[industries.index(j_code)] = now / base
+                    if hh_targets:
+                        prices_now = np.asarray(country.firms.ts.current("price")).ravel()
+                        ind_of_firm = np.asarray(country.firms.states["Industry"])
+                        px = {}
+                        for k in hh_targets:
+                            sel = ind_of_firm == k
+                            if sel.any():
+                                v = float(np.nanmean(prices_now[sel]))
+                                if np.isfinite(v) and v > 0.0:
+                                    px[k] = v
+                        country.households.anchor_energy_quantities(hh_targets, px)
+                        logger.info(
+                            "household quantity anchor: region=%s year=%s targets=%s",
+                            cims_region, year,
+                            {industries[k]: round(v, 4) for k, v in hh_targets.items()},
+                        )
 
                 tc = None
                 if transition_capital and reader.transition_capital_available(itr, year, cims_region):
