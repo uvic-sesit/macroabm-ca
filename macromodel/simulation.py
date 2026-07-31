@@ -509,29 +509,39 @@ class Simulation:
         # investigation needs demand for a good attributed across purchaser classes
         # (firms' intermediate use, firms' capital purchases, household consumption,
         # household investment, exports) -- the aggregate series cannot say which class
-        # drives a divergence.  Firms' series are REAL amounts; household and trade
-        # series are NOMINAL LCU and need deflating by the good's price in analysis.
+        # drives a divergence.
+        #
+        # UNITS ARE MIXED and every key therefore carries an explicit _real / _nominal
+        # suffix.  Firms' series are real amounts; household, government and trade series
+        # are nominal LCU and must be deflated by the good's price before being compared
+        # with, or added to, the real ones.  This was documented only in a comment here
+        # and was duly missed in analysis: deflating the already-real firm series made
+        # sector D's firm intermediate demand read +0.1% (Current Measures) and +8.4%
+        # (Net-zero) when it is +21.9% and +28.6%, and the purchaser identity came to
+        # 79-87% of production instead of ~100%.  With the units applied correctly the
+        # identity closes to 99.3-101.0%.  The suffix travels with the data; a comment
+        # does not.
         try:
             import pandas as pd
 
             for country_name, country in self.countries.items():
                 cols = list(country.firms.industries)
                 for key, arr in (
-                    ("firms_intermediate_bought_by_good",
+                    ("firms_intermediate_bought_by_good_real",
                      np.array(country.firms.ts.historic("real_amount_bought_as_intermediate_inputs")).sum(axis=1)),
-                    ("firms_capital_bought_by_good",
+                    ("firms_capital_bought_by_good_real",
                      np.array(country.firms.ts.historic("real_amount_bought_as_capital_goods")).sum(axis=1)),
-                    ("households_consumption_by_good",
+                    ("households_consumption_by_good_nominal",
                      np.array(country.households.ts.historic("industry_consumption"))),
-                    ("households_investment_by_good",
+                    ("households_investment_by_good_nominal",
                      np.array(country.households.ts.historic("investment")).sum(axis=1)),
                     # Government buys goods too.  Omitting it made the 2020 purchase
                     # total 4.2% short of supply, which biased every growth rate computed
                     # off that base upward -- the identity closes to 1.00 once included.
-                    ("government_consumption_by_good",
+                    ("government_consumption_by_good_nominal",
                      np.array(country.government_entities.ts.historic("consumption_in_usd"))),
-                    ("exports_by_good", np.array(country.economy.ts.historic("exports"))),
-                    ("imports_by_good", np.array(country.economy.ts.historic("imports"))),
+                    ("exports_by_good_nominal", np.array(country.economy.ts.historic("exports"))),
+                    ("imports_by_good_nominal", np.array(country.economy.ts.historic("imports"))),
                 ):
                     if arr.ndim != 2 or arr.shape[1] != len(cols):
                         continue
