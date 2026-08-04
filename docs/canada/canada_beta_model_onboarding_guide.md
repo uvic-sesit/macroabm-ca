@@ -21,6 +21,7 @@ Main-branch documentation:
 - [Project documentation index](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/index.md)
 - [Installation guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/installation.md)
 - [Quickstart guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/quickstart.md)
+- [Model factsheet](macroabm_ca_model_factsheet.md) — a point-in-time characterization of the model's design (GMMI questionnaire)
 
 The examples below use repository-relative paths. Raw data, generated pickles, H5 outputs,
 and validation artifacts are intentionally treated as local files outside the committed
@@ -35,15 +36,16 @@ the current Canada provincial model.
 
 | Start here | Use it for | What it produces |
 |------------|------------|------------------|
-| `Sample_macroabm-Canada_provincial_run.ipynb` | One basic end-to-end provincial run | A local `DataWrapper` pickle, one H5 result file, and basic GDP/production plots |
-| `Sample_macroabm-CANADA_run_time_iteration.ipynb` | Scenario comparison | In-memory scenario results and comparison plots for GDP, emissions, and prices |
+| `scenarios/Sample_macroabm-Canada_provincial_run.ipynb` | One basic end-to-end provincial run | A local `DataWrapper` pickle, one H5 result file, and basic GDP/production plots |
+| `scenarios/Sample_macroabm-CANADA_run_time_iteration.ipynb` | Scenario comparison | In-memory scenario results and comparison plots for GDP, emissions, and prices |
+| `scenarios/run_canada_provincial.py` | Same end-to-end provincial run as the basic notebook | Same outputs as the provincial notebook, runnable from the command line |
 
 Recommended order for beta testers:
 
 1. Read Sections 1-6 of this guide to understand the data/model contract.
-2. Run `Sample_macroabm-Canada_provincial_run.ipynb` to confirm the provincial model can
+2. Run `scenarios/Sample_macroabm-Canada_provincial_run.ipynb` (or `scenarios/run_canada_provincial.py`) to confirm the provincial model can
    build, run, save, and plot results on your machine.
-3. Run `Sample_macroabm-CANADA_run_time_iteration.ipynb` if you want to compare scenario
+3. Run `scenarios/Sample_macroabm-CANADA_run_time_iteration.ipynb` if you want to compare scenario
    behaviour across price-setting assumptions or repeated random-seed trials.
 4. Use the deeper documentation links in each section below when you need API-level or
    implementation detail.
@@ -154,18 +156,23 @@ The public code path for building the provincial model starts from:
 - [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
 - [`macromodel/simulation.py`](../macromodel/simulation.py)
 
+Canadian model teams should keep runnable scenario scripts and notebooks in the
+[`scenarios/`](../../scenarios/) folder. See [Section 11](#11-team-workflow-scenarios-and-upstream-sync)
+for naming conventions and upstream-sync guidance.
+
 Project teams may keep local run scripts around these entry points. Those scripts should set
 the raw data path, build a `DataWrapper` pickle, configure the provincial simulation, and
 save H5 outputs.
 
 Runnable examples:
 
-- see the two notebooks listed in [Section 0](#0-suggested-starting-point)
+- see the notebooks and scripts listed in [Section 0](#0-suggested-starting-point)
 
 ### External Raw Data Folder
 
 The public repository does not commit raw data. Users provide a local raw-data folder and
-pass it as `raw_data_path` to `DataWrapper.from_config(...)`.
+pass it as `raw_data_path` to `DataWrapper.from_config(...)`. To read more about the raw data used
+in the Canadian model, please refer to the [raw data documentation file](https://github.com/uvic-sesit/macroabm-ca/blob/documentation_updates/docs/canada/raw_data_reference.md).
 
 Common convention:
 
@@ -727,6 +734,8 @@ with h5py.File(path, "r") as f:
 print(national_gdp)
 ```
 
+---
+
 ## 10. Final Note On Testing And Policy Runs
 
 MacroABM-CA results, like other similar models, are sensitive to model settings, input data, and policy assumptions. When using the model for beta testing or policy
@@ -734,3 +743,219 @@ simulation, document the raw data version, IO table, run script or notebook, tim
 random seed or trial design, policy settings, and any code or parameter changes made for
 the run. This makes results easier to interpret, compare, reproduce, and revise as the
 model continues to develop.
+
+---
+
+## 11. Team Workflow: Scenarios and Upstream Sync
+
+This section covers two practical conventions for the Canadian model team: where to keep
+scenario scripts, and how to pull framework updates from the upstream INET repository without
+losing Canada-specific work.
+
+### 11.1 Keep scenario scripts in `scenarios/`
+
+All Canadian model run scripts and notebooks should live in the [`scenarios/`](../../scenarios/)
+folder at the repository root. Do not leave one-off runs at the repo root or in unrelated
+directories — that makes scripts harder to find, reuse, and hand off to other team members.
+
+**Naming.** Use descriptive filenames that make the purpose of the run obvious at a glance.
+Good names include the geography, policy or behavioural assumption, and horizon where
+relevant. Examples:
+
+```text
+scenarios/run_canada_provincial.py
+scenarios/Sample_macroabm-Canada_provincial_run.ipynb
+scenarios/scenario_carbon_price_ramp_2025_2030.py
+scenarios/scenario_tfp_growth_sensitivity_16q.py
+```
+
+Avoid generic names like `run.py`, `test.ipynb`, or `new_scenario_v2.py`. The goal is that
+someone returning to the repository months later can tell what each script does without
+opening it.
+
+**Reuse.** When adapting an existing scenario, copy and rename the closest script rather
+than editing a shared baseline in place. Keep the original smoke-test scripts
+(`run_canada_provincial.py`, the sample notebooks) as stable reference runs.
+
+**What belongs in `scenarios/`.** End-to-end run scripts, scenario-comparison notebooks,
+and small wrappers around `DataWrapper.from_config(...)` and `Simulation.from_datawrapper(...)`.
+Analysis-only post-processing can live in a separate project repository if it is not meant
+to be rerun as part of the model workflow.
+
+### 11.2 Pulling changes from the upstream INET repository
+
+MacroABM-CA is a Canada-specific adaptation built on top of the shared MacroABM framework.
+The upstream source of truth for core framework code is the INET repository:
+
+- [inet-complexity/macro-main](https://github.com/inet-complexity/macro-main)
+
+When the INET team releases new model features, bug fixes, or refactors, the Canadian team
+needs to pull those changes into `macroabm-ca` while preserving Canada-only additions that
+the upstream repo does not carry.
+
+#### Canada-only folders to preserve
+
+Two folders were added for the Canadian workflow and are **not** expected to exist in the
+upstream INET repository:
+
+| Folder | Purpose |
+|--------|---------|
+| [`docs/canada/`](./) | Canada-specific onboarding, raw-data, and provincial IO documentation |
+| [`scenarios/`](../../scenarios/) | Canadian team run scripts, notebooks, and scenario presets |
+
+Whoever performs an upstream pull should treat these folders as **keep-local** content. Do
+not delete or overwrite them when merging upstream changes. If Git reports conflicts inside
+these folders, resolve them in favour of the Canadian team's version unless you are
+deliberately replacing that documentation or script.
+
+All other shared framework code — principally `macro_data/`, `macromodel/`, `macrocalib/`,
+`tests/`, and top-level project files — should be updated from upstream.
+
+#### Upstream first, then pull
+
+To avoid messy merges, **aim to land Canadian model features in the INET repository before
+pulling upstream changes** whenever those features touch shared framework code. Examples
+include provincial IO reader changes, Canada-specific configuration paths, or new agent
+behaviour intended for the general model.
+
+The preferred sequence is:
+
+1. **Identify overlap.** Before pulling, list changes in `macroabm-ca` that modify shared
+   packages (`macro_data/`, `macromodel/`, etc.) rather than `docs/canada/` or `scenarios/`.
+2. **Upstream what you can.** Open a pull request or coordinate with the INET team to merge
+   reusable Canada work into `inet-complexity/macro-main` first.
+3. **Pull once upstream is aligned.** After shared features are accepted upstream (or
+   consciously deferred), fetch and merge the latest INET changes into `macroabm-ca`.
+4. **Resolve conflicts in shared code only.** Keep `docs/canada/` and `scenarios/` intact;
+   carefully reconcile conflicts in framework packages and tests.
+5. **Verify locally.** Rebuild or reuse an existing provincial pickle, run
+   `scenarios/run_canada_provincial.py` (or the basic provincial notebook), and run the
+   test suite before pushing the merged branch.
+
+Skipping step 2 and pulling a large upstream diff while carrying unmerged Canadian edits in
+the same files often produces painful three-way conflicts that are much slower to untangle
+than upstreaming first.
+
+#### Suggested git workflow
+
+These steps assume `origin` points at the Canadian repository
+([uvic-sesit/macroabm-ca](https://github.com/uvic-sesit/macroabm-ca)) and that you add the
+INET repository as a separate remote (typically named `upstream`):
+
+```bash
+# One-time setup
+git remote add upstream https://github.com/inet-complexity/macro-main.git
+
+# Before each sync
+git status                          # working tree should be clean
+git fetch upstream
+
+# Merge upstream main into your current branch
+git merge upstream/main
+
+# Or, if your team prefers rebasing:
+# git rebase upstream/main
+```
+
+During conflict resolution:
+
+- **`docs/canada/` and `scenarios/`** — keep the Canadian versions unless intentionally updating them.
+- **`macro_data/`, `macromodel/`, `tests/`** — merge upstream improvements with any remaining Canada-specific logic; run tests after resolving.
+- **Lockfiles and config** (`pyproject.toml`, `uv.lock`) — reconcile carefully; reinstall with `uv sync` and rerun tests.
+
+If you are unsure whether a conflict hunk is Canada-specific or shared framework code, check
+whether the same file exists in the upstream repository and whether the Canadian change has
+already been merged there.
+
+### 11.3 Reporting findings and contributing back
+
+Beta testers interact only with the Canadian fork
+([uvic-sesit/macroabm-ca](https://github.com/uvic-sesit/macroabm-ca)). SESIT triages what
+comes in and, where appropriate, carries changes upstream to INET — you never have to file
+on the INET repository yourself.
+
+**Always raise an issue first.** Every change starts as an issue, not a pull request. Open
+an issue describing what you found or want to change, and we discuss it together in the
+thread. Only once we have collectively agreed that it is actionable — and decided whether it
+is CA-specific or a candidate to raise upstream — does it become a pull request. This keeps
+review focused, avoids work on changes we haven't aligned on, and gives every PR a clear
+issue it resolves. Please do not open a PR without a linked, discussed issue.
+
+**Raising something (Issues).** Use the repository's **Issues** tab. Two forms are provided:
+
+- **Bug / reproducible defect** — the model or data pipeline does the wrong thing and you can
+  reproduce it. Include the steps/command, the preset or config, the province(s) affected,
+  and your branch + short commit SHA (`git rev-parse --short HEAD`).
+- **Beta-test finding / question** — an observation, modelling question, or idea that isn't
+  yet a confirmed defect. Say what you saw, the data vintage/scenario, and — if you have a
+  sense — how general you think it is.
+
+Please do not paste restricted data or large outputs into an issue; summarize and, if needed,
+share those separately with SESIT. SESIT discusses the issue with you in the thread and
+decides whether it becomes actionable work.
+
+**Proposing a change (Pull Requests).** For concrete code, config, data-processing, testing,
+or documentation changes:
+
+1. Open (or link) an issue first, then branch off `main` — never push directly to `main`.
+2. Open a PR into the Canadian `main`. The PR template asks you to **classify** the change:
+   - **CA-specific** — Canadian model logic, calibration, or data; stays on this fork.
+   - **Upstream candidate** — a generic `macromodel`/`macro_data` change with no Canada
+     specificity. SESIT re-files these upstream after merge (see Section 11.2).
+   - **Docs / validation only** — no runtime behaviour change.
+3. State the **default / backward-compatibility impact**: new mechanisms should be opt-in and
+   reproduce prior results when not enabled.
+4. Add or update **tests**, run `uv run pytest` and `ruff` locally, and confirm no local
+   paths, credentials, or restricted/large data are included.
+
+CI (style plus the model, data, and calibration test suites) runs automatically on every PR
+and must pass before review. A change is merged after one SESIT review and green CI.
+
+#### Filling in the PR template
+
+When you open a pull request, GitHub automatically loads the PR template into the
+description box — you do not need to copy anything; just edit it in place. A few mechanics:
+
+- **Guidance comments** written as `<!-- ... -->` do not appear in the rendered PR. Follow
+  them, then leave or delete them — readers never see them either way.
+- **Checkboxes** (`- [ ]`) are ticked by putting an `x` between the brackets (`- [x]`), or by
+  clicking them directly once the PR is open.
+- **Classification** — tick **exactly one** box. This is the routing signal: `CA-specific`
+  stays on the fork, `Upstream candidate` is re-filed to INET after merge, `Docs / validation
+  only` changes no runtime behaviour.
+- **Default & backward-compatibility** — tick "no change to shipped defaults" only if a run
+  that does not opt in reproduces prior results exactly; otherwise tick the second box and
+  justify the change in the summary.
+- Fill the **summary**, **tests & results**, and the final **checklist**; leave a field blank
+  only if it genuinely does not apply, and say so.
+
+A minimal filled example for a CA-specific bug fix:
+
+```markdown
+## Linked issue
+Closes #42
+
+## Classification
+- [x] CA-specific
+- [ ] Upstream candidate
+- [ ] Docs / validation only
+
+## Summary of changes
+Excludes social-housing rent from the rental-income-tax base in
+synthetic_central_government (fixes the double-count in #42).
+
+## Default & backward-compatibility impact
+- [x] No change to shipped defaults (legacy runs reproduce exactly)
+
+## Tests & results
+Added test_rental_income_tax_excludes_social_housing; `uv run pytest` green.
+
+## Checklist
+- [x] Tests added/updated and passing locally
+- [x] Style passes (ruff)
+- [x] No local paths, temporary outputs, credentials, or restricted/large data
+```
+
+A PR that arrives with the template blank or unticked will be sent back to be completed
+before review — the classification and backward-compatibility answers are what a reviewer
+reads first.

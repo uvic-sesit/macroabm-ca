@@ -1,0 +1,42 @@
+name: Beta-test finding / question
+description: An observation, question, or discussion point from working with MacroABM-CA that isn't yet a confirmed bug.
+title: "[finding] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for beta-test observations, modelling questions, or ideas to discuss with SESIT.
+        If it's a clear, reproducible defect, use the **Bug / reproducible defect** form instead.
+  - type: textarea
+    id: observation
+    attributes:
+      label: What you observed or want to discuss
+      description: The behaviour, result, or question — and why it matters for your work.
+    validations:
+      required: true
+  - type: input
+    id: context
+    attributes:
+      label: Context
+      description: Team / model fork, province(s), preset or scenario, and data vintage if relevant.
+    validations:
+      required: false
+  - type: dropdown
+    id: generality
+    attributes:
+      label: How general do you think this is?
+      description: Helps us decide whether it stays CA-specific or is a candidate to raise upstream to INET. We'll confirm during triage.
+      options:
+        - Not sure
+        - Specific to our Canadian setup
+        - Might be general (INET-relevant)
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence (optional)
+      description: Numbers, plots, config snippets, or a link. Do not paste restricted data.
+    validations:
+      required: false
