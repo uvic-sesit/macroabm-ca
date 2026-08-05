@@ -876,6 +876,7 @@ class Country:
                 ].values.flatten(),
                 tau_cf=self.central_government.states["Capital Formation Tax"],
                 assume_zero_growth=self.assume_zero_growth,
+                good_prices=self.economy.ts.current("good_prices"),
             )
         )
 

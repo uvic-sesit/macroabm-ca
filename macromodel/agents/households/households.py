@@ -898,6 +898,7 @@ class Households(Agent):
         exogenous_total_investment: float,
         tau_cf: float,
         assume_zero_growth: bool,
+        good_prices: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate target investment levels.
 
@@ -932,6 +933,7 @@ class Households(Agent):
                 investment_weights=self.investment_weights,
                 investment_rate=self.states["investment_rate"],
                 tau_cf=tau_cf,
+                good_prices=good_prices,
             )
 
     def prepare_housing_market_clearing(
