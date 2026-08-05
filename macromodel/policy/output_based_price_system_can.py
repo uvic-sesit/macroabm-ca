@@ -206,18 +206,6 @@ class OutputBasedPriceSystemCAN:
                 out=np.zeros_like(self.baseline_emission_intensity),
                 where=self.reference_production != 0,
             )
-            _r = self.regulated_indices
-            if len(_r):
-                _em_r = self.reference_emission[_r]
-                _order = np.argsort(_em_r)[::-1][:4]
-                _top = "  ".join(
-                    f"{self.industries[_r[k]]}={_em_r[k]:.4g}(prod={self.reference_production[_r[k]]:.4g})"
-                    for k in _order
-                )
-                logging.warning(
-                    "OBPSTOP %s | ref_em total=%.4g | worst sectors: %s",
-                    self.country_name, float(np.sum(_em_r)), _top,
-                )
 
         if self.current_year < 2019:
             return np.zeros(len(self.industries))

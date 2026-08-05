@@ -173,26 +173,6 @@ class DefaultPriceSetter(PriceSetter):
         )
         average_price_by_firm = (prev_average_good_prices + tax_by_sector)[current_firm_sectors]
         tax_by_firm = tax_by_sector[current_firm_sectors]
-        # TEMPORARY: does the tax actually arrive here, and does it move cost_push?
-        import logging as _lg
-        _t = np.asarray(tax_by_firm, dtype=float)
-        _u = np.asarray(curr_unit_costs, dtype=float)
-        _p = np.asarray(average_price_by_firm, dtype=float)
-        _with = np.divide(_u + _t, np.maximum(_p, 1e-12)) - 1.0
-        _without = np.divide(_u, np.maximum(_p - _t, 1e-12)) - 1.0
-        _sel = np.abs(_t) > 1e-12
-        if _sel.any():
-            _w = np.clip(_with[_sel], -0.1, 0.1)
-            _o = np.clip(_without[_sel], -0.1, 0.1)
-            _lg.warning(
-                "TAXCLAMP taxed_firms=%d pre_clamp_maxdiff=%.6g POST_clamp_maxdiff=%.6g "
-                "frac_taxed_at_low=%.3f frac_taxed_at_high=%.3f median_pre=%.4f",
-                int(_sel.sum()), float(np.abs(_with[_sel]-_without[_sel]).max()),
-                float(np.abs(_w-_o).max()),
-                float((_without[_sel] <= -0.1).mean()), float((_without[_sel] >= 0.1).mean()),
-                float(np.median(_without[_sel])),
-            )
-
         # Demand-pull inflation
         demand_pull_inflation = np.zeros_like(prev_firm_prices)
         ind_canvas = np.logical_or(
@@ -227,18 +207,9 @@ class DefaultPriceSetter(PriceSetter):
             )
             - 1.0
         )
-        # TEMPORARY PROBE: distribution of the cost-push term BEFORE clamping, per firm.
-        import logging as _lg
-        _c = np.asarray(cost_push_inflation, dtype=float)
-        _lg.warning(
-            "CPPROBE n=%d frac_at_low=%.4f frac_at_high=%.4f p05=%.4f p50=%.4f p95=%.4f max=%.4f",
-            _c.size, float((_c <= min_inflation).mean()), float((_c >= max_inflation).mean()),
-            float(np.percentile(_c, 5)), float(np.percentile(_c, 50)),
-            float(np.percentile(_c, 95)), float(_c.max()),
-        )
         cost_push_inflation = np.maximum(min_inflation, np.minimum(max_inflation, cost_push_inflation))
 
-        _out = np.maximum(
+        return np.maximum(
             1e-2,
             prev_prices
             * (1 + np.random.normal(0.0, self.price_setting_noise_std, prev_prices.shape))
@@ -246,11 +217,7 @@ class DefaultPriceSetter(PriceSetter):
             * (1 + self.price_setting_speed_dp * demand_pull_inflation)
             * (1 + self.price_setting_speed_cp * cost_push_inflation),
         )
-        import logging as _lg2
-        _lg2.warning("PRICEOUT speed_cp=%.6g cp_sum=%.10g price_sum=%.12g",
-                     self.price_setting_speed_cp, float(np.asarray(cost_push_inflation,dtype=float).sum()),
-                     float(np.asarray(_out,dtype=float).sum()))
-        return _out
+
 
 
 class SectorExogenousPriceSetter(DefaultPriceSetter):
