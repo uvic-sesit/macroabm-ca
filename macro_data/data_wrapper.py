@@ -33,6 +33,7 @@ Example usage:
     ```
 """
 
+import logging
 import pickle as pkl
 import time
 from dataclasses import dataclass
@@ -46,6 +47,7 @@ from macro_data.configuration import DataConfiguration
 from macro_data.configuration.countries import Country
 from macro_data.configuration.region import Region
 from macro_data.processing.synthetic_country import SyntheticCountry
+from macro_data.readers.emissions.emissions_reader import CH4EmissionsDataCAN
 from macro_data.processing.synthetic_rest_of_the_world.default_synthetic_rest_of_the_world import (
     DefaultSyntheticRestOfTheWorld,
 )
@@ -336,6 +338,48 @@ class DataWrapper:
 
         row_exports_growth = calibration_data[("ROW", "Exports (Growth)")]
         row_imports_growth = calibration_data[("ROW", "Imports (Growth)")]
+
+        # CH4 emission factors: national inventory / NATIONAL production.
+        #
+        # CH4EmissionsDataCAN divides Canada-wide CH4 totals (EN-GHG_EconSectByGas-CA) by
+        # the production of whichever country it is building, so a province is charged the
+        # WHOLE country's methane for a sector and divides it by its own output.  For
+        # sectors a province barely has, that is a national numerator over a near-zero
+        # denominator: measured coal-mining factors of 5.57e+09 (ON) and 3.18e+09 (MB)
+        # against Alberta's 1.89e-03, giving reference emissions of 1e15-1e18 in seven of
+        # ten provinces against 1e8-1e9 in the three that actually mine coal.
+        #
+        # Apportioning the national total to a province by its production share and then
+        # dividing by that same production leaves national/national, so the correct factor
+        # is province-invariant -- which is also how the CO2 factors behave.  Provinces are
+        # built independently and cannot see the national total, so it is recomputed here
+        # once every province exists.
+        _ch4_countries = [
+            c for c in synthetic_countries if synthetic_countries[c].emission_factors_ch4 is not None
+        ]
+        if _ch4_countries and readers.ch4_emissions is not None:
+            _national_production = np.zeros(len(industries))
+            for _c in synthetic_countries:
+                _firms = synthetic_countries[_c].firms
+                _national_production += (
+                    _firms.firm_data.groupby("Industry")["Production"]
+                    .sum()
+                    .reindex(range(len(industries)), fill_value=0.0)
+                    .values
+                )
+            _national_ch4 = CH4EmissionsDataCAN.from_reader(
+                reader=readers.ch4_emissions,
+                industries=industries,
+                production_by_industry=_national_production,
+                year=year,
+            )
+            for _c in _ch4_countries:
+                synthetic_countries[_c].emission_factors_ch4 = _national_ch4
+            logging.info(
+                "CH4 factors recomputed on national production for %d provinces "
+                "(max factor %.4g, was up to 5.6e+09 on provincial denominators).",
+                len(_ch4_countries), float(np.max(_national_ch4.emission_factors)),
+            )
 
         total_number_sellers = np.sum(
             [synthetic_countries[country].n_sellers_by_industry for country in synthetic_countries], axis=1
