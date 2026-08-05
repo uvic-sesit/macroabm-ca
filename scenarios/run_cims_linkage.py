@@ -650,6 +650,7 @@ def build_simulation(
     timesteps: int,
     seed: int,
     firms_bundles: list[list[int]] | None = None,
+    use_obps_reg: bool = False,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     capital_target_fraction: float | None = None,
@@ -671,7 +672,8 @@ def build_simulation(
     post-build overlays (flat NA extension past the data tail and +2%/yr HH demand).
     """
     config = build_simulation_configuration(
-        len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles
+        len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles,
+        use_obps_reg=use_obps_reg,
     )
     if use_candidate_baseline:
         logger.info("Applying candidate growth baseline (observed labour path + HH overlay)")

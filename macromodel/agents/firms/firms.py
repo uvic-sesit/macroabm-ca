@@ -1278,6 +1278,7 @@ class Firms(Agent):
         current_estimated_ppi_inflation: np.ndarray,
         previous_average_good_prices: np.ndarray,
         ppi_during: np.ndarray,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Set prices for each firm's output.
 
@@ -1318,6 +1319,7 @@ class Firms(Agent):
             ),
             ppi_during=ppi_during,
             current_time=len(self.ts.historic("price")),
+            extra_marginal_taxes=extra_marginal_taxes,
         )
 
     def compute_unconstrained_demand_for_intermediate_inputs(
@@ -1526,6 +1528,7 @@ class Firms(Agent):
         previous_good_prices: np.ndarray,
         expected_inflation: float,
         assume_zero_growth: bool = False,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> None:
         """Prepare firms' buying plans for goods market.
 
@@ -1542,6 +1545,12 @@ class Firms(Agent):
             expected_inflation (float): Expected inflation rate
             assume_zero_growth (bool, optional): Whether to assume no growth. Defaults to False.
         """
+        # Firms evaluate affordability at the price they will actually pay, so a
+        # marginal tax (e.g. OBPS) tightens the budget for the same real basket.
+        _emt = (
+            np.zeros_like(previous_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        _taxed_prices = previous_good_prices + _emt
         # Target intermediate inputs
         if assume_zero_growth:
             self.ts.target_intermediate_inputs.append(self.ts.initial("target_intermediate_inputs"))
@@ -1553,7 +1562,7 @@ class Firms(Agent):
                     ),
                     target_short_term_credit=self.ts.current("target_short_term_credit"),
                     received_short_term_credit=self.ts.current("received_short_term_credit"),
-                    previous_good_prices=previous_good_prices,
+                    previous_good_prices=_taxed_prices,
                     expected_inflation=expected_inflation,
                 )
             )
@@ -1567,7 +1576,7 @@ class Firms(Agent):
                     unconstrained_target_capital_inputs=self.ts.current("unconstrained_target_capital_inputs"),
                     target_long_term_credit=self.ts.current("target_long_term_credit"),
                     received_long_term_credit=self.ts.current("received_long_term_credit"),
-                    previous_good_prices=previous_good_prices,
+                    previous_good_prices=_taxed_prices,
                     expected_inflation=expected_inflation,
                 )
             )
@@ -1596,6 +1605,7 @@ class Firms(Agent):
         exchange_rate_usd_to_lcu: float,
         previous_good_prices: np.ndarray,
         expected_inflation: float,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> None:
         """Prepare all aspects of goods market participation.
 
@@ -1612,6 +1622,7 @@ class Firms(Agent):
         self.set_exchange_rate(exchange_rate_usd_to_lcu)
         self.prepare_buying_goods(
             previous_good_prices=previous_good_prices,
+            extra_marginal_taxes=extra_marginal_taxes,
             expected_inflation=expected_inflation,
         )
         self.prepare_selling_goods()
@@ -1646,7 +1657,7 @@ class Firms(Agent):
         )
         """
 
-    def compute_gross_fixed_capital_formation(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_gross_fixed_capital_formation(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate gross fixed capital formation.
 
         Computes value of capital goods purchases at current prices.
@@ -1657,9 +1668,12 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of capital formation by industry
         """
-        return (self.ts.current("real_amount_bought_as_capital_goods") * current_good_prices).sum(axis=0)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
 
-    def update_total_newly_bought_costs(self, current_good_prices: np.ndarray) -> None:
+    def update_total_newly_bought_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> None:
         """Update costs of newly purchased inputs.
 
         Allocates purchase costs between:
@@ -1670,8 +1684,11 @@ class Firms(Agent):
         Args:
             current_good_prices (np.ndarray): Current prices for valuation
         """
-        amount_ii = (self.ts.current("real_amount_bought_as_intermediate_inputs") * current_good_prices).sum(axis=1)
-        amount_cap = (self.ts.current("real_amount_bought_as_capital_goods") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        amount_ii = (self.ts.current("real_amount_bought_as_intermediate_inputs") * (current_good_prices + _emt)).sum(axis=1)
+        amount_cap = (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=1)
 
         # Just take fractions
         self.ts.total_intermediate_inputs_bought_costs.append(
@@ -1703,7 +1720,7 @@ class Firms(Agent):
             excess_demand=self.ts.current("real_excess_demand"),
         )
 
-    def compute_nominal_production(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_nominal_production(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate nominal value of production.
 
         Args:
@@ -1712,7 +1729,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Nominal production value for each firm
         """
-        return current_good_prices[self.states["Industry"]] * self.ts.current("production")
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (current_good_prices + _emt)[self.states["Industry"]] * self.ts.current("production")
 
     def compute_inventory(self) -> np.ndarray:
         """Calculate end-of-period inventory levels.
@@ -1731,7 +1751,7 @@ class Firms(Agent):
             self.ts.current("inventory") + self.ts.current("production") - self.ts.current("real_amount_sold"),
         )
 
-    def compute_nominal_inventory(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_nominal_inventory(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate nominal value of inventories.
 
         Args:
@@ -1740,7 +1760,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Nominal inventory value for each firm
         """
-        return current_good_prices[self.states["Industry"]] * self.ts.current("inventory")
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (current_good_prices + _emt)[self.states["Industry"]] * self.ts.current("inventory")
 
     def compute_used_intermediate_inputs(self):
         """Calculate intermediate inputs used in production.
@@ -1762,7 +1785,7 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
         )
 
-    def compute_used_intermediate_inputs_costs(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_used_intermediate_inputs_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate cost of intermediate inputs used in production.
 
         Args:
@@ -1771,7 +1794,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Cost of used intermediate inputs for each firm
         """
-        return (self.ts.current("used_intermediate_inputs") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("used_intermediate_inputs") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_intermediate_inputs_stock(self) -> np.ndarray:
         """Calculate end-of-period intermediate input stocks.
@@ -1791,7 +1817,7 @@ class Firms(Agent):
             + self.ts.current("real_amount_bought_as_intermediate_inputs"),
         )
 
-    def compute_intermediate_inputs_stock_value(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_intermediate_inputs_stock_value(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate value of intermediate input stocks.
 
         Args:
@@ -1800,7 +1826,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of intermediate input stocks for each firm
         """
-        return (self.ts.current("intermediate_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("intermediate_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_used_capital_inputs(self):
         """Calculate capital inputs used in production.
@@ -1824,7 +1853,7 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
         )
 
-    def compute_used_capital_inputs_costs(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_used_capital_inputs_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate cost of capital inputs used in production.
 
         Args:
@@ -1833,12 +1862,16 @@ class Firms(Agent):
         Returns:
             np.ndarray: Cost of used capital inputs for each firm
         """
-        return (self.ts.current("used_capital_inputs") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("used_capital_inputs") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_expected_capital_inputs_stock_value(
         self,
         current_good_prices: np.ndarray,
         estimated_inflation: float,
+        extra_marginal_taxes: Optional[np.ndarray] = None
     ) -> np.ndarray:
         """Calculate expected future value of capital input stocks.
 
@@ -1854,7 +1887,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Expected value of capital input stocks for each firm
         """
-        return (1 + estimated_inflation) * (self.ts.current("capital_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (1 + estimated_inflation) * (self.ts.current("capital_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_capital_inputs_stock(self) -> np.ndarray:
         """Calculate end-of-period capital input stocks.
@@ -1880,7 +1916,7 @@ class Firms(Agent):
             self.ts.current("capital_inputs_stock") - self.ts.current("used_capital_inputs") + delayed_bought_capital,
         )
 
-    def compute_capital_inputs_stock_value(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_capital_inputs_stock_value(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate value of capital input stocks.
 
         Args:
@@ -1889,7 +1925,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of capital input stocks for each firm
         """
-        return (self.ts.current("capital_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("capital_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_total_inventory_change(self) -> np.ndarray:
         """Calculate nominal change in inventory value.
@@ -2063,7 +2102,7 @@ class Firms(Agent):
         else:
             return bad_firm_loans / total_loans_granted
 
-    def compute_equity(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_equity(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate equity value for each firm.
 
         Computes firm equity as:
@@ -2076,8 +2115,11 @@ class Firms(Agent):
         Returns:
             np.ndarray: Equity values for each firm
         """
-        material = np.dot(self.ts.current("intermediate_inputs_stock"), current_good_prices)
-        capital = np.dot(self.ts.current("capital_inputs_stock"), current_good_prices)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        material = np.dot(self.ts.current("intermediate_inputs_stock"), (current_good_prices + _emt))
+        capital = np.dot(self.ts.current("capital_inputs_stock"), (current_good_prices + _emt))
         return (
             self.ts.current("inventory") * self.ts.current("price")
             + material

@@ -300,6 +300,14 @@ class Simulation:
         # Execute pre-hooks before any iteration logic
         self.run_prehooks(self.timestep.year, self.timestep.month)
 
+        # Advance the OBPS policy clock to the current calendar year.  The model steps
+        # quarterly while the carbon price and benchmark tightening are annual, so this
+        # catches the policy up rather than advancing it once per timestep.
+        for country in self.countries.values():
+            if getattr(country, "obps", None) is not None:
+                while country.obps.current_year < self.timestep.year:
+                    country.obps.update()
+
         # self.exchange_rates.set_current_exchange_rates(current_year=self.timestep.year)
 
         for ind, country in enumerate(self.countries.values()):

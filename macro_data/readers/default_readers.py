@@ -39,6 +39,7 @@ from macro_data.readers.economic_data.imf_reader import IMFReader
 from macro_data.readers.economic_data.oecd_economic_data import OECDEconData
 from macro_data.readers.economic_data.ons_reader import ONSReader
 from macro_data.readers.economic_data.policy_rates import PolicyRatesReader
+from macro_data.readers.policy_data.obps_can_reader import OBPSCANReader
 from macro_data.readers.economic_data.provincial_investment_reader import ProvincialInvestmentReader
 from macro_data.readers.economic_data.provincial_macro_reader import ProvincialMacroReader
 from macro_data.readers.economic_data.provincial_labour_reader import ProvincialLabourReader
@@ -64,6 +65,21 @@ from macro_data.readers.population_data.compustat_firms_reader import (
 from macro_data.readers.population_data.hfcs_reader import HFCSReader
 from macro_data.readers.socioeconomic_data.wiod_sea_data import WIODSEAReader
 from macro_data.readers.util.prune_util import DataFilterWarning
+
+
+@dataclass
+class OBPSPaths:
+    """File paths for the Canada Output-Based Pricing System data.
+
+    Attributes:
+        rates_path: CSV of carbon price rates by year and jurisdiction.
+        policy_path: CSV of per-industry reduction factors and tightening rates.
+        policy_elec_path: Optional CSV for electricity-specific tightening rates.
+    """
+
+    rates_path: Path
+    policy_path: Path
+    policy_elec_path: Optional[Path] = None
 
 
 @dataclass
@@ -118,6 +134,7 @@ class DataPaths:
     emissions_fraction_path: Optional[Path] = None
     firm_prices_path: Optional[Path] = None
     ch4_emissions_path: Optional[Path] = None
+    obps_path: Optional["OBPSPaths"] = None
 
     @classmethod
     def default_paths(cls, raw_data_path: Path, icio_years: Iterable[int]):
@@ -141,6 +158,11 @@ class DataPaths:
             oecd_econ_path=raw_data_path / "oecd_econ",
             oecd_econ_mapping_path=raw_data_path / "oecd_econ" / "mappings.json",
             policy_rates_path=raw_data_path / "policy_rates" / "bis_cb_policy_rates.csv",
+            obps_path=OBPSPaths(
+                rates_path=raw_data_path / "policy" / "output_based_price_system_rates.csv",
+                policy_path=raw_data_path / "policy" / "output_based_price_system_policy_values_disagg.csv",
+                policy_elec_path=raw_data_path / "policy" / "output_based_price_system_policy_values_elec.csv",
+            ),
             country_codes_path=raw_data_path / "notation" / "wikipedia-iso-country-codes.csv",
             imf_path=raw_data_path / "imf",
             ons_path=raw_data_path / "ons",
@@ -211,6 +233,7 @@ class DataReaders:
     emission_fractions: Optional[EmissionsFractionReader] = None
     exo_prices: Optional[SectorExoPricesReader] = None
     ch4_emissions: Optional[CH4EmissionsReaderCAN] = None
+    obps_can: Optional[OBPSCANReader] = None
     provincial_macro: Optional[ProvincialMacroReader] = None
     provincial_investment: Optional[ProvincialInvestmentReader] = None
     provincial_tax: Optional[ProvincialTaxReader] = None
@@ -509,11 +532,20 @@ class DataReaders:
         # <raw_data>/canadian_inputs/. Each is a no-op if its file is absent, so national/proxy
         # runs (and non-Canadian raw_data bundles) are unaffected. The investment reader is
         # constructed earlier (it feeds the ICIO GFCF split); macro and tax are attached here.
+        obps_can = None
+        if datapaths.obps_path is not None:
+            obps_can = OBPSCANReader.read_from_raw_data(
+                rates_path=datapaths.obps_path.rates_path,
+                policy_path=datapaths.obps_path.policy_path,
+                policy_elec_path=datapaths.obps_path.policy_elec_path,
+            )
+
         provincial_macro = ProvincialMacroReader.from_default(raw_data_path=raw_data_path)
         provincial_tax = ProvincialTaxReader.from_default(raw_data_path=raw_data_path)
         provincial_labour = ProvincialLabourReader.from_default(raw_data_path=raw_data_path)
 
         return cls(
+            obps_can=obps_can,
             icio=icio,
             wiod_sea=wiod_sea,
             oecd_econ=oecd_econ,

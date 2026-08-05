@@ -112,6 +112,7 @@ def build_simulation_configuration(
     timesteps: int,
     seed: int,
     firms_bundles: list[list[int]] | None = None,
+    use_obps_reg: bool = False,
 ) -> SimulationConfiguration:
     """Build the provincial simulation configuration.
 
@@ -156,6 +157,14 @@ def build_simulation_configuration(
         },
         t_max=timesteps,
     )
+
+    if use_obps_reg:
+        # Canada's Output-Based Pricing System: covered sectors pay the carbon price on
+        # emissions above an output-based benchmark and are rebated below it.  Requires
+        # emissions tracking, which Country enables automatically when B05a/B05b/B05c/C19
+        # are all present -- true for the 43-industry provincial model.
+        for province in CANADIAN_PROVINCES:
+            config.country_configurations[province].use_obps_reg = True
 
     for province in CANADIAN_PROVINCES:
         firms = config.country_configurations[province].firms

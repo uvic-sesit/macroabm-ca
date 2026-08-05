@@ -55,8 +55,28 @@ from macromodel.exogenous.exogenous import Exogenous
 from macromodel.markets.credit_market.credit_market import CreditMarket
 from macromodel.markets.housing_market.housing_market import HousingMarket
 from macromodel.markets.labour_market.labour_market import LabourMarket
+from macromodel.policy.output_based_price_system_can import OutputBasedPriceSystemCAN
 from macromodel.rest_of_the_world import RestOfTheWorld
 from macromodel.util.get_histogram import get_histogram
+
+
+# Ceiling on the OBPS per-unit charge, as a multiple of the good's own price.
+#
+# This is a POLITICAL-ECONOMY bound, not merely a numerical guard.  A carbon charge that
+# more than doubled the price of a good would not survive: the pricing regime would be
+# changed before firms paid it, so a model that lets the charge run past that point is
+# projecting a policy that would not exist.  Capping is the more realistic assumption.
+#
+# It also happens to make the per-sector normalisation safe.  Dividing the sector's OBPS
+# cost by that sector's own production is the economically right per-unit charge, but the
+# denominator can approach zero and send the quotient to absurd values (measured:
+# 3.18e+07 against prices of order 10).  That was invisible while the charge only informed
+# price-setting -- which is multiplied by price_setting_speed_cp = 0 -- but is fatal once
+# it feeds realised input costs, where it produced NaNs in goods-market clearing.
+#
+# The cap is logged when it binds: frequent binding means the denominator is degenerate
+# and the sector's production path needs attention, not the cap.
+_OBPS_MAX_TAX_PRICE_MULTIPLE = 2.0
 
 
 class Country:
@@ -143,6 +163,7 @@ class Country:
         emitting_indices: Optional[np.ndarray] = None,
         emission_factors_lcu_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[np.ndarray] = None,
+        obps: Optional[OutputBasedPriceSystemCAN] = None,
     ):
         """Initialize a new country economy.
 
@@ -212,6 +233,10 @@ class Country:
         self.emission_factors_lcu_ch4 = emission_factors_lcu_ch4
         self.emitting_indices_ch4 = emitting_indices_ch4
         self.use_emission_multiplier = self.configuration.use_emission_multiplier
+
+        self.obps = obps
+        self.use_obps_reg = self.configuration.use_obps_reg
+        self.extra_marginal_taxes_firm = np.zeros(self.firms.n_industries)
 
     @classmethod
     def from_pickled_country(
@@ -400,6 +425,14 @@ class Country:
             scale=scale,
         )
 
+        obps = None
+        if add_emissions and country_configuration.use_obps_reg and synthetic_country.obps_data is not None:
+            obps = OutputBasedPriceSystemCAN(
+                country_name=country_name,
+                industries=list(industries),
+                obps_data=synthetic_country.obps_data,
+            )
+
         return cls(
             country_name=country_name,
             scale=scale,
@@ -425,6 +458,7 @@ class Country:
             emitting_indices=emitting_indices,
             emission_factors_lcu_ch4=emission_factors_lcu_ch4,
             emitting_indices_ch4=emitting_indices_ch4,
+            obps=obps,
         )
 
     def reset(self, configuration: CountryConfiguration) -> None:
@@ -535,6 +569,69 @@ class Country:
             )
         )
 
+    def update_extra_taxes(self, record_obps_reference: bool = True) -> None:
+        """Compute extra marginal taxes for firms from active policy instruments.
+
+        Currently supports the Output-Based Pricing System (OBPS). The sectoral
+        tax cost is divided by production to obtain a per-unit marginal cost that
+        is added to the sector average price seen by firms during price-setting
+        and input-demand calculations.
+
+        Args:
+            record_obps_reference: If True, accumulate 2017–2019 reference
+                emission data (should be True only in the planning phase).
+        """
+        self.extra_marginal_taxes_firm = np.zeros(self.firms.n_industries)
+
+        if self.use_obps_reg and self.obps is None:
+            logging.warning(
+                "use_obps_reg is True for %s but no OBPS object is set — OBPS has no effect.",
+                self.country_name,
+            )
+
+        if self.use_obps_reg and self.obps is not None:
+            input_em_ch4 = self.firms.ts.current("inputs_emissions_ch4")
+            if input_em_ch4 is None:
+                input_em_ch4 = np.zeros_like(self.firms.ts.current("inputs_emissions"))
+            capital_em_ch4 = self.firms.ts.current("capital_emissions_ch4")
+            if capital_em_ch4 is None:
+                capital_em_ch4 = np.zeros_like(self.firms.ts.current("capital_emissions"))
+
+            sectoral_tax = self.obps.compute_obps(
+                use_obps_reg=self.use_obps_reg,
+                record_obps_reference=record_obps_reference,
+                production=self.firms.ts.current("production"),
+                input_em=self.firms.ts.current("inputs_emissions") + input_em_ch4,
+                capital_em=self.firms.ts.current("capital_emissions") + capital_em_ch4,
+                initial_production=self.firms.ts.initial("production"),
+            )
+            self.extra_marginal_taxes_firm = np.divide(
+                sectoral_tax,
+                self.firms.ts.current("production"),
+                out=np.zeros_like(sectoral_tax),
+                where=self.firms.ts.current("production") != 0,
+            )
+            # A negative rebate cannot bring the effective sector price below zero.
+            self.extra_marginal_taxes_firm = np.maximum(
+                -self.economy.ts.current("good_prices"),
+                self.extra_marginal_taxes_firm,
+            )
+
+            # Ceiling on the positive side (see _OBPS_MAX_TAX_PRICE_MULTIPLE).  Logged
+            # rather than applied silently: if this binds often, the denominator is
+            # degenerate and the sector's production path needs looking at, not the cap.
+            _prices = np.asarray(self.economy.ts.current("good_prices"), dtype=float)
+            _cap = _OBPS_MAX_TAX_PRICE_MULTIPLE * np.abs(_prices)
+            _n_capped = int((self.extra_marginal_taxes_firm > _cap).sum())
+            if _n_capped:
+                logging.warning(
+                    "OBPS (%s): per-unit charge capped at %.1fx price for %d sector(s); "
+                    "max uncapped %.4g vs cap %.4g.",
+                    self.country_name, _OBPS_MAX_TAX_PRICE_MULTIPLE, _n_capped,
+                    float(np.max(self.extra_marginal_taxes_firm)), float(np.max(_cap)),
+                )
+            self.extra_marginal_taxes_firm = np.minimum(self.extra_marginal_taxes_firm, _cap)
+
     def clear_labour_market(self) -> None:
         """Execute labor market clearing.
 
@@ -555,6 +652,9 @@ class Country:
         Computes expected profits, asset values, benefits, and other metrics
         used by agents in their planning decisions.
         """
+        if self.add_emissions:
+            self.update_extra_taxes(record_obps_reference=True)
+
         # Firms estimate profits
         self.firms.ts.expected_profits.append(
             self.firms.compute_estimated_profits(
@@ -576,6 +676,7 @@ class Country:
             self.firms.compute_expected_capital_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
                 estimated_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -669,13 +770,15 @@ class Country:
                     current_estimated_ppi_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
                     previous_average_good_prices=self.economy.ts.current("good_prices"),
                     ppi_during=self.exogenous.national_accounts_during["PPI (Value)"].values.flatten(),
+                    extra_marginal_taxes=self.extra_marginal_taxes_firm,
                 )
             )
 
         # Firm demand for goods
         self.firms.ts.unconstrained_target_intermediate_inputs.append(
             self.firms.compute_unconstrained_demand_for_intermediate_inputs(
-                good_prices=self.economy.ts.current("good_prices")
+                good_prices=self.economy.ts.current("good_prices"),
+                extra_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.unconstrained_target_intermediate_inputs_costs.append(
@@ -685,7 +788,8 @@ class Country:
         )
         self.firms.ts.unconstrained_target_capital_inputs.append(
             self.firms.compute_unconstrained_demand_for_capital_inputs(
-                good_prices=self.economy.ts.current("good_prices")
+                good_prices=self.economy.ts.current("good_prices"),
+                extra_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.unconstrained_target_capital_inputs_costs.append(
@@ -751,11 +855,11 @@ class Country:
                     "unemployment_benefits_by_individual"
                 )[0],
                 tau_vat=self.central_government.states["Value-added Tax"],
-                income_tax=self.central_government.states["Income Tax"],
-                employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
                 assume_zero_growth=self.assume_zero_growth,
                 prices=self.firms.ts.current("price"),
                 initial_prices=self.firms.ts.initial("price"),
+                income_tax=self.central_government.states["Income Tax"],
+                employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
                 taxes=current_additional_taxes,
                 initial_taxes=initial_additional_taxes,
             )
@@ -942,6 +1046,7 @@ class Country:
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
             previous_good_prices=self.economy.ts.current("good_prices"),
             expected_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
+            extra_marginal_taxes=self.extra_marginal_taxes_firm,
         )
         self.households.prepare_goods_market_clearing(
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
@@ -1094,6 +1199,7 @@ class Country:
         self.firms.ts.gross_fixed_capital_formation.append(
             self.firms.compute_gross_fixed_capital_formation(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -1101,6 +1207,7 @@ class Country:
         # Update input costs and production metrics
         self.firms.update_total_newly_bought_costs(
             current_good_prices=self.economy.ts.current("good_prices"),
+            extra_marginal_taxes=self.extra_marginal_taxes_firm,
         )
 
         # Execute and record productivity investment after capital purchases are known
@@ -1111,6 +1218,7 @@ class Country:
         self.firms.ts.production_nominal.append(
             self.firms.compute_nominal_production(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -1146,24 +1254,28 @@ class Country:
         self.firms.ts.used_intermediate_inputs_costs.append(
             self.firms.compute_used_intermediate_inputs_costs(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.used_capital_inputs.append(self.firms.compute_used_capital_inputs())
         self.firms.ts.used_capital_inputs_costs.append(
             self.firms.compute_used_capital_inputs_costs(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.inventory.append(self.firms.compute_inventory())
         self.firms.ts.inventory_nominal.append(
             self.firms.compute_nominal_inventory(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.intermediate_inputs_stock.append(self.firms.compute_intermediate_inputs_stock())
         self.firms.ts.intermediate_inputs_stock_value.append(
             self.firms.compute_intermediate_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.intermediate_inputs_stock_industry.append(
@@ -1173,6 +1285,7 @@ class Country:
         self.firms.ts.capital_inputs_stock_value.append(
             self.firms.compute_intermediate_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.capital_inputs_stock_industry.append(self.firms.ts.current("capital_inputs_stock").sum(axis=0))
@@ -1202,6 +1315,7 @@ class Country:
         self.firms.ts.equity.append(
             self.firms.compute_equity(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
