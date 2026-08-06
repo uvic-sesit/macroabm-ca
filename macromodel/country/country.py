@@ -1626,7 +1626,36 @@ class Country:
             "Consumption Expansion Loan Debt": self.households.consumption_loan_debt(),
             "Mortgage Debt": self.households.mortgage_debt(),
             "Central Bank Policy Rate": self.central_bank.ts.get_aggregate("policy_rate"),
+            # GDP. The shallow summary carried none of the three measures, so provincial
+            # GDP had to be reconstructed from components -- and the reconstruction is
+            # exactly where mixed real/nominal units bite.
+            "GDP Output": self.economy.ts.get_aggregate("gdp_output"),
+            "GDP Expenditure": self.economy.ts.get_aggregate("gdp_expenditure"),
+            "GDP Income": self.economy.ts.get_aggregate("gdp_income"),
+            # NAMING TRAP, preserved for compatibility: the "CPI" key above is the price
+            # LEVEL (economy.ts.cpi), not a rate, despite coming from a method called
+            # `total_cpi_inflation`. The rate is a separate series and is added here
+            # explicitly so nobody has to know that.
+            "CPI Inflation Rate": self.economy.ts.get_aggregate("cpi_inflation"),
+            "PPI Inflation Rate": self.economy.ts.get_aggregate("ppi_inflation"),
         }
+
+        # Real GDP, deflated by the CPI level rebased to the first timestep. Derived here
+        # rather than left to the consumer because the deflation needs the LEVEL series
+        # and the obvious-looking "CPI" key is easy to mistake for a rate.
+        try:
+            cpi = np.asarray(data_dict["CPI"], dtype=float).ravel()
+            if cpi.size and np.isfinite(cpi[0]) and cpi[0] > 0:
+                idx = cpi / cpi[0]
+                for measure in ("Output", "Expenditure", "Income"):
+                    nom = np.asarray(data_dict[f"GDP {measure}"], dtype=float).ravel()
+                    n = min(len(nom), len(idx))
+                    real = np.full(len(nom), np.nan)
+                    real[:n] = np.divide(nom[:n], idx[:n], out=np.zeros(n),
+                                         where=idx[:n] > 0)
+                    data_dict[f"GDP {measure} Real"] = real
+        except Exception:  # noqa: BLE001 - derived series must not break the export
+            pass
 
         if self.add_emissions:
             data_dict["Firm Input Emissions"] = self.firms.get_total_inputs_emissions()

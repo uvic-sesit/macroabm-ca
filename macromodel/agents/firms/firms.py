@@ -39,6 +39,13 @@ _INDUSTRY_TS_SUM_FIELDS = (
     # first question to ask of any wage-driven collapse.
     "total_wage",
     "number_of_employees",
+    # Value-added components. GVA by sector is nominal production less intermediate
+    # consumption, and neither term was exported -- so the shallow summary could show a
+    # sector's OUTPUT moving without saying whether the value it added moved with it.
+    # Both are NOMINAL (they are cost/receipt aggregates), unlike `production`, which is
+    # real; see the series_units table written alongside.
+    "used_intermediate_inputs_costs",
+    "taxes_paid_on_production",
 )
 _INDUSTRY_TS_WEIGHTED_FIELDS = {
     "price": "production",
@@ -550,6 +557,25 @@ class Firms(Agent):
             frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
         for field, weight_field in _INDUSTRY_TS_WEIGHTED_FIELDS.items():
             frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+
+        # Gross value added, derived: nominal output less intermediate consumption.
+        # Exported rather than left to the consumer because getting it wrong is easy --
+        # `production` is REAL and `used_intermediate_inputs_costs` is NOMINAL, so the
+        # two cannot be differenced without applying `price` first. That exact mixed-units
+        # mistake has already cost this project one round of invalid analysis.
+        try:
+            prod = frames["production"].to_numpy()
+            price = frames["price"].to_numpy()
+            inter = frames["used_intermediate_inputs_costs"].to_numpy()
+            steps = min(len(prod), len(price), len(inter))
+            frames["gva_nominal"] = pd.DataFrame(
+                prod[:steps] * price[:steps] - inter[:steps], columns=cols
+            )
+            frames["production_nominal"] = pd.DataFrame(
+                prod[:steps] * price[:steps], columns=cols
+            )
+        except Exception:  # noqa: BLE001 - derived series must not break the export
+            pass
         return frames
 
     def reset(self, configuration: FirmsConfiguration) -> None:

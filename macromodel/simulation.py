@@ -556,6 +556,28 @@ class Simulation:
                     pd.DataFrame(np.nan_to_num(arr), columns=cols).to_hdf(
                         save_dir / file_name, key=f"{country_name}_{key}", mode="a"
                     )
+            # Capital purchases by the INVESTING industry -- i.e. GFCF by sector.
+            # `firms_capital_bought_by_good_real` above is indexed by the good BOUGHT and
+            # summed over buyers, so it cannot say which sector is doing the investing.
+            # That gap made it impossible to answer "how much is being invested in the
+            # grid", which is the first question anyone asks of a transition scenario:
+            # sector D's own investment simply was not in the file.
+            for country_name, country in self.countries.items():
+                arr = np.array(country.firms.ts.historic("real_amount_bought_as_capital_goods"))
+                if arr.ndim != 3:
+                    continue
+                industry_idx = np.asarray(country.firms.states["Industry"])
+                cols = list(country.firms.industries)
+                # sum over the GOOD axis, group by the INVESTING firm's industry
+                by_firm = np.nan_to_num(arr).sum(axis=2)
+                mat = np.zeros((by_firm.shape[0], len(cols)))
+                for t in range(by_firm.shape[0]):
+                    np.add.at(mat[t], industry_idx, by_firm[t])
+                pd.DataFrame(mat, columns=cols).to_hdf(
+                    save_dir / file_name,
+                    key=f"{country_name}_firms_gfcf_by_industry_real", mode="a",
+                )
+
             # For linkage-owned goods (the energy bundle), also split firms' intermediate
             # purchases by the CONSUMING industry -- the class totals above cannot say
             # whether one linked sector's coefficient path drives an aggregate divergence.
@@ -582,6 +604,59 @@ class Simulation:
                     )
         except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
             logging.getLogger(__name__).warning("Demand-decomposition export failed: %s", exc)
+
+        # Units metadata. Mixed real/nominal units in this file have already caused one
+        # round of invalid analysis (firm series are REAL, household/government/trade
+        # series are NOMINAL), and the naming is not always a reliable guide -- the "CPI"
+        # column is a price LEVEL despite coming from a method called
+        # `total_cpi_inflation`. A suffix convention helps but does not cover the
+        # per-country summary columns, so the units travel as data.
+        try:
+            import pandas as pd
+
+            units = [
+                # key or column, units, basis, note
+                ("*_firms_production", "real", "quantity, base-year prices", "per-industry"),
+                ("*_firms_production_nominal", "nominal LCU", "current prices", "production x price"),
+                ("*_firms_gva_nominal", "nominal LCU", "current prices", "production x price - intermediate costs"),
+                ("*_firms_used_intermediate_inputs_costs", "nominal LCU", "current prices", ""),
+                ("*_firms_taxes_paid_on_production", "nominal LCU", "current prices", ""),
+                ("*_firms_gfcf_by_industry_real", "real", "quantity, base-year prices", "capital bought BY investing industry"),
+                ("*_firms_capital_bought_by_good_real", "real", "quantity, base-year prices", "indexed by good BOUGHT, summed over buyers"),
+                ("*_firms_intermediate_bought_by_good_real", "real", "quantity, base-year prices", "indexed by good bought"),
+                ("*_firms_price", "index", "price per unit", "production-weighted within industry"),
+                ("*_firms_number_of_employees", "count", "headcount", "model units, not literal persons"),
+                ("*_firms_total_wage", "nominal LCU", "current prices", ""),
+                ("*_households_consumption_by_good_nominal", "nominal LCU", "current prices", "deflate by good price before comparing with real series"),
+                ("*_households_investment_by_good_nominal", "nominal LCU", "current prices", "as above"),
+                ("*_government_consumption_by_good_nominal", "nominal LCU", "current prices", "as above"),
+                ("*_exports_by_good_nominal", "nominal LCU", "current prices", "as above"),
+                ("*_imports_by_good_nominal", "nominal LCU", "current prices", "as above"),
+                ("row_imports_real", "real", "quantity", "ROW sales by industry"),
+                ("row_desired_exports_real", "real", "quantity", "offered, before the import cap"),
+                ("<country>", "mixed", "see per-column rows below", "per-country summary frame"),
+                ("<country>:GDP Output", "nominal LCU", "current prices", ""),
+                ("<country>:GDP Expenditure", "nominal LCU", "current prices", ""),
+                ("<country>:GDP Income", "nominal LCU", "current prices", ""),
+                ("<country>:GDP Output Real", "real LCU", "CPI-deflated, base = first timestep", "nominal / (cpi/cpi[0])"),
+                ("<country>:GDP Expenditure Real", "real LCU", "CPI-deflated, base = first timestep", ""),
+                ("<country>:GDP Income Real", "real LCU", "CPI-deflated, base = first timestep", ""),
+                ("<country>:CPI", "index", "price LEVEL", "NOT a rate, despite the name"),
+                ("<country>:PPI", "index", "price LEVEL", "NOT a rate"),
+                ("<country>:CFPI", "index", "price LEVEL", "NOT a rate"),
+                ("<country>:CPI Inflation Rate", "rate", "per timestep", "fraction, not percent"),
+                ("<country>:PPI Inflation Rate", "rate", "per timestep", "fraction, not percent"),
+                ("<country>:Unemployment Rate", "rate", "share of labour force", "fraction, not percent"),
+                ("<country>:Central Bank Policy Rate", "rate", "per timestep", "fraction, not percent"),
+                ("<country>:Imports", "nominal LCU", "current prices", "economy-wide total"),
+                ("<country>:Exports", "nominal LCU", "current prices", "economy-wide total"),
+                ("<country>_industries", "mapping", "index -> industry code", "row order matches the column order of every per-industry frame"),
+            ]
+            pd.DataFrame(units, columns=["key", "units", "basis", "note"]).to_hdf(
+                save_dir / file_name, key="series_units", mode="a"
+            )
+        except Exception as exc:  # noqa: BLE001 - metadata is non-critical
+            logging.getLogger(__name__).warning("Units metadata export failed: %s", exc)
 
         # Rest-of-the-world sales by industry == the countries' imports by industry.  The
         # shallow summary otherwise carries only an economy-wide Imports total, which
