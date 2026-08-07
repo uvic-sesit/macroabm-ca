@@ -1595,6 +1595,60 @@ class Country:
 
         self.exogenous.save_to_h5(group)
 
+    def apply_investment_tax_credit(self, credits_by_industry: dict[int, float],
+                                    steps_per_year: int) -> None:
+        """Refund investment tax credits to firms, via the production-tax channel.
+
+        A refundable ITC is cash back to the investing firm. The model has no direct
+        firm-transfer instrument, but ``Taxes Less Subsidies Rates`` is a per-industry rate
+        on production value where a NEGATIVE value is a subsidy -- and it flows through
+        taxes paid, into profits, into deposits, which is the cash-flow effect an ITC has.
+
+        APPROXIMATION, stated plainly: the credit is a capital subsidy and this delivers it
+        as a production subsidy of equal value. The dollar amount transferred is right; its
+        incidence is not. A firm receives it in proportion to output rather than to what it
+        built, so within sector D the split across firms differs from reality. Sector-level
+        cash flow -- what this is for -- is unaffected by that.
+
+        The rate is set from LAGGED production value, since the current period's is not yet
+        known when taxes are computed. The realised transfer is logged so the two can be
+        compared rather than assumed equal.
+
+        Args:
+            credits_by_industry: {industry index: credit in $ per YEAR}.
+            steps_per_year: model steps per year, to convert to a per-step transfer.
+        """
+        base = getattr(self, "_itc_base_rates", None)
+        rates = self.central_government.states["Taxes Less Subsidies Rates"]
+        if base is None:
+            base = self._itc_base_rates = np.array(rates, dtype=float, copy=True)
+        # Start from the untouched rates each time, so credits never accumulate across
+        # milestones -- the failure mode that made the capacity floor keep stale values.
+        new_rates = np.array(base, copy=True)
+        if not credits_by_industry:
+            self.central_government.states["Taxes Less Subsidies Rates"] = new_rates
+            return
+
+        industry = np.asarray(self.firms.states["Industry"])
+        prod = np.asarray(self.firms.ts.current("production"), dtype=float).ravel()
+        price = np.asarray(self.firms.ts.current("price"), dtype=float).ravel()
+        applied = {}
+        for idx, credit_per_year in credits_by_industry.items():
+            sel = industry == idx
+            value = float((prod[sel] * price[sel]).sum())
+            if not np.isfinite(value) or value <= 0.0 or credit_per_year <= 0.0:
+                continue
+            per_step = float(credit_per_year) / max(int(steps_per_year), 1)
+            new_rates[idx] = base[idx] - per_step / value
+            applied[idx] = (per_step, value, new_rates[idx])
+        self.central_government.states["Taxes Less Subsidies Rates"] = new_rates
+        if applied:
+            logging.getLogger(__name__).info(
+                "investment tax credit: %s",
+                {i: {"per_step_$": round(c, 1), "prod_value": round(v, 1),
+                     "net_rate": round(r, 6)} for i, (c, v, r) in applied.items()},
+            )
+
     def shallow_output(self) -> pd.DataFrame:
         """Create summary DataFrame of key economic indicators.
 

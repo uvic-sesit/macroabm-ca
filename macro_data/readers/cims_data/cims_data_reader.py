@@ -54,6 +54,13 @@ class CIMSDataReader:
         """Return the fuel-switching capital uplift (capital good x consuming sector)."""
         return self._read_matrix("transition_capital", itr, year, region)
 
+    def get_investment_tax_credit(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Investment tax credit accruing to each industry, $ per year (linkage-supplied)."""
+        return self._read_matrix("investment_tax_credit", itr, year, region)
+
+    def investment_tax_credit_available(self, itr: str, year: int, region: str) -> bool:
+        return self._path("investment_tax_credit", itr, year, region).exists()
+
     def get_export_demand_index(self, itr: str, year: int, region: str) -> pd.DataFrame:
         """Per-industry multiplier on base-year ROW export demand (linkage-supplied)."""
         return self._read_matrix("export_demand_index", itr, year, region)

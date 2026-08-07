@@ -509,24 +509,38 @@ class Simulation:
                 row.set_production_base(production.copy())
             if getattr(row, "_export_demand_index", None) is None:
                 return
-            # KNOWN-WRONG, and kept deliberately: this uses ROW's `exports_real`, which
-            # is what ROW SELLS to the countries (their imports), not what it buys. It
-            # overstates absorption ~4x (39.2bn/yr against an actual 10.1bn).
+            # Countries' EXPORTS, deflated to real. NOT `row.ts.exports_real`, which is
+            # what ROW SELLS to the countries -- their imports. `record_bought_goods` sets
+            # it from `real_amount_sold`; the name says exports, the definition does not.
+            # Using it overstated absorption ~4x (39.2bn/yr against an actual 10.1bn).
             #
-            # The "corrected" version -- deflating the countries' own export series --
-            # was tried and made results markedly WORSE: oil went from +10.4% to +46.7%
-            # against CER's +4.4%, and production levels inflated across the board
-            # (national output 3,933 -> 4,098bn). Its absorption was still wrong in the
-            # other direction (23.3bn/yr against 11.8bn actual), so neither computation
-            # is right and the wrong one at least does not distort levels.
-            #
-            # Do not "fix" this without re-reading the oil/gas section of
-            # docs/cer_macroabm/supply_side_linkage_design.md -- the obvious fix has
-            # already been tried and rejected on evidence.
-            exports = np.asarray(row.ts.current("exports_real"), dtype=float).ravel()
-            if exports.shape != production.shape:
-                exports = np.zeros_like(production)
-            row.set_domestic_absorption(np.maximum(production - exports, 0.0))
+            # HISTORY, so this is not flip-flopped again: this correction was tried once
+            # while production was still demand-determined and made results markedly worse
+            # (oil +10.4% -> +46.7%, national output 3,933 -> 4,098bn), because a larger
+            # export target then inflated production itself. With production driven by
+            # `exogenous_fossil_production` that feedback is cut: production is fixed by
+            # the external path, so absorption only decides the SPLIT between domestic use
+            # and exports. The correction is safe in that configuration and wrong-headed
+            # without it.
+            exports_real = np.zeros_like(production)
+            for country in self.countries.values():
+                industry = np.asarray(country.firms.states["Industry"])
+                nominal = np.asarray(
+                    country.economy.ts.current("exports"), dtype=float).ravel()
+                if nominal.shape != production.shape:
+                    continue
+                prod_f = np.asarray(
+                    country.firms.ts.current("production"), dtype=float).ravel()
+                price_f = np.asarray(
+                    country.firms.ts.current("price"), dtype=float).ravel()
+                num = np.zeros_like(production)
+                den = np.zeros_like(production)
+                np.add.at(num, industry, prod_f * price_f)
+                np.add.at(den, industry, prod_f)
+                price = np.divide(num, den, out=np.ones_like(num), where=den > 0)
+                exports_real += np.divide(nominal, price, out=np.zeros_like(nominal),
+                                          where=price > 0)
+            row.set_domestic_absorption(np.maximum(production - exports_real, 0.0))
         except Exception as exc:  # noqa: BLE001 - never break the run for a diagnostic input
             logging.getLogger(__name__).warning(
                 "Could not compute domestic absorption for export pinning: %s", exc)

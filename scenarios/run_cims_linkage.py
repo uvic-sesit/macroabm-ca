@@ -302,6 +302,8 @@ def build_link_prehook(
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
+    investment_tax_credit: bool = False,
+    steps_per_year: int = 4,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
 ):
@@ -352,6 +354,21 @@ def build_link_prehook(
                         cims_region, year,
                         {industries[i]: round(v, 4) for i, v in sorted(floored.items())},
                     )
+
+                # Refund clean-electricity investment tax credits to the investing sector.
+                if investment_tax_credit and reader.investment_tax_credit_available(
+                        itr, year, cims_region):
+                    itc = reader.get_investment_tax_credit(itr, year, cims_region)
+                    col = itc.columns[0]
+                    credits = {industries.index(code): float(itc.loc[code, col])
+                               for code in itc.index
+                               if code in industries and float(itc.loc[code, col]) > 0.0}
+                    country.apply_investment_tax_credit(credits, steps_per_year)
+                elif investment_tax_credit:
+                    logger.warning(
+                        "investment_tax_credit is ENABLED but no table was found for "
+                        "itr=%s year=%s region=%s -- the flag is having NO effect.",
+                        itr, year, cims_region)
 
             if method == "intensity_target":
                 if not reader.intensity_available(itr, year, cims_region) or not reader.intensity_available(
@@ -890,6 +907,13 @@ def parse_args() -> argparse.Namespace:
              "production tracks demand exactly and cannot reach CER's generation path.",
     )
     p.add_argument(
+        "--investment-tax-credit",
+        action="store_true",
+        help="Refund clean-economy investment tax credits (Clean Technology, Clean "
+             "Electricity, CCUS) to the investing sector via the production-tax channel. "
+             "Rates are headline statutory rates: treat the fiscal cost as an upper bound.",
+    )
+    p.add_argument(
         "--exogenous-fossil-production",
         action="store_true",
         help="Drive the export-pinned industries' PRODUCTION to the linkage's path "
@@ -1111,6 +1135,8 @@ def main() -> None:
         transition_capital=args.transition_capital,
         export_demand_pinning=args.export_demand_pinning,
         exogenous_fossil_production=args.exogenous_fossil_production,
+        investment_tax_credit=args.investment_tax_credit,
+        steps_per_year=args.steps_per_year,
         additive_intensity=args.additive_intensity,
         household_energy_shares=args.household_energy_shares,
         intermediate_factor=args.intermediate_factor,
