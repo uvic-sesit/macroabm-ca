@@ -54,6 +54,14 @@ class CIMSDataReader:
         """Return the fuel-switching capital uplift (capital good x consuming sector)."""
         return self._read_matrix("transition_capital", itr, year, region)
 
+    def get_export_demand_index(self, itr: str, year: int, region: str) -> pd.DataFrame:
+        """Per-industry multiplier on base-year ROW export demand (linkage-supplied)."""
+        return self._read_matrix("export_demand_index", itr, year, region)
+
+    def export_demand_index_available(self, itr: str, year: int, region: str) -> bool:
+        """True when the linkage wrote an export-demand index for this region/year."""
+        return self._path("export_demand_index", itr, year, region).exists()
+
     def transition_capital_available(self, itr: str, year: int, region: str) -> bool:
         """True if the processed transition-capital table exists."""
         return self._path("transition_capital", itr, year, region).exists()

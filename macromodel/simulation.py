@@ -350,6 +350,11 @@ class Simulation:
         total_real_production = self.total_real_production
         if total_real_production > 0:
             self.aggregate_country_price_index = self.aggregate_nominal_production / total_real_production
+        # Residual export targeting needs domestic absorption, which only this layer can
+        # see: it spans every country's output and the exports ROW took out of it. Supplied
+        # with a ONE-PERIOD LAG -- using the current period would make the export target
+        # depend on a market clearing that has not happened yet.
+        self._update_row_domestic_absorption()
         self.rest_of_the_world.update_planning_metrics(
             aggregate_country_production_index=aggregate_country_production_index,
             aggregate_country_price_index=self.aggregate_country_price_index,
@@ -477,6 +482,54 @@ class Simulation:
             self.goods_market.save_to_h5(f)
             for country in self.countries.values():
                 country.save_to_h5(f)
+
+    def _update_row_domestic_absorption(self) -> None:
+        """Real production the home economy keeps, by industry = production - exports.
+
+        A no-op unless a linkage has pinned some industry, so it costs nothing in a normal
+        run. Both terms are REAL: `production` is a real quantity and ROW's `exports_real`
+        is the real amount it bought, so the difference is what stayed home.
+        """
+        row = self.rest_of_the_world
+        try:
+            n = len(next(iter(self.countries.values())).firms.industries)
+            production = np.zeros(n)
+            for country in self.countries.values():
+                industry = np.asarray(country.firms.states["Industry"])
+                prod = np.asarray(country.firms.ts.current("production"), dtype=float).ravel()
+                np.add.at(production, industry, prod)
+            # Base production is captured at the FIRST STEP, unconditionally -- NOT the
+            # first time an index arrives. The linkage's first milestone is 2020 while the
+            # index is anchored to the simulation start (2014), so capturing it lazily
+            # would multiply a 2014-anchored ratio by a 2020 base. That is the same
+            # anchor mismatch that already made this feature move demand the wrong way
+            # once; both ends are now tied to the simulation start by construction and do
+            # not depend on which milestones the linkage happens to write.
+            if getattr(row, "_production_base", None) is None:
+                row.set_production_base(production.copy())
+            if getattr(row, "_export_demand_index", None) is None:
+                return
+            # KNOWN-WRONG, and kept deliberately: this uses ROW's `exports_real`, which
+            # is what ROW SELLS to the countries (their imports), not what it buys. It
+            # overstates absorption ~4x (39.2bn/yr against an actual 10.1bn).
+            #
+            # The "corrected" version -- deflating the countries' own export series --
+            # was tried and made results markedly WORSE: oil went from +10.4% to +46.7%
+            # against CER's +4.4%, and production levels inflated across the board
+            # (national output 3,933 -> 4,098bn). Its absorption was still wrong in the
+            # other direction (23.3bn/yr against 11.8bn actual), so neither computation
+            # is right and the wrong one at least does not distort levels.
+            #
+            # Do not "fix" this without re-reading the oil/gas section of
+            # docs/cer_macroabm/supply_side_linkage_design.md -- the obvious fix has
+            # already been tried and rejected on evidence.
+            exports = np.asarray(row.ts.current("exports_real"), dtype=float).ravel()
+            if exports.shape != production.shape:
+                exports = np.zeros_like(production)
+            row.set_domestic_absorption(np.maximum(production - exports, 0.0))
+        except Exception as exc:  # noqa: BLE001 - never break the run for a diagnostic input
+            logging.getLogger(__name__).warning(
+                "Could not compute domestic absorption for export pinning: %s", exc)
 
     def shallow_df_dict(self):
         """Create a dictionary of shallow (summary) DataFrames for each country.

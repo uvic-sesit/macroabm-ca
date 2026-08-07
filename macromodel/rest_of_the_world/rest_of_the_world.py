@@ -29,6 +29,8 @@ from functools import reduce
 from typing import Any
 
 import h5py
+import logging
+
 import numpy as np
 import pandas as pd
 
@@ -43,6 +45,9 @@ from macromodel.rest_of_the_world.rest_of_the_world_ts import (
 )
 from macromodel.timeseries import TimeSeries
 from macromodel.util.function_mapping import functions_from_model, update_functions
+
+
+logger = logging.getLogger(__name__)
 
 
 class RestOfTheWorld(Agent):
@@ -287,6 +292,107 @@ class RestOfTheWorld(Agent):
             average_country_ppi_inflation=average_country_ppi_inflation
         )
 
+    def set_export_demand_index(self, index: "np.ndarray | None") -> None:
+        """Target selected industries' PRODUCTION at an external path, via exports.
+
+        ROW's industry composition is otherwise FROZEN: `compute_imports` forecasts an
+        aggregate total and splits it by base-year shares, so every industry's exports
+        scale as one block and no sector's path can diverge from any other's.
+
+        RESIDUAL TARGETING, and why it is not simply "grow exports by the index".
+        Production = domestic absorption + exports. Pinning exports to an external
+        PRODUCTION path fails whenever domestic demand is moving: under a deep
+        electrification scenario the model's domestic gas demand falls, so exports growing
+        in line with production growth still leave production falling. Measured, that
+        approach moved gas production only +9.6% against a 38-point gap to CER.
+
+        So exports absorb the residual:
+
+            target_exports = index x base_production  -  domestic_absorption
+
+        which is what an external supply-demand balance does, and the only formulation
+        that lets total production track the target while domestic demand stays endogenous.
+
+        `index` is a per-industry multiplier on BASE-YEAR production; entries <= 0 mean
+        "not pinned". A no-op when None.
+        """
+        self._export_demand_index = None if index is None else np.asarray(index, dtype=float)
+
+    def set_production_base(self, base_real: "np.ndarray | None") -> None:
+        """Base-year REAL production per industry, the level the index multiplies."""
+        self._production_base = None if base_real is None else np.asarray(base_real, dtype=float)
+
+    def set_domestic_absorption(self, absorption_real: "np.ndarray | None") -> None:
+        """Domestic REAL absorption per industry: production the home economy uses itself.
+
+        Supplied by the simulation, which is the only layer that can see both the
+        countries' output and what they consume of it. Lagged one period, which is stable
+        and avoids a simultaneity between this target and the market clearing it feeds.
+        """
+        self._domestic_absorption = None if absorption_real is None else np.asarray(
+            absorption_real, dtype=float)
+
+    def _apply_export_demand_index(self) -> None:
+        """Set pinned industries' desired imports to the residual export target."""
+        index = getattr(self, "_export_demand_index", None)
+        base = getattr(self, "_production_base", None)
+        absorption = getattr(self, "_domestic_absorption", None)
+        if index is None or base is None or absorption is None:
+            return
+        current = np.array(self.ts.current("desired_imports_in_lcu"), dtype=float)
+        p_now = np.array(self.ts.current("price_in_lcu"), dtype=float)
+        shapes = {current.shape, index.shape, base.shape, absorption.shape, p_now.shape}
+        if len(shapes) != 1:
+            logger.warning("export pinning shape mismatch %s; not applied.", shapes)
+            return
+        pinned = (index > 0.0) & (base > 0.0) & np.isfinite(p_now) & (p_now > 0.0)
+        if not pinned.any():
+            return
+
+        before = current[pinned].copy()
+        target_production = base[pinned] * index[pinned]
+        # Exports take whatever the home economy does not. Floored at zero: a target below
+        # domestic absorption means the economy already consumes more than the path allows,
+        # which is a statement about domestic demand, not a reason for negative exports.
+        target_exports_real = np.maximum(target_production - absorption[pinned], 0.0)
+        # UNITS: desired_imports_in_lcu is NOMINAL; the real target converts at current
+        # prices. Applying a real quantity directly strips every year of inflation.
+        current[pinned] = target_exports_real * p_now[pinned]
+        self.ts.desired_imports_in_lcu[-1] = current
+
+        # DIAGNOSTIC GUARD. Three separate bugs in this feature each produced a clean run
+        # with no error and a plausible number: a flag never threaded to its consumer, an
+        # index anchored to a different year than the base it multiplied, and a REAL index
+        # applied to a NOMINAL series. The last two showed up as demand moving OPPOSITE to
+        # its index -- cheap to detect, so it is checked rather than left to the reader.
+        after = current[pinned]
+        idx = index[pinned]
+        contradictory = ((idx > 1.0) & (after < before)) | ((idx < 1.0) & (after > before))
+        if contradictory.any():
+            where = np.flatnonzero(pinned)[contradictory]
+            logger.warning(
+                "export pinning moved demand AGAINST its index for industry indices %s -- "
+                "index %s, demand %s -> %s. Note this CAN be legitimate under residual "
+                "targeting (rising domestic absorption leaves less for export), so check "
+                "absorption before assuming a unit or anchor bug.",
+                where.tolist(), np.round(idx[contradictory], 4).tolist(),
+                np.round(before[contradictory], 1).tolist(),
+                np.round(after[contradictory], 1).tolist(),
+            )
+        binding = int((target_production - absorption[pinned] <= 0.0).sum())
+        if binding:
+            logger.warning("export pinning: %d pinned industries have domestic absorption "
+                           "at or above their production target; exports floored at zero.",
+                           binding)
+        logger.info(
+            "export pinning: index %s, target production %s, absorption %s, "
+            "export target (real) %s, demand %s -> %s",
+            np.round(idx, 4).tolist(), np.round(target_production, 1).tolist(),
+            np.round(absorption[pinned], 1).tolist(),
+            np.round(target_exports_real, 1).tolist(),
+            np.round(before, 1).tolist(), np.round(after, 1).tolist(),
+        )
+
     def prepare_buying_goods(
         self,
         aggregate_country_production_index: float,
@@ -326,6 +432,9 @@ class RestOfTheWorld(Agent):
                     assume_zero_noise=self.assume_zero_noise,
                 )
             )
+        # Pin before converting to USD, so the pinned path flows through everything
+        # downstream (USD demand, goods-to-buy, realised exports) unchanged.
+        self._apply_export_demand_index()
         self.ts.desired_imports_in_usd.append(
             1.0 / self.exchange_rate_usd_to_lcu * self.ts.current("desired_imports_in_lcu")
         )

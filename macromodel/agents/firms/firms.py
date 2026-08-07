@@ -898,7 +898,60 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
-        return self._apply_growth_limits(target)
+        return self._apply_production_target(self._apply_growth_limits(target))
+
+    def set_production_target(self, industry_indices, index: float | None) -> None:
+        """Drive selected industries' target production to ``initial * index``.
+
+        EXOGENOUS PRODUCTION PATH. Where a linkage supplies an external production
+        trajectory -- CER's published oil, gas and coal output -- this replaces the firms'
+        own demand-driven target for those industries. Those sectors become INPUTS to the
+        run rather than results of it, which is the honest framing and should be stated
+        wherever the numbers are used.
+
+        Why this rather than demand-side control: an exogenous demand path is absorbed
+        only partially, because firms produce to their own expected demand and expectations
+        adapt to realised sales. Six demand-side attempts are recorded in
+        docs/cer_macroabm/supply_side_linkage_design.md; the best moved gas from -14.1% to
+        -2.1% against a target of +25.5%, with capital unconstrained and inputs slack. The
+        sector does not expand to fill an order book it has not yet seen.
+
+        Applied AFTER the growth limits, so an exogenous path is not silently clipped by a
+        rate cap -- the whole point is to follow the path. It is applied to the TARGET, not
+        to production itself, so the input and capital constraints still bind: if the
+        sector physically cannot reach the path, production falls short and that shows up
+        as a gap rather than being papered over.
+
+        Args:
+            industry_indices: industries to drive; empty/None clears.
+            index: production index relative to each firm's INITIAL production.
+        """
+        # PER-FIRM array (NaN = not driven), so several industries can be driven to
+        # DIFFERENT indices. A single mask plus a single scalar would let each call
+        # overwrite the last -- the exact latent bug found in set_minimum_capital_stock,
+        # where flooring two sectors silently kept only one.
+        if not industry_indices or index is None:
+            self._production_target_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_target_by_firm", None) is None or                 self._production_target_by_firm.shape[0] != mask.shape[0]:
+            self._production_target_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_target_by_firm[mask] = float(index)
+
+    def _apply_production_target(self, target: np.ndarray) -> np.ndarray:
+        """Override the target for firms on an exogenous production path.  No-op if unset."""
+        idx = getattr(self, "_production_target_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = initial[mask] * idx[mask]
+        return out
 
     def set_growth_limits(
         self,

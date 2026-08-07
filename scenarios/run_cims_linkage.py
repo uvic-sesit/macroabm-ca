@@ -300,6 +300,8 @@ def build_link_prehook(
     electricity_own_use: bool = False,
     household_energy_quantities: bool = False,
     transition_capital: bool = False,
+    export_demand_pinning: bool = False,
+    exogenous_fossil_production: bool = False,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
 ):
@@ -339,12 +341,16 @@ def build_link_prehook(
                     for code in cap.index
                     if code in industries and float(cap.loc[code, col]) > 0.0
                 }
+                # Clear first: the floor now ACCUMULATES across calls, so without this a
+                # sector dropped from one milestone's set would keep the previous value.
+                country.firms.set_capacity_floor(None, None)
                 for idx, value in floored.items():
                     country.firms.set_capacity_floor([idx], value)
                 if floored:
                     logger.info(
-                        "capacity floor: region=%s year=%s indices=%s index=%.3f",
-                        cims_region, year, sorted(floored), next(iter(floored.values())),
+                        "capacity floor: region=%s year=%s %s",
+                        cims_region, year,
+                        {industries[i]: round(v, 4) for i, v in sorted(floored.items())},
                     )
 
             if method == "intensity_target":
@@ -452,23 +458,44 @@ def build_link_prehook(
                 tc = None
                 if transition_capital and reader.transition_capital_available(itr, year, cims_region):
                     tc = reader.get_transition_capital(itr, year, cims_region)
-                country.firms.link(
-                    requested_quantities=rq,
-                    investment=inv,
-                    comparable_codes=comparable_codes,
-                    energy_bundle_codes=energy_codes,
-                    method="intensity_target",
-                    energy_intensity=reader.get_energy_intensity(itr, year, cims_region),
-                    anchor_energy_intensity=reader.get_energy_intensity(itr, anchor_year, cims_region),
-                    capital_intensity=reader.get_capital_intensity(itr, year, cims_region),
-                    anchor_capital_intensity=reader.get_capital_intensity(itr, anchor_year, cims_region),
-                    is_anchor=(year == anchor_year),
-                    reset_multipliers=reset_multipliers,
-                    linkage_owns_coefficients=linkage_owns_coefficients,
-                    additive_intensity=additive_intensity,
-                    transition_capital=tc,
-                )
 
+                # Pin selected industries' EXPORT demand to a linkage-supplied path.
+                # ROW splits its aggregate import forecast by frozen base-year shares, so
+                # without this no sector's export path can diverge from any other's --
+                # which makes oil and gas, both export-driven, unable to follow CER at all.
+                # The index is NATIONAL and identical in every region file, because ROW is
+                # a single global agent: a per-region index would be overwritten by
+                # whichever region this loop processes last.
+                if export_demand_pinning and not reader.export_demand_index_available(itr, year, cims_region):
+                    # A flag that is ON but finds no data is the single most common way a
+                    # linkage feature does nothing while the run reports success.
+                    logger.warning(
+                        "export_demand_pinning is ENABLED but no export_demand_index was "
+                        "found for itr=%s year=%s region=%s -- the flag is having NO effect.",
+                        itr, year, cims_region,
+                    )
+                if export_demand_pinning and reader.export_demand_index_available(itr, year, cims_region):
+                    xd = reader.get_export_demand_index(itr, year, cims_region)
+                    col = xd.columns[0]
+                    aligned = xd[col].reindex(industries).fillna(0.0).to_numpy(dtype=float)
+                    sim.rest_of_the_world.set_export_demand_index(aligned)
+                    # Drive the same industries' PRODUCTION to the same path. One matrix
+                    # serves both: it is CER production relative to the simulation start,
+                    # which is the anchor `ts.initial("production")` uses. The export
+                    # residual then takes whatever the home economy does not absorb, so
+                    # the extra output goes to EXPORTS rather than being forced into
+                    # domestic consumption.
+                    if exogenous_fossil_production:
+                        for _c in sim.countries.values():
+                            _c.firms.set_production_target(None, None)
+                            for _k, _v in enumerate(aligned):
+                                if _v > 0.0:
+                                    _c.firms.set_production_target([_k], float(_v))
+                        logger.info(
+                            "exogenous production path: %s",
+                            {industries[k]: round(float(v), 4)
+                             for k, v in enumerate(aligned) if v > 0.0},
+                        )
                 if electricity_own_use and reader.own_use_available(itr, year, cims_region):
                     # AFTER link(): the gross-up applies to the linkage-owned coefficients,
                     # which link() has just written, and needs _linkage_owned_pairs populated.
@@ -863,6 +890,24 @@ def parse_args() -> argparse.Namespace:
              "production tracks demand exactly and cannot reach CER's generation path.",
     )
     p.add_argument(
+        "--exogenous-fossil-production",
+        action="store_true",
+        help="Drive the export-pinned industries' PRODUCTION to the linkage's path "
+             "instead of leaving it demand-determined. Those sectors become exogenous "
+             "INPUTS to the run rather than results; say so wherever the numbers are used. "
+             "Requires --export-demand-pinning, which supplies the path and routes the "
+             "extra output to exports.",
+    )
+    p.add_argument(
+        "--export-demand-pinning",
+        action="store_true",
+        help="Pin selected industries' ROW export demand to a linkage-supplied index "
+             "(export_demand_index_*.csv). Without it ROW splits its aggregate import "
+             "forecast by FROZEN base-year shares, so no sector's export path can diverge "
+             "from any other's -- which makes export-driven sectors like oil and gas "
+             "unable to follow an external scenario at all.",
+    )
+    p.add_argument(
         "--transition-capital",
         action="store_true",
         help="Charge sectors the capital cost of switching fuel: raises their machinery, "
@@ -1064,6 +1109,8 @@ def main() -> None:
         capacity_floor=args.capacity_floor,
         electricity_own_use=args.electricity_own_use,
         transition_capital=args.transition_capital,
+        export_demand_pinning=args.export_demand_pinning,
+        exogenous_fossil_production=args.exogenous_fossil_production,
         additive_intensity=args.additive_intensity,
         household_energy_shares=args.household_energy_shares,
         intermediate_factor=args.intermediate_factor,

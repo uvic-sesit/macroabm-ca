@@ -56,8 +56,11 @@ class TargetCapitalInputsSetter(ABC):
         self.target_capital_inputs_fraction = target_capital_inputs_fraction
         # Optional floor on the reference capital stock, used by the energy linkage to
         # drive capacity investment in the sectors it covers.  Inert until set.
-        self._min_capital_firms: np.ndarray | None = None
-        self._min_capital_index: float | None = None
+        # PER-FIRM index array (NaN = not floored). Previously a single mask plus a single
+        # scalar, which meant each call OVERWROTE the last: flooring two sectors left only
+        # the one applied last, silently. That was latent while electricity was the only
+        # floored sector and would have broken the moment a second one was added.
+        self._min_capital_index_by_firm: np.ndarray | None = None
         self.credit_gap_fraction = credit_gap_fraction
         self.forward_looking_reference_fraction = forward_looking_reference_fraction
         self.rolling_reference = rolling_reference
@@ -78,24 +81,33 @@ class TargetCapitalInputsSetter(ABC):
             index: capacity index relative to the firms' initial capital stock.
         """
         if firm_mask is None or index is None:
-            self._min_capital_firms = None
-            self._min_capital_index = None
+            self._min_capital_index_by_firm = None
             return
-        self._min_capital_firms = np.asarray(firm_mask, dtype=bool)
-        self._min_capital_index = float(index)
+        mask = np.asarray(firm_mask, dtype=bool)
+        if self._min_capital_index_by_firm is None or                 self._min_capital_index_by_firm.shape[0] != mask.shape[0]:
+            self._min_capital_index_by_firm = np.full(mask.shape[0], np.nan)
+        # ACCUMULATES across calls, so several sectors can be floored independently.
+        self._min_capital_index_by_firm[mask] = float(index)
 
     def _apply_minimum_capital_stock(
         self, reference_capital_stock: np.ndarray, initial_capital_inputs_stock: np.ndarray
     ) -> np.ndarray:
         """Apply the capacity floor to a reference stock.  No-op unless configured."""
-        if self._min_capital_firms is None or self._min_capital_index is None:
+        idx = self._min_capital_index_by_firm
+        if idx is None or idx.shape[0] != reference_capital_stock.shape[0]:
             return reference_capital_stock
-        mask = self._min_capital_firms
-        if mask.shape[0] != reference_capital_stock.shape[0]:
+        mask = np.isfinite(idx)
+        if not mask.any():
             return reference_capital_stock
         floored = np.array(reference_capital_stock, copy=True)
+        # The stock is 2-D (firms x capital goods) while the index is per FIRM, so it
+        # needs a trailing axis to broadcast across goods. The previous single-scalar
+        # index broadcast against both dimensions for free; a per-firm vector does not.
+        scale = idx[mask]
+        if initial_capital_inputs_stock.ndim > 1:
+            scale = scale[:, None]
         floored[mask] = np.maximum(
-            floored[mask], initial_capital_inputs_stock[mask] * self._min_capital_index
+            floored[mask], initial_capital_inputs_stock[mask] * scale
         )
         return floored
 
