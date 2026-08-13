@@ -1694,19 +1694,90 @@ class Country:
             "PPI Inflation Rate": self.economy.ts.get_aggregate("ppi_inflation"),
         }
 
-        # Real GDP, deflated by the CPI level rebased to the first timestep. Derived here
-        # rather than left to the consumer because the deflation needs the LEVEL series
-        # and the obvious-looking "CPI" key is easy to mistake for a rate.
+        # Real GDP by DOUBLE DEFLATION: real value added = real gross output minus real
+        # intermediate inputs, and the GDP deflator is nominal value added over that.
+        #
+        # This previously deflated nominal GDP by the CPI, which is wrong whenever consumer
+        # prices and value-added prices diverge -- and under an energy transition they do,
+        # in opposite directions. Higher input prices compress nominal value added AND
+        # raise consumer prices, so CPI-deflation counted the same shock twice. Measured on
+        # the 2050 CER runs: Net-zero real gross output was +8.1% and every province's real
+        # output rose, yet CPI-deflation reported real GDP at -19.9% nationally and -64.2%
+        # for New Brunswick. Double deflation gives +7.7% and +8.8%. The reported figure was
+        # 88% price index and 12% economics, and it inverted the sign of the headline
+        # result.
+        #
+        # Double deflation needs no choice of price index, which is the point: it is the
+        # national-accounts standard for exactly this reason. Real quantities here are in
+        # base-year prices (initial prices ~1 across industries), so the two sums are
+        # commensurable and their difference is constant-price value added.
+        #
+        # The deflator is applied to all three measures so Output, Expenditure and Income
+        # stay comparable; it is exported as `GDP Deflator` so the derivation is auditable.
+        # `CPI` is still exported, so the old CPI-deflated series can be reconstructed by
+        # anyone who wants it -- but it should not be called real GDP.
+        # VALUATION BASIS. The deflator's numerator is nominal GROSS VALUE ADDED, not
+        # nominal GDP. Nominal GDP nets out taxes on production and adds taxes on products
+        # and rent (see `compute_gdp`), so dividing it by a value-added-only denominator
+        # would put those wedges in the numerator alone. That is harmless only while the
+        # wedge is a stable share of GDP, and it is not: net product taxes reach 14.3% of
+        # GDP under Net-zero against 12.3% under Current Measures, because carbon revenue
+        # is scenario-dependent. Mixing the bases understated Net-zero's 2050 real GDP by
+        # 1.5pp (+7.7% instead of +9.2%), with no material effect before 2040.
+        #
+        # Both sides use the same series `compute_gdp` uses for its first two terms --
+        # gross output at current prices and USED intermediate consumption -- so the
+        # deflator is exactly the price of value added on the producers'-price, used
+        # basis. `used_intermediate_inputs` (real) pairs with `used_intermediate_inputs_costs`
+        # (nominal); the BOUGHT series would differ by input inventory change and would not
+        # match the GDP identity.
+        #
+        # Taxes and rent are then deflated implicitly at the value-added rate when the
+        # index is applied to nominal GDP. Deflating net product taxes by the taxed
+        # products' own price indices would be more rigorous, but needs a deflator choice
+        # per component and is well beyond what this diagnostic export warrants.
         try:
-            cpi = np.asarray(data_dict["CPI"], dtype=float).ravel()
-            if cpi.size and np.isfinite(cpi[0]) and cpi[0] > 0:
-                idx = cpi / cpi[0]
+            production = np.asarray(self.firms.ts.historic("production"), dtype=float)
+            price = np.asarray(self.firms.ts.historic("price"), dtype=float)
+            used = np.asarray(self.firms.ts.historic("used_intermediate_inputs"), dtype=float)
+            used_cost = np.asarray(
+                self.firms.ts.historic("used_intermediate_inputs_costs"), dtype=float
+            )
+            n = min(len(production), len(price), len(used), len(used_cost))
+
+            real_output = np.nansum(production[:n].reshape(n, -1), axis=1)
+            real_intermediates = np.nansum(used[:n].reshape(n, -1), axis=1)
+            nominal_output = np.nansum((price[:n] * production[:n]).reshape(n, -1), axis=1)
+            nominal_intermediates = np.nansum(used_cost[:n].reshape(n, -1), axis=1)
+
+            real_va = real_output - real_intermediates
+            nominal_va = nominal_output - nominal_intermediates
+
+            m = n
+            deflator = np.full(m, np.nan)
+            np.divide(nominal_va, real_va, out=deflator,
+                      where=(real_va > 0) & (nominal_va > 0))
+
+            if m and np.isfinite(deflator[0]) and deflator[0] > 0:
+                index = deflator / deflator[0]
+                # Pad to the length of the other columns, which is set by the GDP series,
+                # NOT by the firm histories used to build the deflator -- they can differ
+                # by a step and a short column would misalign the exported frame.
+                target_len = len(np.asarray(data_dict["GDP Output"], dtype=float).ravel())
+                data_dict["GDP Deflator"] = np.concatenate(
+                    [index[:target_len], np.full(max(0, target_len - m), np.nan)]
+                )
                 for measure in ("Output", "Expenditure", "Income"):
                     nom = np.asarray(data_dict[f"GDP {measure}"], dtype=float).ravel()
-                    n = min(len(nom), len(idx))
+                    k = min(len(nom), m)
                     real = np.full(len(nom), np.nan)
-                    real[:n] = np.divide(nom[:n], idx[:n], out=np.zeros(n),
-                                         where=idx[:n] > 0)
+                    # NaN, not zero, where the deflator is undefined. Real value added is
+                    # non-positive in a thin province whose real intermediate inputs exceed
+                    # its real gross output (observed for PEI), which is not economically
+                    # meaningful; a zero there would read as a measurement rather than as
+                    # missing data.
+                    real[:k] = np.divide(nom[:k], index[:k], out=np.full(k, np.nan),
+                                         where=index[:k] > 0)
                     data_dict[f"GDP {measure} Real"] = real
         except Exception:  # noqa: BLE001 - derived series must not break the export
             pass

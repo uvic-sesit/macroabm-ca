@@ -170,6 +170,35 @@ class GoodsMarketClearer(ABC):
         # unless the backstop is suppressed for the same industries.  Empty by default,
         # so behaviour is unchanged unless set_import_limited_industries() is called.
         self._import_limited_industries: set[int] = set()
+        # ROW split anchor: when enabled, ROW's import demand is routed to origin
+        # countries by their BASE-YEAR origin shares before the unconstrained pool
+        # clearing.  Off by default; see set_row_split_anchor().
+        self._row_split_anchor: bool = False
+        self._row_split_anchor_excluded: set[int] = set()
+
+    def set_row_split_anchor(self, enabled: bool, exclude_industries=None) -> None:
+        """Anchor WHICH countries supply ROW to base-year origin shares.
+
+        The LEVEL of ROW's imports stays what it was: each origin's anchored pass is
+        capped at (base-year origin share x ROW's initial demand), shares sum to 1, and
+        any demand an origin cannot fill falls through to the general pool exactly as
+        before, so the anchor shapes the split without making ROW a priority claimant
+        on any additional quantity.
+
+        With real_country_prioritisation clamped at 1.0 the trade-proportion stage
+        zeroes every province's planned sales to ROW, so ROW's imports are otherwise
+        filled entirely in the unconstrained pool -- whichever province happens to have
+        slack captures the sale.  That is the mechanism behind the arbitrary provincial
+        ROW-export split.
+
+        Args:
+            enabled: turn the anchor on or off.
+            exclude_industries: industry indices whose ROW demand keeps pool clearing
+                (e.g. exogenous-production fuels whose export geography must follow the
+                production path, not the base year).
+        """
+        self._row_split_anchor = bool(enabled)
+        self._row_split_anchor_excluded = {int(i) for i in (exclude_industries or [])}
 
     def set_import_limited_industries(self, industry_indices) -> None:
         """Exclude industries from the additional-ROW-exports backstop.
@@ -620,6 +649,11 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
         # Clear markets using trade proportions if enabled
         if self.consider_trade_proportions:
             # Get price-adjusted trade proportions
+            # ROW's destination share, either frozen (default) or scaled to its own
+            # current demand.  Done HERE rather than inside get_trade_proportions because
+            # that function is numba-compiled and cannot take an optional array.  Passing
+            # real_country_prioritisation=0.0 makes its own ROW line `(1 - 0) * share`,
+            # i.e. a pass-through of whatever we put in.
             origin_trade_proportions, destin_trade_proportions = get_trade_proportions(
                 n_countries=n_countries,
                 default_origin_trade_proportions=default_origin_trade_proportions,
@@ -629,6 +663,7 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 real_country_prioritisation=self.real_country_prioritisation,
                 row_index=row_index,
             )
+
             # Clear each country pair using trade proportions
             for c1 in range(n_countries):
                 for c2 in range(n_countries):
@@ -642,6 +677,44 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                         origin_trade_proportions=origin_trade_proportions,
                         destin_trade_proportions=destin_trade_proportions,
                     )
+
+        # ROW split anchor: bilateral province -> ROW passes on base-year origin shares,
+        # BEFORE the unconstrained pool below.  Buyer-side proportions apply to ROW's
+        # INITIAL demand (collect_buyer_info takes min(share x initial, remaining)), so
+        # each origin is capped at its base-year share of ROW's demand and the passes do
+        # not compound; whatever an origin cannot fill stays in ROW's remaining demand
+        # and clears in the pool as it always did, keeping the level residual.
+        if self._row_split_anchor and row_index >= 0:
+            anchor_shares = default_origin_trade_proportions[:, row_index, :].copy()
+            anchor_shares[row_index] = 0.0
+            for g_excl in self._row_split_anchor_excluded:
+                anchor_shares[:, g_excl] = 0.0
+            denom = anchor_shares.sum(axis=0)
+            anchor_shares = np.divide(
+                anchor_shares, denom, out=np.zeros_like(anchor_shares), where=denom > 0.0
+            )
+            anchor_origin = np.zeros_like(default_origin_trade_proportions)
+            anchor_destin = np.zeros_like(default_destin_trade_proportions)
+            for c1 in range(n_countries):
+                if c1 == row_index:
+                    continue
+                anchor_origin[c1, row_index] = anchor_shares[c1]
+                # The seller side offers everything it still has to ROW in this pass;
+                # the buyer-side share above is what limits the actual flow.
+                anchor_destin[c1, row_index] = np.where(anchor_shares[c1] > 0.0, 1.0, 0.0)
+            for c1 in range(n_countries):
+                if c1 == row_index or not np.any(anchor_shares[c1] > 0.0):
+                    continue
+                self.perform_clearing(
+                    goods_market_participants=goods_market_participants,
+                    n_industries=n_industries,
+                    average_prices_by_country=average_prices_by_country,
+                    buyer_priorities=buyer_priorities,
+                    start_country=c1,
+                    end_country=row_index,
+                    origin_trade_proportions=anchor_origin,
+                    destin_trade_proportions=anchor_destin,
+                )
 
         # Clear remaining supply and demand without trade proportion constraints
         self.perform_clearing(
@@ -663,6 +736,7 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 goods_market_participants=goods_market_participants,
                 n_industries=n_industries,
             )
+
 
     def perform_clearing(
         self,

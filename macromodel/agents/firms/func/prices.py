@@ -260,6 +260,27 @@ class SectorExogenousPriceSetter(DefaultPriceSetter):
         current_quarter is 1-based (quarter 1 = Q1 of initial_year).
         Converts the quarterly index to a fractional calendar year, linearly interpolates
         the CSV price series, and divides by the value at initial_year.
+
+        The price file is ANNUAL while the model steps quarterly, so the final calendar
+        year's Q2-Q4 fall past its last point: a run ending in 2050 asks for 2050.25 and
+        a bounded interpolator raises.  This only bites when the horizon reaches the end
+        of the price data, which is why it survived every run ending well short of it.
+
+        CLAMPED rather than extrapolated, and the distinction is not cosmetic.  Passing
+        `fill_value="extrapolate"` stops scipy delegating linear interpolation to
+        `np.interp` (`_call_linear_np`) and switches it to its own `_call_linear`, which
+        differs in the last bit: 15 of the 145 quarters a 2014-2050 run requests move by
+        ~1e-16 relative.  In this model that is not negligible -- the perturbation is
+        amplified to 2e-08 by 2017 and to 18% (Ontario) and 55% (Alberta) of GDP by 2036,
+        so the whole path shifts and results stop being comparable with earlier runs.
+        Clamping keeps the fast path and is bit-identical in range, confining the change
+        to the quarters that previously raised.
+
+        Holding the last annual value flat across the final year's quarters is also the
+        honest reading of an annual series: the file says what 2050 is, not what its Q4
+        is.  `rest_of_the_world.func.prices._normalised_price` does extrapolate there;
+        that difference is left alone deliberately, since changing it would move ROW's
+        in-range numbers the same way and break comparability for the same reason.
         """
         initial_year = self.firm_exo_prices.initial_year
         series = self.firm_exo_prices.prices[industry_name]
@@ -267,6 +288,7 @@ class SectorExogenousPriceSetter(DefaultPriceSetter):
         prices = series.values.astype(float)
         fn = interp1d(years, prices)
         yr = initial_year + (current_quarter - 1) / 4
+        yr = min(max(yr, float(years.min())), float(years.max()))
         return float(fn(yr)) / float(fn(initial_year))
 
     def compute_price(

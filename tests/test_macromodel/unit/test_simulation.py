@@ -59,6 +59,56 @@ def test_simulation(datawrapper, seed):
     assert True
 
 
+def test_shallow_sales_by_destination(datawrapper):
+    """The per-counterparty sales frames must partition total sales exactly.
+
+    Interprovincial trade is set as *proportions*, which only steer clearing, so the
+    feature can be verified only from realised flows.  That makes the identity
+    "sum over destinations == firms_real_amount_sold" the thing to guard: a silently
+    partial split would read as trade that never happened.
+    """
+    import pandas as pd
+
+    configuration = SimulationConfiguration(country_configurations={"FRA": CountryConfiguration()})
+    configuration.seed = 0
+    simulation = Simulation.from_datawrapper(datawrapper=datawrapper, simulation_configuration=configuration)
+
+    for _ in range(3):
+        simulation.iterate()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "simulation_shallow.h5"
+        simulation.shallow_hdf_save(save_dir=Path(tmp), file_name=path.name)
+
+        # Keys carry the country's DISPLAY name, as every other key in the file does
+        # (`Country.FRANCE` concatenates as "FRA" but formats as "France", and the
+        # existing `f"{country_name}_firms_{field}"` keys take the formatted form).
+        destinations = [f"{c}" for c in simulation.countries["FRA"].firms.all_country_names]
+        home = f"{list(simulation.countries.keys())[0]}"
+        assert "ROW" in destinations and home in destinations
+
+        by_dest = sum(pd.read_hdf(path, key=f"{home}_sales_to_{d}_real") for d in destinations)
+        total = pd.read_hdf(path, key=f"{home}_firms_real_amount_sold")
+        # Row 0 is the pre-simulation initial state: NaN in the total, zeroed in the split.
+        np.testing.assert_allclose(
+            by_dest.to_numpy()[1:], total.to_numpy()[1:], rtol=1e-9, atol=1e-9
+        )
+        assert by_dest.columns.tolist() == total.columns.tolist()
+
+        # ROW's row of the matrix must reconcile with the aggregate it is a split of.
+        row_by_dest = sum(pd.read_hdf(path, key=f"row_sales_to_{d}_real") for d in destinations)
+        row_total = pd.read_hdf(path, key="row_imports_real")
+        np.testing.assert_allclose(
+            row_by_dest.to_numpy()[1:].sum(axis=1),
+            np.nan_to_num(row_total.to_numpy()[1:]).sum(axis=1),
+            rtol=1e-9, atol=1e-9,
+        )
+
+        # Domestic sales are the bulk of a one-country simulation; without the domestic
+        # destination the frames could not be turned into an export share at all.
+        assert pd.read_hdf(path, key=f"{home}_sales_to_{home}_real").to_numpy()[1:].sum() > 0.0
+
+
 @pytest.mark.parametrize("seed", [0, 100])
 def test_all_industries(allind_datawrapper, seed):
     n_industries = allind_datawrapper.n_industries

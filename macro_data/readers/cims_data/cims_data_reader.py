@@ -91,6 +91,20 @@ class CIMSDataReader:
             "investment", itr, year, region
         ).exists()
 
+    def demand_available(self, itr: str, year: int, region: str) -> bool:
+        """True if the CER-derived DEMAND matrices exist for this iteration/year/region.
+
+        Deliberately NOT :meth:`available`, which also requires ``investment``.  Investment
+        and capital intensity are costed from CIMS, whose regions aggregate NB/NS/PE/NL into
+        "AT", so the extractor writes no per-province file for them -- asking `available()`
+        about a province code would therefore always answer False and silently pin every
+        province back to its CIMS region.  This checks only what a per-province demand run
+        actually reads.
+        """
+        return self._path("requested_quantities", itr, year, region).exists() and self._path(
+            "energy_intensity", itr, year, region
+        ).exists()
+
     def intensity_available(self, itr: str, year: int, region: str) -> bool:
         """True if the processed energy-intensity matrix exists for this iteration/year/region."""
         return self._path("energy_intensity", itr, year, region).exists()

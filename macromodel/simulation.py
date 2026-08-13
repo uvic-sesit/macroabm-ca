@@ -21,6 +21,7 @@ from numba import njit
 
 from macro_data import DataWrapper
 from macro_data.configuration import CountryDataConfiguration
+from macromodel.agents.agent import Agent
 from macromodel.configurations import CountryConfiguration, SimulationConfiguration
 from macromodel.country import Country
 from macromodel.country.regional_aggregator import RegionalAggregator
@@ -310,6 +311,44 @@ class Simulation:
 
         # self.exchange_rates.set_current_exchange_rates(current_year=self.timestep.year)
 
+        # One national inflation expectation, shared by every province.
+        #
+        # Each province otherwise forecasts inflation from its OWN prices, and firms pass
+        # that straight back into those prices (price_setting_speed_gf = 1.0), so prices ->
+        # own PPI -> own expectation -> prices is a closed per-province loop with no anchor.
+        # Measured consequence: provincial price LEVELS compound apart, reaching a 3.5x
+        # spread by 2050 with 91% of Ontario's industries above 1.5x its Current Measures
+        # level while 90% of Saskatchewan's sit below 0.8x -- a province-wide drift with no
+        # economic driver, which fed straight into real GDP via the deflator.
+        #
+        # Sharing the expectation breaks the per-province loop while KEEPING full
+        # pass-through, so firms still respond to inflation; they just cannot bootstrap
+        # their own province's price level away from everyone else's.
+        #
+        # Computed from the PREVIOUS step's estimates, which are all available here before
+        # any country runs `estimation_phase` this step. That is deliberate: it avoids
+        # splitting the country loop below, and reordering that loop would change the RNG
+        # draw sequence and therefore every result. A one-quarter lag on an expectation is
+        # realistic in any case. Weighted by production, so Ontario counts for more
+        # than PEI.
+        national_ppi_expectation = None
+        if getattr(self, "national_inflation_expectation", False):
+            weights, values = [], []
+            for _c in self.countries.values():
+                try:
+                    v = float(np.asarray(_c.economy.ts.current("estimated_ppi_inflation")).ravel()[0])
+                    w = float(np.nansum(np.asarray(_c.firms.ts.current("production"), dtype=float)))
+                except (KeyError, AttributeError, IndexError, ValueError):
+                    continue
+                if np.isfinite(v) and np.isfinite(w) and w > 0:
+                    values.append(v)
+                    weights.append(w)
+            if values:
+                total = float(np.sum(weights))
+                national_ppi_expectation = (
+                    float(np.dot(values, weights) / total) if total > 0 else float(np.mean(values))
+                )
+
         for ind, country in enumerate(self.countries.values()):
             exchange_rate = self.exchange_rates.get_current_exchange_rates_from_usd_to_lcu(
                 country_name=country.country_name,
@@ -320,6 +359,14 @@ class Simulation:
             logging.info("Country: %s", country.country_name)
             country.initialisation_phase(exchange_rate_usd_to_lcu=exchange_rate)
             country.estimation_phase()
+            if national_ppi_expectation is not None:
+                # Overrides the province's own estimate for every consumer of it -- prices,
+                # wages, planning and government -- rather than prices alone, because a
+                # province forecasting one inflation rate for wages and another for prices
+                # would be less coherent, not more.
+                country.economy.ts.override_current(
+                    "estimated_ppi_inflation", [national_ppi_expectation]
+                )
             country.target_setting_phase()
             country.clear_labour_market()
             country.update_planning_metrics()
@@ -460,6 +507,46 @@ class Simulation:
         """
         conf_string = self.configuration.model_dump()
         h5_file.attrs["configuration"] = str(conf_string)
+
+    def iter_agents(self):
+        """Yield every `Agent` in the simulation, including the rest of the world.
+
+        Walks each country's attributes rather than naming the agent collections, so a
+        country gaining an agent type does not silently fall out of the sweep.
+        """
+        seen = set()
+        candidates = [self.rest_of_the_world]
+        for country in self.countries.values():
+            candidates.extend(vars(country).values())
+        for candidate in candidates:
+            if isinstance(candidate, Agent) and id(candidate) not in seen:
+                seen.add(id(candidate))
+                yield candidate
+
+    def set_agent_history_limit(self, limit: int | None) -> None:
+        """Cap the goods-market transaction history every agent retains.
+
+        Those per-agent, per-counterparty series are 97.3% of the simulation's memory on
+        a long provincial run and nothing reads their history (see `Agent`), so capping
+        them makes the footprint flat in the horizon instead of linear.
+
+        `None` restores the default of keeping every step, which is required for
+        `save`: a trimmed run cannot write a complete HDF5 export, and callers that
+        enable both should be rejected rather than silently write short series.
+
+        Args:
+            limit (int | None): Steps to retain, or None for unlimited.  Must be at
+                least 2 so `current()` and `prev()` still resolve.
+
+        Raises:
+            ValueError: If *limit* is below 2.
+        """
+        if limit is not None and limit < 2:
+            raise ValueError(
+                f"history limit must be at least 2 so current() and prev() resolve, got {limit}"
+            )
+        for agent in self.iter_agents():
+            agent.history_limit = limit
 
     def save(self, save_dir: Path | str, file_name: str):
         """Save the complete simulation state to an HDF5 file.
@@ -672,6 +759,63 @@ class Simulation:
         except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
             logging.getLogger(__name__).warning("Demand-decomposition export failed: %s", exc)
 
+        # Realised sales split by BUYER country: the origin-destination matrix, per good,
+        # per timestep.  `GoodsMarket.set_trade_proportions` only *steers* clearing -- its
+        # own docstring says the proportions "influence but do not strictly determine
+        # actual trade flows" -- so a run that sets interprovincial electricity flows
+        # cannot be verified from the inputs.  It has to be measured on the output side,
+        # and nothing here previously carried it: `exports_by_good_nominal` is summed over
+        # destinations, and the per-destination series that *does* exist
+        # (`economy.ts["exports_before_taxes_to_<c>"]`) is NOMINAL and lives only in the
+        # multi-GB full save.
+        #
+        # REAL, and that is the point.  Interprovincial electricity is a quantity claim
+        # (CER's GW.h), and the nominal aggregates are dominated by ROW, so a nominal
+        # series cannot answer "did province A actually ship electricity to province B".
+        #
+        # The DOMESTIC destination is included (`dest == country_name`), because the
+        # export share is sales-abroad / sales-total and the denominator has to come from
+        # the same series -- differencing against `firms_real_amount_sold` instead would
+        # silently absorb any book-keeping gap into the domestic cell.  As a corollary,
+        # summing these frames across destinations reproduces
+        # `<country>_firms_real_amount_sold`, which is the identity check to run first.
+        #
+        # Every good, not just the linkage-owned ones: the frames are (timesteps x
+        # industries) and there are n_countries per country, so the whole matrix is a few
+        # MB, and scoping it to today's question would just have to be widened again for
+        # the next one (C20 and hydrogen).
+        try:
+            import pandas as pd
+
+            def _sales_by_destination(agent, cols, key_prefix):
+                industry_idx = np.asarray(agent.states["Industry"])
+                for dest in agent.all_country_names:
+                    hist = agent.ts.historic("real_amount_sold_to_" + dest)
+                    mat = np.zeros((len(hist), len(cols)))
+                    for t, arr in enumerate(hist):
+                        # Row 0 is the pre-simulation initial state and is NaN for every
+                        # goods-market series; zero it so the frame is summable, and note
+                        # that this makes row 0 a 0 where `firms_real_amount_sold` has NaN.
+                        values = np.nan_to_num(np.asarray(arr, dtype=float).ravel())
+                        np.add.at(mat[t], industry_idx, values)
+                    pd.DataFrame(mat, columns=cols).to_hdf(
+                        save_dir / file_name, key=f"{key_prefix}_sales_to_{dest}_real", mode="a"
+                    )
+
+            industry_cols = None
+            for country_name, country in self.countries.items():
+                industry_cols = list(country.firms.industries)
+                _sales_by_destination(country.firms, industry_cols, country_name)
+            # ROW's row of the same matrix: imports into each province BY SOURCE.
+            # `row_imports_real` is summed over destinations, so it cannot say which
+            # province the import leakage lands in -- the question the import limits were
+            # added to answer.  ROW's seller transactors are per-exporter, not per-industry,
+            # so they are aggregated through `states["Industry"]` exactly as firms are.
+            if industry_cols is not None:
+                _sales_by_destination(self.rest_of_the_world, industry_cols, "row")
+        except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
+            logging.getLogger(__name__).warning("Sales-by-destination export failed: %s", exc)
+
         # Units metadata. Mixed real/nominal units in this file have already caused one
         # round of invalid analysis (firm series are REAL, household/government/trade
         # series are NOMINAL), and the naming is not always a reliable guide -- the "CPI"
@@ -699,6 +843,10 @@ class Simulation:
                 ("*_government_consumption_by_good_nominal", "nominal LCU", "current prices", "as above"),
                 ("*_exports_by_good_nominal", "nominal LCU", "current prices", "as above"),
                 ("*_imports_by_good_nominal", "nominal LCU", "current prices", "as above"),
+                ("*_sales_to_<dest>_real", "real", "quantity, base-year prices",
+                 "seller country's realised sales by industry to <dest>; sum over <dest> = *_firms_real_amount_sold"),
+                ("row_sales_to_<dest>_real", "real", "quantity, base-year prices",
+                 "ROW sales into <dest> by industry; sum over <dest> = row_imports_real"),
                 ("row_imports_real", "real", "quantity", "ROW sales by industry"),
                 ("row_desired_exports_real", "real", "quantity", "offered, before the import cap"),
                 ("<country>", "mixed", "see per-column rows below", "per-country summary frame"),

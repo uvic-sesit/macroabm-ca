@@ -33,9 +33,26 @@ _LABOUR_INDEX_JSON = Path(__file__).resolve().parents[2] / "scripts/data/labour_
 _LABOUR_BASE_YEAR = 2014
 
 
+def _cap_annual_growth(annual_by_year: dict[str, float], years: list[int],
+                       cap: float) -> dict[str, float]:
+    """Rebuild an annual index with year-on-year growth capped at *cap*.
+
+    A CAP, not a replacement rate: years growing slower than *cap* -- including outright
+    falls, such as every province's 2020 -- keep their observed change, so the within-
+    sample dynamics survive and only the excess trend is removed.  Setting a flat rate
+    instead would invent growth in the years the labour force actually shrank.
+    """
+    out = {str(years[0]): annual_by_year[str(years[0])]}
+    for prev, year in zip(years, years[1:]):
+        growth = annual_by_year[str(year)] / annual_by_year[str(prev)] - 1.0
+        out[str(year)] = out[str(prev)] * (1.0 + min(growth, cap))
+    return out
+
+
 def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
                                 uniform: bool = False,
                                 post_sample_growth: Optional[float] = None,
+                                growth_cap: Optional[dict[str, float]] = None,
                                 ) -> dict[str, list[float]] | list[float]:
     """Quarterly observed labour-force index (base 1.0 at t0), interpolated to n_quarters.
 
@@ -58,6 +75,21 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
         post_sample_growth: annual labour-force growth applied after the last observed
             year (e.g. ``0.0072`` for CER EF2026's +0.72%/yr population path).  ``None``
             keeps the historical flat-tail behaviour.
+        growth_cap: ``{province: maximum annual growth}`` applied to the OBSERVED years.
+            A DELIBERATE DEPARTURE FROM THE DATA, and only worth making because the
+            alternative is worse.  The bundled index is correct -- BC's labour force really
+            did grow 2.23%/yr over 2015-2024 and PE's 2.34%/yr -- but this model's labour
+            DEMAND grows ~0.9-1.1%/yr in every province regardless of local supply, because
+            household demand is set by a single national rate.  Provincial unemployment
+            drift is then almost exactly (labour-force growth - employment growth):
+            correlation +0.93 across the ten provinces, with residuals under 2pp.  BC
+            reaches 17.7% unemployment by 2023 against roughly 5% in reality and tips into
+            a demand spiral in 2024; PE reaches 25.8%.
+            Capping supply at what the model can absorb makes the OUTCOME realistic at the
+            cost of the INPUT.  It treats the symptom: the real fix is a per-province
+            household-demand path.  Ontario is on the same trajectory at 1.78%/yr and is
+            left uncapped while it still functions.  Anything reported from a capped run
+            must say so.
 
     Raises:
         FileNotFoundError: if the bundled JSON is missing (rebuild with
@@ -84,6 +116,13 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
                 idx = idx.copy()
                 idx[tail] = vals[-1] * (1.0 + post_sample_growth) ** (quarters_past / 4.0)
         return (idx / idx[0]).tolist()
+
+    if growth_cap:
+        unknown = sorted(set(growth_cap) - set(raw))
+        if unknown:
+            raise ValueError(f"growth_cap names unknown provinces: {unknown}")
+        raw = {p: (_cap_annual_growth(v, years, float(growth_cap[p])) if p in growth_cap else v)
+               for p, v in raw.items()}
 
     if uniform:
         # national index = provinces weighted equally in index space is not meaningful;
@@ -145,6 +184,7 @@ def apply_candidate_growth_baseline(
     n_quarters: Optional[int] = None,
     uniform_labour_path: bool = False,
     labour_force_growth: Optional[float] = None,
+    labour_force_cap: Optional[dict[str, float]] = None,
     capital_target_fraction: Optional[float] = None,
     capital_rolling_reference: Optional[bool] = None,
 ):
@@ -166,6 +206,9 @@ def apply_candidate_growth_baseline(
         province: country key (e.g. "CAN_ON"), required with use_observed_labour_path.
         n_quarters: horizon (t_max + 1), required with use_observed_labour_path.
         uniform_labour_path: with the flag, use the cross-province mean index (control arm).
+        labour_force_cap: {province: max annual observed growth}; see
+            `observed_labour_force_index`, which documents why this exists and what it
+            costs.
 
     Returns:
         The mutated country_config (also mutated in place).
@@ -196,7 +239,7 @@ def apply_candidate_growth_baseline(
             raise ValueError("use_observed_labour_path=True requires `province` and `n_quarters`.")
         labour_force_index = observed_labour_force_index(
             n_quarters=n_quarters, province=province, uniform=uniform_labour_path,
-            post_sample_growth=labour_force_growth)
+            post_sample_growth=labour_force_growth, growth_cap=labour_force_cap)
 
     if labour_force_index is not None:
         country_config.individuals.functions.demography.name = p["demography"]

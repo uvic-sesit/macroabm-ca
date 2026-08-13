@@ -486,15 +486,100 @@ class Firms(Agent):
             return
         if not hasattr(self, "_loss_grossed_baseline"):
             self._loss_grossed_baseline: dict[tuple[int, int], float] = {}
+        owned = getattr(self, "_linkage_owned_pairs", {}).get(
+            "intermediate_tech_multipliers", set()
+        )
         for i in buyers:
             key = (i, j)
             # Store the pre-loss coefficient so repeated milestone calls re-derive from it
             # rather than compounding the gross-up.
-            if key not in self._loss_grossed_baseline:
+            #
+            # For pairs the linkage OWNS, that store has to be refreshed every milestone.
+            # This runs after `link()`, which rewrites those coefficients from the anchor
+            # baseline each time, so a value cached at the first milestone is a STALE
+            # pre-loss coefficient -- and writing `stale / factor` back silently discarded
+            # every subsequent linkage update.  With `electricity_own_use` on, that froze
+            # every buyer's electricity coefficient at its first-milestone value and
+            # blocked electrification outright: row C20 realised 1-23% of the share change
+            # the linkage had written for it (AB 0.07, ON 0.04, NS 0.01).  Unowned pairs
+            # keep the cached value, because nothing rewrites them and re-deriving from
+            # the live entry there really would compound the gross-up.
+            if key not in self._loss_grossed_baseline or key in owned:
                 self._loss_grossed_baseline[key] = float(base[j, i])
             productivity = self._loss_grossed_baseline[key]
             if np.isfinite(productivity) and productivity > 0.0:
                 base[j, i] = productivity / factor
+
+    def set_capital_intensity_uplift(self, industry_indices, factor: float | None) -> None:
+        """Raise how much capital a sector needs per unit of output, by *factor*.
+
+        THE POINT IS TO DECOUPLE INVESTMENT FROM THE PRODUCTION CEILING. The capacity
+        floor is already an investment channel -- it raises the sector's capital TARGET,
+        firms buy capital to reach it, and that is GFCF -- but the same capital also raises
+        `limiting_capital_inputs`, which is stock x productivity, so a floor scaled up to
+        represent higher investment silently licenses more OUTPUT too. For the power sector
+        that is wrong twice over: sector D has no capacity-factor concept, so a ceiling set
+        from capacity produces at capacity, and CER's generation is well below that.
+
+        Measured on the 2050 Net-zero pair, scaling D's floor by the investment multiplier
+        without this: provincial generation share-distance against CER 0.081 -> 0.176,
+        Manitoba 1.14 -> 1.82, and total incremental investment FELL (+786bn -> +665bn)
+        because the misallocated power capital crowded out better uses.
+
+        Dividing capital productivity by the same factor the floor is multiplied by cancels
+        on the ceiling (stock x productivity is unchanged) and compounds on investment. It
+        is also the physically honest reading: net-zero generation needs more capital per
+        MWh because wind and solar have low capacity factors, and "more capital per unit of
+        output" IS a productivity reduction.
+
+        NOT `transition_capital`, which lowers the same productivity but with NO matching
+        floor -- that tells a sector its output got harder to produce and constrains it.
+        Measured there, D's 2035 employment fell 12.2%. The pairing is what makes this
+        expansionary rather than contractionary.
+
+        The pre-uplift coefficient is cached per (capital good, sector) so repeated
+        milestone calls re-derive from it rather than compounding, exactly as
+        `set_transmission_loss_rate` does.
+
+        Args:
+            industry_indices: sectors whose capital requirement to raise; empty/None clears.
+            factor: multiplier on capital needed per unit output; <= 1 is a no-op.
+        """
+        if not hasattr(self, "_capital_uplift_baseline"):
+            self._capital_uplift_baseline: dict[tuple[int, int], float] = {}
+        # Any positive factor, not just > 1. The composed factor is
+        # `floor_index / target_ceiling_index`, and the investment multiplier is BELOW 1 in
+        # seven of ten provinces (AB 0.835, ON 0.777, SK 0.812 ...), so a `> 1` guard drops
+        # exactly the term that keeps their ceilings on CER's generation path -- measured,
+        # it left them 15-20% under it. Below 1 means the sector needs LESS capital per unit
+        # of output, which is the arithmetic consequence of a floor scaled down by that
+        # multiplier; it is not a claim about technology.
+        if not industry_indices or factor is None or not np.isfinite(factor) or factor <= 0.0:
+            return
+        if abs(factor - 1.0) < 1e-9:
+            return
+        base = self.base_capital_inputs_productivity_matrix
+        # Pairs `link()` rewrites every milestone. Their cached pre-uplift value must be
+        # REFRESHED, or the uplift re-derives from a stale coefficient and silently
+        # discards everything link() has written since. Unowned pairs must keep the cached
+        # value, because nothing rewrites them and re-reading the live entry there would
+        # compound the uplift instead. This is the identical hazard, and identical fix, as
+        # `set_transmission_loss_rate` -- which froze every buyer's electricity coefficient
+        # at its first-milestone value before it was found.
+        owned = getattr(self, "_linkage_owned_pairs", {}).get("capital_tech_multipliers", set())
+        for i in industry_indices:
+            i = int(i)
+            if not (0 <= i < base.shape[1]):
+                continue
+            for j in range(base.shape[0]):
+                coeff = float(base[j, i])
+                # inf marks "this sector does not use this capital good"
+                if not np.isfinite(coeff) or coeff <= 0.0:
+                    continue
+                key = (j, i)
+                if key not in self._capital_uplift_baseline or (i, j) in owned:
+                    self._capital_uplift_baseline[key] = coeff
+                base[j, i] = self._capital_uplift_baseline[key] / float(factor)
 
     def set_capacity_floor(self, industry_indices, index: float | None) -> None:
         """Floor the reference capital stock of the given industries at ``initial * index``.
@@ -2755,6 +2840,175 @@ class Firms(Agent):
                 is_anchor=is_anchor,
                 reset_multipliers=reset_multipliers,
             )
+
+    def anchor_energy_quantities(
+        self,
+        targets: dict[tuple[int, int], float],
+        *,
+        increments: dict[tuple[int, int], float] | None = None,
+        energy_indices: list[int] | None = None,
+        max_step: float = 2.0,
+    ) -> None:
+        """Pin firms' REAL intermediate purchases of a good to an external quantity path.
+
+        The firm analogue of :meth:`Households.anchor_energy_quantities`, and for the same
+        reason.  ``_link_intensity_target`` is OPEN-loop: it writes a technical
+        coefficient and never checks whether the purchase followed.  Measured on the
+        2026-08-09 Net-zero run, row ``C20`` realised only 1-23% of the electricity share
+        change the linkage had written for it (AB 0.07, ON 0.04, NS 0.01, QC 0.11,
+        SK 0.16, BC 0.23), even though the written coefficients reproduce CER's industrial
+        fuel shares exactly.  A coefficient is a desired ratio, not a delivered quantity:
+        firms rescale it by their own multipliers, ration against available supply and
+        substitute on relative price, and the target dissipates through all three.  The
+        household channel, which closes the loop, tracks CER to within 2-7%.
+
+        So read what was actually bought and correct toward the target.  This is the
+        firm-side complement to ``linkage_owns_coefficients``: CER owns the quantity path
+        for the pairs named in *targets*, the model owns everything else.
+
+        Call this AFTER :meth:`link` in the same milestone.  ``link`` rebuilds
+        ``base_intermediate_inputs_productivity_matrix`` from the anchor baseline every
+        time, so the correction has to be re-applied on top of that rebuild -- and has to
+        be CUMULATIVE and stored, or the rebuild would discard it and the coefficient
+        would oscillate between corrected and uncorrected.
+
+        Args:
+            targets: ``{(industry index, good index): desired real quantity as an index on
+                the anchor}``.  The anchor is whatever that pair actually bought on the
+                first call, so an index of 1.0 is a no-op by construction.
+            increments: ``{(industry index, good index): change in this good's demand
+                expressed as a SHARE of that industry's total anchor-year energy demand}``.
+                The additive alternative to an index, for pairs where the external model's
+                own anchor is too small to divide by -- see below.
+            energy_indices: the good indices that make up the energy total *increments* are
+                measured against.  Required for *increments*, ignored otherwise.
+            max_step: per-call bound on the adjustment.  The correction reads the last
+                period's realised purchases, so it is one milestone behind; the bound
+                stops that lag turning a large intensity change into an overshoot.
+
+        **Why increments exist.**  An index needs a base-year quantity in the denominator,
+        and the external path has pairs whose base is essentially zero and whose target
+        year is real -- electric vehicles in a small province, say.  Any positive base
+        passes a ``base > 0`` test however tiny, so those pairs produce enormous indices
+        (measured per province: up to 1800x, with PE and NL at a 95th percentile near
+        280), firms are told to buy 1800x their base-year electricity, and the run
+        collapses.  Aggregating provinces hides this by giving every pair a non-trivial
+        denominator, so it is a latent fragility in the anchor rather than a property of
+        per-province data.
+
+        The fix is not to drop those pairs -- that silently discards real demand -- but to
+        stop dividing by a number that is not there.  An increment carries the LEVEL
+        change instead, made unit-free by both sides dividing by a denominator that is
+        well determined: the industry's total energy.  ``delta`` of 0.4 means "this fuel
+        grew by 40% of the industry's base-year energy", and this method converts that to
+        model units with the industry's OWN anchor-year energy purchases:
+
+            desired = anchor(i, j) + delta * total anchor energy of industry i
+
+        which is well defined at a zero base and bounded by the industry's energy scale,
+        which is exactly what the ratio was not.
+        """
+        if not targets and not increments:
+            return
+        try:
+            bought = np.asarray(
+                self.ts.current("real_amount_bought_as_intermediate_inputs"), dtype=float
+            )
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return
+        if bought.ndim != 2 or bought.size == 0:
+            return
+
+        base_matrix = self.base_intermediate_inputs_productivity_matrix
+        industry_idx = np.asarray(self.states["Industry"])
+        multipliers = self.states.get("intermediate_tech_multipliers")
+
+        if not hasattr(self, "_linkage_owned_pairs"):
+            self._linkage_owned_pairs: dict[str, set[tuple[int, int]]] = {}
+        if not hasattr(self, "_firm_quantity_anchor"):
+            self._firm_quantity_anchor: dict[tuple[int, int], float] = {}
+        if not hasattr(self, "_firm_quantity_multiplier"):
+            self._firm_quantity_multiplier: dict[tuple[int, int], float] = {}
+        if not hasattr(self, "_firm_energy_anchor_total"):
+            self._firm_energy_anchor_total: dict[int, float] = {}
+
+        # One entry per pair.  An increment WINS over an index for the same pair: the
+        # index is precisely what the caller's guard rejected for it.
+        specs: dict[tuple[int, int], tuple[str, float]] = {
+            (int(i), int(j)): ("index", float(v)) for (i, j), v in targets.items()
+        }
+        for (i, j), delta in (increments or {}).items():
+            specs[(int(i), int(j))] = ("increment", float(delta))
+
+        # Capture the energy totals BEFORE applying anything, and on EVERY call rather
+        # than only on calls that carry an increment.  Measured later they would embed
+        # corrections this method had already made, and the increment would be scaled by
+        # a moving denominator instead of the anchor-year one it was derived against --
+        # and the first increment necessarily arrives a milestone AFTER the first call,
+        # because at the anchor year the external level change is zero by construction.
+        energy_j = [int(k) for k in (energy_indices or [])]
+        if energy_j:
+            for (i, _j) in specs:
+                if i in self._firm_energy_anchor_total:
+                    continue
+                firms_i = np.where(industry_idx == i)[0]
+                total = 0.0
+                for k in energy_j:
+                    # Exclude the self-input, as the caller's denominator does: an energy
+                    # sector's purchases of its own output are not anchored at all.
+                    if k == i or k >= bought.shape[1] or firms_i.size == 0:
+                        continue
+                    v = float(np.nansum(bought[firms_i, k]))
+                    if np.isfinite(v) and v > 0.0:
+                        total += v
+                self._firm_energy_anchor_total[i] = total
+
+        for (i, j), (kind, value) in specs.items():
+            if not np.isfinite(value) or (kind == "index" and value <= 0.0):
+                continue
+            if j >= bought.shape[1] or j >= base_matrix.shape[0] or i >= base_matrix.shape[1]:
+                continue
+            firms_i = np.where(industry_idx == i)[0]
+            if firms_i.size == 0:
+                continue
+            realised = float(np.nansum(bought[firms_i, j]))
+            if not np.isfinite(realised) or realised <= 0.0:
+                # A pair the model does not buy at all cannot be reached from here: the
+                # correction travels through a MULTIPLIER on an existing coefficient, and
+                # nothing multiplies zero into a quantity.  Not the case the increment is
+                # for, which is a real model purchase against a missing external base.
+                continue
+            anchor = self._firm_quantity_anchor.setdefault((i, j), realised)
+            if anchor <= 0.0:
+                continue
+            if kind == "index":
+                desired = anchor * value
+            else:
+                total = float(self._firm_energy_anchor_total.get(i, 0.0))
+                if not np.isfinite(total) or total <= 0.0:
+                    continue
+                desired = anchor + value * total
+            if not np.isfinite(desired) or desired <= 0.0:
+                # A negative increment big enough to zero the pair out: let the step bound
+                # below walk it down instead of writing a non-positive coefficient.
+                desired = anchor * (1.0 / max_step)
+            # `realised` already embeds the multiplier in force last milestone, so the
+            # ratio is the ADDITIONAL factor needed and compounds onto the stored one.
+            step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            mult = float(self._firm_quantity_multiplier.get((i, j), 1.0)) * step
+            mult = float(min(max(mult, 1e-3), 1e3))
+            self._firm_quantity_multiplier[(i, j)] = mult
+            # The matrix holds PRODUCTIVITY, the reciprocal of the input coefficient, so
+            # buying more per unit of output means dividing it.
+            current = float(base_matrix[j, i])
+            if not np.isfinite(current) or current <= 0.0:
+                continue
+            base_matrix[j, i] = current / mult
+            self._linkage_owned_pairs.setdefault("intermediate_tech_multipliers", set()).add(
+                (i, j)
+            )
+            if multipliers is not None:
+                multipliers[firms_i, j] = 1.0
 
     def _apply_transition_capital(
         self,

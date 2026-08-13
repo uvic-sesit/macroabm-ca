@@ -235,6 +235,86 @@ class GoodsMarket:
         #
         self.states["current_supply_chain"] = {g: {} for g in range(self.n_industries)}
 
+    def set_trade_proportions(
+        self,
+        industry_index: int,
+        flows: np.ndarray,
+        *,
+        country_indices: list[int] | None = None,
+    ) -> None:
+        """Point one industry's trade pattern at an externally supplied flow matrix.
+
+        *flows* is an (origin, destination) matrix of physical flows in any consistent
+        unit -- only its shares matter.  It is normalised twice, because the two state
+        arrays answer different questions: ``origin_trade_proportions`` is each ORIGIN's
+        output split across destinations (rows sum to 1), and
+        ``destin_trade_proportions`` is each DESTINATION's imports split across origins
+        (columns sum to 1).  Feeding the same normalisation to both is the obvious way to
+        get this subtly wrong.
+
+        Rows or columns that sum to zero are left at their existing values rather than
+        zeroed: a province with no trade in *flows* should keep the model's own pattern,
+        not be barred from trading.
+
+        THE DIAGONAL IS THE DOMESTIC SHARE, not a trade share -- ``flows[c, c]`` is what
+        country c keeps at home, and it is normalised alongside the off-diagonal cells.
+        An INTERCHANGE dataset records only what crosses a border and so has a zero
+        diagonal; passing one in unchanged therefore says "every province exports all of
+        its output", which is not what the dataset means.  Measured on the provincial
+        fixture with an intertie-masked matrix, it cut realised domestic sales of D by 72%
+        and pushed provinces to sell essentially their whole output across the nearest
+        intertie.  Callers holding trade-only data must supply a diagonal -- each region's
+        own absorption, on the same scale as the flows.
+
+        Provinces are the model's "countries", so this is how interprovincial electricity
+        enters -- CER's own interprovincial flows, reconstructed pairwise in
+        ``scripts/cer_electricity_trade.py``.  Note the class docstring's caveat that these
+        proportions "influence but do not strictly determine actual trade flows": this
+        steers clearing, it does not pin it, so realised flows must be verified rather
+        than assumed.
+
+        Args:
+            industry_index: the good whose trade pattern to set.
+            flows: (n, n) origin-by-destination flows, n = len(*country_indices*).
+            country_indices: positions in the market's country axis that the rows and
+                columns of *flows* correspond to, in order.  Defaults to the leading n.
+        """
+        # These arrive as reshaped views of the DataWrapper's pandas `.values`, which are
+        # not writeable, so mutate copies and put them back rather than assigning in place.
+        origin = np.array(self.states["origin_trade_proportions"], dtype=float, copy=True)
+        destin = np.array(self.states["destin_trade_proportions"], dtype=float, copy=True)
+        n_countries = origin.shape[0]
+        j = int(industry_index)
+        if not (0 <= j < origin.shape[2]):
+            raise IndexError(f"industry_index {j} outside 0..{origin.shape[2] - 1}")
+
+        flows = np.asarray(flows, dtype=float)
+        if flows.ndim != 2 or flows.shape[0] != flows.shape[1]:
+            raise ValueError(f"flows must be a square matrix, got {flows.shape}")
+        if country_indices is None:
+            country_indices = list(range(flows.shape[0]))
+        if len(country_indices) != flows.shape[0]:
+            raise ValueError("country_indices length must match flows")
+        if any(not (0 <= c < n_countries) for c in country_indices):
+            raise IndexError("country_indices outside the market's country axis")
+
+        full = np.zeros((n_countries, n_countries), dtype=float)
+        for a, ca in enumerate(country_indices):
+            for b, cb in enumerate(country_indices):
+                full[ca, cb] = max(float(flows[a, b]), 0.0)
+
+        row_sums = full.sum(axis=1)
+        for c in range(n_countries):
+            if row_sums[c] > 0.0:
+                origin[c, :, j] = full[c, :] / row_sums[c]
+        col_sums = full.sum(axis=0)
+        for c in range(n_countries):
+            if col_sums[c] > 0.0:
+                destin[:, c, j] = full[:, c] / col_sums[c]
+
+        self.states["origin_trade_proportions"] = origin
+        self.states["destin_trade_proportions"] = destin
+
     def clear(self) -> None:
         """Execute market clearing.
 

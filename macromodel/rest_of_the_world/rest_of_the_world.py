@@ -131,8 +131,11 @@ class RestOfTheWorld(Agent):
         # Industry indices whose ROW exports (= domestic imports) are share-capped.
         # Empty by default, so behaviour is unchanged unless set_import_limits() is called.
         self._import_limited_industries: list[int] = []
+        # "share" (default) scales the cap by the aggregate production index; "level"
+        # freezes imports at their base-year volume.
+        self._import_limit_mode: str = "share"
 
-    def set_import_limits(self, industry_indices) -> None:
+    def set_import_limits(self, industry_indices, *, mode: str = "share") -> None:
         """Cap ROW exports of the given industries so their import *share* cannot grow.
 
         The rest of the world is an unconstrained residual supplier: whenever domestic
@@ -146,9 +149,21 @@ class RestOfTheWorld(Agent):
         level scaled by the aggregate production index, i.e. imports may still grow with
         the economy but their share of it cannot rise above the base-year share.
 
+        ``mode="level"`` instead freezes imports at their base-year VOLUME, dropping the
+        production-index scaling.  For electricity that is the more physical cap:
+        cross-border transfer capacity is fixed transmission infrastructure and does not
+        grow with GDP, so letting the cap scale with the economy still allows imports to
+        roughly double by 2050.  It is also the stricter reading -- if the domestic sector
+        cannot build fast enough, the shortfall becomes unmet demand rather than an import.
+
         Args:
             industry_indices: industry indices to cap; empty/None clears all limits.
+            mode: ``"share"`` (default, base-year share) or ``"level"`` (base-year volume).
         """
+        mode = str(mode or "share").lower()
+        if mode not in ("share", "level"):
+            raise ValueError(f"Unknown import limit mode: {mode!r}")
+        self._import_limit_mode = mode
         self._import_limited_industries = sorted({int(i) for i in (industry_indices or [])})
 
     def _apply_import_limits(self, aggregate_country_production_index: float) -> None:
@@ -161,9 +176,13 @@ class RestOfTheWorld(Agent):
             return
         current = np.array(self.ts.current("desired_exports_real"), dtype=float)
         initial = np.array(self.ts.initial("desired_exports_real"), dtype=float)
-        index = float(aggregate_country_production_index)
-        if not np.isfinite(index) or index <= 0.0:
+        if getattr(self, "_import_limit_mode", "share") == "level":
+            # Base-year VOLUME: no scaling with the economy.
             index = 1.0
+        else:
+            index = float(aggregate_country_production_index)
+            if not np.isfinite(index) or index <= 0.0:
+                index = 1.0
         for g in self._import_limited_industries:
             if 0 <= g < current.size:
                 current[g] = min(current[g], initial[g] * index)
@@ -318,6 +337,25 @@ class RestOfTheWorld(Agent):
         """
         self._export_demand_index = None if index is None else np.asarray(index, dtype=float)
 
+    def set_export_target_industries(self, industry_indices) -> None:
+        """Industries whose index targets EXPORTS directly, not production.
+
+        The default residual formulation targets PRODUCTION and lets exports absorb the
+        residual, which is right for oil and gas: CER's export path and its production path
+        are the same series, so one index serves both.
+
+        Electricity is the opposite case.  CER has Canada's international electricity
+        exports FALLING to 0.892x of the 2014 anchor by 2050 while generation GROWS 2.07x,
+        so residual targeting reads the export index as a production target, asks for
+        national output at 89% of 2014 minus everything the country consumes, and clamps the
+        deeply negative result to zero -- measured: exports to zero and provincial generation
+        error worsening from 0.364 to 0.399.  For these industries the index means what it
+        says: exports = index x base-year exports, and production stays endogenous.
+
+        Empty by default, so behaviour is unchanged unless this is called.
+        """
+        self._export_target_industries = {int(i) for i in (industry_indices or [])}
+
     def set_production_base(self, base_real: "np.ndarray | None") -> None:
         """Base-year REAL production per industry, the level the index multiplies."""
         self._production_base = None if base_real is None else np.asarray(base_real, dtype=float)
@@ -345,20 +383,64 @@ class RestOfTheWorld(Agent):
         if len(shapes) != 1:
             logger.warning("export pinning shape mismatch %s; not applied.", shapes)
             return
-        pinned = (index > 0.0) & (base > 0.0) & np.isfinite(p_now) & (p_now > 0.0)
-        if not pinned.any():
+        # NOTE (2026-08-13, negative result -- do not rebuild): converting these real
+        # targets at a production-weighted MARKET price per industry instead of ROW's
+        # aggregate-indexed `price_in_lcu` was tried to close a relative-price drift in
+        # the pinned quantities. A controlled Net-zero pair showed it is much worse:
+        # total 2050 production -13.3%, BC to 23% unemployment, generation
+        # share-distance 0.161 -> 0.226. ROW's aggregate-indexed nominal budget for the
+        # fossil pins is load-bearing under Net-zero, where CER's fossil prices fall
+        # relative to the aggregate.
+        # Industries whose index is an EXPORT path rather than a production path.
+        export_mode = np.zeros(index.shape, dtype=bool)
+        for i in getattr(self, "_export_target_industries", set()):
+            if 0 <= int(i) < export_mode.size:
+                export_mode[int(i)] = True
+
+        priced = np.isfinite(p_now) & (p_now > 0.0)
+        prod_pinned = (index > 0.0) & (base > 0.0) & priced & ~export_mode
+        # Export-mode needs no production base -- it multiplies base-year EXPORTS instead.
+        base_exports_real = np.zeros(index.shape, dtype=float)
+        if export_mode.any():
+            init_nom = np.array(self.ts.initial("desired_imports_in_lcu"), dtype=float)
+            init_p = np.array(self.ts.initial("price_in_lcu"), dtype=float)
+            ok = export_mode & np.isfinite(init_p) & (init_p > 0.0) & np.isfinite(init_nom)
+            # REAL base-year exports. Deflating by the INITIAL price and re-inflating by the
+            # current one below keeps this a real target: the same real/nominal trap the
+            # guard at the end of this method was written to catch.
+            base_exports_real[ok] = init_nom[ok] / init_p[ok]
+        exp_pinned = (index > 0.0) & priced & export_mode & (base_exports_real > 0.0)
+
+        if not prod_pinned.any() and not exp_pinned.any():
             return
 
-        before = current[pinned].copy()
-        target_production = base[pinned] * index[pinned]
-        # Exports take whatever the home economy does not. Floored at zero: a target below
-        # domestic absorption means the economy already consumes more than the path allows,
-        # which is a statement about domestic demand, not a reason for negative exports.
-        target_exports_real = np.maximum(target_production - absorption[pinned], 0.0)
-        # UNITS: desired_imports_in_lcu is NOMINAL; the real target converts at current
-        # prices. Applying a real quantity directly strips every year of inflation.
-        current[pinned] = target_exports_real * p_now[pinned]
+        # Kept as FULL-LENGTH arrays, not compressed to the pinned subset, so the two modes
+        # and every diagnostic below index the same way.
+        before_all = current.copy()
+        target_production = np.zeros(index.shape, dtype=float)
+        target_exports_real = np.zeros(index.shape, dtype=float)
+        if prod_pinned.any():
+            target_production[prod_pinned] = base[prod_pinned] * index[prod_pinned]
+            # Exports take whatever the home economy does not. Floored at zero: a target
+            # below domestic absorption means the economy already consumes more than the
+            # path allows, which is a statement about domestic demand, not a reason for
+            # negative exports.
+            target_exports_real[prod_pinned] = np.maximum(
+                target_production[prod_pinned] - absorption[prod_pinned], 0.0)
+            # UNITS: desired_imports_in_lcu is NOMINAL; the real target converts at current
+            # prices. Applying a real quantity directly strips every year of inflation.
+            current[prod_pinned] = target_exports_real[prod_pinned] * p_now[prod_pinned]
+        if exp_pinned.any():
+            # EXPORT-TARGETED: the index multiplies base-year REAL exports and production is
+            # left endogenous. Deflating the base by the INITIAL price and re-inflating by
+            # the current one keeps this a real target.
+            target_exports_real[exp_pinned] = (
+                base_exports_real[exp_pinned] * index[exp_pinned])
+            current[exp_pinned] = target_exports_real[exp_pinned] * p_now[exp_pinned]
         self.ts.desired_imports_in_lcu[-1] = current
+
+        pinned = prod_pinned | exp_pinned
+        before = before_all[pinned]
 
         # DIAGNOSTIC GUARD. Three separate bugs in this feature each produced a clean run
         # with no error and a plausible number: a flag never threaded to its consumer, an
@@ -379,18 +461,24 @@ class RestOfTheWorld(Agent):
                 np.round(before[contradictory], 1).tolist(),
                 np.round(after[contradictory], 1).tolist(),
             )
-        binding = int((target_production - absorption[pinned] <= 0.0).sum())
-        if binding:
-            logger.warning("export pinning: %d pinned industries have domestic absorption "
-                           "at or above their production target; exports floored at zero.",
-                           binding)
+        # Only meaningful for PRODUCTION-targeted industries: an export-targeted one has no
+        # production target for absorption to exceed.
+        if prod_pinned.any():
+            binding = int(
+                (target_production[prod_pinned] - absorption[prod_pinned] <= 0.0).sum())
+            if binding:
+                logger.warning(
+                    "export pinning: %d pinned industries have domestic absorption "
+                    "at or above their production target; exports floored at zero.",
+                    binding)
         logger.info(
             "export pinning: index %s, target production %s, absorption %s, "
-            "export target (real) %s, demand %s -> %s",
-            np.round(idx, 4).tolist(), np.round(target_production, 1).tolist(),
+            "export target (real) %s, demand %s -> %s (export-targeted: %s)",
+            np.round(idx, 4).tolist(), np.round(target_production[pinned], 1).tolist(),
             np.round(absorption[pinned], 1).tolist(),
-            np.round(target_exports_real, 1).tolist(),
+            np.round(target_exports_real[pinned], 1).tolist(),
             np.round(before, 1).tolist(), np.round(after, 1).tolist(),
+            np.flatnonzero(exp_pinned).tolist(),
         )
 
     def prepare_buying_goods(

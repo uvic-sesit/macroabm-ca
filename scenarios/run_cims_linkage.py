@@ -41,7 +41,10 @@ from macro_data.processing.macroabm_cims_data_processing import (
     SectorMap,
 )
 from macro_data.readers.cims_data import CIMSDataReader
-from macromodel.configurations.growth_baseline_preset import apply_candidate_growth_baseline
+from macromodel.configurations.growth_baseline_preset import (
+    apply_candidate_growth_baseline,
+    observed_labour_force_index,
+)
 from macromodel.simulation import Simulation
 
 # Candidate-baseline household-demand overlay (matches scripts/run_candidate_baseline.py).
@@ -280,6 +283,166 @@ def extract_cims_inputs(
 
 # Macro industry standing in for households in the CER sector map (residential proxy).
 _HOUSEHOLD_PROXY_ROW = "L"
+# Industries that may be EXPORT-pinned but must never receive a production target from the
+# same index. Electricity qualifies because CER's international export path and its
+# generation path move in opposite directions -- exports to 0.892x of the 2014 anchor by
+# 2050, generation to 2.07x -- so reusing one matrix for both pins output to the wrong path.
+# C19 (refined petroleum) joins for the opposite reason to electricity: its index is 1.0,
+# meaning EXPORTS HELD FLAT at the base-year level while production follows domestic demand
+# (which falls under Net-zero, as CER's own refined-product path does -- 0.895x by 2050).
+# Under residual targeting a 1.0 index would instead hold PRODUCTION flat and let exports
+# absorb the falling domestic demand, which is the artefact being removed: C19 exports to
+# ROW ran 10.9 -> 37.6 $bn/yr and the exported share 13% -> 41% while unpinned.
+# F/G/L/O/P/Q join for the same reason as C19: non-tradeable services whose ROW exports
+# grew 956x-139,474x over 2025-2050 on the frozen base-year composition. Their index is
+# 1.0 (exports flat at base year), and none of them ever receives a CER production path,
+# so exclusion from production targeting is a no-op today; membership here is what routes
+# their flat index to export-mode instead of a production pin.
+_PRODUCTION_TARGET_EXCLUDED = {"D", "C19", "F", "G", "L", "O", "P", "Q"}
+
+
+def _quantity_anchor_spec(base_q, now_q, base_total: float, floor: float):
+    """Choose how one (row, fuel) pair is anchored: growth index, level increment, neither.
+
+    THE GUARD.  Both quantity anchors -- firms' and households' -- turn CER's demand into
+    a GROWTH INDEX ``now / base``, whose only protection is ``base > 0``.  Any positive
+    base passes that however tiny, so a pair that is essentially zero in the anchor year
+    and real by the target year (electric vehicles in Prince Edward Island, say) produces
+    an enormous index.  Measured per province: up to 1800x, with PE and NL at a 95th
+    percentile near 280.  Firms are then instructed to buy ~1800x their base-year
+    electricity and the run collapses.
+
+    Aggregation is what hides this today -- summing four Atlantic provinces gives every
+    pair a non-trivial denominator -- so it is a latent fragility in the anchor rather
+    than a property of per-province data.  De-aggregation merely exposes it, and this
+    guard is what unblocks per-province linkage data generally.
+
+    *floor* is deliberately SCALE-FREE: a pair is negligible when its anchor-year quantity
+    is below that fraction of the row's TOTAL anchor-year energy demand, so the test means
+    "this fuel is negligible for this industry" rather than "this number is small", which
+    no defensible absolute threshold could say.  ``floor=0.0`` disables the guard exactly
+    (nothing is below zero), leaving the index path bit-identical to before it existed.
+
+    Negligible pairs are converted, not dropped: dropping them silently discards real CER
+    demand.  The increment is CER's LEVEL change over the same denominator, which is
+    well defined at a zero base -- the agents convert it back to model units against their
+    own anchor-year energy (see ``Firms.anchor_energy_quantities``).
+
+    Returns ``("index", v)``, ``("increment", v)``, or ``None`` when the pair carries
+    nothing to anchor.
+    """
+    base_q = float(base_q)
+    now_q = float(now_q)
+    if not np.isfinite(now_q) or not np.isfinite(base_q):
+        return None
+    negligible = (
+        floor > 0.0
+        and base_total > 0.0
+        and np.isfinite(base_total)
+        and base_q < floor * base_total
+    )
+    if not negligible:
+        if base_q > 0.0 and now_q > 0.0:
+            return ("index", now_q / base_q)
+        return None
+    delta = (now_q - base_q) / base_total
+    # Below this the pair is negligible at BOTH ends -- no level change to carry, and
+    # the model's own dynamics are a better answer than a numerically empty target.
+    if abs(delta) < 1e-9:
+        return None
+    return ("increment", delta)
+
+
+def _row_energy_total(anchor_frame, row_code: str, energy_codes, industries) -> float:
+    """Total anchor-year energy demand of one row, over the fuels the anchor can reach.
+
+    The denominator of :func:`_quantity_anchor_spec`, and it has to cover the SAME fuel
+    set the agent sums on its side, or the increment changes meaning between the two.  So
+    this excludes the self-input for exactly the reason the anchor loops do.
+    """
+    total = 0.0
+    for code in energy_codes:
+        if code == row_code or code not in industries:
+            continue
+        if code not in anchor_frame.columns or row_code not in anchor_frame.index:
+            continue
+        v = float(anchor_frame.loc[row_code, code])
+        if np.isfinite(v) and v > 0.0:
+            total += v
+    return total
+
+
+def _to_model_value_units(flows, labels, sim, d_index, cache):
+    """Rescale a GW.h flow matrix into the model's value units, per ORIGIN.
+
+    CER's flows are physical (GW.h); the goods market trades deflated IO VALUE.  That
+    difference is invisible to ``origin_trade_proportions``, which normalises each row
+    within a single origin so any per-origin factor cancels -- but NOT to
+    ``destin_trade_proportions``, which normalises each column ACROSS origins.  There a
+    GW.h share is simply the wrong share whenever a GW.h is worth different amounts
+    depending on where it came from.
+
+    It is worth very different amounts.  Model D output per CER GW.h spans SIX-fold across
+    provinces in the base year -- Newfoundland 0.33x the national average, Prince Edward
+    Island 1.99x, Nova Scotia 1.93x, Saskatchewan 1.38x -- while the model's D price is
+    nearly uniform (0.92-1.03x).  So this is a real difference in the value density of each
+    province's electricity, carried by the IO table, and not something the model's own
+    prices express.  Left uncorrected it tells each province to source its supply from
+    high-value-density neighbours in GW.h proportion, which over-sources them in value.
+
+    The weights come from the model's own base-year D output against the matrix's row sums
+    (which are CER generation by construction), computed ONCE and cached: they are a unit
+    conversion, not a control.  Recomputing them each milestone would instead feed the
+    model's drift back in -- New Brunswick reaches 4.4x by 2050 -- and tell its neighbours
+    to buy more from it precisely because it is producing too much.
+    """
+    flows = np.asarray(flows, dtype=float)
+    weights = cache.get("weights")
+    if weights is None:
+        generation = flows.sum(axis=1)
+        weights = np.ones(len(labels), dtype=float)
+        density, seen = np.ones(len(labels), dtype=float), []
+        for i, code in enumerate(labels):
+            if code == "ROW" or generation[i] <= 0.0:
+                continue
+            output = _model_industry_output(sim, code, d_index)
+            if output is None or not np.isfinite(output) or output <= 0.0:
+                continue
+            density[i] = output / generation[i]
+            seen.append(i)
+        if len(seen) < 2:
+            logger.warning(
+                "interprovincial electricity: could not derive value densities "
+                "(resolved %d provinces); leaving the matrix in GW.h.", len(seen)
+            )
+            return flows
+        # Normalised to mean 1 over the provinces that resolved, so only the RELATIVE
+        # densities matter; ROW keeps 1.0, since its value density is its own price and
+        # is not observable from this matrix.
+        density[seen] /= float(np.mean(density[seen]))
+        weights = density
+        cache["weights"] = weights
+        logger.info(
+            "interprovincial electricity: value densities (model D output per CER GW.h, "
+            "mean 1) %s",
+            {code: round(float(weights[i]), 3) for i, code in enumerate(labels)},
+        )
+    return flows * weights[:, None]
+
+
+def _model_industry_output(sim, code: str, industry_index: int) -> float | None:
+    """Current production of one industry in the province matching *code*."""
+    for name, country in sim.countries.items():
+        text = str(name)
+        if not (text.endswith(f"_{code}") or text == code):
+            continue
+        firms = country.firms
+        industry = np.asarray(firms.states["Industry"])
+        production = np.asarray(firms.ts.current("production"), dtype=float).ravel()
+        if industry.shape != production.shape:
+            return None
+        return float(np.nansum(production[industry == industry_index]))
+    return None
 
 
 def build_link_prehook(
@@ -297,8 +460,15 @@ def build_link_prehook(
     capital_investment_boost: float = 0.1,
     linkage_owns_coefficients: bool = False,
     capacity_floor: bool = False,
+    capacity_floor_per_province: bool = False,
+    linkage_data_per_province: bool = False,
+    investment_as_capital_intensity: bool = False,
+    capacity_factor_from_cer: bool = False,
     electricity_own_use: bool = False,
     household_energy_quantities: bool = False,
+    firm_energy_quantities: bool = False,
+    quantity_anchor_floor: float = 0.0,
+    interprovincial_flows: dict | None = None,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -316,33 +486,183 @@ def build_link_prehook(
     """
     energy_codes = sector_map.energy_bundle_for(industries)
     comparable_codes = sector_map.comparable_for(industries)
+    energy_indices = [industries.index(code) for code in energy_codes if code in industries]
+    quantity_anchor_floor = float(quantity_anchor_floor or 0.0)
     milestone = set(years)
     method = (method or "nudge").lower()
     if anchor_year is None and years:
         anchor_year = min(years)
+    # Base-year value densities for the interprovincial flow matrix, filled on the first
+    # milestone and reused thereafter.  See `_to_model_value_units`.
+    _value_density: dict[str, object] = {}
 
     def link_prehook(sim: Simulation, year: int, month: int) -> None:
         if month != 1 or year not in milestone:
             return
+
+        # Interprovincial electricity, set ONCE per milestone: there is one goods market
+        # for the whole simulation, so doing this inside the per-country loop below would
+        # rewrite the same global state ten times.  `interprovincial_flows` maps year ->
+        # (labels, origin-by-destination matrix); the market's country axis is
+        # `sorted(country names + "ROW")`, so the labels are resolved against that.
+        #
+        # The matrix is a full DISPOSITION of generation, not an interchange matrix: its
+        # diagonal is each province's own absorption and its last label is "ROW" carrying
+        # international trade.  Both matter -- `set_trade_proportions` normalises each row
+        # across every destination including the origin, so a zero diagonal reads as
+        # "export everything" and a missing ROW column reallocates international exports
+        # to the domestic share.  See `cer_electricity_trade.disposition_matrix`.
+        if interprovincial_flows and year in interprovincial_flows:
+            labels, flows = interprovincial_flows[year]
+            axis = sorted(list(sim.countries.keys()) + ["ROW"])
+            axis_pos = {str(name): i for i, name in enumerate(axis)}
+            wanted, keep, resolved = [], [], []
+            for row_i, code in enumerate(labels):
+                for name, pos in axis_pos.items():
+                    if name.endswith(f"_{code}") or name == code:
+                        wanted.append(pos)
+                        keep.append(row_i)
+                        resolved.append(code)
+                        break
+            if len(wanted) < 2:
+                logger.warning(
+                    "interprovincial electricity: could not resolve %s against the goods "
+                    "market's country axis %s -- skipping.", labels, axis,
+                )
+            elif "ROW" in labels and "ROW" not in resolved:
+                # Proceeding would quietly fold international exports into the domestic
+                # share, which is the failure this matrix was rebuilt to avoid.
+                logger.warning(
+                    "interprovincial electricity: the matrix carries international trade "
+                    "but 'ROW' is not on the country axis %s -- skipping.", axis,
+                )
+            else:
+                sub = np.asarray(flows, dtype=float)[np.ix_(keep, keep)]
+                d_index = industries.index("D") if "D" in industries else None
+                if d_index is None:
+                    logger.warning("interprovincial electricity: no 'D' industry; skipping.")
+                else:
+                    sub = _to_model_value_units(sub, resolved, sim, d_index, _value_density)
+                    sim.goods_market.set_trade_proportions(
+                        d_index, sub, country_indices=wanted
+                    )
+                    total = float(sub.sum())
+                    domestic = float(np.trace(sub))
+                    logger.info(
+                        "interprovincial electricity: year=%s set D trade proportions over "
+                        "%d regions (%s); disposition %.1f = domestic %.1f (%.1f%%) + "
+                        "traded %.1f (source units)",
+                        year, len(wanted), ",".join(resolved), total, domestic,
+                        100.0 * domestic / total if total else 0.0, total - domestic,
+                    )
         for country in sim.countries.values():
             province = _province_code(country.country_name)
             cims_region = sector_map.macro_region_to_cims.get(province)
             if cims_region is None or not reader.available(itr, year, cims_region):
                 continue
-            rq = reader.get_requested_quantities(itr, year, cims_region)
+            province_code = province.rsplit("_", 1)[-1]
+
+            # DEMAND-SIDE region. CER publishes every series per province -- there is no
+            # "AT" in CER data -- so the CER-derived channels can read this province's own
+            # file. Worth doing: energy intensity's household row at 2050 runs 0.1106 in PE
+            # to 0.2388 in NL against an AT average of 0.1530.
+            #
+            # It also corrects a 4x OVER-CREDIT. `investment_tax_credit` is an ABSOLUTE
+            # dollar amount and this loop applies it once per province, so NB/NS/PE/NL each
+            # received the whole Atlantic credit: $2.207bn applied four times in 2050
+            # Net-zero where $2.207bn is correct. Per province it is NB $233m, NS $974m,
+            # PE $19m, NL $981m.
+            #
+            # `investment` and `capital_intensity` deliberately keep `cims_region`: both are
+            # costed from CIMS, whose regions genuinely do aggregate the Atlantic four, and
+            # the extractor writes no per-province file for them. Reading one would return
+            # ZERO rather than raising and silently delete the signal.
+            demand_region = cims_region
+            if linkage_data_per_province and reader.demand_available(itr, year, province_code):
+                demand_region = province_code
+                if demand_region != cims_region:
+                    # POSITIVE confirmation, not just absence of a warning: this flag only
+                    # changes anything for the four provinces CIMS aggregates, so a run that
+                    # silently kept reading "AT" would otherwise look identical to success.
+                    logger.info(
+                        "per-province CER data: province=%s year=%s (was CIMS region %s)",
+                        province_code, year, cims_region,
+                    )
+            elif linkage_data_per_province:
+                logger.warning(
+                    "linkage_data_per_province is ENABLED but no per-province CER data for "
+                    "%s (itr=%s year=%s) -- falling back to CIMS region %s.",
+                    province_code, itr, year, cims_region,
+                )
+
+            rq = reader.get_requested_quantities(itr, year, demand_region)
             inv = reader.get_investment(itr, year, cims_region)
 
-            if capacity_floor and reader.capacity_available(itr, year, cims_region):
+            # Prefer this province's OWN capacity file when per-province floors are on and
+            # one exists. CIMS aggregates NB/NS/PE/NL into "AT", and the floor inherited
+            # that even though its path comes from CER, which publishes per province: all
+            # four were floored at 5.6405 in 2050 Net-zero against own CER generation
+            # ratios of 1.44 (NB) to 6.95 (NS), over-building New Brunswick and
+            # under-building Nova Scotia. Falls back to the CIMS region when the
+            # per-province file is absent, so an older processed directory still runs.
+            # `_province_code` returns the MACRO region key ("CAN_NB"), while the processed
+            # files are named by the bare province code ("NB") -- the same convention the
+            # CIMS regions use, which is why the CIMS-costed lookups pass `cims_region`.
+            pending_uplifts: dict[int, float] = {}
+            floor_region = cims_region
+            if capacity_floor_per_province and reader.capacity_available(itr, year, province_code):
+                floor_region = province_code
+            elif capacity_floor_per_province:
+                logger.warning(
+                    "capacity_floor_per_province is ENABLED but no per-province capacity "
+                    "file for %s (itr=%s year=%s) -- falling back to CIMS region %s.",
+                    province_code, itr, year, cims_region,
+                )
+
+            if capacity_floor and reader.capacity_available(itr, year, floor_region):
                 # CER's installed-capacity path, applied as a floor on the power sector's
                 # reference capital stock.  The end-use demand file cannot supply this --
                 # end use is not supply -- so it comes from the separate capacity dataset.
-                cap = reader.get_generation_capacity(itr, year, cims_region)
+                cap = reader.get_generation_capacity(itr, year, floor_region)
                 col = cap.columns[0]
                 floored = {
                     industries.index(code): float(cap.loc[code, col])
                     for code in cap.index
                     if code in industries and float(cap.loc[code, col]) > 0.0
                 }
+                # Raise the sector's capital REQUIREMENT by whatever part of the floor is
+                # the investment multiplier, so that part buys capital without also
+                # licensing output. Without it the floor does both at once, and the power
+                # sector -- which has no capacity-factor concept -- produces to a ceiling
+                # set from capacity rather than to CER's generation. See
+                # Firms.set_capital_intensity_uplift for the measured effect.
+                # COLLECTED HERE, APPLIED AFTER link(). `link()` rewrites
+                # `base_capital_inputs_productivity_matrix` (both its own capital-factor
+                # nudge and `_apply_transition_capital`), so an uplift written before it is
+                # silently discarded -- the same trap `set_transmission_loss_rate` and the
+                # firm quantity anchor are both sequenced around.
+                # Both uplifts raise capital needed per unit of output, so they COMPOSE:
+                # the investment part represents net-zero plant costing more per MW, the
+                # capacity-factor part represents each MW delivering fewer MWh. Applied
+                # together with a capacity-indexed floor, the ceiling lands back on CER's
+                # generation path while the capital stock tracks CER's MW build.
+                # The guard is on the COMPOSED factor, never on the individual terms: the
+                # investment multiplier is below 1 in most provinces, so filtering terms at
+                # > 1 would silently drop it and leave their ceilings under CER's path.
+                _factors: dict[int, float] = {}
+                for _col, _on in (("investment_uplift", investment_as_capital_intensity),
+                                  ("capacity_factor_uplift", capacity_factor_from_cer)):
+                    if not _on or _col not in cap.columns:
+                        continue
+                    for code in cap.index:
+                        if code not in industries:
+                            continue
+                        v = float(cap.loc[code, _col])
+                        if np.isfinite(v) and v > 0.0:
+                            k = industries.index(code)
+                            _factors[k] = _factors.get(k, 1.0) * v
+                pending_uplifts = {k: v for k, v in _factors.items() if abs(v - 1.0) > 1e-9}
+
                 # Clear first: the floor now ACCUMULATES across calls, so without this a
                 # sector dropped from one milestone's set would keep the previous value.
                 country.firms.set_capacity_floor(None, None)
@@ -351,14 +671,33 @@ def build_link_prehook(
                 if floored:
                     logger.info(
                         "capacity floor: region=%s year=%s %s",
-                        cims_region, year,
+                        floor_region, year,
                         {industries[i]: round(v, 4) for i, v in sorted(floored.items())},
                     )
 
                 # Refund clean-electricity investment tax credits to the investing sector.
+                # ITC region is resolved INDEPENDENTLY of linkage_data_per_province, because
+                # reading it from an aggregate file is a bug rather than a modelling choice.
+                # `credit_dollars` is an ABSOLUTE amount and this loop applies it once per
+                # province, so NB/NS/PE/NL each received the WHOLE Atlantic credit: $2.207bn
+                # applied four times in 2050 Net-zero where $2.207bn is correct (per province
+                # NB $233m, NS $974m, PE $19m, NL $981m). Falls back to the CIMS region when
+                # no per-province file exists, so an older processed directory still runs --
+                # with the old, wrong behaviour, which the log line below makes visible.
+                itc_region = demand_region
+                if reader.investment_tax_credit_available(itr, year, province_code):
+                    itc_region = province_code
+                elif investment_tax_credit and itc_region != province_code:
+                    logger.warning(
+                        "investment_tax_credit for %s is being read from aggregate region "
+                        "%s -- an absolute amount applied once per province, so every "
+                        "province sharing that region receives the WHOLE credit. Re-extract "
+                        "to get per-province files.",
+                        province_code, itc_region,
+                    )
                 if investment_tax_credit and reader.investment_tax_credit_available(
-                        itr, year, cims_region):
-                    itc = reader.get_investment_tax_credit(itr, year, cims_region)
+                        itr, year, itc_region):
+                    itc = reader.get_investment_tax_credit(itr, year, itc_region)
                     col = itc.columns[0]
                     credits = {industries.index(code): float(itc.loc[code, col])
                                for code in itc.index
@@ -371,8 +710,8 @@ def build_link_prehook(
                         itr, year, cims_region)
 
             if method == "intensity_target":
-                if not reader.intensity_available(itr, year, cims_region) or not reader.intensity_available(
-                    itr, anchor_year, cims_region
+                if not reader.intensity_available(itr, year, demand_region) or not reader.intensity_available(
+                    itr, anchor_year, demand_region
                 ):
                     logger.warning(
                         "intensity_target: intensity matrices missing for region=%s year=%s (or anchor %s); "
@@ -386,8 +725,8 @@ def build_link_prehook(
                     # changes to the household budget the same way additive_intensity
                     # applies sector shares to firm coefficients.  The residential proxy
                     # row of the energy-intensity matrix IS CER's residential fuel mix.
-                    ei_now = reader.get_energy_intensity(itr, year, cims_region)
-                    ei_anchor = reader.get_energy_intensity(itr, anchor_year, cims_region)
+                    ei_now = reader.get_energy_intensity(itr, year, demand_region)
+                    ei_anchor = reader.get_energy_intensity(itr, anchor_year, demand_region)
                     # Transmission losses belong to the same weight write, not a second
                     # pass over it.  Households buy in NOMINAL budget shares, so grossing
                     # up the finished weight compounds against the real->nominal price
@@ -395,8 +734,8 @@ def build_link_prehook(
                     # household electricity +10.9% -> +35.9% off a 7.5% loss rate.  Passed
                     # in here, the gross-up lands on the REAL share target, before pricing.
                     hh_loss: dict[int, float] = {}
-                    if electricity_own_use and reader.own_use_available(itr, year, cims_region):
-                        ou_hh = reader.get_electricity_own_use(itr, year, cims_region)
+                    if electricity_own_use and reader.own_use_available(itr, year, demand_region):
+                        ou_hh = reader.get_electricity_own_use(itr, year, demand_region)
                         col_hh = ou_hh.columns[0]
                         for code in ou_hh.index:
                             if code in industries and float(ou_hh.loc[code, col_hh]) > 0.0:
@@ -443,38 +782,113 @@ def build_link_prehook(
                     # transport, since the passenger split routes personal-vehicle
                     # electricity to the residential proxy -- so it, not CER's published
                     # residential series, is the right target for this channel.
-                    rq_anchor = reader.get_requested_quantities(itr, anchor_year, cims_region)
+                    rq_anchor = reader.get_requested_quantities(itr, anchor_year, demand_region)
                     hh_targets: dict[int, float] = {}
+                    hh_increments: dict[int, float] = {}
+                    # Denominator for the negligible-pair guard: residential total energy
+                    # at the anchor year.  See `_quantity_anchor_spec`.
+                    hh_base_total = _row_energy_total(
+                        rq_anchor, _HOUSEHOLD_PROXY_ROW, energy_codes, industries
+                    )
                     for j_code in energy_codes:
                         if (
                             _HOUSEHOLD_PROXY_ROW in rq.index and j_code in rq.columns
                             and _HOUSEHOLD_PROXY_ROW in rq_anchor.index
                             and j_code in rq_anchor.columns
+                            and j_code in industries
                         ):
-                            base = float(rq_anchor.loc[_HOUSEHOLD_PROXY_ROW, j_code])
-                            now = float(rq.loc[_HOUSEHOLD_PROXY_ROW, j_code])
-                            if base > 0.0 and np.isfinite(now) and now > 0.0:
-                                hh_targets[industries.index(j_code)] = now / base
-                    if hh_targets:
+                            spec = _quantity_anchor_spec(
+                                rq_anchor.loc[_HOUSEHOLD_PROXY_ROW, j_code],
+                                rq.loc[_HOUSEHOLD_PROXY_ROW, j_code],
+                                hh_base_total,
+                                quantity_anchor_floor,
+                            )
+                            if spec is None:
+                                continue
+                            kind, value = spec
+                            if kind == "index":
+                                hh_targets[industries.index(j_code)] = value
+                            else:
+                                hh_increments[industries.index(j_code)] = value
+                    if hh_targets or hh_increments:
                         prices_now = np.asarray(country.firms.ts.current("price")).ravel()
                         ind_of_firm = np.asarray(country.firms.states["Industry"])
                         px = {}
-                        for k in hh_targets:
+                        # Priced over the WHOLE energy set, not just the anchored fuels:
+                        # the increment's denominator is total residential energy, and
+                        # households need a price for every fuel in it to read that total
+                        # off their nominal spending.
+                        for k in energy_indices:
                             sel = ind_of_firm == k
                             if sel.any():
                                 v = float(np.nanmean(prices_now[sel]))
                                 if np.isfinite(v) and v > 0.0:
                                     px[k] = v
-                        country.households.anchor_energy_quantities(hh_targets, px)
+                        country.households.anchor_energy_quantities(
+                            hh_targets,
+                            px,
+                            increments=hh_increments or None,
+                            energy_indices=energy_indices,
+                        )
                         logger.info(
-                            "household quantity anchor: region=%s year=%s targets=%s",
+                            "household quantity anchor: region=%s year=%s targets=%s "
+                            "increments (share of anchor-year residential energy)=%s",
                             cims_region, year,
                             {industries[k]: round(v, 4) for k, v in hh_targets.items()},
+                            {industries[k]: round(v, 5) for k, v in hh_increments.items()},
                         )
 
                 tc = None
                 if transition_capital and reader.transition_capital_available(itr, year, cims_region):
                     tc = reader.get_transition_capital(itr, year, cims_region)
+
+                # THE firm-side linkage.  Everything else in this branch adjusts households,
+                # exports or capacity; this is the only call that writes CER's engineering
+                # result onto firms' input coefficients, and without it `intensity_target`
+                # runs report success while applying nothing to industry.
+                #
+                # It was deleted by ff62756 ("Drive fossil production and export demand from
+                # an external path"), which inserted the export block below where this call
+                # used to sit and left `tc` assigned but unread.  Nothing failed: the
+                # "link() applied" message at the end of the branch is unconditional, so
+                # every run since 2026-08-06 logged a linkage it was not performing.
+                # Instrumenting `firms.link` showed 0 calls against 30 such messages.
+                # Keep this call and that log line together.
+                country.firms.link(
+                    requested_quantities=rq,
+                    investment=inv,
+                    comparable_codes=comparable_codes,
+                    energy_bundle_codes=energy_codes,
+                    method="intensity_target",
+                    energy_intensity=reader.get_energy_intensity(itr, year, demand_region),
+                    anchor_energy_intensity=reader.get_energy_intensity(itr, anchor_year, demand_region),
+                    capital_intensity=reader.get_capital_intensity(itr, year, cims_region),
+                    anchor_capital_intensity=reader.get_capital_intensity(itr, anchor_year, cims_region),
+                    is_anchor=(year == anchor_year),
+                    reset_multipliers=reset_multipliers,
+                    linkage_owns_coefficients=linkage_owns_coefficients,
+                    additive_intensity=additive_intensity,
+                    transition_capital=tc,
+                )
+
+                # AFTER link(), which has just rewritten these same capital coefficients
+                # (its own capital-factor nudge and `_apply_transition_capital` both write
+                # `base_capital_inputs_productivity_matrix`). Applied before, the uplift is
+                # silently discarded -- the trap `set_transmission_loss_rate` and the firm
+                # quantity anchor are both sequenced around.
+                #
+                # Raises D's capital REQUIREMENT by whatever part of its capacity floor is
+                # the investment multiplier, so that part buys capital without also
+                # licensing output. Otherwise floor and ceiling move together and the power
+                # sector produces to a capacity-derived ceiling rather than CER's generation.
+                if pending_uplifts:
+                    for _idx, _factor in pending_uplifts.items():
+                        country.firms.set_capital_intensity_uplift([_idx], _factor)
+                    logger.info(
+                        "capital-intensity uplift: region=%s year=%s %s",
+                        floor_region, year,
+                        {industries[i]: round(f, 4) for i, f in sorted(pending_uplifts.items())},
+                    )
 
                 # Pin selected industries' EXPORT demand to a linkage-supplied path.
                 # ROW splits its aggregate import forecast by frozen base-year shares, so
@@ -496,33 +910,154 @@ def build_link_prehook(
                     col = xd.columns[0]
                     aligned = xd[col].reindex(industries).fillna(0.0).to_numpy(dtype=float)
                     sim.rest_of_the_world.set_export_demand_index(aligned)
+                    # Electricity's index is an EXPORT path, not a production path: CER has
+                    # intl electricity exports falling to 0.892x of the 2014 anchor while
+                    # generation grows 2.07x. Same set that is held out of production
+                    # targets below -- one concept, applied on both sides.
+                    _export_mode = [i for i, code in enumerate(industries)
+                                    if code in _PRODUCTION_TARGET_EXCLUDED and aligned[i] > 0.0]
+                    sim.rest_of_the_world.set_export_target_industries(_export_mode)
+                    if _export_mode:
+                        logger.info(
+                            "export-TARGETED industries (index multiplies base-year exports, "
+                            "production left endogenous): %s",
+                            {industries[i]: round(float(aligned[i]), 4) for i in _export_mode},
+                        )
                     # Drive the same industries' PRODUCTION to the same path. One matrix
                     # serves both: it is CER production relative to the simulation start,
                     # which is the anchor `ts.initial("production")` uses. The export
                     # residual then takes whatever the home economy does not absorb, so
                     # the extra output goes to EXPORTS rather than being forced into
                     # domestic consumption.
+                    #
+                    # ELECTRICITY IS EXCLUDED, and the exclusion is essential. For oil and
+                    # gas the export path IS the production path -- both come from CER's
+                    # production series -- so one matrix legitimately serves both. For
+                    # electricity they point in OPPOSITE directions: CER has international
+                    # exports falling to 0.892x of the 2014 anchor by 2050 while generation
+                    # GROWS 2.07x. Feeding the export index into the production target put
+                    # every province's electricity output on a 0.892x path and collapsed the
+                    # run -- national D growth 0.11 against CER's 2.07, with D production
+                    # near zero in all ten provinces. Sector D's output is governed by the
+                    # capacity floor and demand, not by its export path.
                     if exogenous_fossil_production:
+                        _skip = {i for i, code in enumerate(industries)
+                                 if code in _PRODUCTION_TARGET_EXCLUDED}
                         for _c in sim.countries.values():
                             _c.firms.set_production_target(None, None)
                             for _k, _v in enumerate(aligned):
-                                if _v > 0.0:
+                                if _v > 0.0 and _k not in _skip:
                                     _c.firms.set_production_target([_k], float(_v))
                         logger.info(
-                            "exogenous production path: %s",
+                            "exogenous production path: %s (excluded from production "
+                            "targets, export-pinned only: %s)",
                             {industries[k]: round(float(v), 4)
-                             for k, v in enumerate(aligned) if v > 0.0},
+                             for k, v in enumerate(aligned) if v > 0.0 and k not in _skip},
+                            {industries[k] for k in _skip if aligned[k] > 0.0},
                         )
-                if electricity_own_use and reader.own_use_available(itr, year, cims_region):
+                if electricity_own_use and reader.own_use_available(itr, year, demand_region):
                     # AFTER link(): the gross-up applies to the linkage-owned coefficients,
                     # which link() has just written, and needs _linkage_owned_pairs populated.
-                    ou = reader.get_electricity_own_use(itr, year, cims_region)
+                    ou = reader.get_electricity_own_use(itr, year, demand_region)
                     col = ou.columns[0]
                     for code in ou.index:
                         if code in industries and float(ou.loc[code, col]) > 0.0:
                             country.firms.set_transmission_loss_rate(
                                 industries.index(code), float(ou.loc[code, col])
                             )
+
+                if firm_energy_quantities:
+                    # CER owns firms' REAL energy quantity path, the model owns the rest --
+                    # the firm-side counterpart of `household_energy_quantities`, and for
+                    # the same reason: writing a coefficient does not pin a quantity.
+                    #
+                    # LAST in this branch, deliberately.  It corrects the coefficient
+                    # `link()` wrote and `set_transmission_loss_rate` then grossed up, so
+                    # anything that rewrites those entries has to have run already.
+                    #
+                    # The residential proxy row is excluded: `rq[L, .]` is households'
+                    # demand routed through that row, and `household_energy_quantities`
+                    # already anchors it.  Anchoring firms in industry L to the same
+                    # target would count CER's residential demand a second time.
+                    #
+                    # A constant transmission-loss rate needs no adjustment here: the
+                    # target is an INDEX, and a rate that applies equally to the anchor
+                    # and the current milestone cancels out of the ratio.  A time-varying
+                    # rate would not, and would have to be carried into the target.
+                    rq_anchor_f = reader.get_requested_quantities(itr, anchor_year, demand_region)
+                    firm_targets: dict[tuple[int, int], float] = {}
+                    firm_increments: dict[tuple[int, int], float] = {}
+                    # EVERY row rq carries, not just `comparable_codes`.  That restriction
+                    # belongs to `link()`, whose intensity ratios are only defined for
+                    # CIMS-comparable sectors; this channel reads rq directly and needs no
+                    # such counterpart.  `_row_allocations` spreads each CER sector across
+                    # ~38 macro industries, so anchoring only the comparable rows covered
+                    # 10% of electricity demand (G 4.6%, H49 3.7%, C20 1.9% in AB 2050) and
+                    # left the other two thirds to grow with whatever the model did --
+                    # which is why the anchored pairs hit 96-98% of target while provincial
+                    # demand still ran -31% to +126% against CER.
+                    for i_code in rq.index:
+                        if i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries:
+                            continue
+                        if i_code not in rq_anchor_f.index:
+                            continue
+                        # Denominator for the negligible-pair guard: this industry's TOTAL
+                        # anchor-year energy demand.  See `_quantity_anchor_spec`.
+                        base_total = _row_energy_total(
+                            rq_anchor_f, i_code, energy_codes, industries
+                        )
+                        for j_code in energy_codes:
+                            if j_code not in industries or j_code == i_code:
+                                # Skip the self-input: an energy sector buying its own
+                                # output cannot bootstrap in a sequential model (firms
+                                # purchase before producing), the failure mode
+                                # `set_transmission_loss_rate` documents.
+                                continue
+                            if j_code not in rq.columns or j_code not in rq_anchor_f.columns:
+                                continue
+                            spec = _quantity_anchor_spec(
+                                rq_anchor_f.loc[i_code, j_code],
+                                rq.loc[i_code, j_code],
+                                base_total,
+                                quantity_anchor_floor,
+                            )
+                            if spec is None:
+                                continue
+                            kind, value = spec
+                            pair = (industries.index(i_code), industries.index(j_code))
+                            if kind == "index":
+                                firm_targets[pair] = value
+                            else:
+                                firm_increments[pair] = value
+                    if firm_targets or firm_increments:
+                        country.firms.anchor_energy_quantities(
+                            firm_targets,
+                            increments=firm_increments or None,
+                            energy_indices=energy_indices,
+                        )
+                        by_fuel: dict[str, list[float]] = {}
+                        for (_i, _j), _v in firm_targets.items():
+                            by_fuel.setdefault(industries[_j], []).append(_v)
+                        inc_by_fuel: dict[str, list[float]] = {}
+                        for (_i, _j), _v in firm_increments.items():
+                            inc_by_fuel.setdefault(industries[_j], []).append(_v)
+                        logger.info(
+                            "firm quantity anchor: region=%s year=%s pairs=%d "
+                            "median index by fuel=%s | increment pairs=%d "
+                            "median increment by fuel (share of anchor-year energy)=%s",
+                            cims_region, year, len(firm_targets),
+                            {k: round(float(np.median(v)), 4)
+                             for k, v in sorted(by_fuel.items())},
+                            len(firm_increments),
+                            {k: round(float(np.median(v)), 5)
+                             for k, v in sorted(inc_by_fuel.items())},
+                        )
+                    else:
+                        logger.warning(
+                            "firm_energy_quantities is ENABLED but no (industry, energy) "
+                            "target could be built for itr=%s year=%s region=%s -- the "
+                            "flag is having NO effect.", itr, year, cims_region,
+                        )
             else:
                 country.firms.link(
                     requested_quantities=rq,
@@ -617,7 +1152,9 @@ def apply_growth_limits(
         )
 
 
-def apply_import_limits(sim: Simulation, industry_indices: list[int]) -> None:
+def apply_import_limits(
+    sim: Simulation, industry_indices: list[int], *, mode: str = "share"
+) -> None:
     """Cap ROW exports (= domestic imports) of the given industries at their base-year share.
 
     Applied after the simulation is built or restored (and on every iteration), so it
@@ -627,7 +1164,7 @@ def apply_import_limits(sim: Simulation, industry_indices: list[int]) -> None:
     """
     if not industry_indices:
         return
-    sim.rest_of_the_world.set_import_limits(industry_indices)
+    sim.rest_of_the_world.set_import_limits(industry_indices, mode=mode)
     # Clamping ROW's desired exports is not sufficient on its own: the goods market has
     # an unmet-demand backstop that adds to ROW's realised sales without reference to
     # the quantity it offered, so a capped sector was simply refilled there (measured at
@@ -640,6 +1177,31 @@ def apply_import_limits(sim: Simulation, industry_indices: list[int]) -> None:
         logger.warning(
             "Goods-market clearer does not support import limits; ROW's additional-exports "
             "backstop will refill capped sectors and the cap will not bind."
+        )
+
+
+def apply_row_split_anchor(
+    sim: Simulation, enabled: bool, exclude_indices: list[int] | None = None
+) -> None:
+    """Anchor which provinces supply ROW to base-year origin shares (level residual).
+
+    A retry of the 2026-08-12 arm K experiment against the corrected baseline: arm K's
+    Net-zero collapse ran through Alberta's unpinned C19 exports, a market that the C19
+    flat-export pin has since removed.  Applied after build/restore like the import
+    limits, so checkpoint-restored sims get it too.  No-op when *enabled* is false.
+    """
+    if not enabled:
+        return
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is not None and hasattr(clearer, "set_row_split_anchor"):
+        clearer.set_row_split_anchor(True, exclude_industries=exclude_indices)
+        logger.info(
+            "ROW split anchor ENABLED: ROW purchases routed by base-year origin shares "
+            "(excluded industry indices: %s)", sorted(exclude_indices or []),
+        )
+    else:
+        logger.warning(
+            "Goods-market clearer does not support the ROW split anchor; flag ignored."
         )
 
 
@@ -678,11 +1240,45 @@ def _extend_exogenous_national_accounts(model: Simulation, required_length: int)
 def _apply_household_demand_overlay(
     model: Simulation,
     growth_rate: float = _HOUSEHOLD_DEMAND_GROWTH,
+    index_by_province: dict[str, list[float]] | None = None,
 ) -> None:
-    """Apply the candidate-baseline exogenous household demand growth overlay."""
-    for country in model.countries.values():
+    """Apply the candidate-baseline exogenous household demand growth overlay.
+
+    With *index_by_province*, each province's demand follows ITS OWN path instead of one
+    national rate, and `growth_rate` is ignored.
+
+    WHY THAT IS THE RIGHT SHAPE.  `ExogenousLabourForcePath` does not create people: it
+    reclassifies existing individuals NOT_ECONOMICALLY_ACTIVE -> UNEMPLOYED and leaves
+    `n_individuals` alone, so the labour-force index adds JOB-SEEKERS WITHOUT ADDING
+    CONSUMERS.  But the index is StatCan LFS data, and provincial labour-force growth over
+    2015-2024 was mostly POPULATION growth -- BC 2.23%/yr, PE 2.34%/yr, largely
+    immigration -- and those people brought their consumption with them.  Feeding a
+    population-driven series into the supply side alone is the defect: provincial
+    unemployment then drifts by (labour-force growth - employment growth), correlation
+    +0.93 across the ten provinces, and BC reaches 17.7% unemployment by 2023 against
+    about 5% in reality.
+
+    Passing the SAME index to both sides fixes the asymmetry and fixes the magnitude with
+    it -- there is no rate to tune.  It should also be self-limiting where a flat national
+    rate was not: the previous +2%/yr default outran +0.72%/yr labour supply and drove the
+    labour share up without bound, whereas demand and supply here grow together.
+    """
+    for name, country in model.countries.items():
         frame = country.exogenous.national_accounts_during
-        fac = (1.0 + growth_rate) ** (np.arange(len(frame)) / 4.0)
+        if index_by_province is not None:
+            path = index_by_province.get(str(name))
+            if path is None:
+                logger.warning("household demand overlay: no index for %s; leaving it flat.", name)
+                continue
+            fac = np.asarray(path, dtype=float)
+            # The index is built for timesteps+1 quarters and the accounts frame need not
+            # match; hold the last value rather than truncating the tail to zero.
+            if len(fac) < len(frame):
+                fac = np.concatenate([fac, np.full(len(frame) - len(fac), fac[-1])])
+            fac = fac[:len(frame)]
+            fac = fac / fac[0]
+        else:
+            fac = (1.0 + growth_rate) ** (np.arange(len(frame)) / 4.0)
         for col in _HH_DEMAND_COLS:
             if col in frame.columns:
                 frame[col] = frame[col].values * fac
@@ -697,12 +1293,16 @@ def build_simulation(
     use_obps_reg: bool = False,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
+    labour_force_cap: dict[str, float] | None = None,
     capital_target_fraction: float | None = None,
     capital_rolling_reference: bool | None = None,
     household_demand_growth: float | None = None,
+    household_demand_from_labour_force: bool = False,
     exogenous_energy_prices: bool = False,
     tfp_base_growth_rate: float | None = None,
     tfp_investment_effectiveness: float | None = None,
+    price_setting_noise_std: float | None = None,
+    price_setting_speed_gf: float | None = None,
 ) -> Simulation:
     """Build a provincial Simulation, optionally with the candidate growth baseline.
 
@@ -719,6 +1319,7 @@ def build_simulation(
         len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles,
         use_obps_reg=use_obps_reg,
     )
+
     if use_candidate_baseline:
         logger.info("Applying candidate growth baseline (observed labour path + HH overlay)")
         for i, province in enumerate(CANADIAN_PROVINCES):
@@ -729,6 +1330,7 @@ def build_simulation(
                 n_quarters=timesteps + 1,
                 demography_seed=1000 + i + 100 * seed,
                 labour_force_growth=labour_force_growth,
+                labour_force_cap=labour_force_cap,
                 capital_target_fraction=capital_target_fraction,
                 capital_rolling_reference=capital_rolling_reference,
             )
@@ -762,18 +1364,78 @@ def build_simulation(
             tfp_investment_effectiveness,
         )
 
+    if price_setting_speed_gf is not None:
+        # Pass-through of a province's OWN estimated PPI inflation into every firm's price.
+        # The shipped 1.0 is FULL pass-through, and PPI is itself an index of those same
+        # firm prices, so prices -> PPI -> expected inflation -> prices with no anchor in
+        # between (demand-pull and cost-push are both zeroed). That is a unit root with
+        # positive feedback: each province's price LEVEL self-reinforces in whatever
+        # direction accumulated noise sends it.
+        #
+        # Measured on the 2050 runs: Ontario's price level reaches 2.3x Saskatchewan's
+        # within a single scenario, and 91% of Ontario's 43 industries sit above 1.5x its
+        # Current Measures level under Net-zero while 90% of Saskatchewan's sit below 0.8x
+        # -- uniform across sectors, i.e. a province-wide level drift with no economic
+        # driver. Because real GDP is nominal deflated by CPI, that drift is what produced
+        # a spurious -15% national real GDP under Net-zero.
+        #
+        # Values below 1.0 damp the feedback; 0.0 removes the channel entirely and leaves
+        # prices moving only on noise.
+        for province in CANADIAN_PROVINCES:
+            prices_fn = config.country_configurations[province].firms.functions.prices
+            prices_fn.parameters["price_setting_speed_gf"] = float(price_setting_speed_gf)
+        logger.info(
+            "Price inflation pass-through overridden: price_setting_speed_gf=%s (shipped 1.0)",
+            price_setting_speed_gf,
+        )
+
+    if price_setting_noise_std is not None:
+        # Idiosyncratic price noise. `DefaultPriceSetter` multiplies each firm's PREVIOUS
+        # price by (1 + N(0, std)) every step, and both economic terms that could pull a
+        # firm back -- demand-pull and cost-push -- are multiplied by speeds of 0.0 in the
+        # shipped configuration. So the executing rule is a geometric random walk with no
+        # level anchor, and prices for the SAME industry in different provinces drift apart
+        # without bound: measured median max/min across provinces of 1.48 (2015) rising to
+        # 7.84 (2050), with log(dispersion)/sqrt(t) flat at ~0.17 (the random-walk
+        # signature) and an implied per-step sd of 0.0549 against the configured 0.05.
+        #
+        # Dispersion scales as exp(3.08 * std * sqrt(t)) for 10 provinces, so this only
+        # slows the divergence rather than bounding it -- 0.01 gives roughly 1.5x at 2050
+        # instead of 7.8x. Bounding it properly needs a cross-province anchor, which is a
+        # structural change and deliberately not made here.
+        #
+        # Applies ONLY to industries priced endogenously: the CER-pinned sectors
+        # (SectorExogenousPriceSetter) are overridden before this rule is reached.
+        for province in CANADIAN_PROVINCES:
+            prices_fn = config.country_configurations[province].firms.functions.prices
+            prices_fn.parameters["price_setting_noise_std"] = float(price_setting_noise_std)
+        logger.info(
+            "Price-setting noise overridden: price_setting_noise_std=%s (shipped 0.05)",
+            price_setting_noise_std,
+        )
+
     sim = Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
     if use_candidate_baseline:
         _extend_exogenous_national_accounts(sim, required_length=timesteps + 1)
         # The overlay's default (+2%/yr) outruns labour-supply growth (~0.72%/yr), so firms
         # bid wages up against a hard supply limit and the labour share climbs without
         # bound.  Overridable so the two can be tested at compatible rates.
+        _hh_index = None
+        if household_demand_from_labour_force:
+            _hh_index = observed_labour_force_index(
+                n_quarters=timesteps + 1, post_sample_growth=labour_force_growth,
+                growth_cap=labour_force_cap)
+            logger.info(
+                "Household demand follows each province's OWN labour-force index "
+                "(2050 index: %s)",
+                {k: round(v[-1], 3) for k, v in sorted(_hh_index.items())})
         _apply_household_demand_overlay(
             sim,
             growth_rate=(
                 _HOUSEHOLD_DEMAND_GROWTH if household_demand_growth is None
                 else float(household_demand_growth)
             ),
+            index_by_province=_hh_index,
         )
     return sim
 

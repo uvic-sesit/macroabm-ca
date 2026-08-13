@@ -699,6 +699,8 @@ class Households(Agent):
         targets: dict[int, float],
         prices: dict[int, float],
         max_step: float = 2.0,
+        increments: dict[int, float] | None = None,
+        energy_indices: list[int] | None = None,
     ) -> None:
         """Pin households' REAL consumption of a good to an external quantity path.
 
@@ -722,8 +724,19 @@ class Households(Agent):
             max_step: per-call bound on the weight adjustment.  The correction reads last
                 period's realised consumption, so it is one step behind; the bound stops
                 a large price jump turning that lag into an overshoot.
+            increments: {industry index: change in this good's demand as a SHARE of total
+                residential anchor-year energy demand}.  The additive alternative to an
+                index, for fuels whose external base-year quantity is too small to divide
+                by -- the household counterpart of ``Firms.anchor_energy_quantities``'s
+                increments, and see that method for why an index fails there.  Converted
+                to model units with households' OWN anchor-year energy consumption:
+                ``desired = anchor(j) + delta * total anchor energy``.
+            energy_indices: the good indices making up that energy total.  It must be the
+                WHOLE energy set the caller's denominator covers, not merely the goods
+                being anchored, or the increment changes meaning between the two sides.
+                Required for *increments*, ignored otherwise.
         """
-        if not targets or not prices:
+        if not (targets or increments) or not prices:
             return
         try:
             nominal = np.asarray(self.ts.current("industry_consumption"), dtype=float).ravel()
@@ -742,23 +755,65 @@ class Households(Agent):
         # 1.0, the rebuild drops the old factor, and consumption overshoots again.
         if not hasattr(self, "_energy_quantity_multiplier"):
             self._energy_quantity_multiplier = {}
+        if not hasattr(self, "_energy_quantity_anchor_total"):
+            self._energy_quantity_anchor_total: float | None = None
 
         weights = np.array(self.consumption_weights, dtype=float, copy=True)
         by_income = np.array(self.consumption_weights_by_income, dtype=float, copy=True)
         n_industries = int(weights.shape[0])
 
-        for j, index in targets.items():
-            j = int(j)
+        # One entry per good.  An increment WINS over an index for the same good: the
+        # index is precisely what the caller's guard rejected for it.
+        specs: dict[int, tuple[str, float]] = {
+            int(j): ("index", float(v)) for j, v in targets.items()
+        }
+        for j, delta in (increments or {}).items():
+            specs[int(j)] = ("increment", float(delta))
+
+        def _realised(j: int) -> float | None:
             price = float(prices.get(j, 0.0))
-            if j >= nominal.size or price <= 0.0 or not np.isfinite(index) or index <= 0.0:
+            if j >= nominal.size or price <= 0.0:
+                return None
+            q = float(nominal[j]) / price
+            return q if np.isfinite(q) and q > 0.0 else None
+
+        # Anchors first, so the energy total is captured on the same call as the
+        # per-good anchors it is the sum of -- and BEFORE any correction lands, or the
+        # increment would be scaled by a denominator this method had already moved.
+        # On EVERY call, not only calls carrying an increment: the first increment
+        # necessarily arrives a milestone after the first call, because at the anchor
+        # year the external level change is zero by construction, and by then the total
+        # would no longer be the anchor-year one the increment was derived against.
+        if energy_indices:
+            for j in [int(k) for k in energy_indices]:
+                q = _realised(j)
+                if q is not None:
+                    self._energy_quantity_anchor.setdefault(j, q)
+            if self._energy_quantity_anchor_total is None:
+                self._energy_quantity_anchor_total = float(
+                    sum(self._energy_quantity_anchor.get(int(k), 0.0) for k in energy_indices)
+                )
+
+        for j, (kind, value) in specs.items():
+            if not np.isfinite(value) or (kind == "index" and value <= 0.0):
                 continue
-            realised = float(nominal[j]) / price
-            if not np.isfinite(realised) or realised <= 0.0:
+            realised = _realised(j)
+            if realised is None:
                 continue
             anchor = self._energy_quantity_anchor.setdefault(j, realised)
             if anchor <= 0.0:
                 continue
-            desired = anchor * float(index)
+            if kind == "index":
+                desired = anchor * value
+            else:
+                total = float(self._energy_quantity_anchor_total or 0.0)
+                if not np.isfinite(total) or total <= 0.0:
+                    continue
+                desired = anchor + value * total
+            if not np.isfinite(desired) or desired <= 0.0:
+                # A negative increment big enough to zero the good out: let the step
+                # bound below walk the weight down instead of writing a non-positive one.
+                desired = anchor * (1.0 / max_step)
             # `realised` already embeds the multiplier in force last period, so the ratio
             # is the ADDITIONAL factor needed and compounds onto the stored one.
             step = float(min(max(desired / realised, 1.0 / max_step), max_step))

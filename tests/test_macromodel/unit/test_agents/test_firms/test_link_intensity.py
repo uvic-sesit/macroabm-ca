@@ -16,6 +16,8 @@ import pandas as pd
 import pytest
 
 from macromodel.agents.firms.firms import (
+    _INDUSTRY_TS_SUM_FIELDS,
+    _INDUSTRY_TS_WEIGHTED_FIELDS,
     Firms,
     _intensity_target_productivity,
     _weighted_effective_coefficient,
@@ -261,7 +263,19 @@ def test_industry_timeseries_dataframes_aggregates_by_industry():
         "labour_productivity_factor": [np.array([1.0, 1.0, 1.0]), np.array([1.2, 1.4, 1.1])],
         "labour_productivity": [np.array([2.0, 2.0, 2.0]), np.array([3.0, 5.0, 4.0])],
         "price": [np.array([10.0, 20.0, 7.0]), np.array([10.0, 10.0, 5.0])],
+        "used_intermediate_inputs_costs": [np.array([1.0, 2.0, 4.0]), np.array([2.0, 3.0, 5.0])],
+        "taxes_paid_on_production": [np.array([0.5, 0.5, 1.0]), np.array([1.0, 1.0, 2.0])],
     }
+    # The fixture has to cover every exported field, and drifted out of date once already:
+    # adding `used_intermediate_inputs_costs` to the export left this test failing with a
+    # bare KeyError from the fake `historic`, which reads as a broken test rather than an
+    # incomplete one.  Fail here instead, naming what is missing.
+    expected_fields = set(_INDUSTRY_TS_SUM_FIELDS) | set(_INDUSTRY_TS_WEIGHTED_FIELDS)
+    expected_fields |= set(_INDUSTRY_TS_WEIGHTED_FIELDS.values())
+    assert expected_fields <= set(history), (
+        f"fixture is missing exported fields: {sorted(expected_fields - set(history))}"
+    )
+
     f = types.SimpleNamespace(
         industries=industries,
         states={"Industry": industry_of_firm},
@@ -290,6 +304,21 @@ def test_industry_timeseries_dataframes_aggregates_by_industry():
     # (2*1.2 + 2*1.4)/(2+2) = 1.3, and (1*2 + 3*2)/(1+3) = 2.0.
     assert frames["labour_productivity_factor"].loc[1, "A"] == pytest.approx(1.3)
     assert frames["labour_productivity"].loc[0, "A"] == pytest.approx(2.0)
+    # Nominal cost aggregates sum like any other extensive field.
+    assert frames["used_intermediate_inputs_costs"].loc[0, "A"] == pytest.approx(3.0)  # 1+2
+    assert frames["taxes_paid_on_production"].loc[0, "A"] == pytest.approx(1.0)        # .5+.5
+    # The DERIVED frames, which are built inside a bare `except: pass` and so fail
+    # silently -- leaving them unasserted means a broken derivation looks like a passing
+    # test with two missing keys.  Both use the AGGREGATED price, and `production` is real
+    # while `used_intermediate_inputs_costs` is nominal, which is exactly the mixed-units
+    # trap the export exists to spare its consumers.
+    assert "gva_nominal" in frames and "production_nominal" in frames
+    # A at t=0: production 5.0 x price 16.0 = 80.0, less intermediate consumption 3.0.
+    assert frames["production_nominal"].loc[0, "A"] == pytest.approx(80.0)
+    assert frames["gva_nominal"].loc[0, "A"] == pytest.approx(77.0)
+    # B at t=0 is a single firm: 5.0 x 7.0 = 35.0, less 4.0.
+    assert frames["production_nominal"].loc[0, "B"] == pytest.approx(35.0)
+    assert frames["gva_nominal"].loc[0, "B"] == pytest.approx(31.0)
     assert frames["price"].loc[0, "B"] == pytest.approx(7.0)
     assert list(frames["inventory"].columns) == industries
 
