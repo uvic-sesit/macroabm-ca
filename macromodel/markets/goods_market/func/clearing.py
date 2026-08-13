@@ -175,6 +175,9 @@ class GoodsMarketClearer(ABC):
         # clearing.  Off by default; see set_row_split_anchor().
         self._row_split_anchor: bool = False
         self._row_split_anchor_excluded: set[int] = set()
+        # Per-industry external origin shares for ROW's purchases; see
+        # set_row_split_override().  Empty by default.
+        self._row_split_override: dict[int, np.ndarray] = {}
 
     def set_row_split_anchor(self, enabled: bool, exclude_industries=None) -> None:
         """Anchor WHICH countries supply ROW to base-year origin shares.
@@ -199,6 +202,28 @@ class GoodsMarketClearer(ABC):
         """
         self._row_split_anchor = bool(enabled)
         self._row_split_anchor_excluded = {int(i) for i in (exclude_industries or [])}
+
+    def set_row_split_override(self, shares_by_industry) -> None:
+        """Route ROW's demand for SPECIFIC industries to externally supplied origin shares.
+
+        Unlike set_row_split_anchor -- which freezes every industry's export geography at
+        the base year and was rejected for destabilising scenarios that move production
+        geography -- this takes {industry_index: shares_over_countries} for a chosen few
+        industries, and the shares may be updated per year by the caller.  Built for
+        sector D: ROW's electricity purchases (international interchange plus
+        hydrogen-electrolysis load) belong in the provinces CER says export and make
+        hydrogen, not wherever the pool finds slack.  Shares are normalised here; the
+        entry for ROW's own position must be 0.  Passing None or {} disables it.
+        """
+        cleaned: dict[int, np.ndarray] = {}
+        for g, shares in (shares_by_industry or {}).items():
+            arr = np.asarray(shares, dtype=float).copy()
+            arr[~np.isfinite(arr)] = 0.0
+            arr[arr < 0.0] = 0.0
+            total = float(arr.sum())
+            if total > 0.0:
+                cleaned[int(g)] = arr / total
+        self._row_split_override = cleaned
 
     def set_import_limited_industries(self, industry_indices) -> None:
         """Exclude industries from the additional-ROW-exports backstop.
@@ -684,15 +709,25 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
         # each origin is capped at its base-year share of ROW's demand and the passes do
         # not compound; whatever an origin cannot fill stays in ROW's remaining demand
         # and clears in the pool as it always did, keeping the level residual.
-        if self._row_split_anchor and row_index >= 0:
-            anchor_shares = default_origin_trade_proportions[:, row_index, :].copy()
-            anchor_shares[row_index] = 0.0
-            for g_excl in self._row_split_anchor_excluded:
-                anchor_shares[:, g_excl] = 0.0
-            denom = anchor_shares.sum(axis=0)
-            anchor_shares = np.divide(
-                anchor_shares, denom, out=np.zeros_like(anchor_shares), where=denom > 0.0
-            )
+        if (self._row_split_anchor or self._row_split_override) and row_index >= 0:
+            if self._row_split_anchor:
+                anchor_shares = default_origin_trade_proportions[:, row_index, :].copy()
+                anchor_shares[row_index] = 0.0
+                for g_excl in self._row_split_anchor_excluded:
+                    anchor_shares[:, g_excl] = 0.0
+                denom = anchor_shares.sum(axis=0)
+                anchor_shares = np.divide(
+                    anchor_shares, denom, out=np.zeros_like(anchor_shares), where=denom > 0.0
+                )
+            else:
+                anchor_shares = np.zeros(
+                    (n_countries, default_origin_trade_proportions.shape[2])
+                )
+            # External per-industry shares take precedence over the base-year anchor.
+            for g_over, shares_over in self._row_split_override.items():
+                if 0 <= int(g_over) < anchor_shares.shape[1] and len(shares_over) == n_countries:
+                    anchor_shares[:, int(g_over)] = shares_over
+                    anchor_shares[row_index, int(g_over)] = 0.0
             anchor_origin = np.zeros_like(default_origin_trade_proportions)
             anchor_destin = np.zeros_like(default_destin_trade_proportions)
             for c1 in range(n_countries):

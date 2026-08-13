@@ -370,6 +370,35 @@ class RestOfTheWorld(Agent):
         self._domestic_absorption = None if absorption_real is None else np.asarray(
             absorption_real, dtype=float)
 
+    def set_market_prices(self, prices: "np.ndarray | None") -> None:
+        """Countries' production-weighted price per industry, supplied each step.
+
+        Consumed ONLY for industries in :meth:`set_real_terms_export_industries` --
+        harmless to supply otherwise.  Lagged one period like absorption.
+        """
+        self._market_prices = None if prices is None else np.asarray(prices, dtype=float)
+
+    def set_real_terms_export_industries(self, industry_indices) -> None:
+        """Industries whose export pin converts at the MARKET's price, not ROW's.
+
+        `desired_imports_in_lcu` is a NOMINAL budget the goods market converts back to
+        a real quantity at the market's average price, while ROW's own `price_in_lcu`
+        moves every industry by ONE aggregate index. For a pinned industry whose market
+        price drifts against that aggregate, the realized real quantity is the target
+        times the drift -- measured for D (whose price is exogenously pinned to CER's
+        real path, ~0.74x of model CPI by 2050 Net-zero): national D growth 2.35
+        against a target consistent with CER's 2.07.
+
+        SELECTIVE BY DESIGN. Converting EVERY pinned industry this way was tried
+        (2026-08-13, arm fix1b) and wrecked Net-zero -- the aggregate-indexed nominal
+        budgets silently cap the fossil residual export targets (B05b real exports
+        9.9bn -> 55.6bn when converted faithfully) and that cap is load-bearing. The
+        do-not-rebuild note in _apply_export_demand_index refers to the blanket
+        version; this per-industry set exists so D can be corrected without touching
+        the fossils. Empty by default, so behaviour is unchanged unless called.
+        """
+        self._real_terms_export_industries = {int(i) for i in (industry_indices or [])}
+
     def _apply_export_demand_index(self) -> None:
         """Set pinned industries' desired imports to the residual export target."""
         index = getattr(self, "_export_demand_index", None)
@@ -383,14 +412,25 @@ class RestOfTheWorld(Agent):
         if len(shapes) != 1:
             logger.warning("export pinning shape mismatch %s; not applied.", shapes)
             return
-        # NOTE (2026-08-13, negative result -- do not rebuild): converting these real
-        # targets at a production-weighted MARKET price per industry instead of ROW's
-        # aggregate-indexed `price_in_lcu` was tried to close a relative-price drift in
-        # the pinned quantities. A controlled Net-zero pair showed it is much worse:
-        # total 2050 production -13.3%, BC to 23% unemployment, generation
-        # share-distance 0.161 -> 0.226. ROW's aggregate-indexed nominal budget for the
-        # fossil pins is load-bearing under Net-zero, where CER's fossil prices fall
-        # relative to the aggregate.
+        # NOTE (2026-08-13, negative result -- do not rebuild the BLANKET version):
+        # converting ALL these real targets at a production-weighted MARKET price
+        # instead of ROW's aggregate-indexed `price_in_lcu` was tried to close a
+        # relative-price drift in the pinned quantities. A controlled Net-zero pair
+        # showed it is much worse: total 2050 production -13.3%, BC to 23%
+        # unemployment, generation share-distance 0.161 -> 0.226. ROW's
+        # aggregate-indexed nominal budget for the fossil pins is load-bearing under
+        # Net-zero, where CER's fossil prices fall relative to the aggregate. The
+        # SELECTIVE per-industry conversion below (set_real_terms_export_industries)
+        # is the safe form: it touches only the industries explicitly opted in.
+        market = getattr(self, "_market_prices", None)
+        real_terms = getattr(self, "_real_terms_export_industries", set())
+        if real_terms and market is not None and market.shape == p_now.shape:
+            usable = np.isfinite(market) & (market > 0.0)
+            select = np.zeros(p_now.shape, dtype=bool)
+            for i in real_terms:
+                if 0 <= int(i) < select.size:
+                    select[int(i)] = True
+            p_now = np.where(select & usable, market, p_now)
         # Industries whose index is an EXPORT path rather than a production path.
         export_mode = np.zeros(index.shape, dtype=bool)
         for i in getattr(self, "_export_target_industries", set()):

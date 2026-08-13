@@ -469,6 +469,7 @@ def build_link_prehook(
     firm_energy_quantities: bool = False,
     quantity_anchor_floor: float = 0.0,
     interprovincial_flows: dict | None = None,
+    row_electricity_split: dict | None = None,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -555,6 +556,43 @@ def build_link_prehook(
                         year, len(wanted), ",".join(resolved), total, domestic,
                         100.0 * domestic / total if total else 0.0, total - domestic,
                     )
+
+        # ROW electricity split: route ROW's D purchases to provinces by CER's own
+        # (international exports + electrolysis) shares, refreshed per linkage year.
+        # This is the SPLIT half of treating hydrogen exports as electricity leaving in
+        # another form; the LEVEL half is the electrolysis-inclusive export index on the
+        # ROW agent.  One goods market for the whole simulation, so set once per year,
+        # outside the per-country loop.  `row_electricity_split` maps
+        # year -> {province_code: share}; the shares vector is resolved against the same
+        # sorted country axis the trade proportions use, with ROW's own slot at zero.
+        if row_electricity_split and year in row_electricity_split:
+            clearer = sim.goods_market.functions.get("clearing")
+            d_index = industries.index("D") if "D" in industries else None
+            if clearer is None or not hasattr(clearer, "set_row_split_override"):
+                logger.warning(
+                    "ROW electricity split: clearer does not support the override; skipping.")
+            elif d_index is None:
+                logger.warning("ROW electricity split: no 'D' industry; skipping.")
+            else:
+                axis = sorted(list(sim.countries.keys()) + ["ROW"])
+                vec = np.zeros(len(axis))
+                matched = {}
+                for code, share in row_electricity_split[year].items():
+                    for pos, name in enumerate(axis):
+                        text = str(name)
+                        if text != "ROW" and (text.endswith(f"_{code}") or text == code):
+                            vec[pos] = float(share)
+                            matched[code] = round(float(share), 4)
+                            break
+                if vec.sum() <= 0.0:
+                    logger.warning(
+                        "ROW electricity split: no province resolved for year %s; skipping.",
+                        year)
+                else:
+                    clearer.set_row_split_override({d_index: vec})
+                    logger.info(
+                        "ROW electricity split: year=%s D origin shares set: %s",
+                        year, matched)
         for country in sim.countries.values():
             province = _province_code(country.country_name)
             cims_region = sector_map.macro_region_to_cims.get(province)
@@ -917,6 +955,19 @@ def build_link_prehook(
                     _export_mode = [i for i, code in enumerate(industries)
                                     if code in _PRODUCTION_TARGET_EXCLUDED and aligned[i] > 0.0]
                     sim.rest_of_the_world.set_export_target_industries(_export_mode)
+                    # Sector D's export index is a PHYSICAL (GW.h) ratio -- interchange
+                    # plus electrolysis -- so its budget must convert at D's own market
+                    # price or the model buys index x price-drift instead of the index
+                    # (measured: national D growth 2.35 vs CER 2.07, arm fix7). D ONLY:
+                    # the blanket conversion broke the fossil budgets (arm fix1b); see
+                    # RestOfTheWorld.set_real_terms_export_industries.
+                    _d_idx = industries.index("D") if "D" in industries else None
+                    if _d_idx is not None and _d_idx in _export_mode and hasattr(
+                            sim.rest_of_the_world, "set_real_terms_export_industries"):
+                        sim.rest_of_the_world.set_real_terms_export_industries([_d_idx])
+                        logger.info(
+                            "real-terms export conversion enabled for D (index %.4f)",
+                            float(aligned[_d_idx]))
                     if _export_mode:
                         logger.info(
                             "export-TARGETED industries (index multiplies base-year exports, "

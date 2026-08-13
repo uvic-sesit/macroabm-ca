@@ -581,10 +581,19 @@ class Simulation:
         try:
             n = len(next(iter(self.countries.values())).firms.industries)
             production = np.zeros(n)
+            price_num = np.zeros(n)
             for country in self.countries.values():
                 industry = np.asarray(country.firms.states["Industry"])
                 prod = np.asarray(country.firms.ts.current("production"), dtype=float).ravel()
                 np.add.at(production, industry, prod)
+                price_f = np.asarray(country.firms.ts.current("price"), dtype=float).ravel()
+                np.add.at(price_num, industry, prod * price_f)
+            # National production-weighted market price per industry.  ROW uses it ONLY
+            # for the industries opted in via set_real_terms_export_industries (sector D
+            # today); every other pin keeps ROW's aggregate-indexed price, which the
+            # fix1b A/B showed is load-bearing for the fossil budgets.
+            row.set_market_prices(np.divide(
+                price_num, production, out=np.zeros(n), where=production > 0))
             # Base production is captured at the FIRST STEP, unconditionally -- NOT the
             # first time an index arrives. The linkage's first milestone is 2020 while the
             # index is anchored to the simulation start (2014), so capturing it lazily
