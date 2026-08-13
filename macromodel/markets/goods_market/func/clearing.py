@@ -178,6 +178,8 @@ class GoodsMarketClearer(ABC):
         # Per-industry external origin shares for ROW's purchases; see
         # set_row_split_override().  Empty by default.
         self._row_split_override: dict[int, np.ndarray] = {}
+        self._row_split_strict: bool = False
+        self._row_split_signal: float = 0.0
 
     def set_row_split_anchor(self, enabled: bool, exclude_industries=None) -> None:
         """Anchor WHICH countries supply ROW to base-year origin shares.
@@ -203,7 +205,8 @@ class GoodsMarketClearer(ABC):
         self._row_split_anchor = bool(enabled)
         self._row_split_anchor_excluded = {int(i) for i in (exclude_industries or [])}
 
-    def set_row_split_override(self, shares_by_industry) -> None:
+    def set_row_split_override(self, shares_by_industry, *, strict: bool = False,
+                               signal_shortfall: float = 0.0) -> None:
         """Route ROW's demand for SPECIFIC industries to externally supplied origin shares.
 
         Unlike set_row_split_anchor -- which freezes every industry's export geography at
@@ -214,6 +217,28 @@ class GoodsMarketClearer(ABC):
         hydrogen-electrolysis load) belong in the provinces CER says export and make
         hydrogen, not wherever the pool finds slack.  Shares are normalised here; the
         entry for ROW's own position must be 0.  Passing None or {} disables it.
+
+        As a pure first-pass hint the split does NOT bind: the pool backfills whatever an
+        origin could not supply, from whichever province has slack.  Measured (S2 pair,
+        2026-08-13): Ontario delivered 0.8% of ROW's D demand against a 24.2% anchored
+        share -- its supply is fully committed domestically by the time the anchored pass
+        runs -- while Quebec delivered 31% against 15.6% and Manitoba 11.5% against 4.4%.
+        Two opt-ins close the loop:
+
+        - ``strict``: ROW's demand for an override industry that its anchored origins
+          cannot fill is WITHDRAWN, not pooled. Realised exports may run under the index
+          while origins grow in; without it the split is decorative for any origin whose
+          supply is domestically committed.
+        - ``signal_shortfall``: the FRACTION (0..1) of each origin's unfilled allocation
+          booked as REAL excess demand on that origin's sellers of that industry (after
+          the global excess-demand distribution, which would otherwise hand the signal
+          to whichever province has spare supply -- the same defect the split corrects,
+          one step earlier). This is what lets an origin PLAN for the order book it
+          keeps missing: demand estimation reads recorded excess demand. DAMP IT:
+          measured at 1.0 (arm S3), Ontario -- under-filled for 20 straight years --
+          over-invested past its share (generation ratio 1.52 vs CER, growth 2.48 vs
+          2.05) and its cheapened electricity inflated its own demand; 0.0 (arm S4)
+          leaves the origin blind and exports permanently under-run.
         """
         cleaned: dict[int, np.ndarray] = {}
         for g, shares in (shares_by_industry or {}).items():
@@ -224,6 +249,8 @@ class GoodsMarketClearer(ABC):
             if total > 0.0:
                 cleaned[int(g)] = arr / total
         self._row_split_override = cleaned
+        self._row_split_strict = bool(strict)
+        self._row_split_signal = max(0.0, min(1.0, float(signal_shortfall)))
 
     def set_import_limited_industries(self, industry_indices) -> None:
         """Exclude industries from the additional-ROW-exports backstop.
@@ -709,6 +736,7 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
         # each origin is capped at its base-year share of ROW's demand and the passes do
         # not compound; whatever an origin cannot fill stays in ROW's remaining demand
         # and clears in the pool as it always did, keeping the level residual.
+        split_shortfalls: dict[tuple[int, int], float] = {}
         if (self._row_split_anchor or self._row_split_override) and row_index >= 0:
             if self._row_split_anchor:
                 anchor_shares = default_origin_trade_proportions[:, row_index, :].copy()
@@ -737,9 +765,21 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 # The seller side offers everything it still has to ROW in this pass;
                 # the buyer-side share above is what limits the actual flow.
                 anchor_destin[c1, row_index] = np.where(anchor_shares[c1] > 0.0, 1.0, 0.0)
+            row_name = list(goods_market_participants.keys())[row_index]
+
+            def _row_buyer_sum(g: int, field: str) -> float:
+                total = 0.0
+                for _tr in goods_market_participants[row_name]:
+                    if _tr.transactor_buyer_states["Value Type"] != ValueType.NONE:
+                        total += float(_tr.transactor_buyer_states[field][:, g].sum())
+                return total
+
+            override_gs = sorted(self._row_split_override)
+            row_initial = {g: _row_buyer_sum(g, "Initial Goods") for g in override_gs}
             for c1 in range(n_countries):
                 if c1 == row_index or not np.any(anchor_shares[c1] > 0.0):
                     continue
+                before = {g: _row_buyer_sum(g, "Remaining Goods") for g in override_gs}
                 self.perform_clearing(
                     goods_market_participants=goods_market_participants,
                     n_industries=n_industries,
@@ -750,6 +790,24 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                     origin_trade_proportions=anchor_origin,
                     destin_trade_proportions=anchor_destin,
                 )
+                # Shortfall bookkeeping for the override industries: what this origin
+                # was allocated but could not supply.  In ROW's own units (nominal for
+                # a NOMINAL buyer); converted at the origin's price when signalled.
+                for g in override_gs:
+                    allocated = min(anchor_shares[c1, g] * row_initial[g], before[g])
+                    cleared = before[g] - _row_buyer_sum(g, "Remaining Goods")
+                    short = allocated - cleared
+                    if short > 0.0:
+                        split_shortfalls[(c1, g)] = split_shortfalls.get((c1, g), 0.0) + short
+
+            # STRICT split: demand the anchored origins could not fill is withdrawn,
+            # not pooled.  Without this the pool re-runs the defect the split exists to
+            # fix -- whichever province has slack captures the sale (Manitoba).
+            if self._row_split_strict and override_gs:
+                for _tr in goods_market_participants[row_name]:
+                    if _tr.transactor_buyer_states["Value Type"] != ValueType.NONE:
+                        for g in override_gs:
+                            _tr.transactor_buyer_states["Remaining Goods"][:, g] = 0.0
 
         # Clear remaining supply and demand without trade proportion constraints
         self.perform_clearing(
@@ -764,6 +822,31 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
             goods_market_participants=goods_market_participants,
             n_industries=n_industries,
         )
+
+        # Route the anchored-pass shortfalls to their origins as excess demand, AFTER
+        # the global distribution above (which ASSIGNS rather than adds, and would hand
+        # the signal to whichever province has spare supply -- the defect the split
+        # corrects).  This is the order book an origin keeps missing: demand estimation
+        # reads recorded excess demand, so the origin plans and invests into its share.
+        if self._row_split_signal and split_shortfalls:
+            names = list(goods_market_participants.keys())
+            for (c1, g), nominal in split_shortfalls.items():
+                if nominal <= 0.0:
+                    continue
+                price = float(average_prices_by_country[c1][g])
+                if not np.isfinite(price) or price <= 0.0:
+                    price = float(average_prices_by_country[-1][g])
+                if not np.isfinite(price) or price <= 0.0:
+                    continue
+                real_short = (nominal / price) * self._row_split_signal
+                for transactor in goods_market_participants[names[c1]]:
+                    if transactor.transactor_seller_states["Value Type"] == ValueType.REAL:
+                        ind = transactor.transactor_seller_states["Industries"] == g
+                        n_rows = int(ind.sum())
+                        if n_rows:
+                            transactor.transactor_seller_states["Real Excess Demand"][ind] += (
+                                real_short / n_rows
+                            )
 
         # Allow additional ROW exports if enabled
         if self.allow_additional_row_exports and self.additionally_available_factor > 0.0:

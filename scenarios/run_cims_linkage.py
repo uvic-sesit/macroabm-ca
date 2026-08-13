@@ -470,6 +470,8 @@ def build_link_prehook(
     quantity_anchor_floor: float = 0.0,
     interprovincial_flows: dict | None = None,
     row_electricity_split: dict | None = None,
+    row_electricity_split_strict: bool = False,
+    row_electricity_split_signal: float = 0.0,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -589,10 +591,16 @@ def build_link_prehook(
                         "ROW electricity split: no province resolved for year %s; skipping.",
                         year)
                 else:
-                    clearer.set_row_split_override({d_index: vec})
+                    clearer.set_row_split_override(
+                        {d_index: vec},
+                        strict=row_electricity_split_strict,
+                        signal_shortfall=float(row_electricity_split_signal or 0.0),
+                    )
                     logger.info(
-                        "ROW electricity split: year=%s D origin shares set: %s",
-                        year, matched)
+                        "ROW electricity split: year=%s D origin shares set (strict=%s, "
+                        "signal=%.2f): %s",
+                        year, row_electricity_split_strict,
+                        float(row_electricity_split_signal or 0.0), matched)
         for country in sim.countries.values():
             province = _province_code(country.country_name)
             cims_region = sector_map.macro_region_to_cims.get(province)
