@@ -75,7 +75,9 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
         post_sample_growth: annual labour-force growth applied after the last observed
             year (e.g. ``0.0072`` for CER EF2026's +0.72%/yr population path).  ``None``
             keeps the historical flat-tail behaviour.
-        growth_cap: ``{province: maximum annual growth}`` applied to the OBSERVED years.
+        growth_cap: ``{province: maximum annual growth}`` applied to the OBSERVED years
+            AND, when it sits below ``post_sample_growth``, to the projected tail
+            (see ``_tail_growth_for``).
             A DELIBERATE DEPARTURE FROM THE DATA, and only worth making because the
             alternative is worse.  The bundled index is correct -- BC's labour force really
             did grow 2.23%/yr over 2015-2024 and PE's 2.34%/yr -- but this model's labour
@@ -103,10 +105,11 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
     year_q = np.array([(y - _LABOUR_BASE_YEAR) * 4 + 1.5 for y in years])  # annual obs at mid-year
     grid = np.arange(n_quarters, dtype=float)
 
-    def _interp(annual_by_year: dict[str, float]) -> list[float]:
+    def _interp(annual_by_year: dict[str, float],
+                tail_growth: Optional[float] = None) -> list[float]:
         vals = np.array([annual_by_year[str(y)] for y in years], dtype=float)
         idx = np.interp(grid, year_q, vals)   # np.interp holds the endpoints flat outside the range
-        if post_sample_growth:
+        if tail_growth:
             # Re-grow the flat tail at a constant annual rate, compounding quarterly from
             # the last in-sample observation rather than from the start of the flat region.
             last_obs_q = year_q[-1]
@@ -114,8 +117,25 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
             if tail.any():
                 quarters_past = grid[tail] - last_obs_q
                 idx = idx.copy()
-                idx[tail] = vals[-1] * (1.0 + post_sample_growth) ** (quarters_past / 4.0)
+                idx[tail] = vals[-1] * (1.0 + tail_growth) ** (quarters_past / 4.0)
         return (idx / idx[0]).tolist()
+
+    def _tail_growth_for(p: str) -> Optional[float]:
+        """The projected tail obeys the same per-province cap as the observed years.
+
+        Without this a capped province escapes its cap the moment the data ends: BC
+        capped at 1%/yr through 2024 then grows at the national 0.72%/yr continuation,
+        which sits ABOVE its broken-basin employment growth (0.58%/yr, measured
+        2026-08-13), so unemployment drifts up ~0.14pp/yr from the mid-2030s whenever
+        the economy lands in that basin. A cap below the continuation pins the tail
+        too, which is the point: the cap means "supply never outruns this rate", not
+        "the 2015-2024 window is reshaped and the projection is exempt".
+        """
+        if not post_sample_growth:
+            return post_sample_growth
+        if growth_cap and p in growth_cap:
+            return min(float(post_sample_growth), float(growth_cap[p]))
+        return post_sample_growth
 
     if growth_cap:
         unknown = sorted(set(growth_cap) - set(raw))
@@ -129,10 +149,10 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
         # reconstruct the national sum requires levels, which the index drops. The uniform
         # control instead applies the cross-province mean index to every province.
         mean_by_year = {str(y): float(np.mean([raw[p][str(y)] for p in raw])) for y in years}
-        shared = _interp(mean_by_year)
+        shared = _interp(mean_by_year, post_sample_growth)
         result = {p: list(shared) for p in raw}
     else:
-        result = {p: _interp(raw[p]) for p in raw}
+        result = {p: _interp(raw[p], _tail_growth_for(p)) for p in raw}
 
     if province is not None:
         return result[province]
