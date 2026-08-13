@@ -49,7 +49,7 @@ class ExogenousCountryData:
             quarter,
         )
 
-        labour_stats = prepare_labour_stats(country_name, readers)
+        labour_stats = prepare_labour_stats(country_name, readers, base_year=year)
 
         house_price_index = readers.oecd_econ.get_house_price_index(country_name)
 
@@ -88,7 +88,7 @@ class ExogenousCountryData:
         return country_data
 
 
-def prepare_labour_stats(country_name: Country, readers: DataReaders):
+def prepare_labour_stats(country_name: Country, readers: DataReaders, base_year: Optional[int] = None):
     labour_stats = readers.imf_reader.get_labour_stats(country_name)
     vacancy_rate = readers.oecd_econ.get_vacancy_rate(country_name)
     participation_rate = readers.world_bank.get_participation_rate(country_name)
@@ -112,6 +112,19 @@ def prepare_labour_stats(country_name: Country, readers: DataReaders):
             axis=1,
         )
     labour_stats = labour_stats.ffill(axis=0)
+
+    # The labour series (WB unemployment/participation, OECD vacancies) can end before a later
+    # base year (e.g. it ends ~2021-Q1 while the 2022 base needs 2022-Q1, and the model indexes
+    # the base quarter directly in Exogenous.__init__). When the base quarter is missing, hold the
+    # last observation flat forward past the base year so the base quarter and simulation horizon
+    # exist. Gated on the base quarter being absent, so earlier base years (2014) are unchanged.
+    if (
+        base_year is not None
+        and len(labour_stats.index) > 0
+        and pd.Timestamp(base_year, 1, 1) not in labour_stats.index
+    ):
+        extended_index = pd.date_range(labour_stats.index.min(), pd.Timestamp(base_year + 25, 10, 1), freq="QS")
+        labour_stats = labour_stats.reindex(labour_stats.index.union(extended_index)).ffill()
 
     labour_stats.rename(
         columns={

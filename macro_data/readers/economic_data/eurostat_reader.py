@@ -48,6 +48,38 @@ from macro_data.configuration.region import Region
 from macro_data.readers.util.prune_util import DataFilterWarning, prune_index
 
 
+def _nearest_balance_sheet_value(row_df: pd.DataFrame, year: int) -> Optional[float]:
+    """Nearest populated year value from a single eurostat financial-balance-sheet row.
+
+    Eurostat balance-sheet cells are strings: ':'-prefixed markers (': ', ': d', ': de') and
+    empty tokens denote missing data, and a numeric value may carry a trailing flag suffix
+    (e.g. '12345.6 d'). Eurostat coverage can end before a later base year (2022), so this
+    walks outward from ``year`` (nearest <= year first) and returns the first parseable value,
+    or ``None`` when the country row has none.
+    """
+    year_columns = sorted(int(c) for c in row_df.columns if str(c).isdigit())
+    search_order = [y for y in year_columns if y <= year][::-1] + [y for y in year_columns if y > year]
+    for candidate in search_order:
+        values = row_df[str(candidate)].values
+        if len(values) == 0:
+            continue
+        cell = values[0]
+        if cell is None or (isinstance(cell, float) and np.isnan(cell)):
+            continue
+        text = str(cell).strip()
+        if text in ("", ":") or text.startswith(":"):
+            continue
+        try:
+            return float(text)
+        except ValueError:
+            stripped = text.rsplit(" ", 1)[0]  # drop a trailing ' d'/' e' quality flag
+            try:
+                return float(stripped)
+            except ValueError:
+                continue
+    return None
+
+
 def get_perc_growth_series(country: str, growth_df: pd.DataFrame, series_name: Optional[str] = None) -> pd.Series:
     """
     Extract and format percentage growth series for a specific country.
@@ -265,16 +297,8 @@ class EuroStatReader:
         df = df.loc[
             df[r"unit,co_nco,sector,finpos,na_item,geo\time"] == "MIO_NAC,NCO,S11,LIAB,F4," + country_name_short
         ]
-        if str(year) in df.columns:
-            res = df[str(year)].values[0]
-            if len(res) <= 2:
-                return np.nan
-            if " " in res:
-                return float(res[:-2]) * 1e6 * ratio
-            else:
-                return float(res) * 1e6 * ratio
-        else:
-            return np.nan
+        value = _nearest_balance_sheet_value(df, year)
+        return value * 1e6 * ratio if value is not None else np.nan
 
     def get_total_fin_firm_debt(self, country: Country | str, year: int) -> float:
         """
@@ -296,7 +320,8 @@ class EuroStatReader:
         df = df.loc[
             df[r"unit,co_nco,sector,finpos,na_item,geo\time"] == "MIO_NAC,NCO,S12,LIAB,F4," + country_name_short
         ]
-        return float(df[str(year)].values[0]) * 1e6
+        value = _nearest_balance_sheet_value(df, year)
+        return value * 1e6 if value is not None else np.nan
 
     def get_total_household_deposits(
         self, country: str, year: int, proxy_country: str = "FRA", ratio: float = 1.0
@@ -323,17 +348,17 @@ class EuroStatReader:
         df = df.loc[
             df[r"unit,co_nco,sector,finpos,na_item,geo\time"] == "MIO_NAC,CO,S1314,ASS,F2," + country_name_short
         ]
-        val = df[str(year)].values
-        if len(val) == 0 or val[0] == ": ":
-            if proxy_country in self.total_output:
-                return (
-                    self.total_output[country]
-                    / self.total_output[proxy_country]
-                    * self.get_total_household_deposits(proxy_country, year)
-                )
-            else:
-                return self.get_total_household_deposits(proxy_country, year) * ratio
-        return float(val[0]) * 1e6
+        value = _nearest_balance_sheet_value(df, year)
+        if value is not None:
+            return value * 1e6
+        if isinstance(proxy_country, str):
+            proxy_country = Country(proxy_country)
+        if proxy_country == country:  # avoid infinite recursion when the proxy is itself
+            return np.nan
+        proxy_value = self.get_total_household_deposits(proxy_country, year)
+        if country in self.total_output and proxy_country in self.total_output:
+            return self.total_output[country] / self.total_output[proxy_country] * proxy_value
+        return proxy_value * ratio
 
     def get_total_household_fixed_assets(
         self, country: str, year: int, proxy_country: str = "GBR", ratio: float = 1.0
@@ -358,17 +383,19 @@ class EuroStatReader:
         df = self.data["non_financial_balance_sheets"]
         country_name_short = self.c_map.loc[self.c_map["Alpha-3 code"] == country, "Alpha-2 code"].values[0]
         df = df.loc[df[r"freq,unit,nace_r2,asset10,geo\TIME_PERIOD"] == "A,CRC_MNAC,TOTAL,N111N," + country_name_short]
-        val = df[str(year)].values
-        if len(val) == 0:
-            return (
-                self.total_output[country]
-                / self.total_output[proxy_country]
-                * self.get_total_household_fixed_assets(proxy_country, year)
-                * ratio
-            )
-        if " " in val[0]:
-            return float(val[0][:-2]) * 1e6
-        return float(val[0]) * 1e6
+        value = _nearest_balance_sheet_value(df, year)
+        if value is not None:
+            return value * 1e6
+        if isinstance(proxy_country, str):
+            proxy_country = Country(proxy_country)
+        if proxy_country == country:  # avoid infinite recursion when the proxy is itself
+            return np.nan
+        return (
+            self.total_output[country]
+            / self.total_output[proxy_country]
+            * self.get_total_household_fixed_assets(proxy_country, year)
+            * ratio
+        )
 
     def nonfin_firm_deposit_ratios(self, country: Country, year: int) -> float:
         """
@@ -461,16 +488,8 @@ class EuroStatReader:
         df = self.data["financial_balance_sheets"]
         country_name_short = self.c_map.loc[self.c_map["Alpha-3 code"] == country, "Alpha-2 code"].values[0]
         df = df.loc[df[r"unit,co_nco,sector,finpos,na_item,geo\time"] == "MIO_NAC,NCO,S11,ASS,F2," + country_name_short]
-        if df.empty or str(year) not in df.columns:
-            return np.nan
-        else:
-            res = df[str(year)].values[0]
-            if len(res) <= 2:
-                return np.nan
-            if " " in res:
-                return float(res[:-2]) * 1e6 * ratio
-            else:
-                return float(res) * 1e6 * ratio
+        value = _nearest_balance_sheet_value(df, year)
+        return value * 1e6 * ratio if value is not None else np.nan
 
     # historic domestic
     def get_total_bank_equity(self, country: str, year: int, proxy_country: str = "FRA", ratio: float = 1.0) -> float:
@@ -491,23 +510,38 @@ class EuroStatReader:
         if isinstance(country, Region):
             ratio = country.va_ratio
             country = country.parent_country
+        if isinstance(country, str):
+            country = Country(country)
+        if isinstance(proxy_country, str):
+            proxy_country = Country(proxy_country)
         df = self.data["financial_balance_sheets"]
         country_name_short = self.c_map.loc[self.c_map["Alpha-3 code"] == country, "Alpha-2 code"].values[0]
         df = df.loc[
             df[r"unit,co_nco,sector,finpos,na_item,geo\time"] == "MIO_NAC,NCO,S122_S123,ASS,F5," + country_name_short
         ]
-        if str(year) in df.columns:
-            val = df[str(year)].values
-            if len(val) > 0 and val[0] != ": d" and val[0] != ": de" and val[0] != ": ":
-                return float(val[0]) * 1e6
-        if proxy_country in self.total_output:
-            return (
-                self.total_output[country]
-                / self.total_output[proxy_country]
-                * self.get_total_bank_equity(proxy_country, year)
-            )
-        else:
-            return self.get_total_bank_equity(proxy_country, year) * ratio
+
+        # Nearest populated year: eurostat balance sheets can end before 2022, and marker
+        # strings (": d", ": de", ": ") denote missing cells. Resolving to the latest valid year
+        # also terminates the proxy recursion below (previously FRA's own proxy is FRA, so a
+        # missing 2022 recursed forever).
+        missing_markers = {": d", ": de", ": "}
+        year_columns = sorted(int(c) for c in df.columns if str(c).isdigit())
+        search_order = [y for y in year_columns if y <= year][::-1] + [y for y in year_columns if y > year]
+        for candidate in search_order:
+            values = df[str(candidate)].values
+            if len(values) > 0 and values[0] not in missing_markers and str(values[0]).strip() not in {"", ":"}:
+                try:
+                    return float(values[0]) * 1e6
+                except (TypeError, ValueError):
+                    continue
+
+        # No valid own-country observation: fall back to the proxy, but never recurse into self.
+        if proxy_country == country:
+            return np.nan
+        proxy_equity = self.get_total_bank_equity(proxy_country, year)
+        if country in self.total_output and proxy_country in self.total_output:
+            return self.total_output[country] / self.total_output[proxy_country] * proxy_equity
+        return proxy_equity * ratio
 
     def cb_debt_ratios(self, country: Country, year: int) -> float:
         """
@@ -733,9 +767,17 @@ class EuroStatReader:
         if isinstance(country, Region):
             country = country.parent_country
         df = self.data["number_of_households"].set_index("geo")
-        return int(df.loc[country, str(year)] * 1000)
+        row = df.loc[country]
+        if str(year) in df.columns and pd.notna(row[str(year)]):
+            return int(row[str(year)] * 1000)
+        # Eurostat household counts can end before 2022 -> use the nearest populated year.
+        year_series = pd.to_numeric(row[[c for c in df.columns if str(c).isdigit()]], errors="coerce").dropna()
+        year_series.index = year_series.index.astype(int)
+        below = year_series.index[year_series.index <= year]
+        nearest = below.max() if len(below) else year_series.index.min()
+        return int(year_series.loc[nearest] * 1000)
 
-    def taxrate_on_capital_formation(self, country: Country, year: int) -> float:
+    def taxrate_on_capital_formation(self, country: Country, year: int, proxy_country: Country = Country("FRA")) -> float:
         """
         Get tax rate on capital formation for a specific country and year.
 
@@ -751,6 +793,8 @@ class EuroStatReader:
         """
         if isinstance(country, Region):
             country = country.parent_country
+        if isinstance(country, str):
+            country = Country(country)
         capform_df = self.data["capital_formation"]
 
         df = self.data["iot_tables"]
@@ -759,7 +803,20 @@ class EuroStatReader:
         capform = self.find_value(capform_df, country, str(year))
         taxes = self.find_value(taxes_df, country, str(year))
 
-        return taxes / capform
+        rate = np.nan
+        if capform not in (None, 0) and taxes is not None:
+            rate = taxes / capform
+
+        # Non-EU countries (e.g. CAN) are absent from these eurostat tables -> NaN. Fall back to
+        # the EU proxy, matching the FRA-proxy convention used by the other eurostat getters and
+        # by the exogenous national-accounts path (which already resolves CAN's cf tax via FRA).
+        if not np.isfinite(rate):
+            if isinstance(proxy_country, str):
+                proxy_country = Country(proxy_country)
+            if proxy_country != country:
+                return self.taxrate_on_capital_formation(proxy_country, year, proxy_country)
+            return 0.0
+        return rate
 
     def get_perc_sectoral_growth(self, country: Country) -> pd.DataFrame:
         """

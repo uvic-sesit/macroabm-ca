@@ -228,8 +228,25 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             hfcs_households_data, hfcs_individuals_data, n_households, output_shares=output_shares
         )
 
-        unemployment_rate = exogenous_data.labour_stats.loc[f"{year}-Q{quarter}", "Unemployment Rate (Value)"].iloc[0]
-        participation_rate = exogenous_data.labour_stats.loc[f"{year}-Q{quarter}", "Participation Rate (Value)"].iloc[0]
+        # Base-quarter labour rates. The labour-stats series (WB/IMF/OECD) can end before the
+        # base year (e.g. 2022), so fall back to the last available finite observation instead
+        # of raising KeyError on the missing quarter.
+        _labour_stats = exogenous_data.labour_stats
+        _base_quarter_key = f"{year}-Q{quarter}"
+
+        def _base_labour_rate(column: str) -> float:
+            try:
+                selected = np.atleast_1d(np.asarray(_labour_stats.loc[_base_quarter_key, column], dtype=float))
+                if selected.size and np.isfinite(selected[0]):
+                    return float(selected[0])
+            except KeyError:
+                pass
+            finite = np.asarray(_labour_stats[column].values, dtype=float)
+            finite = finite[np.isfinite(finite)]
+            return float(finite[-1]) if finite.size else 0.0
+
+        unemployment_rate = _base_labour_rate("Unemployment Rate (Value)")
+        participation_rate = _base_labour_rate("Participation Rate (Value)")
 
         n_firms_by_industry = industry_data["industry_vectors"]["Number of Firms"].values
 

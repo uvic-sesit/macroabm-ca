@@ -30,14 +30,26 @@ SEA_TO_IO_CANDIDATE_TARGETS: dict[str, list[str]] = {
     "J58": ["J58T60", "J"],
     "J59_J60": ["J58T60", "J"],
     "J62_J63": ["J62", "J"],
-    # Metal split used by the current provincial IO table.
-    "C24": ["C24a", "C24b"],
+    "J62": ["J62_63", "J"],
+    # Metal split used by the current provincial IO table (43-sector uses C24a/b;
+    # the 2022 OECD-50 table uses C24A/C24B).
+    "C24": ["C24a", "C24b", "C24A", "C24B"],
+    # OECD-50 splits that the older WIOD/43-sector codes leave aggregated.
+    "C17": ["C17_18"],
+    "C30": ["C301", "C302T309"],
+    "R_S": ["R", "S"],
     # Older 50-sector tables split electricity. Current 43-sector tables keep D.
     "D": ["D01a", "D01b", "D01c", "D01d", "D01e"],
     # Current IO sector list keeps the broad residual service bucket.
     "T": ["R_S"],
     "U": ["R_S"],
 }
+
+
+# WIOD/SEA source sectors with no counterpart in some IO industry lists (e.g. the
+# OECD-50 table has no "U" activities-of-extraterritorial-organisations sector). These
+# are dropped rather than force-mapped when no target exists, instead of raising.
+SEA_DROP_SECTORS = {"U"}
 
 
 SEA_AGGREGATE_PREFIXES = {
@@ -88,7 +100,8 @@ def bridge_sea_to_io_industries(
 
         targets = _resolve_sea_targets(source_industry, target_industries)
         if not targets:
-            unmapped.append(source_industry)
+            if source_industry not in SEA_DROP_SECTORS:
+                unmapped.append(source_industry)
             continue
 
         for country in countries:

@@ -56,6 +56,21 @@ from macro_data.readers.economic_data.oecd_mappings import INDUSTRY_MAPPING
 from macro_data.readers.io_tables.mappings import ICIO_AGGREGATE
 from macro_data.readers.util.prune_util import DataFilterWarning
 
+
+def _closest_time(times, year: int) -> int:
+    """Return the available year in ``times`` closest to ``year`` (preferring the exact
+    match). OECD annual series can end before a later base year such as 2022; this resolves
+    the lookup to the nearest observation instead of indexing an empty selection."""
+    available = pd.unique(pd.Series(times).dropna())
+    if year in available:
+        return year
+    numeric = sorted(int(t) for t in available if str(t).strip().lstrip("-").isdigit())
+    if not numeric:
+        return year
+    below = [y for y in numeric if y <= year]
+    return below[-1] if below else numeric[0]
+
+
 # Forced tax rates for countries where OECD data is unavailable or unreliable
 force_tau_sif = {
     "AUS": 0.0,
@@ -328,13 +343,17 @@ class OECDEconData:
             year = 2014
 
         df = self.data["business_demography1"].copy()
-        df = df.loc[
+        base_mask = (
             (df["VAR"] == "ENTR")
             & (df["SRC"] == "SSIS")
-            & (df["TIME"] == year)
             & (df["Size Class"] == "Total")
             & (df["LOCATION"] == country)
-        ].copy()
+        )
+        # OECD business demography can end before 2022 -> resolve to the nearest available
+        # year for this country so the ISIC table is populated (otherwise the empty filter
+        # drops the country column and `isic_table[country]` raises KeyError).
+        year = _closest_time(df.loc[base_mask, "TIME"], year)
+        df = df.loc[base_mask & (df["TIME"] == year)].copy()
 
         output.index = range(len(output))
         output.index = range(len(output))
@@ -506,9 +525,10 @@ class OECDEconData:
         if country.value in force_tau_sif:
             return force_tau_sif[country.value]
         df = self.data["employers_contribution_social_insurance"]
-        df = df.loc[(df["COU"] == country) & (df["YEA"] == year)]
+        country_df = df.loc[df["COU"] == country]
+        df = country_df.loc[country_df["YEA"] == year]
         if len(df) == 0:
-            df = self.find_closest_year(df, year)
+            df = self.find_closest_year(country_df, year)  # year absent (e.g. 2022) -> nearest available
         return df.loc[df["RATE_THRESH"] == "01_MR", "Value"].iloc[0] / 100.0
 
     def read_tau_siw(self, country: Country | str | Region, year: int) -> float:
@@ -532,9 +552,10 @@ class OECDEconData:
         if country.value in force_tau_siw:
             return force_tau_siw[country.value]
         df = self.data["employees_contribution_social_insurance"]
-        df = df.loc[(df["COU"] == country) & (df["YEA"] == year)]
+        country_df = df.loc[df["COU"] == country]
+        df = country_df.loc[country_df["YEA"] == year]
         if len(df) == 0:
-            df = self.find_closest_year(df, year)
+            df = self.find_closest_year(country_df, year)  # year absent (e.g. 2022) -> nearest available
         return df.loc[df["RATE_THRESH"] == "01_MR", "Value"].iloc[0] / 100.0
 
     def read_tau_firm(self, country: Country | str | Region, year: int) -> float:
@@ -558,9 +579,10 @@ class OECDEconData:
         if country.value in force_tau_firm:
             return force_tau_firm[country.value]
         df = self.data["corporate_income_tax_rate"]
-        df = df.loc[(df["COU"] == country) & (df["YEA"] == year)]
+        country_df = df.loc[df["COU"] == country]
+        df = country_df.loc[country_df["YEA"] == year]
         if len(df) == 0:
-            df = self.find_closest_year(df, year)
+            df = self.find_closest_year(country_df, year).copy()  # year absent (e.g. 2022) -> nearest available
         df.set_index("CORP_TAX", inplace=True)
         return df.loc["COMB_CIT_RATE", "Value"] / 100.0
 
@@ -791,9 +813,11 @@ class OECDEconData:
             country = country.parent_country
         df = self.data["total_unemployment_benefits_perc_gdp"]
         if country.value in df["LOCATION"].values:
-            value = df.loc[(df["LOCATION"] == country) & (df["TIME"] == year), "Value"].iloc[0]
-            return value / 100.0
+            sub = df.loc[df["LOCATION"] == country]
+            year = _closest_time(sub["TIME"], year)  # OECD benefits series can end before 2022
+            return sub.loc[sub["TIME"] == year, "Value"].iloc[0] / 100.0
         else:
+            year = _closest_time(df["TIME"], year)
             return df.loc[df["TIME"] == year, "Value"].mean() / 100.0
 
     def all_benefits_gdp_pct(self, country: str, year: int, average_oecd: float = 0.212) -> float:
