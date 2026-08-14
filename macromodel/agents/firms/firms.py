@@ -1002,7 +1002,49 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
-        return self._apply_production_target(self._apply_growth_limits(target))
+        return self._apply_production_gate(
+            self._apply_production_target(self._apply_growth_limits(target)))
+
+    def set_production_gate(self, industry_indices, index: float | None) -> None:
+        """Cap selected industries' target production at ``initial * index``.
+
+        THE CAPACITY GATE, and the missing physical constraint the 2026-08-11
+        capacity-factor diagnosis named: the Leontief limiting-capital computation
+        ignores `capital_inputs_utilisation_rate` and uses EFFECTIVE (drifting)
+        coefficients, so technical investment quietly raises output-per-capital --
+        measured at ~1.5x of base by 2035-45 for Manitoba's D under a binding capital
+        ceiling, while every uncapped province held ~1.0. A capital-side bound cannot
+        close that valve; a production-side gate can, and unlike the S7 tighter
+        ceiling it cannot migrate the excess to the next-slackest province, because
+        every gated province is capped at its own external path.
+
+        A CLAMP, not an override: production below the gate is untouched, so this
+        composes with (and is applied after) set_production_target. Same per-firm
+        accumulation semantics as the floor/ceiling/target siblings.
+        """
+        if not industry_indices or index is None:
+            self._production_gate_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_gate_by_firm", None) is None or \
+                self._production_gate_by_firm.shape[0] != mask.shape[0]:
+            self._production_gate_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_gate_by_firm[mask] = float(index)
+
+    def _apply_production_gate(self, target: np.ndarray) -> np.ndarray:
+        """Clamp the target for gated firms.  No-op if unset."""
+        idx = getattr(self, "_production_gate_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = np.minimum(out[mask], initial[mask] * idx[mask])
+        return out
 
     def set_production_target(self, industry_indices, index: float | None) -> None:
         """Drive selected industries' target production to ``initial * index``.

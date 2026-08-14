@@ -473,6 +473,8 @@ def build_link_prehook(
     row_electricity_split_strict: bool = False,
     row_electricity_split_signal: float = 0.0,
     capacity_ceiling_margin: float = 0.0,
+    capacity_gate_margin: float = 0.0,
+    capacity_gate_provinces: set[str] | None = None,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -721,6 +723,40 @@ def build_link_prehook(
                         floor_region, year,
                         {industries[i]: round(v, 4) for i, v in sorted(floored.items())},
                     )
+                # Capacity GATE: hard cap on target PRODUCTION at the CER generation
+                # path x margin. The capital ceiling below bounds INVESTMENT, but the
+                # limiting-capital computation uses effective (drifting) coefficients
+                # and ignores utilisation, so output-per-capital escapes upward
+                # (Manitoba ~1.5x of base under a binding ceiling). The gate closes
+                # that valve on the production side, and cannot migrate the excess:
+                # every gated province is capped at its own path. floored[] carries
+                # the CAPACITY index when capacity_index_basis="capacity"; dividing by
+                # the capacity_factor_uplift column (cf(0)/cf(t)) recovers the
+                # GENERATION path. Off unless capacity_gate_margin > 0.
+                country.firms.set_production_gate(None, None)
+                # Optional province filter: gating every province at path x margin
+                # (arm S9) squeezed the national total (1.88 vs CER 2.07) and re-rolled
+                # BC's basin; gating ONLY the runaway province is the surgical form.
+                _gate_this_province = (
+                    not capacity_gate_provinces
+                    or province_code in capacity_gate_provinces
+                )
+                if capacity_gate_margin and capacity_gate_margin > 0.0 and _gate_this_province:
+                    for idx, value in floored.items():
+                        _cfup = 1.0
+                        _code = industries[idx]
+                        if "capacity_factor_uplift" in cap.columns and _code in cap.index:
+                            _v = float(cap.loc[_code, "capacity_factor_uplift"])
+                            if np.isfinite(_v) and _v > 0.0:
+                                _cfup = _v
+                        country.firms.set_production_gate(
+                            [idx], (value / _cfup) * float(capacity_gate_margin))
+                    if floored:
+                        logger.info(
+                            "capacity gate: region=%s year=%s generation path x %.2f",
+                            floor_region, year, float(capacity_gate_margin),
+                        )
+
                 # Ceiling: the floor's twin, at floor x margin. One-sided guidance let
                 # a slack province over-build without limit (Manitoba's D investment
                 # 3.3x by 2050 against a CER generation path of 1.27x) and sell the
