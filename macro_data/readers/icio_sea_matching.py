@@ -159,17 +159,21 @@ def _match_country_iot_with_sea(
     #     "Value Added",
     # ] = new_va
     sea_reader.set_values_in_usd(country_name, "Value Added", new_va)
-    # sea_reader.df.loc[
-    #     sea_reader.df.index.get_level_values(0) == country_name,
-    #     "Labour Compensation",
-    # ] = get_sea(
-    #     country_name, "Value Added", sea_reader
-    # ) - get_sea(country_name, "Capital Compensation", sea_reader)
-    sea_reader.set_values_in_usd(
-        country_name,
-        "Labour Compensation",
-        get_sea(country_name, "Value Added", sea_reader) - get_sea(country_name, "Capital Compensation", sea_reader),
-    )
+    # Labour Compensation drives ONLY the firm wage bill (== firm labour cost), not the GDP identity
+    # (which is output/expenditure-based) and not capital technology. Prefer OBSERVED compensation of
+    # employees (PRM500000 wages + PRM600000 employer contributions, annual CAD-abs x1e6 -- the same
+    # units as new_va == annual IO value added) when it has been injected for this region; otherwise
+    # fall back to the legacy residual VA - GFCF-reconciled capital compensation (which over-states
+    # labour because the GFCF-based capcomp is far below true operating surplus). Capital Compensation
+    # stays GFCF-based (set above) for the investment allocation and the depreciation rate.
+    observed_coe = getattr(sea_reader, "can_2022_compensation_of_employees", {}).get(country_name)
+    if observed_coe is not None:
+        labour_compensation = np.asarray(observed_coe, dtype=float)
+    else:
+        labour_compensation = get_sea(country_name, "Value Added", sea_reader) - get_sea(
+            country_name, "Capital Compensation", sea_reader
+        )
+    sea_reader.set_values_in_usd(country_name, "Labour Compensation", labour_compensation)
     # Update Capital Stock values using proper indexing to avoid chained assignment
     mask = (sea_reader.df.index.get_level_values(0) == country_name) & (
         sea_reader.df.index.get_level_values(1).isin(sea_reader.industries)

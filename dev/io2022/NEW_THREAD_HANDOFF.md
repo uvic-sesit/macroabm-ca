@@ -32,18 +32,30 @@ depletion under its demand overlay — the known **"intermediate lock"/demand-ch
 from the capital fix and explicitly NOT a failure of it** (`INTEGRATION_LOG.md` #30). Do not mix that
 growth work into basic DataWrapper integration.
 
+## Validated so far (simple/default baseline; see INTEGRATION_LOG #29–#33)
+- **Capital treatment (#29)** — pre-fold non-negative capital composition; t0→t1 collapse fixed.
+- **StatCan 36-10-0489 employment shares (#31)** — wired to province×sector headcount.
+- **Observed compensation of employees (#32)** — firm wage bill = PRM500000 wages + PRM600000 employer
+  (from `macroabm-io2022/canonical/VA_tax_output_basic.csv`; regenerate the input with
+  `dev/io2022/prepare_compensation_input.py`); `tau_sif` = observed per-province employer ratio.
+- **CAD-native IO currency handling (#33)** — `from_usd_to_lcu_io` removes the spurious ~1.30 USD→CAD on
+  the 2022 CAD IO/SEA ingestion; Compustat (USD) keeps the real rate. Model CoE/wages/employer/VA now
+  match canonical CAD.
+
+13q simple/default acceptance: real GVA −6%, unemployment 7.7→35.7%, **0 NaN/inf**, GDP identity 13/13 at
+t0 — mechanically stable nationally, but 5 small regions (NL/PE/NB/YT/NT) collapse (see remaining #1).
+
 ## Remaining integration items (NOT yet worked on — do not start without direction)
-1. **Canadian employment shares not yet wired** — synthetic population still uses the HFCS France-proxy
-   employment distribution/normalization; validated StatCan `36-10-0489` shares prepared but unwired.
+1. **Zero-sector handling + small-province/territory scaling** — the ε floor (#28,
+   `_floor_empty_provincial_sectors`) fabricates tiny output/VA/investment, and territories use
+   `scale=10` (#21). At scale=1000 a small province has too few synthetic agents to express 50-sector
+   shares (PEI ≈ 61 employed / 50 sectors) and the ≥1-worker floor injects `scale` phantom persons per
+   empty sector. This is why NL/PE/NB/YT/NT collapse over 13q. Needs principled model-side zero-sector
+   handling + per-province scaling.
 2. **HFCS-2021 still raw / non-Canadianized** — household income/wealth/debt/consumption from raw
    European wave; SFS-2016 + CIS-2017 Canadianization (the orphaned `New_*` files, §G) not wired.
-3. **Observed IO wages still not wired** — firm wage bill = SEA Labour Compensation = VA − reconciled
-   capcomp (a residual); the validated IO wages + employer contributions are never wired through the
-   legacy labour-compensation reconciliation.
-4. **ε zero-sector workaround (#28) needs replacement** — `_floor_empty_provincial_sectors` fabricates
-   tiny output/VA/investment; replace with principled model-side zero-sector handling.
-5. **Territory scale hack (#21) needs resolution** — YT/NT/NU use `scale=10` (vs 1000); non-uniform
-   person normalization; small regions (incl. PEI) still unstable.
+3. **Candidate-growth baseline remains PARKED** — separate t2 intermediate/demand-channel collapse
+   (#30); do not mix into basic integration.
 
 Original forensic sections C–F (superseded) follow.
 

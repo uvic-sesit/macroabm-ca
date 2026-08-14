@@ -195,3 +195,114 @@ pushes demand (609B) past intermediate supply — the known **"intermediate lock
 NOT capital (capital is non-binding there). Small-region residuals: PEI = same intermediate depletion;
 YT/NT/NU = the `scale=10` #21 territory hack. **Classified as a separate growth-baseline / demand-channel
 issue; explicitly NOT a failure of the capital fix. Deferred — do not diagnose or fix here.**
+
+## ✅ #31: 2022 labour initialization — StatCan 36-10-0489 employment shares WIRED (2026-08-13)
+
+Classification: **data mapping** (employed-person structure). Simple/default baseline only.
+
+Previously the province×sector employment (headcount) came entirely from the HFCS (France-proxy)
+aggregate distribution split by **output** shares (`reassign_industries`); the validated 36-10-0489
+shares were prepared but unwired.
+
+**Change.** `_load_can_2022_employment_shares` (in `default_readers.py`) loads the validated shares and
+stashes them on the SEA reader inside `inject_can_provincial_socioeconomic_2022`;
+`reallocate_employment_by_shares` (`synthetic_population/utils.py`) reassigns employed individuals'
+`Employment Industry` to those shares, applied in `synthetic_country` build **after** the population is
+built and **before** firms inherit `number_employees_by_industry` (both proxied and EU paths). Every
+sector floored at ≥1 worker (mirrors `ensure_minimum_workers_in_industries`; StatCan has exact-zero
+cells and the model builds one firm per sector). Only the sector label changes — activity status,
+income, household links, the sector wage bill (SEA Labour Compensation), and value added are untouched.
+No behavioural equation changed.
+
+**Validation** (`dev/pkl_files/io2022_13prov_2022_labourfix.pkl`; build cmd as #29 with that path):
+- Realized vs target shares: large provinces match closely (ON L1=0.008, corr≈1.000; QC/AB/BC/MB/SK
+  L1≤0.10). Small provinces are min-1-floor-dominated (NL/NB/NS L1 0.15–0.22; **PEI L1=0.92**, only 61
+  synthetic employed across 50 sectors — a `scale`/#21 artifact, not a wiring error). corr ≥0.90 all.
+- GDP identity still **1.00000 all 13 regions** (0 off). ✅
+- wage/worker & labour productivity finite and plausibly ordered; 1 non-positive wage/worker per province
+  = a zero-labour-comp sector forced to 1 worker (the #28 zero-sector interaction).
+- t0→t1 stable (ON ~6910 employed), 4q smoke 0 non-finite.
+- **Simple/default 13q improved vs capital-only**: real GVA 894.5B→875.7B (−2.1%, was −7.9%);
+  unemployment 7.7%→25.6% (was →35.8%). No collapse.
+
+**Wages assessment (now resolved — see #32).** Earlier deferred; observed compensation was in fact
+available in the io2022 canonical layer.
+
+## ✅ #32: observed compensation of employees WIRED (PRM500000 + PRM600000) (2026-08-13)
+
+Classification: **data mapping** (firm wage bill). Simple/default baseline only. Capital/GFCF untouched.
+
+The firm wage bill was the residual `Labour Compensation = VA − GFCF-reconciled capcomp`, which
+over-stated labour (GFCF ≪ true operating surplus). Model expectation is **Option B** (proven from the
+equations): `add_wages` sets `Total Wages = labour_compensation/(1+tau_sif)` and
+`Total Wages Paid = labour_compensation`; firm `labour_costs = Total Wages·(1+tau_sif) = labour_compensation`.
+So the input **is total compensation of employees**, and `tau_sif` only splits it (wages vs employer part);
+firm labour cost = CoE for any `tau_sif`.
+
+**Change.** New input `dev/raw_data/can_2022/compensation_of_employees_oecd50_by_province_CADmillions.csv`
+(built from `macroabm-io2022/canonical/VA_tax_output_basic.csv`: `wages_salaries`=PRM500000,
+`employers_social_contributions`=PRM600000). `_load_can_2022_compensation_of_employees` stores per-region
+CoE (=wages+employer, ×1e6) and the employer/wages ratio on the SEA reader.
+`_match_country_iot_with_sea` sets `Labour Compensation = observed CoE` for 2022 provinces (same annual
+CAD-abs units as `new_va = annual IO VA`), instead of the residual — **Capital Compensation stays
+GFCF-based** (investment allocation + depreciation rate), VA unchanged. `read_tau_sif` (single source for
+both the wage split and the firm/government tax side) returns the observed per-province employer ratio,
+so the split matches PRM500000/PRM600000. Dependency basis: the GDP identity is output/expenditure-based
+and uses neither compensation field; GOS auto-recomputes as `Output − CoE − intermediate − taxes`.
+
+**Validation** (`dev/pkl_files/io2022_13prov_2022_wagefix.pkl`):
+- Firm labour cost / observed CoE = **1.30 uniformly** all provinces (the pre-existing USD→CAD factor
+  carried by every CAD magnitude — VA/output/capital); wages/PRM500000 = employer/PRM600000 = 1.30 too,
+  so **share and split are exact**. `tau_sif` now per-province 0.13–0.18 (was 0.022) = observed ratio.
+- Scale-adjusted wage/person: ON ≈ 91k, AB ≈ 56k CAD/yr (÷scale) — O(10⁴–10⁵), economically sane vs the
+  per-agent ~2.7e7 (resolves the scale red flag). `number_employees_by_industry` = synthetic agents,
+  agent ≈ `scale` persons; the wage bill is full-scale so per-agent wage = scale × per-person.
+- GDP identity **1.00000 all 13 regions** (0 off).
+- t0→t1 stable (ON ~6910), 4q smoke 0 non-finite, 13q simple/default no collapse
+  (real GVA 894.5B→849.1B, −5.1%; unemployment 7.7%→31.9% — slightly higher drift than the wage-residual
+  run because the correct, lower wage bill feeds less household income; still the separate small-region /
+  demand-channel drift, not a collapse).
+
+## ✅ #33: removed the spurious USD→CAD (~1.30) inflation for the 2022 CAN path (2026-08-13)
+
+Classification: **units / currency**. No economic equation changed. Capital/GFCF untouched.
+
+The 2022 provincial IO and the canonical VA/compensation inputs are **already in CAD**, but the generic
+pipeline labels SEA/IO values "USD" and converts to LCU via `ExchangeRatesReader.from_usd`
+(`from_usd_to_lcu`), which returned the market rate `from_usd(CAN, 2022) ≈ 1.30`. That factor was applied
+to every CAD magnitude in `industry_extraction` (`"... in LCU" = value × exchange_rate`) and the
+firm/bank/government/emissions builders, inflating VA/output/CoE by ~1.30 (this was the "uniform 1.30" in
+#32). Because it was uniform it cancelled in ratios and the GDP identity, so it was invisible there — but
+absolute CAD levels were 1.30× reality.
+
+**Change (SCOPED — not a global override).** A first pass globally forced `from_usd(CAN,2022)=1.0`, but a
+caller audit found **both** source families: CAD-native 2022 IO/SEA **and** genuinely USD-denominated
+Compustat bank balance sheets (`default_synthetic_banks` `get_country_data(exchange_rate=…)`). A global
+override wrongly zeroes the bank USD→CAD conversion. So the bypass lives on the **CAD-native IO/SEA
+ingestion path only**: new `ExchangeRatesReader.from_usd_to_lcu_io` returns 1.0 for CAN+2022 (real rate
+otherwise), used at `industry_extraction` (industry_vectors: output/VA/labour/capital/consumption/trade)
+and the firm **price numeraire** (`default_synthetic_firms`, `Price = Price in USD × exchange_rate`, must
+match the CAD vectors). `from_usd`/`from_usd_to_lcu` stay generic, so Compustat banks keep the real
+USD→CAD rate. Scoped to CAN+2022 (2014 baseline and other countries untouched); no economic equation
+changed.
+
+**Caller audit** (every `from_usd(CAN,2022)` in the 2022 build):
+| caller | source | native ccy | classification |
+|---|---|---|---|
+| `industry_extraction:40` industry_vectors | 2022 provincial IO + injected SEA | CAD | CAD-native → **1.0** |
+| `default_synthetic_firms:157` price numeraire | IO price base | CAD | CAD-native → **1.0** |
+| `default_synthetic_banks:291` Compustat | Compustat balance sheets | USD | genuinely USD → **keep ~1.30** |
+| `default_readers:806/823` gov debt / WB exports | OECD / World Bank | (LCU per docstring) | external, out of scope → unchanged |
+| `data_wrapper:303/330` emissions | emission factors | output-tied | conditional, unchanged |
+| `industry_extraction:63/219/252`, ROW / historical | OECD ICIO (2010-19) | USD | keep real rate (io returns real for year≠2022) |
+
+**Validation** (`dev/pkl_files/io2022_13prov_2022_cadscoped.pkl`; annual CAD bn):
+- CoE **1386.3** / wages **1202.4** / employer **183.9** = canonical **exactly**.
+- **Nominal VA reconciliation (like-for-like):** DataWrapper nominal VA = the IO `("TOTAL","Value Added")`
+  row that `get_value_added` reads = **2674.18B** vs canonical **2674.953B** → gap **0.77B (0.03%)**
+  (valuation/rounding between the compat OECD-50 IO and the canonical VA breakdown — same StatCan SU;
+  not aggregation, not currency). The earlier "~2.6%" was an artefact of comparing firm-based
+  double-deflated **real GVA** (2746B), a transformed quantity that differs from nominal VA by the
+  synthetic-firm construction (integer firm counts, #28 floor, single-firm rounding).
+- Compustat banks **preserved** (ON Equity 5.06e11, Deposits 2.53e11 — not zeroed).
+- GDP identity **0/13 off**; 4q smoke stable, 0 non-finite (real GVA 686.5→654.7B/qtr).

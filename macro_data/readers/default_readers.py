@@ -617,6 +617,11 @@ class DataReaders:
         if datapaths.ch4_emissions_path is not None and datapaths.ch4_emissions_path.exists():
             ch4_emissions = CH4EmissionsReaderCAN.read_data(datapaths.ch4_emissions_path)
 
+        # Hand the observed 2022 provincial employer social-contribution rates (loaded onto the SEA
+        # reader during the socioeconomic injection) to the OECD reader, whose read_tau_sif is the
+        # single source of tau_sif for both the wage decomposition and the firm/ government tax side.
+        oecd_econ.can_2022_employer_si_ratio = getattr(wiod_sea, "can_2022_employer_si_ratio", {})
+
         return cls(
             icio=icio,
             wiod_sea=wiod_sea,
@@ -940,6 +945,81 @@ def _floor_empty_provincial_sectors(
 CAN_2022_SOCIOECONOMIC_DIR = "can_2022"
 CAN_2022_CAPITAL_STOCK_FILE = "capital_stock_end2021_oecd50_by_province_CADmillions.csv"
 CAN_2022_CAPITAL_COMPENSATION_FILE = "capital_compensation_oecd50_by_province_CADmillions.csv"
+CAN_2022_EMPLOYMENT_SHARES_FILE = "employment_shares_oecd50_by_province.csv"
+CAN_2022_COMPENSATION_FILE = "compensation_of_employees_oecd50_by_province_CADmillions.csv"
+
+
+def _load_can_2022_compensation_of_employees(
+    raw_data_path: Path,
+    regions_dict: dict[Country, list[Region]],
+    industries: list[str],
+) -> tuple[dict[Region, np.ndarray], dict[Region, float]]:
+    """Load observed 2022 compensation of employees from the StatCan detail VA breakdown
+    (PRM500000 wages_salaries + PRM600000 employers_social_contributions, province x OECD-50, CAD mn).
+
+    Returns:
+        (coe_by_region, employer_ratio_by_region)
+        * coe_by_region[region]  = TOTAL compensation of employees per sector (wages + employer), x1e6.
+          This is the model's ``labour_compensation`` input (== firm-side Total Wages Paid == full firm
+          labour cost); ``tau_sif`` only decomposes it into employee wages vs employer contributions.
+        * employer_ratio_by_region[region] = sum(employer) / sum(wages) at region level -- the observed
+          employer social-contribution rate, used to override ``tau_sif`` so the decomposition matches
+          PRM500000 / PRM600000. (firm labour cost = Total Wages * (1+tau_sif) = CoE regardless of the
+          rate, so this only re-splits employee income vs employer contributions, not firm cost.)
+    """
+    path = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR / CAN_2022_COMPENSATION_FILE
+    if not path.exists():
+        warnings.warn(
+            f"2022 compensation of employees not found at {path}; keeping the residual "
+            "VA - GFCF-reconciled capital compensation for the wage bill (observed CoE NOT wired).",
+            DataFilterWarning,
+        )
+        return {}, {}
+    df = pd.read_csv(path)
+    df["region"] = df["region"].astype(str)
+    wages = df.pivot(index="region", columns="oecd", values="wages_salaries")
+    employer = df.pivot(index="region", columns="oecd", values="employers_social_contributions")
+    coe_by_region: dict[Region, np.ndarray] = {}
+    ratio_by_region: dict[Region, float] = {}
+    for regions in regions_dict.values():
+        for region in regions:
+            short_code = str(region).split("_", 1)[-1]
+            if short_code not in wages.index:
+                continue
+            w = wages.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+            e = employer.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+            coe_by_region[region] = (w + e) * 1e6
+            ratio_by_region[region] = float(e.sum() / w.sum()) if w.sum() > 0 else 0.0
+    return coe_by_region, ratio_by_region
+
+
+def _load_can_2022_employment_shares(
+    raw_data_path: Path,
+    regions_dict: dict[Country, list[Region]],
+    industries: list[str],
+) -> dict[Region, np.ndarray]:
+    """Load validated StatCan 36-10-0489 province x OECD-50 employment shares (sum to 1 per province),
+    aligned to the model's ``industries`` order. Returns {region: shares_vector}; regions absent from
+    the file are omitted (the caller then keeps the HFCS/output-share allocation for them).
+    """
+    path = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR / CAN_2022_EMPLOYMENT_SHARES_FILE
+    if not path.exists():
+        warnings.warn(
+            f"2022 employment shares not found at {path}; keeping the HFCS/output-share employment "
+            "allocation (StatCan 36-10-0489 shares NOT wired).",
+            DataFilterWarning,
+        )
+        return {}
+    shares_df = pd.read_csv(path, index_col=0)
+    shares_df.index = shares_df.index.astype(str)
+    out: dict[Region, np.ndarray] = {}
+    for regions in regions_dict.values():
+        for region in regions:
+            short_code = str(region).split("_", 1)[-1]
+            if short_code not in shares_df.index:
+                continue
+            out[region] = shares_df.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+    return out
 
 
 def inject_can_provincial_socioeconomic_2022(
@@ -1015,6 +1095,30 @@ def inject_can_provincial_socioeconomic_2022(
             f"2022 provincial socioeconomic injection skipped (WIOD fallback) for: {skipped}.",
             DataFilterWarning,
         )
+
+    # Also load the validated StatCan 36-10-0489 employment shares and stash them on the SEA reader.
+    # These drive the province x sector EMPLOYED-PERSON structure (headcount), applied to the synthetic
+    # population after it is built (see reallocate_employment_by_shares / synthetic_country build). The
+    # sector wage bill (SEA Labour Compensation) is unaffected, so wiring these fixes the employment
+    # distribution and hence wage/worker and labour productivity, without touching the value-added or
+    # GDP-identity reconciliation.
+    sea_reader.can_2022_employment_shares = _load_can_2022_employment_shares(
+        raw_data_path=raw_data_path,
+        regions_dict=regions_dict,
+        industries=industries,
+    )
+
+    # Load observed 2022 compensation of employees (PRM500000 + PRM600000). This replaces the residual
+    # VA - GFCF-capcomp as the firm wage bill (SEA "Labour Compensation"), applied in
+    # _match_country_iot_with_sea. The employer/wages ratio overrides tau_sif so the wages vs employer
+    # split matches PRM500000/PRM600000. Capital compensation and the GFCF/investment path are untouched.
+    coe_by_region, employer_ratio = _load_can_2022_compensation_of_employees(
+        raw_data_path=raw_data_path,
+        regions_dict=regions_dict,
+        industries=industries,
+    )
+    sea_reader.can_2022_compensation_of_employees = coe_by_region
+    sea_reader.can_2022_employer_si_ratio = employer_ratio
 
 
 def prune_icio_dict(icio_dict: dict[int, Any], prune_date: date):

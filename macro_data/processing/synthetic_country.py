@@ -107,6 +107,7 @@ from macro_data.processing.synthetic_population.hfcs_synthetic_population import
 from macro_data.processing.synthetic_population.synthetic_population import (
     SyntheticPopulation,
 )
+from macro_data.processing.synthetic_population.utils import reallocate_employment_by_shares
 from macro_data.readers import AGGREGATED_INDUSTRIES, ALL_INDUSTRIES, DataReaders
 from macro_data.readers.emission_fraction.emission_fraction_reader import EmissionFractions
 from macro_data.readers.emissions.emissions_reader import CH4EmissionsDataCAN, EmissionsData
@@ -252,6 +253,20 @@ class SyntheticCountry:
             country_name_short=country.to_two_letter_code(),
             exogenous_data=exogenous_country_data,
         )
+
+        # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
+        # onto the synthetic population, replacing the HFCS (France-proxy) + output-share allocation.
+        # Done before the firms inherit population.number_employees_by_industry so the individual and
+        # firm headcounts stay consistent for the matching step. Sector wage bills are unchanged.
+        employment_shares_by_region = getattr(readers.wiod_sea, "can_2022_employment_shares", {})
+        target_shares = employment_shares_by_region.get(country)
+        if target_shares is not None:
+            reallocate_employment_by_shares(
+                individual_data=population.individual_data,
+                target_shares=target_shares,
+                n_industries=len(industries),
+                min_workers=1,
+            )
 
         firms = DefaultSyntheticFirms.from_readers(
             readers=readers,
@@ -466,6 +481,20 @@ class SyntheticCountry:
             quarter=quarter,
             exogenous_data=exogenous_country_data,
         )
+
+        # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
+        # onto the proxied synthetic population, replacing the HFCS (France-proxy) + output-share
+        # allocation. Done before the firms inherit population.number_employees_by_industry so the
+        # individual and firm headcounts stay consistent for matching. Sector wage bills are unchanged.
+        employment_shares_by_region = getattr(readers.wiod_sea, "can_2022_employment_shares", {})
+        target_shares = employment_shares_by_region.get(country)
+        if target_shares is not None:
+            reallocate_employment_by_shares(
+                individual_data=population.individual_data,
+                target_shares=target_shares,
+                n_industries=len(industries),
+                min_workers=1,
+            )
 
         firms = DefaultSyntheticFirms.from_readers(
             readers=readers,
