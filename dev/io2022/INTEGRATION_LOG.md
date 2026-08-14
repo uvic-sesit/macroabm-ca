@@ -306,3 +306,34 @@ changed.
   synthetic-firm construction (integer firm counts, #28 floor, single-firm rounding).
 - Compustat banks **preserved** (ON Equity 5.06e11, Deposits 2.53e11 — not zeroed).
 - GDP identity **0/13 off**; 4q smoke stable, 0 non-finite (real GVA 686.5→654.7B/qtr).
+
+## 🏁 #34: integration acceptance run + LOCAL CHECKPOINT (2026-08-13)
+
+**Local checkpoint:** commit `e9346ff75e63de6944744635d50fd6df2eae9e54` on `feature/io-2022-integration`
+(not pushed; `real-growth-baseline` untouched at `d11edc1`).
+
+**13q simple/default acceptance** (`dev/pkl_files/io2022_13prov_2022_accept.pkl`; candidate-growth NOT run):
+- t0 GDP identity: **13/13 balanced**
+- NaN/inf over 13q (production/intermediate/labour): **0**
+- national real GVA: **687.3B → 646.4B (−6.0%)**
+- unemployment: 7.7% → 35.7%
+- small-region catastrophic collapse (end → ~0): **NL, PE, NB, YT, NT** (large provinces hold)
+
+**Status:**
+- Capital treatment — **validated** (#29).
+- Canadian StatCan 36-10-0489 employment shares — **wired** (#31).
+- Observed compensation of employees / wages / employer contributions — **wired** (#32).
+- CAD-native IO currency handling — **validated** (#33).
+- Candidate-growth baseline — **PARKED** (#30).
+- **Overall 2022 integration NOT yet complete**: mechanically stable nationally (0 NaN/inf, identity
+  holds) but the **small-region mechanics fail** (NL/PE/NB/YT/NT collapse over 13q).
+
+**Next task (explicit, in order):**
+1. Zero-sector handling — replace the ε floor (#28) with principled model-side handling.
+2. Principled small-region synthetic-population scaling — per-province `scale` so small
+   provinces/territories carry enough agents to express 50-sector shares without the ≥1-worker floor
+   injecting `scale` phantom persons per empty sector (supersedes the #21 scale=10 hack).
+3. Rerun the simple/default 13q baseline and confirm the small-region collapse is resolved.
+
+**Deferred until after regional mechanics are stable:** HFCS-2021 Canadianization; post-2022
+external-series / vintage work.
