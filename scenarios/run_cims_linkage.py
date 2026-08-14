@@ -742,19 +742,39 @@ def build_link_prehook(
                     or province_code in capacity_gate_provinces
                 )
                 if capacity_gate_margin and capacity_gate_margin > 0.0 and _gate_this_province:
+                    _gated = {}
                     for idx, value in floored.items():
-                        _cfup = 1.0
                         _code = industries[idx]
+                        # D ONLY. The floored dict also carries the fossil supply
+                        # floors (B05b/B05c), whose production is exogenously PINNED
+                        # to CER's path -- a gate below the pin would clip the very
+                        # path the pin exists to follow. Measured in arm S9 (gate on
+                        # every floored industry): B05c's 2050 gate (1.03 x 1.1 = 1.13)
+                        # sat far below its production pin (1.46).
+                        if _code != "D":
+                            continue
+                        _cfup, _invup = 1.0, 1.0
                         if "capacity_factor_uplift" in cap.columns and _code in cap.index:
                             _v = float(cap.loc[_code, "capacity_factor_uplift"])
                             if np.isfinite(_v) and _v > 0.0:
                                 _cfup = _v
-                        country.firms.set_production_gate(
-                            [idx], (value / _cfup) * float(capacity_gate_margin))
-                    if floored:
+                        # The capacity_index column is the multiplier-SCALED floor
+                        # (index = scaled in generation_capacity); the raw CER path is
+                        # value / investment_uplift. Arm S10 measured the consequence
+                        # of skipping this: Manitoba's floor read 2.85 at 2050 against
+                        # a CER path of ~1.27, so the gate armed at ~3.1x and never
+                        # bound -- MB Net-zero growth stayed 2.13 vs CER 1.27.
+                        if "investment_uplift" in cap.columns and _code in cap.index:
+                            _v = float(cap.loc[_code, "investment_uplift"])
+                            if np.isfinite(_v) and _v > 0.0:
+                                _invup = _v
+                        _gate_val = (value / _invup / _cfup) * float(capacity_gate_margin)
+                        country.firms.set_production_gate([idx], _gate_val)
+                        _gated[_code] = round(_gate_val, 4)
+                    if _gated:
                         logger.info(
-                            "capacity gate: region=%s year=%s generation path x %.2f",
-                            floor_region, year, float(capacity_gate_margin),
+                            "capacity gate: region=%s year=%s generation path x %.2f -> %s",
+                            floor_region, year, float(capacity_gate_margin), _gated,
                         )
 
                 # Ceiling: the floor's twin, at floor x margin. One-sided guidance let
