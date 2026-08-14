@@ -472,6 +472,7 @@ def build_link_prehook(
     row_electricity_split: dict | None = None,
     row_electricity_split_strict: bool = False,
     row_electricity_split_signal: float = 0.0,
+    capacity_ceiling_margin: float = 0.0,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -720,6 +721,22 @@ def build_link_prehook(
                         floor_region, year,
                         {industries[i]: round(v, 4) for i, v in sorted(floored.items())},
                     )
+                # Ceiling: the floor's twin, at floor x margin. One-sided guidance let
+                # a slack province over-build without limit (Manitoba's D investment
+                # 3.3x by 2050 against a CER generation path of 1.27x) and sell the
+                # over-production to whoever the pool handed it -- including Alberta,
+                # whose D intake went 11% -> 29% imported while its own buildout
+                # under-ran. Off unless capacity_ceiling_margin > 0.
+                country.firms.set_capacity_ceiling(None, None)
+                if capacity_ceiling_margin and capacity_ceiling_margin > 0.0:
+                    for idx, value in floored.items():
+                        country.firms.set_capacity_ceiling(
+                            [idx], value * float(capacity_ceiling_margin))
+                    if floored:
+                        logger.info(
+                            "capacity ceiling: region=%s year=%s floor x %.2f",
+                            floor_region, year, float(capacity_ceiling_margin),
+                        )
 
                 # Refund clean-electricity investment tax credits to the investing sector.
                 # ITC region is resolved INDEPENDENTLY of linkage_data_per_province, because

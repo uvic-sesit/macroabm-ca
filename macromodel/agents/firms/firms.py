@@ -602,6 +602,25 @@ class Firms(Agent):
         mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
         fn.set_minimum_capital_stock(mask, float(index))
 
+    def set_capacity_ceiling(self, industry_indices, index: float | None) -> None:
+        """Cap the reference capital stock of the given industries at ``initial * index``.
+
+        The capacity floor's twin. The floor turns CER's capacity path into a LOWER
+        bound on investment; nothing bounded it from above, so a slack province could
+        over-build without limit -- Manitoba's D investment ran 3.3x by 2050 against a
+        CER generation path of 1.27x, and the over-production fed the pool's
+        slack-capture loop. A no-op when the configured target-capital function does
+        not support it.
+        """
+        fn = self.functions.get("target_capital_inputs")
+        if fn is None or not hasattr(fn, "set_maximum_capital_stock"):
+            return
+        if not industry_indices or index is None:
+            fn.set_maximum_capital_stock(None, None)
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        fn.set_maximum_capital_stock(mask, float(index))
+
     def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
         """Per-industry time series (timesteps x industries) for lightweight diagnostics.
 
