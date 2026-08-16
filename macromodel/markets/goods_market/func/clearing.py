@@ -170,48 +170,19 @@ class GoodsMarketClearer(ABC):
         # unless the backstop is suppressed for the same industries.  Empty by default,
         # so behaviour is unchanged unless set_import_limited_industries() is called.
         self._import_limited_industries: set[int] = set()
-        # ROW split anchor: when enabled, ROW's import demand is routed to origin
-        # countries by their BASE-YEAR origin shares before the unconstrained pool
-        # clearing.  Off by default; see set_row_split_anchor().
-        self._row_split_anchor: bool = False
-        self._row_split_anchor_excluded: set[int] = set()
         # Per-industry external origin shares for ROW's purchases; see
         # set_row_split_override().  Empty by default.
         self._row_split_override: dict[int, np.ndarray] = {}
         self._row_split_strict: bool = False
         self._row_split_signal: float = 0.0
 
-    def set_row_split_anchor(self, enabled: bool, exclude_industries=None) -> None:
-        """Anchor WHICH countries supply ROW to base-year origin shares.
-
-        The LEVEL of ROW's imports stays what it was: each origin's anchored pass is
-        capped at (base-year origin share x ROW's initial demand), shares sum to 1, and
-        any demand an origin cannot fill falls through to the general pool exactly as
-        before, so the anchor shapes the split without making ROW a priority claimant
-        on any additional quantity.
-
-        With real_country_prioritisation clamped at 1.0 the trade-proportion stage
-        zeroes every province's planned sales to ROW, so ROW's imports are otherwise
-        filled entirely in the unconstrained pool -- whichever province happens to have
-        slack captures the sale.  That is the mechanism behind the arbitrary provincial
-        ROW-export split.
-
-        Args:
-            enabled: turn the anchor on or off.
-            exclude_industries: industry indices whose ROW demand keeps pool clearing
-                (e.g. exogenous-production fuels whose export geography must follow the
-                production path, not the base year).
-        """
-        self._row_split_anchor = bool(enabled)
-        self._row_split_anchor_excluded = {int(i) for i in (exclude_industries or [])}
-
     def set_row_split_override(self, shares_by_industry, *, strict: bool = False,
                                signal_shortfall: float = 0.0) -> None:
         """Route ROW's demand for SPECIFIC industries to externally supplied origin shares.
 
-        Unlike set_row_split_anchor -- which freezes every industry's export geography at
-        the base year and was rejected for destabilising scenarios that move production
-        geography -- this takes {industry_index: shares_over_countries} for a chosen few
+        Unlike an all-industry base-year anchor -- rejected twice for destabilising
+        scenarios that move production geography -- this takes
+        {industry_index: shares_over_countries} for a chosen few
         industries, and the shares may be updated per year by the caller.  Built for
         sector D: ROW's electricity purchases (international interchange plus
         hydrogen-electrolysis load) belong in the provinces CER says export and make
@@ -730,28 +701,18 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                         destin_trade_proportions=destin_trade_proportions,
                     )
 
-        # ROW split anchor: bilateral province -> ROW passes on base-year origin shares,
-        # BEFORE the unconstrained pool below.  Buyer-side proportions apply to ROW's
-        # INITIAL demand (collect_buyer_info takes min(share x initial, remaining)), so
-        # each origin is capped at its base-year share of ROW's demand and the passes do
-        # not compound; whatever an origin cannot fill stays in ROW's remaining demand
-        # and clears in the pool as it always did, keeping the level residual.
+        # ROW split override: bilateral province -> ROW passes on externally supplied
+        # origin shares, BEFORE the unconstrained pool below.  Buyer-side proportions
+        # apply to ROW's INITIAL demand (collect_buyer_info takes
+        # min(share x initial, remaining)), so each origin is capped at its share of
+        # ROW's demand and the passes do not compound; whatever an origin cannot fill
+        # stays in ROW's remaining demand and clears in the pool as it always did,
+        # keeping the level residual.
         split_shortfalls: dict[tuple[int, int], float] = {}
-        if (self._row_split_anchor or self._row_split_override) and row_index >= 0:
-            if self._row_split_anchor:
-                anchor_shares = default_origin_trade_proportions[:, row_index, :].copy()
-                anchor_shares[row_index] = 0.0
-                for g_excl in self._row_split_anchor_excluded:
-                    anchor_shares[:, g_excl] = 0.0
-                denom = anchor_shares.sum(axis=0)
-                anchor_shares = np.divide(
-                    anchor_shares, denom, out=np.zeros_like(anchor_shares), where=denom > 0.0
-                )
-            else:
-                anchor_shares = np.zeros(
-                    (n_countries, default_origin_trade_proportions.shape[2])
-                )
-            # External per-industry shares take precedence over the base-year anchor.
+        if self._row_split_override and row_index >= 0:
+            anchor_shares = np.zeros(
+                (n_countries, default_origin_trade_proportions.shape[2])
+            )
             for g_over, shares_over in self._row_split_override.items():
                 if 0 <= int(g_over) < anchor_shares.shape[1] and len(shares_over) == n_countries:
                     anchor_shares[:, int(g_over)] = shares_over

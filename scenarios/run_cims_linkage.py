@@ -1179,31 +1179,6 @@ def apply_import_limits(
         )
 
 
-def apply_row_split_anchor(
-    sim: Simulation, enabled: bool, exclude_indices: list[int] | None = None
-) -> None:
-    """Anchor which provinces supply ROW to base-year origin shares (level residual).
-
-    A retry of the 2026-08-12 arm K experiment against the corrected baseline: arm K's
-    Net-zero collapse ran through Alberta's unpinned C19 exports, a market that the C19
-    flat-export pin has since removed.  Applied after build/restore like the import
-    limits, so checkpoint-restored sims get it too.  No-op when *enabled* is false.
-    """
-    if not enabled:
-        return
-    clearer = sim.goods_market.functions.get("clearing")
-    if clearer is not None and hasattr(clearer, "set_row_split_anchor"):
-        clearer.set_row_split_anchor(True, exclude_industries=exclude_indices)
-        logger.info(
-            "ROW split anchor ENABLED: ROW purchases routed by base-year origin shares "
-            "(excluded industry indices: %s)", sorted(exclude_indices or []),
-        )
-    else:
-        logger.warning(
-            "Goods-market clearer does not support the ROW split anchor; flag ignored."
-        )
-
-
 def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
     """Resolve a comma-separated list of macro sector codes to industry indices.
 
