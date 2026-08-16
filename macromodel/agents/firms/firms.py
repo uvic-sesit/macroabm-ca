@@ -2620,12 +2620,9 @@ class Firms(Agent):
 
     def link(
         self,
-        requested_quantities: pd.DataFrame,
-        investment: pd.DataFrame,
         comparable_codes: list[str],
         energy_bundle_codes: list[str],
         *,
-        method: str = "nudge",
         energy_intensity: pd.DataFrame | None = None,
         anchor_energy_intensity: pd.DataFrame | None = None,
         capital_intensity: pd.DataFrame | None = None,
@@ -2635,48 +2632,32 @@ class Firms(Agent):
         linkage_owns_coefficients: bool = False,
         additive_intensity: bool = False,
         transition_capital=None,
-        intermediate_factor: float = 0.1,
-        capital_factor: float = 0.1,
-        capital_investment_boost: float = 0.1,
     ) -> None:
         """Adjust productivity matrices using CIMS linkage data (no file I/O).
 
-        Two methods are supported:
+        Directly *sets* each comparable industry's energy-per-unit-output
+        coefficient toward the CIMS engineering result, index-anchored to a
+        base/anchor year.  Because the macroABM production technology is
+        Leontief (``used_input = production / productivity``), ``productivity``
+        is the reciprocal of energy-per-output, so this is a direct assignment
+        rather than a search.  Anchoring on the macroABM's own base-year
+        coefficient keeps the units (monetary IO intensities) and eliminates a
+        base-year level shock.  Both the energy (intermediate) and investment
+        (capital) channels are overwritten.  (A legacy damped "nudge" method
+        existed and was removed 2026-08 as unreachable; see git history.)
 
-        * ``method="nudge"`` (legacy): translates CIMS-requested energy
-          quantities and investment into damped, one-directional *nudges* on the
-          base productivity matrices.  This aligns only the energy *mix* (it
-          rescales CIMS energy to the macro total), by a fixed multiplicative
-          step, and never raises intermediate productivity.
-
-        * ``method="intensity_target"`` (recommended): directly *sets* each
-          comparable industry's energy-per-unit-output coefficient toward the
-          CIMS engineering result, index-anchored to a base/anchor year.  Because
-          the macroABM production technology is Leontief
-          (``used_input = production / productivity``), ``productivity`` is the
-          reciprocal of energy-per-output, so this is a direct assignment rather
-          than a search.  Anchoring on the macroABM's own base-year coefficient
-          keeps the units (monetary IO intensities) and eliminates the base-year
-          level shock that destabilises the ``nudge`` method.  Both the energy
-          (intermediate) and investment (capital) channels are overwritten.
-
-        NOTE: both methods mutate the *base* coefficient matrices.  In
-        ``intensity_target`` mode the affected firm-level tech multipliers are
-        reset to 1 (unless ``reset_multipliers=False``) so the *effective* energy
-        mix equals the CIMS target at each milestone; between milestones the
-        model is free to drift them again (e.g. bundle arbitrage), which is what
-        lets the macroABM substitute across the 5-year period.
+        NOTE: this mutates the *base* coefficient matrices.  The affected
+        firm-level tech multipliers are reset to 1 (unless
+        ``reset_multipliers=False``) so the *effective* energy mix equals the
+        CIMS target at each milestone; between milestones the model is free to
+        drift them again (e.g. bundle arbitrage), which is what lets the
+        macroABM substitute across the 5-year period.
 
         Args:
-            requested_quantities: (industry x good) CIMS demand matrix (nudge).
-            investment: (industry x good) CIMS investment matrix (nudge).
             comparable_codes: Industry codes with a CIMS counterpart.
             energy_bundle_codes: Energy-input codes (columns to update).
-            method: ``"nudge"`` or ``"intensity_target"``.
-            energy_intensity: current-year energy-per-output matrix
-                (intensity_target).
-            anchor_energy_intensity: anchor-year energy-per-output matrix
-                (intensity_target).
+            energy_intensity: current-year energy-per-output matrix.
+            anchor_energy_intensity: anchor-year energy-per-output matrix.
             capital_intensity / anchor_capital_intensity: same for the capital
                 (investment) channel.
             is_anchor: True when this call is at the anchor year; captures the
@@ -2684,83 +2665,20 @@ class Firms(Agent):
                 otherwise unchanged (index = 1).
             reset_multipliers: reset the affected energy-column tech multipliers
                 to 1 at each milestone so the effective mix is overwritten.
-            intermediate_factor / capital_factor / capital_investment_boost:
-                damping steps for the legacy ``nudge`` method.
         """
-        method = (method or "nudge").lower()
-        if method == "intensity_target":
-            self._link_intensity_target(
-                comparable_codes,
-                energy_bundle_codes,
-                energy_intensity=energy_intensity,
-                anchor_energy_intensity=anchor_energy_intensity,
-                capital_intensity=capital_intensity,
-                anchor_capital_intensity=anchor_capital_intensity,
-                is_anchor=is_anchor,
-                reset_multipliers=reset_multipliers,
-                linkage_owns_coefficients=linkage_owns_coefficients,
-                additive_intensity=additive_intensity,
-                transition_capital=transition_capital,
-            )
-            return
-        if method != "nudge":
-            raise ValueError(f"Unknown link method {method!r}; expected 'nudge' or 'intensity_target'.")
-
-        industries_list = list(self.industries)
-        industry_idx = self.states["Industry"]
-        n_ind = len(industries_list)
-
-        used_interm = self.ts.current("used_intermediate_inputs")  # (n_firms, n_ind)
-        used_capital = self.ts.current("used_capital_inputs")  # (n_firms, n_ind)
-
-        industry_interm = np.zeros((n_ind, n_ind))
-        industry_capital = np.zeros((n_ind, n_ind))
-        for j in range(n_ind):
-            industry_interm[:, j] = np.bincount(industry_idx, weights=used_interm[:, j], minlength=n_ind)
-            industry_capital[:, j] = np.bincount(industry_idx, weights=used_capital[:, j], minlength=n_ind)
-
-        valid_comparable = [
-            c for c in comparable_codes if c in industries_list and c in requested_quantities.index
-        ]
-        valid_energy = [
-            c for c in energy_bundle_codes if c in industries_list and c in requested_quantities.columns
-        ]
-
-        for i_code in valid_comparable:
-            i = industries_list.index(i_code)
-
-            macro_total = sum(industry_interm[i, industries_list.index(j_code)] for j_code in valid_energy)
-            cims_total = sum(float(requested_quantities.loc[i_code, j_code]) for j_code in valid_energy)
-
-            inv_total = sum(float(investment.loc[i_code, k]) for k in valid_energy)
-            capital_macro_total = sum(industry_capital[i, industries_list.index(k)] for k in valid_energy)
-
-            for j_code in valid_energy:
-                j = industries_list.index(j_code)
-
-                if cims_total != 0:
-                    scaled_rq = float(requested_quantities.loc[i_code, j_code]) * macro_total / cims_total
-                else:
-                    scaled_rq = 0.0
-
-                coeff_interm = self.base_intermediate_inputs_productivity_matrix[j, i]
-
-                if scaled_rq != 0 and (industry_interm[i, j] - scaled_rq) < 0 and coeff_interm >= 1:
-                    self.base_intermediate_inputs_productivity_matrix[j, i] *= 1 - intermediate_factor
-
-                if inv_total == 0:
-                    continue
-
-                scaled_inv = float(investment.loc[i_code, j_code]) * (capital_macro_total / inv_total)
-                capital_diff = industry_capital[i, j] - scaled_inv
-                coeff_capital = self.base_capital_inputs_productivity_matrix[j, i]
-
-                if capital_diff > 0:
-                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 + capital_factor
-                elif capital_diff < 0 and coeff_capital >= 1:
-                    self.base_capital_inputs_productivity_matrix[j, i] *= 1 - capital_factor * (
-                        1 + capital_investment_boost
-                    )
+        self._link_intensity_target(
+            comparable_codes,
+            energy_bundle_codes,
+            energy_intensity=energy_intensity,
+            anchor_energy_intensity=anchor_energy_intensity,
+            capital_intensity=capital_intensity,
+            anchor_capital_intensity=anchor_capital_intensity,
+            is_anchor=is_anchor,
+            reset_multipliers=reset_multipliers,
+            linkage_owns_coefficients=linkage_owns_coefficients,
+            additive_intensity=additive_intensity,
+            transition_capital=transition_capital,
+        )
 
     def _link_intensity_target(
         self,
