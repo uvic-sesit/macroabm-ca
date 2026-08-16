@@ -1002,8 +1002,7 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
-        return self._apply_production_gate(
-            self._apply_production_target(self._apply_growth_limits(target)))
+        return self._apply_production_gate(self._apply_production_target(target))
 
     def set_production_gate(self, industry_indices, index: float | None) -> None:
         """Cap selected industries' target production at ``initial * index``.
@@ -1062,8 +1061,7 @@ class Firms(Agent):
         -2.1% against a target of +25.5%, with capital unconstrained and inputs slack. The
         sector does not expand to fill an order book it has not yet seen.
 
-        Applied AFTER the growth limits, so an exogenous path is not silently clipped by a
-        rate cap -- the whole point is to follow the path. It is applied to the TARGET, not
+        It is applied to the TARGET, not
         to production itself, so the input and capital constraints still bind: if the
         sector physically cannot reach the path, production falls short and that shows up
         as a gap rather than being papered over.
@@ -1097,70 +1095,6 @@ class Firms(Agent):
             return target
         out = np.array(target, copy=True)
         out[mask] = initial[mask] * idx[mask]
-        return out
-
-    def set_growth_limits(
-        self,
-        industry_indices,
-        max_growth_per_year: float | None,
-        max_decline_per_year: float | None,
-        steps_per_year: int,
-    ) -> None:
-        """Configure a per-sector production-growth clamp (see :meth:`_apply_growth_limits`).
-
-        Args:
-            industry_indices: industry indices whose firms are growth-limited.
-            max_growth_per_year: cap on annual production growth (e.g. 0.05 = +5%/yr),
-                or ``None`` to leave the upside unbounded.
-            max_decline_per_year: cap on annual production decline (0.05 = -5%/yr),
-                or ``None`` to leave the downside unbounded.
-            steps_per_year: simulation steps per calendar year (defines the trailing
-                reference used for the year-on-year band).
-        """
-        self._growth_limit_indices = np.asarray(list(industry_indices), dtype=int)
-        self._growth_limit_up = None if max_growth_per_year is None else float(max_growth_per_year)
-        self._growth_limit_down = None if max_decline_per_year is None else float(max_decline_per_year)
-        self._growth_limit_steps_per_year = int(steps_per_year)
-
-    def _apply_growth_limits(self, target: np.ndarray) -> np.ndarray:
-        """Clamp target production of listed sectors to a year-on-year growth band.
-
-        For firms in the configured industries, the planned output is bounded to
-        ``[ref*(1-max_decline), ref*(1+max_growth)]`` where ``ref`` is the firm's
-        own production one year (``steps_per_year`` steps) ago -- comparing the
-        same quarter a year back so seasonality cancels.  This imposes production
-        stickiness / adjustment costs on the listed (typically extraction)
-        sectors so their output cannot swing faster than is realistic, keeping
-        both the macro dynamics and the CIMS feedback bounded.
-
-        The clamp is skipped for firms with no meaningful reference (first year of
-        the run, or a currently-idle firm with zero prior output).  Robust to
-        checkpoints written before this feature (missing attributes -> no-op).
-        """
-        indices = getattr(self, "_growth_limit_indices", None)
-        if indices is None or len(indices) == 0:
-            return target
-        up = getattr(self, "_growth_limit_up", None)
-        down = getattr(self, "_growth_limit_down", None)
-        if up is None and down is None:
-            return target
-        steps_per_year = int(getattr(self, "_growth_limit_steps_per_year", 4))
-
-        history = self.ts.historic("production")
-        if len(history) < steps_per_year:
-            return target  # not enough history for a year-ago reference yet
-
-        ref = np.asarray(history[-steps_per_year], dtype=float).ravel()
-        industry = np.asarray(self.states["Industry"])
-        firm_mask = np.isin(industry, indices) & (ref > 0.0)
-        if not firm_mask.any():
-            return target
-
-        out = np.array(target, dtype=float, copy=True)
-        if up is not None:
-            out = np.where(firm_mask, np.minimum(out, ref * (1.0 + up)), out)
-        if down is not None:
-            out = np.where(firm_mask, np.maximum(out, ref * (1.0 - down)), out)
         return out
 
     def compute_target_intermediate_inputs_production(self) -> np.ndarray:

@@ -202,48 +202,6 @@ def test_bundle_aggregate_matches_matmul_for_finite_and_is_nan_safe():
     assert np.isinf(out[0, 1])  # singleton bundle of the inf good stays inf
 
 
-def _fake_firms_growth_limit(industry_of_firm, prod_history):
-    return types.SimpleNamespace(
-        states={"Industry": np.asarray(industry_of_firm)},
-        ts=types.SimpleNamespace(historic=lambda key: prod_history),
-    )
-
-
-def test_growth_limit_caps_upside_and_downside_for_listed_sectors():
-    # firm0 -> industry 0 (capped), firm1 -> industry 1 (not capped). ref = 4 steps ago.
-    hist = [np.array([10.0, 20.0])] * 4
-    f = _fake_firms_growth_limit([0, 1], hist)
-    Firms.set_growth_limits(f, industry_indices=[0], max_growth_per_year=0.05, max_decline_per_year=0.05, steps_per_year=4)
-
-    # Both firms want to double: capped firm0 pinned to +5% band; firm1 untouched.
-    out = Firms._apply_growth_limits(f, np.array([20.0, 40.0]))
-    assert out[0] == pytest.approx(10.5)   # min(20, 10*1.05)
-    assert out[1] == pytest.approx(40.0)   # uncapped sector unchanged
-
-    # Both firms want to collapse: capped firm0 floored to -5% band; firm1 untouched.
-    out = Firms._apply_growth_limits(f, np.array([2.0, 5.0]))
-    assert out[0] == pytest.approx(9.5)    # max(2, 10*0.95)
-    assert out[1] == pytest.approx(5.0)
-
-
-def test_growth_limit_skips_without_enough_history_or_zero_reference():
-    # Not enough history (need >= steps_per_year) -> unchanged.
-    f = _fake_firms_growth_limit([0], [np.array([10.0])] * 3)
-    Firms.set_growth_limits(f, [0], 0.05, 0.05, 4)
-    assert Firms._apply_growth_limits(f, np.array([99.0]))[0] == pytest.approx(99.0)
-
-    # Zero reference (idle firm) -> not clamped, free to start up.
-    f = _fake_firms_growth_limit([0], [np.array([0.0])] * 4)
-    Firms.set_growth_limits(f, [0], 0.05, 0.05, 4)
-    assert Firms._apply_growth_limits(f, np.array([99.0]))[0] == pytest.approx(99.0)
-
-
-def test_growth_limit_noop_when_unset():
-    f = _fake_firms_growth_limit([0], [np.array([10.0])] * 4)
-    # No set_growth_limits call -> getattr defaults -> passthrough.
-    assert Firms._apply_growth_limits(f, np.array([99.0]))[0] == pytest.approx(99.0)
-
-
 def test_industry_timeseries_dataframes_aggregates_by_industry():
     """Per-industry export sums quantity fields and production-weights price."""
     # 3 firms: two in industry 0 ("A"), one in industry 1 ("B"). 2 timesteps.
