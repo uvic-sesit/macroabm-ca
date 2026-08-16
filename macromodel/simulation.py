@@ -769,16 +769,16 @@ class Simulation:
             logging.getLogger(__name__).warning("Demand-decomposition export failed: %s", exc)
 
         # Realised sales split by BUYER country: the origin-destination matrix, per good,
-        # per timestep.  `GoodsMarket.set_trade_proportions` only *steers* clearing -- its
-        # own docstring says the proportions "influence but do not strictly determine
-        # actual trade flows" -- so a run that sets interprovincial electricity flows
-        # cannot be verified from the inputs.  It has to be measured on the output side,
-        # and nothing here previously carried it: `exports_by_good_nominal` is summed over
-        # destinations, and the per-destination series that *does* exist
+        # per timestep.  Trade proportions and the ROW split only *steer* clearing --
+        # they "influence but do not strictly determine actual trade flows" -- so a run
+        # that routes electricity geographically cannot be verified from the inputs.
+        # It has to be measured on the output side, and nothing here previously carried
+        # it: `exports_by_good_nominal` is summed over destinations, and the
+        # per-destination series that *does* exist
         # (`economy.ts["exports_before_taxes_to_<c>"]`) is NOMINAL and lives only in the
         # multi-GB full save.
         #
-        # REAL, and that is the point.  Interprovincial electricity is a quantity claim
+        # REAL, and that is the point.  Cross-province electricity is a quantity claim
         # (CER's GW.h), and the nominal aggregates are dominated by ROW, so a nominal
         # series cannot answer "did province A actually ship electricity to province B".
         #

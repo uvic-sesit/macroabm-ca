@@ -372,79 +372,6 @@ def _row_energy_total(anchor_frame, row_code: str, energy_codes, industries) -> 
     return total
 
 
-def _to_model_value_units(flows, labels, sim, d_index, cache):
-    """Rescale a GW.h flow matrix into the model's value units, per ORIGIN.
-
-    CER's flows are physical (GW.h); the goods market trades deflated IO VALUE.  That
-    difference is invisible to ``origin_trade_proportions``, which normalises each row
-    within a single origin so any per-origin factor cancels -- but NOT to
-    ``destin_trade_proportions``, which normalises each column ACROSS origins.  There a
-    GW.h share is simply the wrong share whenever a GW.h is worth different amounts
-    depending on where it came from.
-
-    It is worth very different amounts.  Model D output per CER GW.h spans SIX-fold across
-    provinces in the base year -- Newfoundland 0.33x the national average, Prince Edward
-    Island 1.99x, Nova Scotia 1.93x, Saskatchewan 1.38x -- while the model's D price is
-    nearly uniform (0.92-1.03x).  So this is a real difference in the value density of each
-    province's electricity, carried by the IO table, and not something the model's own
-    prices express.  Left uncorrected it tells each province to source its supply from
-    high-value-density neighbours in GW.h proportion, which over-sources them in value.
-
-    The weights come from the model's own base-year D output against the matrix's row sums
-    (which are CER generation by construction), computed ONCE and cached: they are a unit
-    conversion, not a control.  Recomputing them each milestone would instead feed the
-    model's drift back in -- New Brunswick reaches 4.4x by 2050 -- and tell its neighbours
-    to buy more from it precisely because it is producing too much.
-    """
-    flows = np.asarray(flows, dtype=float)
-    weights = cache.get("weights")
-    if weights is None:
-        generation = flows.sum(axis=1)
-        weights = np.ones(len(labels), dtype=float)
-        density, seen = np.ones(len(labels), dtype=float), []
-        for i, code in enumerate(labels):
-            if code == "ROW" or generation[i] <= 0.0:
-                continue
-            output = _model_industry_output(sim, code, d_index)
-            if output is None or not np.isfinite(output) or output <= 0.0:
-                continue
-            density[i] = output / generation[i]
-            seen.append(i)
-        if len(seen) < 2:
-            logger.warning(
-                "interprovincial electricity: could not derive value densities "
-                "(resolved %d provinces); leaving the matrix in GW.h.", len(seen)
-            )
-            return flows
-        # Normalised to mean 1 over the provinces that resolved, so only the RELATIVE
-        # densities matter; ROW keeps 1.0, since its value density is its own price and
-        # is not observable from this matrix.
-        density[seen] /= float(np.mean(density[seen]))
-        weights = density
-        cache["weights"] = weights
-        logger.info(
-            "interprovincial electricity: value densities (model D output per CER GW.h, "
-            "mean 1) %s",
-            {code: round(float(weights[i]), 3) for i, code in enumerate(labels)},
-        )
-    return flows * weights[:, None]
-
-
-def _model_industry_output(sim, code: str, industry_index: int) -> float | None:
-    """Current production of one industry in the province matching *code*."""
-    for name, country in sim.countries.items():
-        text = str(name)
-        if not (text.endswith(f"_{code}") or text == code):
-            continue
-        firms = country.firms
-        industry = np.asarray(firms.states["Industry"])
-        production = np.asarray(firms.ts.current("production"), dtype=float).ravel()
-        if industry.shape != production.shape:
-            return None
-        return float(np.nansum(production[industry == industry_index]))
-    return None
-
-
 def build_link_prehook(
     reader: CIMSDataReader,
     sector_map: SectorMap,
@@ -468,7 +395,6 @@ def build_link_prehook(
     household_energy_quantities: bool = False,
     firm_energy_quantities: bool = False,
     quantity_anchor_floor: float = 0.0,
-    interprovincial_flows: dict | None = None,
     row_electricity_split: dict | None = None,
     row_electricity_split_strict: bool = False,
     row_electricity_split_signal: float = 0.0,
@@ -498,69 +424,10 @@ def build_link_prehook(
     method = (method or "nudge").lower()
     if anchor_year is None and years:
         anchor_year = min(years)
-    # Base-year value densities for the interprovincial flow matrix, filled on the first
-    # milestone and reused thereafter.  See `_to_model_value_units`.
-    _value_density: dict[str, object] = {}
 
     def link_prehook(sim: Simulation, year: int, month: int) -> None:
         if month != 1 or year not in milestone:
             return
-
-        # Interprovincial electricity, set ONCE per milestone: there is one goods market
-        # for the whole simulation, so doing this inside the per-country loop below would
-        # rewrite the same global state ten times.  `interprovincial_flows` maps year ->
-        # (labels, origin-by-destination matrix); the market's country axis is
-        # `sorted(country names + "ROW")`, so the labels are resolved against that.
-        #
-        # The matrix is a full DISPOSITION of generation, not an interchange matrix: its
-        # diagonal is each province's own absorption and its last label is "ROW" carrying
-        # international trade.  Both matter -- `set_trade_proportions` normalises each row
-        # across every destination including the origin, so a zero diagonal reads as
-        # "export everything" and a missing ROW column reallocates international exports
-        # to the domestic share.  See `cer_electricity_trade.disposition_matrix`.
-        if interprovincial_flows and year in interprovincial_flows:
-            labels, flows = interprovincial_flows[year]
-            axis = sorted(list(sim.countries.keys()) + ["ROW"])
-            axis_pos = {str(name): i for i, name in enumerate(axis)}
-            wanted, keep, resolved = [], [], []
-            for row_i, code in enumerate(labels):
-                for name, pos in axis_pos.items():
-                    if name.endswith(f"_{code}") or name == code:
-                        wanted.append(pos)
-                        keep.append(row_i)
-                        resolved.append(code)
-                        break
-            if len(wanted) < 2:
-                logger.warning(
-                    "interprovincial electricity: could not resolve %s against the goods "
-                    "market's country axis %s -- skipping.", labels, axis,
-                )
-            elif "ROW" in labels and "ROW" not in resolved:
-                # Proceeding would quietly fold international exports into the domestic
-                # share, which is the failure this matrix was rebuilt to avoid.
-                logger.warning(
-                    "interprovincial electricity: the matrix carries international trade "
-                    "but 'ROW' is not on the country axis %s -- skipping.", axis,
-                )
-            else:
-                sub = np.asarray(flows, dtype=float)[np.ix_(keep, keep)]
-                d_index = industries.index("D") if "D" in industries else None
-                if d_index is None:
-                    logger.warning("interprovincial electricity: no 'D' industry; skipping.")
-                else:
-                    sub = _to_model_value_units(sub, resolved, sim, d_index, _value_density)
-                    sim.goods_market.set_trade_proportions(
-                        d_index, sub, country_indices=wanted
-                    )
-                    total = float(sub.sum())
-                    domestic = float(np.trace(sub))
-                    logger.info(
-                        "interprovincial electricity: year=%s set D trade proportions over "
-                        "%d regions (%s); disposition %.1f = domestic %.1f (%.1f%%) + "
-                        "traded %.1f (source units)",
-                        year, len(wanted), ",".join(resolved), total, domestic,
-                        100.0 * domestic / total if total else 0.0, total - domestic,
-                    )
 
         # ROW electricity split: route ROW's D purchases to provinces by CER's own
         # (international exports + electrolysis) shares, refreshed per linkage year.
