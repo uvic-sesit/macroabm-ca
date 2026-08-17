@@ -58,8 +58,24 @@
   "flows_2022": {
     "household_disposable_income_millions_CAD": 1502342.0
   },
+  "tenure_2022_CHS": {
+    "source": "46-10-0083 Household characteristics, by tenure including first-time homebuyer status (Canadian Housing Survey)",
+    "geo": "Canada (provinces only) -- excludes the three territories",
+    "ref_date": 2022,
+    "statistic": "Number of households (characteristic = Total, household type)",
+    "universe": "private households in Canada's 10 provinces; excludes residents of institutions, Canadian Forces in military camps, people on reserves/other Indigenous settlements, and collective dwellings (senior residences, work camps, religious communities)",
+    "unit": "household / dwelling (a household member owns vs rents the dwelling) -- matches the model tenure concept",
+    "total_households": 15455000,
+    "owner_households": 10109100,
+    "renter_households": 5345900,
+    "homeownership_rate": 0.6541,
+    "cross_checks": {
+      "census_2021_98-10": 0.665,
+      "sfs_2023_weighted_PFTENUR_donor_diagnostic_only": 0.648
+    },
+    "note": "PRIMARY tenure calibration target (user decision 2026-08). Household-unit, base-year 2022, direct owner/renter identification. SFS 2023 rate is a donor-distribution diagnostic, NOT the target."
+  },
   "not_available_in_these_tables": {
-    "homeownership_rate_2022": "not in 36-10-0580/0660; source Census 2021 (98-10-*) or Canadian Housing Survey 46-25-0001",
     "households_by_province_2022": "17-10-0009 is population (persons); household COUNTS need Census families 98-10-* or est."
   },
   "model_field_targets_millions_CAD": {

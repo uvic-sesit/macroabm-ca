@@ -53,6 +53,34 @@ VECTOR_FIELDS = [
 ]
 MATCH_KEYS = ["Type", "Tenure Status of the Main Residence", "income_decile", "province"]
 
+
+def weighted_decile(values, weights, q: int = 10) -> np.ndarray:
+    """Population-WEIGHTED q-tiles (labels 1..q). Survey PUMF weights are highly unequal, so unweighted
+    equal-count bins (pd.qcut on rank) misplace households and smear the income->wealth gradient -- the
+    DHEA quintiles are population-weighted, so we must match that definition."""
+    v = np.asarray(values, dtype=float)
+    w = np.asarray(weights, dtype=float)
+    order = np.argsort(v, kind="mergesort")
+    cw = np.cumsum(w[order])
+    pos = np.empty(len(v))
+    pos[order] = cw / cw[-1]
+    return np.clip((pos * q).astype(int), 0, q - 1) + 1
+
+
+def hfcs_age_band(age_5yr) -> np.ndarray:
+    """Map HFCS reference-person 5-year band (dhageh1b: 16,20,25,...,85) onto the SFS PAGEMIEG 7-band
+    scheme (1:<25, 2:25-34, 3:35-44, 4:45-54, 5:55-64, 6:65-79, 7:80+) so age can be a shared match key."""
+    a = np.asarray(age_5yr, dtype=float)
+    b = np.full(a.shape, np.nan)
+    b[a < 25] = 1
+    b[(a >= 25) & (a < 35)] = 2
+    b[(a >= 35) & (a < 45)] = 3
+    b[(a >= 45) & (a < 55)] = 4
+    b[(a >= 55) & (a < 65)] = 5
+    b[(a >= 65) & (a < 80)] = 6
+    b[a >= 80] = 7
+    return b
+
 # --- recipient: raw HFCS-2021 derived household file (lower-case codes) ---------------------------
 HFCS_CODE_MAP = {
     "dhhtype": "Type", "hb0300": "Tenure Status of the Main Residence", "hw0010": "Weight",
@@ -64,6 +92,7 @@ HFCS_CODE_MAP = {
     "dl1210": "Outstanding Balance of Credit Line", "dl1220": "Outstanding Balance of Credit Card Debt",
     "dl1230": "Outstanding Balance of other Non-Mortgage Loans", "di2000": "Income",
     "da3001": "Total Assets", "dn3001": "Net Worth", "dl1000": "Total Debt", "dl1100": "Total Mortgage",
+    "dhageh1b": "age_5yr",  # reference-person 5-year age band -> age_band match key
 }
 
 # --- SFS 2023 PUMF (economic-family) column map, from SFS2023_EFAM_PUMF_vare.sps. Values that are a
@@ -85,7 +114,8 @@ SFS_COLUMN_MAP: dict[str, object] = {
     "Income": ["PEFMTINC", "PEFGTR"],                          # market income + government transfers
 }
 SFS_META = {"weight": "PWEIGHT", "tenure": "PFTENUR", "family_type": "PFMTYPG",
-            "region": "PREGION", "after_tax_income": "PEFATINC", "net_worth": "PWNETWPG"}
+            "region": "PREGION", "after_tax_income": "PEFATINC", "net_worth": "PWNETWPG",
+            "age_band": "PAGEMIEG"}
 SFS_OWNER_TENURE = {1, 2}            # 1 own w/o mortgage, 2 own w/ mortgage, 3 do not own
 SFS_INCOME_SENTINEL = 99999999       # PEF*INC top-code / not-available
 # --- CIS 2022 PUMF (person-level); Phase-1 uses it only for the income aggregate cross-check.
@@ -122,7 +152,8 @@ def load_recipient_hfcs() -> pd.DataFrame:
             rec = rec.drop(columns=["Tenure Status of the Main Residence_h"])
     rec["province"] = "CAN"  # base HFCS carries no province -> national pool (documented fallback)
     rec["tenure_bin"] = (rec["Tenure Status of the Main Residence"] == 1).astype(int)  # HFCS 1 = owner
-    rec["income_decile"] = pd.qcut(rec["Income"].rank(method="first"), 10, labels=False) + 1
+    rec["income_decile"] = weighted_decile(rec["Income"].values, rec["Weight"].values)  # WEIGHTED (see helper)
+    rec["age_band"] = hfcs_age_band(rec["age_5yr"].values) if "age_5yr" in rec else np.nan
     return rec
 
 
@@ -135,8 +166,9 @@ def load_donor(standin: bool) -> pd.DataFrame:
         don = pd.read_csv(STANDIN_DONOR)
         don["province"] = "CAN"
         don["tenure_bin"] = (don.get("Tenure Status of the Main Residence", 1) == 1).astype(int) if "Tenure Status of the Main Residence" in don else 1
-        inc = don["Income"] if "Income" in don else don.get("income")
-        don["income_decile"] = pd.qcut(pd.Series(inc).rank(method="first"), 10, labels=False) + 1
+        inc = pd.Series(don["Income"] if "Income" in don else don.get("income")).astype(float)
+        wcol = don["Weight"].values if "Weight" in don else np.ones(len(don))
+        don["income_decile"] = weighted_decile(inc.values, wcol)  # age_band absent -> skipped in match
         for f in VECTOR_FIELDS:
             if f not in don.columns:
                 don[f] = 0.0
@@ -160,7 +192,8 @@ def load_donor(standin: bool) -> pd.DataFrame:
     don["Net Worth"] = s[SFS_META["net_worth"]].astype(float)  # may be < 0 -- kept
     don["tenure_bin"] = s[SFS_META["tenure"]].isin(SFS_OWNER_TENURE).astype(int)
     don["province"] = "CAN"  # SFS PREGION is 5 regions; recipient is national -> national pool
-    don["income_decile"] = pd.qcut(s[SFS_META["after_tax_income"]].rank(method="first"), 10, labels=False) + 1
+    don["income_decile"] = weighted_decile(s[SFS_META["after_tax_income"]].values, s[SFS_META["weight"]].values)
+    don["age_band"] = s[SFS_META["age_band"]].astype(float).values  # PAGEMIEG 1..7 (matches hfcs_age_band)
     return don
 
 
@@ -168,7 +201,9 @@ def donor_match(recipient: pd.DataFrame, donor: pd.DataFrame, seed: int = 0) -> 
     """Assign each recipient a donor row by matched cell (Type, Tenure, income_decile, province),
     widening the cell (drop the least-important key) when a cell is empty. Returns donor index array."""
     rng = np.random.default_rng(seed)
-    keys_by_priority = ["province", "tenure_bin", "income_decile"]
+    # priority order = kept longest under widening; least-important key dropped FIRST. province is a
+    # national no-op (always "CAN"); age_band is the refinement (drop first if a cell is empty).
+    keys_by_priority = ["tenure_bin", "income_decile", "age_band"]
     donor = donor.reset_index(drop=True)
     assigned = np.empty(len(recipient), dtype=int)
     n_keys = len(keys_by_priority)
@@ -219,6 +254,34 @@ def load_controls_2022() -> dict:
     return json.loads(p.read_text()).get("model_field_targets_millions_CAD", {})
 
 
+def load_tenure_target() -> float | None:
+    """Official 2022 homeownership rate (CHS 46-10-0083, household unit). See controls_2022.json."""
+    p = OUT_DIR / "controls_2022.json"
+    if not p.exists():
+        return None
+    return json.loads(p.read_text()).get("tenure_2022_CHS", {}).get("homeownership_rate")
+
+
+def calibrate_tenure(df: pd.DataFrame, target_owner_rate: float | None) -> pd.DataFrame:
+    """Post-stratify household weights on the tenure margin so the WEIGHTED homeownership rate hits the
+    official 2022 CHS control, WITHOUT disturbing within-tenure structure. Owners are scaled by one factor
+    and renters by another; the total household count is preserved. The recipient keeps its own tenure
+    label (a match key) and its matched Canadian balance sheet -- only the owner/renter *representation*
+    is Canadianized. No per-variable rescaling, so the SFS joint wealth/debt/income structure is intact."""
+    if not target_owner_rate:
+        return df
+    out = df.copy()
+    w = out["Weight"].values.astype(float)
+    own = out["tenure_bin"].values == 1
+    W, Wown, Wren = w.sum(), w[own].sum(), w[~own].sum()
+    if Wown > 0 and Wren > 0:
+        w = w.copy()
+        w[own] *= target_owner_rate * W / Wown
+        w[~own] *= (1.0 - target_owner_rate) * W / Wren
+        out["Weight"] = w
+    return out
+
+
 def backcast_calibrate(df: pd.DataFrame, targets: dict) -> pd.DataFrame:
     """Calibrate to 2022 official aggregates ($M CAD), preserving within-group ranks/joint structure by
     applying ONE positive factor per group/single. Group targets calibrate the SUM of the listed model
@@ -251,6 +314,7 @@ def _wsum(df, col, w):
 def validate(before: pd.DataFrame, after_joint: pd.DataFrame, after_marg: pd.DataFrame,
              donor: pd.DataFrame, assign: np.ndarray, levels: np.ndarray) -> dict:
     wB = before["Weight"].values
+    wA = after_joint["Weight"].values  # AFTER metrics use post-tenure-calibration weights
     def agg(df, w):
         mort = _wsum(df, "Outstanding Balance of HMR Mortgages", w) + _wsum(df, "Outstanding Balance of Mortgages on other Properties", w)
         cons = sum(_wsum(df, c, w) for c in ["Outstanding Balance of Credit Line", "Outstanding Balance of Credit Card Debt", "Outstanding Balance of other Non-Mortgage Loans"])
@@ -278,12 +342,14 @@ def validate(before: pd.DataFrame, after_joint: pd.DataFrame, after_marg: pd.Dat
     reuse = np.bincount(assign, minlength=len(donor))
     lvl, lvl_ct = np.unique(levels, return_counts=True)
     return {
-        "net_worth_share_by_income_quintile_pct": {"after_joint": nw_quintile_shares(after_joint, before["Weight"].values),
+        "net_worth_share_by_income_quintile_pct": {"after_joint": nw_quintile_shares(after_joint, wA),
                                                    "control_36-10-0660": [11.5, 11.1, 14.9, 22.3, 40.2]},
         "match_quality_by_key_depth": {f"{int(k)}_keys": int(c) for k, c in zip(lvl, lvl_ct)},
         "match_full_cell_fraction": float(np.mean(levels == levels.max())),
-        "BEFORE_hfcs": agg(before, wB), "AFTER_joint": agg(after_joint, wB), "AFTER_marginal": agg(after_marg, wB),
-        "homeownership": {"before": homeown(before, wB), "after_joint": homeown(after_joint, wB)},
+        "BEFORE_hfcs": agg(before, wB), "AFTER_joint": agg(after_joint, wA), "AFTER_marginal": agg(after_marg, wB),
+        "homeownership": {"before": homeown(before, wB), "after_joint": homeown(after_joint, wA),
+                          "control_CHS_2022_46-10-0083": 0.6541,
+                          "cross_checks": {"census_2021": 0.665, "sfs_2023_donor_diag": 0.648}},
         "joint_structure_mean_abs_corr": {
             "donor(reference)": mean_abs_corr(donor.iloc[np.unique(assign)]),
             "after_joint_transplant": mean_abs_corr(after_joint),
@@ -311,7 +377,8 @@ def main() -> None:
     assign, levels = donor_match(recipient, donor, seed=args.seed)
     after_joint = joint_transplant(recipient, donor, assign)
     after_marg = marginal_rescale(recipient, donor)
-    after_joint = backcast_calibrate(after_joint, load_controls_2022())  # calibrate to official 2022 targets
+    after_joint = calibrate_tenure(after_joint, load_tenure_target())  # Canadianize tenure margin (CHS 2022)
+    after_joint = backcast_calibrate(after_joint, load_controls_2022())  # then hit $ aggregates on new weights
 
     report = validate(recipient, after_joint, after_marg, donor, assign, levels)
     mode = "STANDIN (New_Household donor; NON-PRODUCTION numbers)" if standin else "REAL (SFS 2023)"

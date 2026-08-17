@@ -15,6 +15,7 @@ PIDS = {
     "18100004": "CPI",
     "17100009": "population estimates quarterly",
     "11100012": "distribution of total income by census family type",
+    "46100083": "CHS 2022 households by tenure (homeownership control)",
 }
 
 def fetch(pid, desc):

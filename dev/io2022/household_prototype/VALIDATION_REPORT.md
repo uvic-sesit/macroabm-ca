@@ -1,5 +1,38 @@
 # Household Canadianization prototype — Phase-1 validation report
 
+## Task 1 — distributional calibration (wealth concentration + tenure) — 2026-08
+
+Both Phase-1 residuals are now resolved. Pipeline: HFCS skeleton → SFS-2023 donor match
+(**tenure × income-decile × age-band**, national pool) → joint transplant → **tenure weight
+post-stratification (CHS 2022)** → aggregate $ calibration.
+
+**A. Wealth concentration — root cause found and fixed.** The under-concentration was **not** a
+matching-key deficiency; it was a **binning bug**. Income deciles were built with unweighted
+`pd.qcut` on rank (equal *count* per bin). SFS PUMF weights are highly unequal, so equal-count bins
+misplace households and smear the income→wealth gradient, collapsing the top quintile from ~40 to 30.
+Diagnostic proof: SFS's *own* weighted NW-share-by-income-quintile is 8.6/12.5/18.0/21.1/**39.8** (≈ the
+40.2 control), but unweighted rank-quintiles give **30.9** — the entire gap. Switching to
+**population-weighted deciles** (matching the DHEA definition) took L1 23.7 → **4.9**. Adding **age-band**
+as a shared match key (HFCS `dhageh1b` → SFS `PAGEMIEG` 7-band) captures the asset-rich/income-poor
+retiree effect and took L1 → **3.5**. `family_type` was **tested and rejected** (over-partitions cells,
+dilutes the top to 38.9, max reuse 71→237). Result: **12.2 / 11.4 / 15.4 / 20.6 / 40.5** vs control
+11.5/11.1/14.9/22.3/40.2 (top quintile 40.5; retiree "high bottom" Q1≥Q2 reproduced). No raking of the
+balance sheet; the SFS joint structure is untouched.
+
+**B. Tenure / homeownership — official 2022 control identified and calibrated.** Target =
+**CHS 2022, table 46-10-0083** (Household characteristics by tenure): owner 10,109,100 / total
+15,455,000 → **homeownership 65.41%**. Universe = private households in the 10 provinces (excl.
+institutions, military camps, reserves/Indigenous settlements, collective dwellings, territories); unit =
+household/dwelling (a member owns vs rents) — matches the model concept. Cross-checks: Census 2021 66.5%,
+SFS 2023 64.8% (donor diagnostic only). Calibrated by **post-stratifying household weights on the tenure
+margin** (owners/renters scaled to hit 65.41%, total count preserved, within-tenure structure intact) —
+not an SFS-spine switch, not marginal rescaling. Result: **0.6541** (was 0.596).
+
+**Full battery after Task 1 (REAL run):** aggregates still hit exactly (assets 18.30T, net worth 15.44T,
+mortgage 2.127T, consumer 0.730T, deposits 2.035T, income 1.502T); joint mean|corr| donor 0.1395 →
+after 0.1400 (preserved); match full-cell **99.99%** (10/83,162 widened by one key), donor reuse
+15,894/16,241 (98%), max 41, mean 5.2; 0 negative asset/debt stocks, 64 negative incomes retained.
+
 ## REAL Phase-1 run (SFS 2023 donor + CIS 2022 + official 2022 controls) — 2026-08
 
 Real PUMFs now present (`dev/raw_data/can_2022/pumf/`). `--real` builds: HFCS household skeleton →
@@ -19,14 +52,11 @@ HFCS copula). Confirmed with real data: **joint transplant is correct, marginal 
 42 negative incomes retained (legitimate losses); SFS income top-code (99999999) and CIS sentinel
 (999999999996) handled.
 
-**Known limitations (next refinements, not blockers):**
-1. **Net-worth top-quintile under-concentration** — shares by income quintile after_joint
-   9.5/15.3/19.9/25.0/**30.4** vs control 11.5/11.1/14.9/22.3/**40.2**. Directionally right (rising with
-   income) but flatter at the top: the match is coarse (tenure × income-decile) and the recipient is the
-   Eurozone HFCS ranked on its own income, so top-end wealth concentration is muted. Improve with finer
-   match keys and/or reweighting to Canadian household+tenure totals.
-2. **Homeownership stays 0.596** (recipient French rate, preserved because tenure is a match key) vs
-   Canadian ~0.66 — fix by calibrating household weights to 2022 Canadian tenure/household totals.
+**Known limitations (next refinements, not blockers):** — both RESOLVED in Task 1 (see top section).
+1. ~~Net-worth top-quintile under-concentration (30.4 vs 40.2)~~ → fixed via weighted deciles + age-band
+   match key → **40.5** (L1 3.5). Root cause was the unweighted `pd.qcut` binning, not coarse matching.
+2. ~~Homeownership stays 0.596~~ → calibrated to the CHS 2022 control **0.6541** via tenure weight
+   post-stratification.
 
 ## SHS consumption vintage — SELECTED: **2023** (deferred build)
 
