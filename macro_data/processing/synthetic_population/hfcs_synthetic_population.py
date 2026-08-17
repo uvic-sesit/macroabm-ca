@@ -805,8 +805,20 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             )
             diff = iot_hh_consumption.sum() - current_hh_consumption.sum()
             inc_sr = (1.0 / (1 + vat) * np.outer(cons_weights, sr * income).T).sum()
-            factor = 1.0 - diff / inc_sr
-            self.household_data["Saving Rate"] = factor * sr
+            if inc_sr > 0.0 and (1.0 - diff / inc_sr) >= 0.0:
+                factor = 1.0 - diff / inc_sr
+                self.household_data["Saving Rate"] = factor * sr
+            else:
+                # Degenerate corner: the IO consumption target exceeds what income can
+                # fund at any non-negative saving rate, so the clipped vector is (near-)
+                # zero and the rescale above either divides by zero (poisoning the column
+                # with NaN) or, with a tiny positive denominator, flips the factor
+                # negative and mints saving rates in the minus-hundreds. The clipped
+                # rates -- consume (essentially) all income -- are the closest feasible
+                # point under the positivity constraint; the survey-based path only
+                # avoids this corner when a few households carry saving rates above 1,
+                # which the Canadianized micro-data (correctly) does not.
+                self.household_data["Saving Rate"] = sr
 
         self.household_data["Consumption"] = (
             1 / (1 + vat) * (1 - self.household_data["Saving Rate"]) * self.household_data["Income"]

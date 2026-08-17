@@ -47,7 +47,7 @@ REGIONS = [
 ]
 
 
-def build_data_config(scale: int = 1000):
+def build_data_config(scale: int = 1000, canadianized_households: bool = False):
     data_config = configuration_utils.default_data_configuration(
         countries=["CAN"],
         aggregate_industries=False,
@@ -62,6 +62,7 @@ def build_data_config(scale: int = 1000):
     data_config.aggregate_industries = False
     data_config.prune_date = None
     data_config.seed = 0
+    data_config.use_canadianized_households = bool(canadianized_households)
 
     base_config = data_config.country_configs[CountryCode("CAN")]
     base_config.single_firm_per_industry = True
@@ -81,7 +82,7 @@ def build_data_config(scale: int = 1000):
 
 
 def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = False,
-                 lfs_unemployment: bool = False):
+                 lfs_unemployment: bool = False, canadianized_households: bool = False):
     if pkl_path.exists() and not force:
         print(f"Pickle already exists at {pkl_path} - skipping (use --force to rebuild).")
         return
@@ -92,7 +93,7 @@ def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = Fal
             "folded table under that name in the raw_data_10prov overlay."
         )
     pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    data_config = build_data_config(scale=scale)
+    data_config = build_data_config(scale=scale, canadianized_households=canadianized_households)
     t0 = time.time()
     creator = DataWrapper.from_config(
         configuration=data_config,
@@ -130,12 +131,16 @@ if __name__ == "__main__":
     ap.add_argument("--pickle", type=Path, default=PKL_PATH)
     ap.add_argument("--build-only", action="store_true")
     ap.add_argument("--force", action="store_true", help="rebuild pickle even if it exists")
+    ap.add_argument("--canadianized-households", action="store_true",
+                    help="replace the proxy HFCS micro-data with the Canadianized synthetic "
+                         "households (SFS-2016/CIS-2017 matched; CAD-native, EUR conversion skipped)")
     ap.add_argument("--lfs-unemployment", action="store_true",
                     help="calibrate t0 unemployment to LFS 2022 per province (option 2: "
                          "surplus unemployed -> inactive; employment untouched)")
     args = ap.parse_args()
 
     build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force,
-                 lfs_unemployment=args.lfs_unemployment)
+                 lfs_unemployment=args.lfs_unemployment,
+                 canadianized_households=args.canadianized_households)
     if not args.build_only:
         inspect(args.pickle)

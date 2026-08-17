@@ -230,6 +230,11 @@ class DataConfiguration(BaseModel):
     author: str = "INET"
     aggregate_industries: bool = False
     can_disaggregation: bool = False
+    # Replace the proxy-country HFCS micro-data with the Canadianized synthetic
+    # households (SFS-2016/CIS-2017 nearest-neighbour rescaling of the HFCS
+    # templates; raw_data/hfcs/New_*_provincial.csv). CAD-native: the proxy
+    # EUR->LCU conversion is skipped for these frames.
+    use_canadianized_households: bool = False
     seed: Optional[int] = None
     aggregation_structure: Optional[dict[Country, list[Country | Region]]] = None
 
