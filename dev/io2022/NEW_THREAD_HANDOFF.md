@@ -32,37 +32,38 @@ depletion under its demand overlay — the known **"intermediate lock"/demand-ch
 from the capital fix and explicitly NOT a failure of it** (`INTEGRATION_LOG.md` #30). Do not mix that
 growth work into basic DataWrapper integration.
 
-## LOCAL CHECKPOINT — commit `e9346ff75e63de6944744635d50fd6df2eae9e54` (feature/io-2022-integration)
-Latest local checkpoint of the 2022 integration (simple/default baseline; not pushed;
-`real-growth-baseline` untouched at `d11edc1`).
+## STATUS — small-region collapse RESOLVED; 13-region baseline stable (INTEGRATION_LOG #35)
+Latest work on the 2022 integration (simple/default baseline; `real-growth-baseline` untouched at `d11edc1`).
 
-**13q simple/default acceptance result:**
+**13q simple/default result (validated, `dev/io2022/run_simple_baseline_2022.py`):**
 - t0 GDP identity: **13/13 balanced**
 - NaN/inf over 13q: **0**
-- national real GVA: **687.3B → 646.4B (−6.0%)**
-- unemployment: 7.7% → 35.7%
-- small-region catastrophic collapse (end → ~0): **NL, PE, NB, YT, NT** (large provinces hold)
+- real GVA: **687.3B → 676.9B (−1.5%)**
+- unemployment: **7.7% → 9.1%**
+- **all 13 regions stable — no collapse** (was NL/PE/NB/YT/NT → 0 before #35)
 
 **Status of the 2022 integration:**
 - Capital treatment — **validated** (#29).
 - Canadian StatCan 36-10-0489 employment shares — **wired** (#31).
 - Observed compensation of employees / wages / employer contributions — **wired** (#32).
 - CAD-native IO currency handling — **validated** (#33).
+- **Trade allocation — fixed (#35): country-ordering realignment + positive-purchase sourcing shares
+  ∈ [0,1]; accounting IO untouched. This resolved the small-region collapse.**
 - Candidate-growth baseline — **PARKED** (#30, separate t2 intermediate/demand collapse).
-- **Overall 2022 integration is NOT yet complete**: it is mechanically stable *nationally* (0 NaN/inf,
-  identity holds) but the **small-region mechanics fail** (NL/PE/NB/YT/NT collapse over 13q).
 
-**NEXT TASK (explicit, in order):**
-1. **Zero-sector handling** — replace the ε floor (`_floor_empty_provincial_sectors`, #28) with
-   principled model-side handling of genuinely-empty (province, sector) cells.
-2. **Principled small-region synthetic-population scaling** — fix the per-province `scale` so small
-   provinces/territories have enough synthetic agents to express 50-sector employment shares without
-   the ≥1-worker floor injecting `scale` phantom persons per empty sector (supersedes the #21 scale=10
-   territory hack).
-3. **Rerun the simple/default 13q baseline** and confirm the small-region collapse is resolved.
+The small-region collapse traced through capital/employment/CoE/currency/accounting to the goods-market
+`origin_trade_proportions`: a country-ordering permutation (sorted DataFrame consumed in participant
+order) routed sourcing to non-producers, and negative net-disinvestment cells made shares <0 / >1. Both
+fixed in #35. Accounting flows were never the problem (t0 balances).
 
-**Deferred until AFTER regional mechanics are stable:** HFCS-2021 Canadianization, and any post-2022
-external-series / vintage work.
+**NEXT — deferred quality improvements (NO LONGER BLOCKERS):**
+1. **Zero-sector handling** — replace the ε floor (`_floor_empty_provincial_sectors`, #28) with a
+   principled model-side treatment. Harmless placeholder now.
+2. **Small-region synthetic-population scaling** — a principled per-province `scale` rule (supersedes the
+   #21 scale=10 territory hack) is a resolution/quality improvement; the collapse it was blamed for was
+   the trade-allocation bug, now fixed.
+
+**Deferred (until otherwise scheduled):** HFCS-2021 Canadianization; post-2022 external-series / vintage work.
 
 ## Validated so far (simple/default baseline; see INTEGRATION_LOG #29–#33)
 - **Capital treatment (#29)** — pre-fold non-negative capital composition; t0→t1 collapse fixed.

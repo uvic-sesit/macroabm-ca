@@ -815,11 +815,30 @@ class ICIOReader:
         """
         return self.iot.loc[start_country, end_country].sum(axis=1).loc[self.industries] / self.yearly_factor
 
+    def _positive_sourcing_flow(self, start_country: str, end_country: str) -> np.ndarray:
+        """Non-negative sourcing basis for the trade-ALLOCATION proportions.
+
+        ACCOUNTING use flows (``get_trade``) can be negative for net-disinvestment goods, because the
+        summed columns include disposal/net-GFCF and folded Changes-in-Inventories cells (e.g. C24A/C24B
+        metals). But goods-market SOURCING SHARES must represent actual purchases and therefore lie in
+        [0, 1]. This mirrors ``get_trade`` (flow of each good from ``start`` to all of ``end``'s columns)
+        but clips **each cell** to >= 0 before summing, so the basis keeps positive intermediate and
+        positive final purchases (household/government/investment) and drops negative inventory changes
+        and negative/disposal fixed capital formation. The accounting IO/``get_trade`` are untouched;
+        this feeds only the allocation-layer proportions.
+        """
+        return (
+            self.iot.loc[start_country, end_country].clip(lower=0.0).sum(axis=1).loc[self.industries].values
+            / self.yearly_factor
+        )
+
     def get_origin_trade_proportions(self) -> pd.DataFrame:
         """Calculate trade proportions from origin country perspective.
 
-        Computes the fraction of each industry's imports that comes from each
-        source country, including domestic production.
+        Computes the fraction of each industry's sourcing that comes from each source country
+        (including domestic production), from the non-negative sourcing basis (see
+        ``_positive_sourcing_flow``). Shares lie in [0, 1] and sum to 1 across origins per
+        destination×industry.
 
         Returns:
             pd.DataFrame: Multi-indexed DataFrame with trade proportions
@@ -831,25 +850,28 @@ class ICIOReader:
             "industry": [],
             "value": [],
         }
+        origins = self.considered_countries + ["ROW"]
         for end_country in self.considered_countries + ["ROW"]:
-            if end_country == "ROW":
-                imports_total = self.get_imports(end_country)
-            else:
-                imports_total = self.get_imports(end_country) + self.get_trade(end_country, end_country)
-            for start_country in self.considered_countries + ["ROW"]:
+            pos_flows = {
+                start_country: (
+                    np.zeros(len(self.industries))
+                    if start_country == end_country == "ROW"
+                    else self._positive_sourcing_flow(start_country, end_country)
+                )
+                for start_country in origins
+            }
+            sourcing_total = np.sum(list(pos_flows.values()), axis=0)
+            for start_country in origins:
                 trade_proportions["start_country"] += [start_country] * len(self.industries)
                 trade_proportions["end_country"] += [end_country] * len(self.industries)
                 trade_proportions["industry"] += list(range(len(self.industries)))
-                if start_country == end_country == "ROW":
-                    trade_proportions["value"] += list(np.zeros(len(self.industries)))
-                else:
-                    shares = np.divide(
-                        self.get_trade(start_country, end_country).values,
-                        imports_total.values,
-                        out=np.zeros(len(self.industries), dtype=float),
-                        where=imports_total.values != 0.0,
-                    )
-                    trade_proportions["value"] += list(shares)
+                shares = np.divide(
+                    pos_flows[start_country],
+                    sourcing_total,
+                    out=np.zeros(len(self.industries), dtype=float),
+                    where=sourcing_total != 0.0,
+                )
+                trade_proportions["value"] += list(shares)
         return pd.DataFrame(trade_proportions).set_index(["start_country", "end_country", "industry"]).sort_index()
 
     def get_destination_trade_proportions(self) -> pd.DataFrame:
@@ -868,22 +890,25 @@ class ICIOReader:
             "industry": [],
             "value": [],
         }
+        destinations = self.considered_countries + ["ROW"]
         for start_country in self.considered_countries + ["ROW"]:
-            if start_country == "ROW":
-                exports_total = self.get_exports(start_country)
-            else:
-                exports_total = self.get_exports(start_country) + self.get_trade(start_country, start_country)
-            for end_country in self.considered_countries + ["ROW"]:
-                if start_country == end_country == "ROW":
-                    trade_proportions["value"] += list(np.zeros(len(self.industries)))
-                else:
-                    shares = np.divide(
-                        self.get_trade(start_country, end_country).values,
-                        exports_total.values,
-                        out=np.zeros(len(self.industries), dtype=float),
-                        where=exports_total.values != 0.0,
-                    )
-                    trade_proportions["value"] += list(shares)
+            pos_flows = {
+                end_country: (
+                    np.zeros(len(self.industries))
+                    if start_country == end_country == "ROW"
+                    else self._positive_sourcing_flow(start_country, end_country)
+                )
+                for end_country in destinations
+            }
+            distribution_total = np.sum(list(pos_flows.values()), axis=0)
+            for end_country in destinations:
+                shares = np.divide(
+                    pos_flows[end_country],
+                    distribution_total,
+                    out=np.zeros(len(self.industries), dtype=float),
+                    where=distribution_total != 0.0,
+                )
+                trade_proportions["value"] += list(shares)
                 trade_proportions["start_country"] += [start_country] * len(self.industries)
                 trade_proportions["end_country"] += [end_country] * len(self.industries)
                 trade_proportions["industry"] += list(range(len(self.industries)))

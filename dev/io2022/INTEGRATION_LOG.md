@@ -337,3 +337,42 @@ changed.
 
 **Deferred until after regional mechanics are stable:** HFCS-2021 Canadianization; post-2022
 external-series / vintage work.
+
+## ✅ #35: trade-allocation proportions fixed — small-region collapse RESOLVED (2026-08-13)
+
+Classification: **orientation/indexing + allocation-layer construction**. No accounting IO flow changed;
+goods-market algorithm, min-fill, scaling, and zero-sector handling untouched.
+
+The small-region collapse (NL/PE/NB/YT/NT) was traced past capital, employment, CoE, currency, and
+accounting to the **goods-market `origin_trade_proportions`** — not a supply deficit (t0 accounting is
+balanced; the commodity-output the model reads already covers domestic sourcing). Two construction bugs:
+
+1. **Country-ordering bug (primary).** The proportion DataFrames are `sort_index()`-ed (alphabetical) but
+   `simulation.py` fed `.values` to the goods market, which indexes countries in **participant order**
+   (`NL,PE,NS,NB,QC,ON,…`). The two orders differ, so both origin and destination axes were permuted —
+   buyers were told to source e.g. C24B from AB/YT (non-producers; AB asked 6.11B, produces 0.44B) with
+   ON asked for negative. **Fix:** `simulation.py` explicitly reindexes origin/destination proportions to
+   `all_country_names` order before `.values` (no reliance on sort/insertion order).
+
+2. **Negative sourcing shares (secondary).** ACCOUNTING use flows can be negative (net-disinvestment /
+   folded Changes-in-Inventories cells in C24A/C24B/B07/B08), so `get_trade`-based shares went <0 (domestic
+   self-share) and >1 (import share) for those metals. SOURCING shares must be actual purchases ∈ [0,1].
+   Compared two fixes: **A** clip the net flow to 0 — rejected, it zeroes the *producer's own* domestic
+   sourcing (ON-C24B net −5498 → 0, forcing ON to import all its C24B). **B** build the basis from
+   **positive-purchase components** (positive intermediate + positive final; exclude negative inventory /
+   disposal FCF) — recovers ON-C24B = 3891 (correct). A and B differ materially; **B implemented.**
+   `icio_reader.py`: new `_positive_sourcing_flow` (element-wise `clip(lower=0)` of `iot.loc[start,end]`)
+   used in `get_origin/destination_trade_proportions`, normalized by the sum of positive flows. `get_trade`
+   and all IO/accounting flows are untouched.
+
+**Validation** (`dev/pkl_files/io2022_13prov_2022_tradefix.pkl`; run `dev/io2022/run_simple_baseline_2022.py`):
+- Every origin share ∈ **[0,1]** (0 negative, 0 >1); sums to 1 per destination×good (699/700 — the one
+  exception is **ROW·T**, a good with zero positive sourcing anywhere → all-zero vector, benign).
+- C24A/C24B sourcing points to the actual producers (ON/QC); ordering intact.
+- t0 per-good restocking for PE/NL/NB/YT/NT = **1.00** (was ~0).
+- **13q simple/default: real GVA 687.3B → 676.9B (−1.5%); unemployment 7.7% → 9.1%; all 13 regions stable
+  (no collapse); 0 NaN/inf.** 4q: 687.3B → 686.3B, u 7.7→8.0%, 0 NaN/inf.
+
+**Status:** the small-region collapse is resolved on the simple/default baseline. **Scaling (#21) and
+zero-sector cleanup (#28) are deferred — they are no longer blockers** (the ε floor + scale=10 remain as
+harmless placeholders; principled replacements are quality improvements, not stability fixes).

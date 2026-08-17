@@ -1,8 +1,9 @@
 # MacroABM-CA — 2022 Provincial IO Integration
 
 > **Status: work in progress** (branch `feature/io-2022-integration`). The 2022 base year builds and
-> runs on the simple/default baseline; it is mechanically stable nationally (no NaN/inf, GDP identity
-> holds) but five small regions collapse over a 13-quarter run — see [Status & roadmap](#status--roadmap).
+> runs on the simple/default baseline; it is **stable over 13 quarters — all 13 regions, no collapse,
+> 0 NaN/inf** (real GVA 687.3B→676.9B, −1.5%; unemployment 7.7→9.1%). The earlier small-region collapse
+> is resolved (INTEGRATION_LOG #35). See [Status & roadmap](#status--roadmap).
 
 Integration of Statistics Canada's 2022 provincial data into the MacroABM-CA DataWrapper: the new
 data, build/run instructions, model changes, and remaining work. Behavioural equations are unchanged;
@@ -75,18 +76,19 @@ From the repo root, with `dev/raw_data/` populated per §3:
 uv run python dev/io2022/build_2022_datawrapper.py --force
 
 # Simple/default baseline, 13 quarters (the accepted integration baseline)
-uv run python dev/io2022/run_candidate_2022.py --quarters 13 --legacy
+uv run python dev/io2022/run_simple_baseline_2022.py --quarters 13
 ```
 
-- `--legacy` selects the simple/default (shipped-defaults) baseline. Omitting it runs the candidate
-  growth baseline, which is parked (a separate demand/intermediate collapse, INTEGRATION_LOG #30) and is
-  not a measure of the 2022 wiring.
+- `run_simple_baseline_2022.py` runs the shipped-defaults (no growth overlays) baseline and reports real
+  GVA start→end, unemployment, per-province GVA, NaN/inf, and any collapse. This is the validated run.
+- The candidate **growth** baseline (`run_candidate_2022.py`, no `--legacy`) is parked (a separate
+  demand/intermediate collapse, INTEGRATION_LOG #30) and is not a measure of the 2022 wiring.
 - `build_2022_datawrapper.py` reads `dev/raw_data/` and writes `dev/pkl_files/io2022_13prov_2022.pkl`;
   the run script reads that pickle (override with `IO2022_PKL=<path>`). Build takes ~2–3 min.
 
-Expected simple/default 13q result (INTEGRATION_LOG #34): GDP output==expenditure identity balances for
-all 13 regions at t0; 0 NaN/inf; national real GVA ≈ −6% over 13q; five small regions (NL, PE, NB, YT,
-NT) collapse (known WIP, §Status). Large provinces are stable.
+Validated simple/default 13q result (INTEGRATION_LOG #35): GDP identity balances for all 13 regions at
+t0; 0 NaN/inf; real GVA **687.3B → 676.9B (−1.5%)**; unemployment **7.7% → 9.1%**; **all 13 regions
+stable, no collapse**.
 
 ---
 
@@ -100,6 +102,7 @@ Data/calibration only — no behavioural equations changed. Detail in `INTEGRATI
 | Employment structure | Province×sector headcount wired to **StatCan 36-10-0489** shares (was HFCS France-proxy split by output). | #31 |
 | Firm wage bill | Set to **observed compensation of employees** (PRM500000 wages + PRM600000 employer contributions); `tau_sif` = observed per-province employer ratio. Was the `VA − capital-comp` residual (over-stated). | #32 |
 | Currency handling | `from_usd_to_lcu_io` stops the spurious ~1.30 USD→CAD conversion on the **CAD-native** 2022 IO/SEA inputs (Compustat USD data still converts). Model VA/output/compensation now match canonical 2022 CAD. | #33 |
+| Trade allocation | Goods-market `origin/destination_trade_proportions`: (a) `simulation.py` reindexes to `all_country_names` order before `.values` — fixes a country-ordering permutation that routed sourcing to non-producers; (b) `_positive_sourcing_flow` builds sourcing shares from **positive-purchase** flows (clip negative inventory/disposal cells), keeping shares ∈ [0,1]. Accounting IO flows untouched. Resolves the small-region collapse. | #35 |
 
 ---
 
@@ -108,17 +111,18 @@ Data/calibration only — no behavioural equations changed. Detail in `INTEGRATI
 **Validated (simple/default baseline):**
 - 2022 DataWrapper builds and initializes; GDP identity balances for all 13 regions.
 - Capital treatment, employment shares, observed compensation of employees, CAD-native currency.
+- **Trade allocation (#35): all 13 regions stable over 13q (no collapse, 0 NaN/inf); the small-region
+  collapse is resolved.**
 
-**In progress:**
-1. **Zero-sector handling** — genuinely-empty (province, sector) cells use an ε floor
-   (`_floor_empty_provincial_sectors`); replace with principled model-side handling.
-2. **Small-region synthetic-population scaling** — small provinces/territories have too few synthetic
-   agents to express 50-sector shares (e.g. PEI ≈ 61 employed across 50 sectors), and the ≥1-worker
-   floor injects phantom employment. This is why NL/PE/NB/YT/NT collapse over 13q. Needs per-region
-   scaling (supersedes the `scale=10` territory hack).
-3. **Rerun** the simple/default 13q baseline and confirm the collapse is resolved.
+**Deferred — quality improvements, no longer blockers:**
+1. **Zero-sector handling** — genuinely-empty (province, sector) cells still use the ε floor
+   (`_floor_empty_provincial_sectors`, #28); replace with principled model-side handling. Harmless
+   placeholder now that trade allocation is fixed.
+2. **Small-region synthetic-population scaling** — territories still use `scale=10` (#21); a principled
+   per-region rule is a resolution/quality improvement, not a stability fix (the collapse it was blamed
+   for was actually the trade-allocation bug, now fixed).
 
-**Deferred (until regional mechanics are stable):**
+**Deferred (until otherwise scheduled):**
 - HFCS-2021 Canadianization (household block still uses the raw European wave).
 - Candidate growth baseline (parked, #30).
 - Post-2022 external-series / vintage inputs.
@@ -130,10 +134,11 @@ Data/calibration only — no behavioural equations changed. Detail in `INTEGRATI
 ```text
 dev/io2022/
   README.md                      this document
-  INTEGRATION_LOG.md             detailed change log (#0–#34)
+  INTEGRATION_LOG.md             detailed change log (#0–#35)
   NEW_THREAD_HANDOFF.md          working handoff / forensic notes
   build_2022_datawrapper.py      builds the 2022 DataWrapper pickle
-  run_candidate_2022.py          runs 13q (use --legacy for simple/default)
+  run_simple_baseline_2022.py    runs the validated simple/default 13q baseline
+  run_candidate_2022.py          candidate growth baseline (parked, #30)
   prepare_compensation_input.py  regenerate the CoE input from the io2022 pipeline
   inspect_and_smoke_2022.py      quick init/smoke inspection
 ```
