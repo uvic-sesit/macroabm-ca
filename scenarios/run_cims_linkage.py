@@ -1137,6 +1137,39 @@ def apply_import_limits(
         )
 
 
+def apply_row_split_floor(
+    sim: Simulation, scale: float, exclude_indices: list[int] | None = None
+) -> None:
+    """Reserve a tranche of ROW's demand at base-year origin shares (partial floor).
+
+    The structural repair for the winner-take-all provincial ROW-export split: with
+    real_country_prioritisation clamped at 1.0 the proportions stage zeroes planned
+    province->ROW sales, so ROW's imports clear entirely in the unconstrained pool and
+    the last-ranked province can lose a market to literal zero (measured: ~12 BC
+    sectors' ROW exports at 0 by 2050 under Current Measures, reallocated to other
+    provinces).  Unlike the twice-rejected 100% base-year anchor this reserves only
+    ``scale`` of ROW's demand -- the rest, plus any unfilled tranche, stays fully
+    competitive, so scenarios that move production geography keep (1 - scale) headroom.
+
+    Applied after build/restore like the import limits, so checkpoint-restored sims get
+    it too.  No-op when *scale* is 0.
+    """
+    if not scale or scale <= 0.0:
+        return
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is not None and hasattr(clearer, "set_row_split_floor"):
+        clearer.set_row_split_floor(scale, exclude_industries=exclude_indices)
+        logger.info(
+            "ROW export floor ENABLED: %.0f%% of ROW demand reserved at base-year "
+            "origin shares (excluded industry indices: %s)",
+            100.0 * float(scale), sorted(exclude_indices or []),
+        )
+    else:
+        logger.warning(
+            "Goods-market clearer does not support the ROW export floor; flag ignored."
+        )
+
+
 def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
     """Resolve a comma-separated list of macro sector codes to industry indices.
 
