@@ -37,6 +37,20 @@ from macro_data.readers.policy_data.obps_can_reader import OBPSCANData
 # Canada's actual ~6.7e8 t/yr, so the statutory figure is used directly.
 OBPS_COVERAGE_THRESHOLD_TCO2_PER_YEAR = 50_000.0
 
+# OECD-50 (2022 base) -> 43-scheme fallbacks for the policy-values CSV lookup in
+# get_limit.  B06 (merged crude + natural gas extraction) borrows the crude row --
+# oil dominates the merged sector's output value; the reduction factor is 0.8 and the
+# tightening rate 0.02 across nearly every row, so the choice is second-order.
+_POLICY_CODE_ALIASES = {
+    "B05": "B05a",
+    "B06": "B05c",
+    "C17_18": "C17",
+    "C24A": "C24a",
+    "C24B": "C24b",
+    "C301": "C30",
+    "C302T309": "C30",
+}
+
 @dataclass
 class OutputBasedPriceSystemCAN:
     """Canada Output-Based Pricing System policy class.
@@ -87,6 +101,7 @@ class OutputBasedPriceSystemCAN:
         industries: list[str],
         obps_data: OBPSCANData,
         coverage_threshold_tco2_per_year: float = OBPS_COVERAGE_THRESHOLD_TCO2_PER_YEAR,
+        initial_year: int = 2014,
     ):
         """Initialise the OBPS from a loaded OBPSCANData container.
 
@@ -119,6 +134,15 @@ class OutputBasedPriceSystemCAN:
             "C30",
             "D01b",
             "D01c",
+            # OECD-50 (2022 base) codes -- absent from 43-scheme wrappers, where the
+            # existing skip-if-missing behaviour leaves the legacy list untouched.
+            "B05",
+            "B06",
+            "C17_18",
+            "C24A",
+            "C24B",
+            "C301",
+            "C302T309",
         ]
         self.regulated_indices = np.array(
             [list(industries).index(ind) for ind in self.regulated_industries if ind in industries]
@@ -141,7 +165,10 @@ class OutputBasedPriceSystemCAN:
 
         self.coverage_threshold_tco2_per_year = float(coverage_threshold_tco2_per_year)
         self._excluded_logged: set[int] = set()
-        self.initial_year = 2014
+        # The simulation clock's year zero -- the wrapper's base year.  Previously
+        # hardcoded to 2014; a 2022-base run would otherwise sit 8 years behind on the
+        # price schedule and tightening arithmetic.
+        self.initial_year = int(initial_year)
         self.current_t = 0
         self.current_year = self.initial_year
 
@@ -193,13 +220,28 @@ class OutputBasedPriceSystemCAN:
         # the benchmark move whenever a macro assumption changes -- so two scenarios
         # differing only in, say, TFP would face different carbon regulation.  Emissions
         # are still accumulated over the statutory 2017-18 window.
-        if record_obps_reference and self.current_year in (2017, 2018):
+        #
+        # LATE STARTS (initial_year > 2017, e.g. the 2022-base wrapper): the statutory
+        # window predates the simulation, so left alone the baseline stays zero and every
+        # regulated tonne would be taxed from t=0 -- a confiscatory misread of the policy.
+        # Instead the reference is recorded over the simulation's FIRST year, whose
+        # production/emissions are the wrapper's real base-year data (the same
+        # initialisation-not-simulation rationale as above), and taxing starts the year
+        # after.  For a 2014 start these expressions reduce exactly to the historical
+        # (2017, 2018) window / 2019 tax start.
+        if self.initial_year <= 2017:
+            reference_years: tuple[int, ...] = (2017, 2018)
+        else:
+            reference_years = (self.initial_year,)
+        baseline_year = reference_years[-1]
+
+        if record_obps_reference and self.current_year in reference_years:
             self.reference_emission += input_em + capital_em
             self.reference_production += (
                 production if initial_production is None else initial_production
             )
 
-        if self.current_year == 2018:
+        if self.current_year == baseline_year:
             self.baseline_emission_intensity = np.divide(
                 self.reference_emission,
                 self.reference_production,
@@ -207,7 +249,7 @@ class OutputBasedPriceSystemCAN:
                 where=self.reference_production != 0,
             )
 
-        if self.current_year < 2019:
+        if self.current_year < max(2019, baseline_year + 1):
             return np.zeros(len(self.industries))
 
         obps_cost = np.zeros(len(self.industries))
@@ -248,6 +290,11 @@ class OutputBasedPriceSystemCAN:
         """
         industry_name = self.industries[industry_idx]
         row = self.df_policy[self.df_policy["Industry"] == industry_name]
+        if row.empty and industry_name in _POLICY_CODE_ALIASES:
+            # The policy-values CSV is written in the 43-scheme; OECD-50 codes fall
+            # back to their closest legacy row (B06 -> B05c: oil dominates the merged
+            # sector's output value).
+            row = self.df_policy[self.df_policy["Industry"] == _POLICY_CODE_ALIASES[industry_name]]
         if row.empty:
             return 0.0
 

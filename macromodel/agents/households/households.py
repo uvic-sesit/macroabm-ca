@@ -1347,6 +1347,7 @@ class Households(Agent):
         readjusted_factors_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[np.ndarray] = None,
         use_emission_multiplier: bool = False,
+        b06_oil_emission_share: Optional[float] = None,
     ) -> None:
         """Update consumption and investment outcomes.
 
@@ -1366,6 +1367,22 @@ class Households(Agent):
             emitting_indices_ch4 (Optional[np.ndarray]): CH4 emitting sector indices
             use_emission_multiplier (bool): Whether to apply industry-specific fraction multipliers
         """
+
+        def _fuel_series(disagg: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+            """(col_1, col_2, refined) per the legacy column labelling, scheme-aware.
+
+            Legacy 4-column path: returns columns 1, 2, 3 untouched (their historical
+            labels are kept even though the emitting order is B05a, B05b=gas, B05c=oil,
+            C19 -- do not silently relabel a legacy export).  Merged 3-column path:
+            column 1 is the blended B06; it is split into its exact oil/gas parts with
+            oil's emission share of the blend, and the historical label order
+            (oil first, gas second) is preserved.
+            """
+            if disagg.shape[1] == 4:
+                return disagg[:, 1], disagg[:, 2], disagg[:, 3]
+            share = 0.5 if b06_oil_emission_share is None else float(b06_oil_emission_share)
+            return share * disagg[:, 1], (1.0 - share) * disagg[:, 1], disagg[:, 2]
+
         # Total amount spent
         self.ts.amount_bought.append(self.ts.current("nominal_amount_spent_in_lcu").sum(axis=1))
 
@@ -1414,10 +1431,11 @@ class Households(Agent):
                 self.ts.consumption_emissions_ch4_by_good.append(consumption_emissions_ch4_by_good)
 
             disaggregated_emissions = cons_slice * readjusted_factors
+            _oil_c, _gas_c, _ref_c = _fuel_series(disaggregated_emissions)
             self.ts.coal_consumption_emissions.append(disaggregated_emissions[:, 0])
-            self.ts.oil_consumption_emissions.append(disaggregated_emissions[:, 1])
-            self.ts.gas_consumption_emissions.append(disaggregated_emissions[:, 2])
-            self.ts.refined_products_consumption_emissions.append(disaggregated_emissions[:, 3])
+            self.ts.oil_consumption_emissions.append(_oil_c)
+            self.ts.gas_consumption_emissions.append(_gas_c)
+            self.ts.refined_products_consumption_emissions.append(_ref_c)
 
         # Consumption
         self.ts.consumption.append(consumption_by_good.sum(axis=1))
@@ -1466,10 +1484,11 @@ class Households(Agent):
                 self.ts.investment_emissions_ch4_by_good.append(investment_emissions_ch4_by_good)
 
             disaggregated_emissions = inv_slice * readjusted_factors
+            _oil_i, _gas_i, _ref_i = _fuel_series(disaggregated_emissions)
             self.ts.coal_investment_emissions.append(disaggregated_emissions[:, 0])
-            self.ts.oil_investment_emissions.append(disaggregated_emissions[:, 1])
-            self.ts.gas_investment_emissions.append(disaggregated_emissions[:, 2])
-            self.ts.refined_products_investment_emissions.append(disaggregated_emissions[:, 3])
+            self.ts.oil_investment_emissions.append(_oil_i)
+            self.ts.gas_investment_emissions.append(_gas_i)
+            self.ts.refined_products_investment_emissions.append(_ref_i)
         self.ts.total_investment.append([(1 + tau_cf) * self.ts.current("investment").sum()])
         self.ts.total_investment_before_vat.append([self.ts.current("investment").sum()])
         self.ts.industry_investment.append(self.ts.current("investment").sum(axis=0))

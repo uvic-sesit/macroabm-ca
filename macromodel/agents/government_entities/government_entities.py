@@ -325,18 +325,19 @@ class GovernmentEntities(Agent):
         if add_emissions:
             emissions = np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors).sum()
             self.ts.emissions.append(emissions)
-            self.ts.coal_emissions.append(
-                np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[0])
-            )
-            self.ts.gas_emissions.append(
-                np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[1])
-            )
-            self.ts.oil_emissions.append(
-                np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[2])
-            )
-            self.ts.refined_products_emissions.append(
-                np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[3])
-            )
+            # Per-fuel diagnostic series; positions clamped for the merged OECD-50
+            # 3-factor scheme ([coal, oil-and-gas blend, refining]) -- the "gas" and
+            # "oil" series then both carry the blended component.  The 4-factor legacy
+            # path is byte-identical.
+            _pos = [0, 1, 2, 3] if len(readjusted_factors) == 4 else [0, 1, 1, 2]
+            for _series, _p in zip(
+                (self.ts.coal_emissions, self.ts.gas_emissions,
+                 self.ts.oil_emissions, self.ts.refined_products_emissions),
+                _pos,
+            ):
+                _series.append(
+                    np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[_p])
+                )
         self.ts.total_consumption.append([self.ts.current("consumption_in_lcu").sum()])
 
     def save_to_h5(self, group: h5py.Group):

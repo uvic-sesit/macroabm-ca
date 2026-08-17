@@ -39,6 +39,11 @@ import numpy as np
 import pandas as pd
 
 from macro_data import SyntheticCountry
+from macro_data.readers.emissions.emissions_reader import (
+    b06_oil_emission_share,
+    emission_factors_for,
+    emitting_industries_for,
+)
 from macromodel.agents.agent import Agent
 from macromodel.agents.banks.banks import Banks
 from macromodel.agents.central_bank.central_bank import CentralBank
@@ -161,6 +166,7 @@ class Country:
         add_emissions: bool = False,
         emission_factors_lcu: Optional[np.ndarray] = None,
         emitting_indices: Optional[np.ndarray] = None,
+        b06_oil_emission_share: Optional[float] = None,
         emission_factors_lcu_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[np.ndarray] = None,
         obps: Optional[OutputBasedPriceSystemCAN] = None,
@@ -230,6 +236,7 @@ class Country:
         self.add_emissions = add_emissions
         self.emission_factors_lcu = emission_factors_lcu
         self.emitting_indices = emitting_indices
+        self.b06_oil_emission_share = b06_oil_emission_share
         self.emission_factors_lcu_ch4 = emission_factors_lcu_ch4
         self.emitting_indices_ch4 = emitting_indices_ch4
         self.use_emission_multiplier = self.configuration.use_emission_multiplier
@@ -274,15 +281,29 @@ class Country:
         """
         scale = synthetic_country.scale
 
-        emission_industries = ["B05a", "B05b", "B05c", "C19"]
-        add_emissions = all([industry in industries for industry in emission_industries])
+        # Scheme-aware emitting sectors: the legacy 43-code split or the OECD-50
+        # (2022 base) B05/B06/C19 with the value-weighted merged oil-and-gas factor.
+        emission_industries = (
+            emitting_industries_for(list(industries))
+            if synthetic_country.emission_factors is not None
+            else None
+        )
+        add_emissions = emission_industries is not None
 
         if add_emissions:
             emitting_indices = np.array([list(industries).index(industry) for industry in emission_industries])
-            emission_factors_lcu = synthetic_country.emission_factors.emissions_array
+            emission_factors_lcu = emission_factors_for(
+                emission_industries, synthetic_country.emission_factors.emissions_array
+            )
+            _b06_share = (
+                b06_oil_emission_share(synthetic_country.emission_factors.emissions_array)
+                if len(emission_industries) == 3
+                else None
+            )
         else:
             emitting_indices = None
             emission_factors_lcu = None
+            _b06_share = None
 
         if synthetic_country.emission_factors_ch4 is not None:
             emission_factors_lcu_ch4 = synthetic_country.emission_factors_ch4.emission_factors
@@ -431,6 +452,7 @@ class Country:
                 country_name=country_name,
                 industries=list(industries),
                 obps_data=synthetic_country.obps_data,
+                initial_year=initial_year,
             )
 
         return cls(
@@ -456,6 +478,7 @@ class Country:
             add_emissions=add_emissions,
             emission_factors_lcu=emission_factors_lcu,
             emitting_indices=emitting_indices,
+            b06_oil_emission_share=_b06_share,
             emission_factors_lcu_ch4=emission_factors_lcu_ch4,
             emitting_indices_ch4=emitting_indices_ch4,
             obps=obps,
@@ -1249,6 +1272,7 @@ class Country:
                 use_emission_multiplier=self.use_emission_multiplier,
                 readjusted_factors_ch4=readjusted_factors_ch4,
                 emitting_indices_ch4=self.emitting_indices_ch4,
+                b06_oil_emission_share=self.b06_oil_emission_share,
             )
 
         self.firms.ts.used_intermediate_inputs.append(self.firms.compute_used_intermediate_inputs())
@@ -1409,6 +1433,7 @@ class Country:
             use_emission_multiplier=self.use_emission_multiplier,
             readjusted_factors_ch4=readjusted_factors_ch4,
             emitting_indices_ch4=self.emitting_indices_ch4,
+            b06_oil_emission_share=self.b06_oil_emission_share,
         )
         self.households.update_wealth(
             housing_data=self.housing_market.states["properties"],

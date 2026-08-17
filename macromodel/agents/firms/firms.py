@@ -2315,6 +2315,7 @@ class Firms(Agent):
         use_emission_multiplier: bool = False,
         readjusted_factors_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[list | np.ndarray] = None,
+        b06_oil_emission_share: Optional[float] = None,
     ):
         """Update emissions from production activities.
 
@@ -2370,14 +2371,34 @@ class Firms(Agent):
         inputs_emissions_disaggregated[refining_firms] = 0
         capital_emissions_disaggregated[refining_firms] = 0
 
+        if inputs_emissions_disaggregated.shape[1] == 4:
+            gas_inputs = inputs_emissions_disaggregated[:, 1]
+            oil_inputs = inputs_emissions_disaggregated[:, 2]
+            refined_inputs = inputs_emissions_disaggregated[:, 3]
+            gas_capital = capital_emissions_disaggregated[:, 1]
+            oil_capital = capital_emissions_disaggregated[:, 2]
+            refined_capital = capital_emissions_disaggregated[:, 3]
+        else:
+            # Merged OECD-50 scheme: column 1 is the blended oil-and-gas B06 sector.
+            # Split it into exact Oil/Gas series with oil's emission share of the blend
+            # (constant, computed at Country construction from the stored 4-factor
+            # array); the two sum back to the merged column exactly.
+            share = 0.5 if b06_oil_emission_share is None else float(b06_oil_emission_share)
+            oil_inputs = share * inputs_emissions_disaggregated[:, 1]
+            gas_inputs = (1.0 - share) * inputs_emissions_disaggregated[:, 1]
+            refined_inputs = inputs_emissions_disaggregated[:, 2]
+            oil_capital = share * capital_emissions_disaggregated[:, 1]
+            gas_capital = (1.0 - share) * capital_emissions_disaggregated[:, 1]
+            refined_capital = capital_emissions_disaggregated[:, 2]
+
         self.ts.coal_inputs_emissions.append(inputs_emissions_disaggregated[:, 0])
-        self.ts.gas_inputs_emissions.append(inputs_emissions_disaggregated[:, 1])
-        self.ts.oil_inputs_emissions.append(inputs_emissions_disaggregated[:, 2])
-        self.ts.refined_products_inputs_emissions.append(inputs_emissions_disaggregated[:, 3])
+        self.ts.gas_inputs_emissions.append(gas_inputs)
+        self.ts.oil_inputs_emissions.append(oil_inputs)
+        self.ts.refined_products_inputs_emissions.append(refined_inputs)
         self.ts.coal_capital_emissions.append(capital_emissions_disaggregated[:, 0])
-        self.ts.gas_capital_emissions.append(capital_emissions_disaggregated[:, 1])
-        self.ts.oil_capital_emissions.append(capital_emissions_disaggregated[:, 2])
-        self.ts.refined_products_capital_emissions.append(capital_emissions_disaggregated[:, 3])
+        self.ts.gas_capital_emissions.append(gas_capital)
+        self.ts.oil_capital_emissions.append(oil_capital)
+        self.ts.refined_products_capital_emissions.append(refined_capital)
 
     def compute_total_deposits(self) -> float:
         """Calculate total deposits across all firms.

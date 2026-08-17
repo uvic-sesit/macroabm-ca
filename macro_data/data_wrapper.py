@@ -61,6 +61,7 @@ from macro_data.readers import (
     compile_industry_data,
 )
 from macro_data.readers.emissions.emissions_reader import (
+    B06_OIL_VALUE_WEIGHT,
     EmissionsData,
     EmissionsEnergyFactors,
 )
@@ -226,7 +227,12 @@ class DataWrapper:
 
         add_emissions = False
 
-        if all([emitting_ind in industries for emitting_ind in ["B05a", "B05b", "B05c"]]):
+        if all([emitting_ind in industries for emitting_ind in ["B05a", "B05b", "B05c"]]) or all(
+            [emitting_ind in industries for emitting_ind in ["B05", "B06"]]
+        ):
+            # Emissions run on either fossil scheme: the legacy split (B05a coal /
+            # B05b gas / B05c oil) or the OECD-50 2022 scheme (B05 coal / B06 merged
+            # oil-and-gas, value-weighted blend downstream).
             emission_factors["coke_refining"] = get_coke_refining_emissions(
                 readers.icio[year], emission_factors, country_names + ["ROW"], year
             )
@@ -634,8 +640,15 @@ def get_country_coke_refining_emissions(
     Returns:
         float: Calculated coke refining emissions for the country
     """
-    coefficients = (1 / icio_reader.get_intermediate_inputs_matrix(country)).loc[["B05a", "B05b", "B05c"], "C19"]
-    return coefficients @ emission_factors_array
+    matrix = 1 / icio_reader.get_intermediate_inputs_matrix(country)
+    if "B05a" in matrix.index:
+        coefficients = matrix.loc[["B05a", "B05b", "B05c"], "C19"]
+        return coefficients @ emission_factors_array
+    # OECD-50 scheme: [B05 coal, B06 merged oil-and-gas]; the array arrives as
+    # [coal, gas, oil], so B06 takes the value-weighted oil/gas blend.
+    coefficients = matrix.loc[["B05", "B06"], "C19"]
+    blend = B06_OIL_VALUE_WEIGHT * emission_factors_array[2] + (1.0 - B06_OIL_VALUE_WEIGHT) * emission_factors_array[1]
+    return coefficients @ np.array([emission_factors_array[0], blend])
 
 
 def get_coke_refining_emissions(
