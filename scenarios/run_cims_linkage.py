@@ -1268,6 +1268,7 @@ def build_simulation(
     tfp_investment_effectiveness: float | None = None,
     price_setting_noise_std: float | None = None,
     price_setting_speed_gf: float | None = None,
+    labour_index_base_year: int | None = None,
 ) -> Simulation:
     """Build a provincial Simulation, optionally with the candidate growth baseline.
 
@@ -1298,6 +1299,7 @@ def build_simulation(
                 labour_force_cap=labour_force_cap,
                 capital_target_fraction=capital_target_fraction,
                 capital_rolling_reference=capital_rolling_reference,
+                labour_index_base_year=labour_index_base_year,
             )
     if exogenous_energy_prices:
         # CER supplies price trajectories for the energy bundle; pin those industries'
@@ -1389,7 +1391,9 @@ def build_simulation(
         if household_demand_from_labour_force:
             _hh_index = observed_labour_force_index(
                 n_quarters=timesteps + 1, post_sample_growth=labour_force_growth,
-                growth_cap=labour_force_cap)
+                growth_cap=labour_force_cap,
+                **({"base_year": labour_index_base_year}
+                   if labour_index_base_year is not None else {}))
             logger.info(
                 "Household demand follows each province's OWN labour-force index "
                 "(2050 index: %s)",

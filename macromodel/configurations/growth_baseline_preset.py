@@ -53,6 +53,7 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
                                 uniform: bool = False,
                                 post_sample_growth: Optional[float] = None,
                                 growth_cap: Optional[dict[str, float]] = None,
+                                base_year: int = _LABOUR_BASE_YEAR,
                                 ) -> dict[str, list[float]] | list[float]:
     """Quarterly observed labour-force index (base 1.0 at t0), interpolated to n_quarters.
 
@@ -102,7 +103,12 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
             f"{_LABOUR_INDEX_JSON} not found; rebuild with scripts/build_labour_force_index.py")
     raw = json.loads(_LABOUR_INDEX_JSON.read_text())
     years = sorted(int(y) for y in next(iter(raw.values())))
-    year_q = np.array([(y - _LABOUR_BASE_YEAR) * 4 + 1.5 for y in years])  # annual obs at mid-year
+    # base_year anchors quarter 0 at the SIMULATION start, not the data's first year.
+    # For a base year inside the observed window (e.g. a 2022-base wrapper against the
+    # 2014-2024 LFS index) the pre-start observations land at negative quarters, np.interp
+    # holds the start-of-range value flat, and the idx/idx[0] rebase below normalises the
+    # path to 1.0 at the simulation start -- exactly the semantics the demography expects.
+    year_q = np.array([(y - base_year) * 4 + 1.5 for y in years])  # annual obs at mid-year
     grid = np.arange(n_quarters, dtype=float)
 
     def _interp(annual_by_year: dict[str, float],
@@ -207,6 +213,7 @@ def apply_candidate_growth_baseline(
     labour_force_cap: Optional[dict[str, float]] = None,
     capital_target_fraction: Optional[float] = None,
     capital_rolling_reference: Optional[bool] = None,
+    labour_index_base_year: Optional[int] = None,
 ):
     """Apply the candidate growth baseline (opt-in overrides) to one CountryConfiguration.
 
@@ -259,7 +266,9 @@ def apply_candidate_growth_baseline(
             raise ValueError("use_observed_labour_path=True requires `province` and `n_quarters`.")
         labour_force_index = observed_labour_force_index(
             n_quarters=n_quarters, province=province, uniform=uniform_labour_path,
-            post_sample_growth=labour_force_growth, growth_cap=labour_force_cap)
+            post_sample_growth=labour_force_growth, growth_cap=labour_force_cap,
+            **({"base_year": labour_index_base_year}
+               if labour_index_base_year is not None else {}))
 
     if labour_force_index is not None:
         country_config.individuals.functions.demography.name = p["demography"]
