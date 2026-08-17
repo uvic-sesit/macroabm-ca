@@ -80,7 +80,8 @@ def build_data_config(scale: int = 1000):
     return data_config
 
 
-def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = False):
+def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = False,
+                 lfs_unemployment: bool = False):
     if pkl_path.exists() and not force:
         print(f"Pickle already exists at {pkl_path} - skipping (use --force to rebuild).")
         return
@@ -98,6 +99,11 @@ def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = Fal
         raw_data_path=INPUT_PATH,
         single_hfcs_survey=True,
     )
+    if lfs_unemployment:
+        # Opt-in "option 2" calibration: reclassify surplus unemployed to inactive so
+        # each province's t0 unemployment matches LFS 2022 (see lfs_unemployment_2022).
+        from lfs_unemployment_2022 import apply_lfs_unemployment
+        apply_lfs_unemployment(creator, INPUT_PATH, seed=data_config.seed)
     creator.save(pkl_path)
     print(f"Pickle saved to {pkl_path} ({(time.time() - t0) / 60:.1f} min)")
     return creator
@@ -124,8 +130,12 @@ if __name__ == "__main__":
     ap.add_argument("--pickle", type=Path, default=PKL_PATH)
     ap.add_argument("--build-only", action="store_true")
     ap.add_argument("--force", action="store_true", help="rebuild pickle even if it exists")
+    ap.add_argument("--lfs-unemployment", action="store_true",
+                    help="calibrate t0 unemployment to LFS 2022 per province (option 2: "
+                         "surplus unemployed -> inactive; employment untouched)")
     args = ap.parse_args()
 
-    build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force)
+    build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force,
+                 lfs_unemployment=args.lfs_unemployment)
     if not args.build_only:
         inspect(args.pickle)
