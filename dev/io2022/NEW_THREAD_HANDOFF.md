@@ -3,7 +3,52 @@
 Self-contained. A fresh agent can continue from this without the prior thread history.
 Branch: `feature/io-2022-integration` (off verified `real-growth-baseline`; baseline untouched).
 
-## ⭐ STATUS UPDATE 2026-08-13 — t0→t1 collapse RESOLVED (capital fix). Read this first.
+## ⭐ CURRENT CHECKPOINT 2026-08-17 — read this first
+**Branch + HEAD:** `feature/io-2022-integration` @ `ab0d2a7` (uvic-sesit/macroabm-ca; not merged;
+`real-growth-baseline` untouched at `d11edc1`).
+
+**Where things stand:**
+- Core 2022 IO/DataWrapper integration is mechanically validated and STABLE on the simple/default 13q
+  baseline (real GVA 687.3B→676.9B −1.5%, unemployment 7.7→9.1%, all 13 regions, 0 NaN/inf; see #35).
+- **Household Canadianization Phase 1 = VALIDATED as a scaffold (NOT wired into the DataWrapper).**
+  Architecture: HFCS household/member skeleton → **SFS 2023** donor match (tenure × income-decile,
+  national pool) → joint wealth/debt/income transplant → calibrate to official 2022 NBSA/DHEA controls;
+  employment stays 36-10-0489; Individuals.csv untouched. Real SFS 2023 (16,241 families) + CIS 2022 +
+  8 StatCan control tables. All aggregate controls hit exactly (assets $18.30T, net worth $15.44T,
+  mortgages $2.13T, consumer $0.73T, deposits $2.03T, income $1.50T); 100% full-cell match; joint
+  transplant reproduces the true Canadian dependence (mean|corr| 0.140 = donor 0.139) vs marginal
+  rescale 0.384 (wrong French copula). Detail: `dev/io2022/household_prototype/VALIDATION_REPORT.md`.
+
+**Local data (git-ignored; must exist locally):**
+```
+dev/raw_data/can_2022/pumf/sfs_2023/sfs2023_efam_pumf.csv   (SFS 2023)
+dev/raw_data/can_2022/pumf/cis_2022/CIS2022_PUMF.csv        (CIS 2022)
+dev/raw_data/can_2022/pumf/shs_2019/SHS_EDM_2023.zip        (SHS 2023 — Phase 2)
+dev/raw_data/can_2022/controls/*.csv                        (8 control tables)
+# regenerate controls: uv run python dev/io2022/household_prototype/{download_controls,extract_controls}.py
+# run Phase-1:         uv run python dev/io2022/household_prototype/prepare_household_canadianization.py --real
+```
+
+**Decisions:** HFCS-skeleton + SFS **joint** donor transplant (NOT SFS-spine, NOT marginal rescale);
+SFS vintage **2023** (benchmarked to 2022 controls); SHS vintage **2023** (2021 pandemic-distorted, 2019
+stale — deferred to Phase 2); income = CIS 2022.
+
+**Remaining household issues (next thread):**
+1. Wealth-quintile calibration — net-worth top quintile under-concentrated (30.4 vs 40.2 control);
+   add finer match keys (age-band / family-type crosswalk).
+2. Tenure/homeownership calibration — stays 0.596 (French recipient) vs ~0.66; weight-calibrate
+   households to 2022 Canadian tenure/household totals (17-10-0009 / 11-10-0012).
+3. Then Phase-2 SHS-2023 consumption (parse fixed-width via codebook layout; donor-match; derive
+   saving = disposable income − consumption; benchmark to 36-10-0587).
+4. Only after the household block is fully validated: wire it into the DataWrapper reader.
+
+**DO NOT REOPEN:** capital treatment (#29), trade allocation (#35), employment shares 36-10-0489 (#31),
+observed CoE (#32), CAD-native currency (#33). Do NOT modify Individuals.csv, wire the household block
+into the DataWrapper, or rerun MacroABM until the household block is fully validated.
+
+---
+
+## ⭐ STATUS UPDATE 2026-08-13 — t0→t1 collapse RESOLVED (capital fix).
 The t0→t1 labour collapse this document was written to diagnose is **root-caused and FIXED**. It was
 **negative capital-technology composition**, NOT employment. Sections C–F below are the original
 (pre-fix) forensic framing and are **superseded** by `INTEGRATION_LOG.md` #29–#30; kept for provenance.
