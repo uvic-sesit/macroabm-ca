@@ -703,6 +703,15 @@ def random_firing(
 
     individual_indices = np.arange(current_individuals_activity.shape[0])
 
+    # True headcount per firm.  The firm_employments lists overcount under the
+    # Poledna clearer (its numba firing only clears individuals_corresponding_firm),
+    # so guarding on the list length can fire a firm's actual last employee and
+    # trip the no_zero_employees assertion downstream.
+    true_headcount = np.bincount(
+        individuals_corresponding_firm[individuals_corresponding_firm >= 0],
+        minlength=number_of_firms,
+    )
+
     for ind_id in individual_indices[employed][is_fired]:
         # Account for costs
 
@@ -710,10 +719,14 @@ def random_firing(
 
         # don't fire if the firm has only one employee
 
-        if len(firm_employments[firm_id]) > 1:
-            firing_costs[individuals_corresponding_firm[ind_id]] += (
-                firing_cost_fraction * current_individual_wages[ind_id]
-            )
+        if true_headcount[firm_id] > 1:
+            # The wages ts is NaN-initialised; a worker fired before their first
+            # payday would otherwise poison the firm's labour_costs (0.0*nan=nan)
+            # and, through credit targets, its whole goods-demand plan.
+            wage = current_individual_wages[ind_id]
+            if not np.isfinite(wage):
+                wage = 0.0
+            firing_costs[individuals_corresponding_firm[ind_id]] += firing_cost_fraction * wage
 
             # Fire the individual
             fire_individual(
@@ -722,6 +735,7 @@ def random_firing(
                 individuals_corresponding_firm=individuals_corresponding_firm,
                 firm_employments=firm_employments,
             )
+            true_headcount[firm_id] -= 1
 
             # Count
             num_newly_randomly_fired += 1
@@ -1071,7 +1085,9 @@ def firing(
             replace=False,
         )
         individuals_corresponding_firm[ind_firing] = -1
-        firing_costs[firm_id] += firing_cost_fraction * current_individual_wages[ind_firing].sum()
+        # Same NaN-wage guard as random_firing: never-paid workers carry nan wages.
+        fired_wages = current_individual_wages[ind_firing]
+        firing_costs[firm_id] += firing_cost_fraction * np.where(np.isfinite(fired_wages), fired_wages, 0.0).sum()
     return firing_costs, int(excess_employees.sum())  # noqa
 
 
