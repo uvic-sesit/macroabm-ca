@@ -1,0 +1,79 @@
+{
+  "net_worth_share_by_income_quintile_pct": {
+    "after_joint": {
+      "1": 9.5,
+      "2": 15.3,
+      "3": 19.9,
+      "4": 25.0,
+      "5": 30.4
+    },
+    "control_36-10-0660": [
+      11.5,
+      11.1,
+      14.9,
+      22.3,
+      40.2
+    ]
+  },
+  "match_quality_by_key_depth": {
+    "3_keys": 83162
+  },
+  "match_full_cell_fraction": 1.0,
+  "BEFORE_hfcs": {
+    "total_assets": 56371895630597.42,
+    "mortgage_debt": 4495101815194.211,
+    "consumer_debt": 644597938434.986,
+    "deposits": 4568696815765.854,
+    "income": 7413676015942.762,
+    "net_worth": 51232195876968.23
+  },
+  "AFTER_joint": {
+    "total_assets": 18298593000000.004,
+    "mortgage_debt": 2126996000000.0,
+    "consumer_debt": 729932000000.0,
+    "deposits": 2034716000000.0,
+    "income": 1502342000000.0002,
+    "net_worth": 15441665000000.004
+  },
+  "AFTER_marginal": {
+    "total_assets": 46359339768239.08,
+    "mortgage_debt": 0.0,
+    "consumer_debt": 0.0,
+    "deposits": 4281752655251.5166,
+    "income": 18492262791000.523,
+    "net_worth": 46359339768239.08
+  },
+  "homeownership": {
+    "before": 0.5963590775789523,
+    "after_joint": 0.5963590775789523
+  },
+  "joint_structure_mean_abs_corr": {
+    "donor(reference)": 0.1389228842854457,
+    "after_joint_transplant": 0.1402956469041921,
+    "after_marginal_rescale": 0.3840471946414831,
+    "before_hfcs": 0.17832718638928854
+  },
+  "negatives": {
+    "Value of the Main Residence": 0,
+    "Value of other Properties": 0,
+    "Value of Household Vehicles": 0,
+    "Wealth in Deposits": 0,
+    "Wealth in Financial Assets": 0,
+    "Value of Self-Employment Businesses": 0,
+    "Voluntary Pension": 0,
+    "Outstanding Balance of HMR Mortgages": 0,
+    "Outstanding Balance of Mortgages on other Properties": 0,
+    "Outstanding Balance of Credit Line": 0,
+    "Outstanding Balance of Credit Card Debt": 0,
+    "Outstanding Balance of other Non-Mortgage Loans": 0,
+    "Income": 42
+  },
+  "donor_reuse": {
+    "n_donors": 16241,
+    "n_used": 16102,
+    "max_reuse": 21,
+    "mean_reuse_among_used": 5.164700037262452
+  },
+  "n_recipients": 83162,
+  "MODE": "REAL (SFS 2023)"
+}

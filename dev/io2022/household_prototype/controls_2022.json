@@ -1,0 +1,101 @@
+{
+  "vintages": {
+    "SFS_donor": "2023 (13M0006X)",
+    "CIS_income": "2022 (72M0003X)",
+    "controls_snapshot": "balance sheet Q4 2022 (2022-10); flows 2022 annual"
+  },
+  "provenance": {
+    "balance_sheet": "36-10-0580 Households, Market value",
+    "quintiles": "36-10-0660 Distribution of value",
+    "backcast": "18-10-0205 NHPI, 18-10-0004 CPI (2022 vs 2023 annual)"
+  },
+  "aggregate_totals_millions_CAD_2022Q4": {
+    "Total assets": 18298593.0,
+    "Dwellings": 3622290.0,
+    "Land underlying dwellings": 4167482.0,
+    "Consumer durables": 878804.0,
+    "Total currency and deposits": 2034716.0,
+    "Total financial assets": 9190499.0,
+    "Equity and investment fund shares": 4129993.0,
+    "Life insurance and pensions": 2807177.0,
+    "Mortgages (liability)": 2126996.0,
+    "Consumer credit (liability)": 597597.0,
+    "Non-mortgage loans (liability)": 132335.0,
+    "Total liabilities (= assets - net worth)": 2893808.0,
+    "Net worth": 15404785.0
+  },
+  "model_field_mapping": {
+    "Value of the Main Residence + other Properties": "Dwellings + Land underlying dwellings (calibrate the SUM; donor keeps the within-class split)",
+    "Value of Household Vehicles": "Consumer durables (approx)",
+    "Wealth in Deposits": "Total currency and deposits",
+    "Wealth in Financial Assets": "Equity and investment fund shares (+ residual financial ex deposits/pensions)",
+    "Voluntary Pension": "Life insurance and pensions",
+    "Value of Self-Employment/Private Businesses": "part of Equity (unincorporated) -- approximate; prefer SFS donor level",
+    "Outstanding Balance of HMR + other Mortgages": "Mortgages (Residential + Non-residential)",
+    "Consumer debt (Credit Line + Card + other)": "Consumer credit + Non-mortgage loans",
+    "Income": "CIS 2022 / DHEA disposable income 2022",
+    "Net Worth": "Net worth"
+  },
+  "quintile_shares_net_worth_2022Q4_pct": {
+    "Lowest income quintile": 11.5,
+    "Second income quintile": 11.1,
+    "Third income quintile": 14.9,
+    "Fourth income quintile": 22.3,
+    "Highest income quintile": 40.2
+  },
+  "backcast_2023_to_2022": {
+    "housing_NHPI": {
+      "2022": 125.10833333333335,
+      "2023": 124.81666666666668,
+      "factor_2022_over_2023": 1.0023367605821873
+    },
+    "general_CPI": {
+      "2022": 148.26354166666667,
+      "2023": 153.80416666666665,
+      "factor_2022_over_2023": 0.9639761059789236
+    }
+  },
+  "flows_2022": {
+    "household_disposable_income_millions_CAD": 1502342.0
+  },
+  "not_available_in_these_tables": {
+    "homeownership_rate_2022": "not in 36-10-0580/0660; source Census 2021 (98-10-*) or Canadian Housing Survey 46-25-0001",
+    "households_by_province_2022": "17-10-0009 is population (persons); household COUNTS need Census families 98-10-* or est."
+  },
+  "model_field_targets_millions_CAD": {
+    "_note": "targets in $M CAD; groups calibrate the SUM of listed model fields (donor keeps within-group split).",
+    "groups": {
+      "residential_real_estate": {
+        "fields": [
+          "Value of the Main Residence",
+          "Value of other Properties"
+        ],
+        "target": 7789772.0
+      },
+      "mortgages": {
+        "fields": [
+          "Outstanding Balance of HMR Mortgages",
+          "Outstanding Balance of Mortgages on other Properties"
+        ],
+        "target": 2126996.0
+      },
+      "consumer_debt": {
+        "fields": [
+          "Outstanding Balance of Credit Line",
+          "Outstanding Balance of Credit Card Debt",
+          "Outstanding Balance of other Non-Mortgage Loans"
+        ],
+        "target": 729932.0
+      }
+    },
+    "singles": {
+      "Wealth in Deposits": 2034716.0,
+      "Wealth in Financial Assets": 4348606.0,
+      "Voluntary Pension": 2807177.0,
+      "Value of Household Vehicles": 878804.0,
+      "Net Worth": 15404785.0,
+      "Value of Self-Employment Businesses": 439518.0,
+      "Income": 1502342.0
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "_README": "Fill from the tables in SOURCE_MANIFEST.md. Values are 2022 CAD aggregate class totals (households sector) and, where used, quintile shares. Leave null to skip calibration of that class (the prototype then keeps donor levels for it). DO NOT guess -- copy from the cited tables.",
+  "vintages": {"SFS": "2023 (13M0006X)", "CIS": "2022 (72M0003X)", "controls": "36-10-0660 / 36-10-0587 / 36-10-0580 / 38-10-0238"},
+  "aggregate_totals_CAD": {
+    "Value of the Main Residence": null,
+    "Value of other Properties": null,
+    "Value of Household Vehicles": null,
+    "Wealth in Deposits": null,
+    "Wealth in Financial Assets": null,
+    "Value of Self-Employment Businesses": null,
+    "Voluntary Pension": null,
+    "Outstanding Balance of HMR Mortgages": null,
+    "Outstanding Balance of Mortgages on other Properties": null,
+    "Outstanding Balance of Credit Line": null,
+    "Outstanding Balance of Credit Card Debt": null,
+    "Outstanding Balance of other Non-Mortgage Loans": null,
+    "Income": null,
+    "Net Worth": null
+  },
+  "quintile_shares": {
+    "Net Worth": null,
+    "Income": null
+  },
+  "backcast_index_2023_to_2022": {
+    "_note": "intermediate adjustment only; final class totals must hit aggregate_totals_CAD",
+    "housing": null,
+    "financial": null,
+    "deposits": null,
+    "mortgage": null,
+    "consumer_credit": null
+  },
+  "homeownership_rate_2022": null,
+  "households_by_province_2022": null
+}
