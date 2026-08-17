@@ -250,6 +250,26 @@ class WorldBankReader:
                     data.append(val)
         return pd.DataFrame(data={"Participation Rate": data}, index=index).bfill()
 
+    @staticmethod
+    def _nearest_year_value(row_df: pd.DataFrame, year: int) -> float:
+        """Return the value at the nearest year column with a finite value for a
+        single-country-filtered frame. World Bank annual series can both end before a
+        later base year (e.g. 2022) and carry trailing NaNs, so this prefers the nearest
+        year <= ``year`` that is populated, else the nearest populated year overall, and
+        returns NaN only when the country has no finite observation at all."""
+        year_cols = [c for c in row_df.columns if str(c).isdigit()]
+        if row_df.empty or not year_cols:
+            return float("nan")
+        series = row_df[year_cols].iloc[0]
+        series.index = series.index.astype(int)
+        series = pd.to_numeric(series, errors="coerce").dropna()
+        if series.empty:
+            return float("nan")
+        below = series.index[series.index <= year]
+        if len(below):
+            return float(series.loc[below.max()])
+        return float(series.loc[series.index.min()])
+
     def get_tau_vat(self, country: Country, year: int) -> float:
         """
         Get VAT (Value Added Tax) rate for a country and year.
@@ -271,8 +291,8 @@ class WorldBankReader:
         df = self.data["tau_vat"]
         if country in forced_vat:
             return forced_vat[country]
-        df = df.loc[df["Country Code"] == country][str(year)]
-        return df.values[0] / 100.0
+        df = df.loc[df["Country Code"] == country]
+        return self._nearest_year_value(df, year) / 100.0
 
     def get_lcu_exports(self, country: Country, year: int) -> float:
         """
@@ -288,8 +308,8 @@ class WorldBankReader:
         if isinstance(country, Region):
             country = country.parent_country
         df = self.data["tau_exp"].fillna(0)
-        df = df.loc[df["Country Code"] == country][str(year)]
-        return df.values[0] / 100.0
+        df = df.loc[df["Country Code"] == country]
+        return self._nearest_year_value(df, year) / 100.0
 
     def get_gini_coef(self, country: Country, year: int) -> float:
         """
@@ -305,7 +325,8 @@ class WorldBankReader:
         if isinstance(country, Region):
             country = country.parent_country
         df = self.data["gini_coefs"]
-        return df.loc[df["Country Code"] == country][str(year)].values[0] / 100
+        df = df.loc[df["Country Code"] == country]
+        return self._nearest_year_value(df, year) / 100
 
     def get_historic_gdp(self, country: Country, year: int) -> float:
         """
@@ -329,7 +350,7 @@ class WorldBankReader:
             country = country.parent_country
         df = self.data["historic_gdp"]
         df = df.loc[df["Country Code"] == country].iloc[:, 4:]
-        return df.loc[:, str(year)].values[0] * ratio
+        return self._nearest_year_value(df, year) * ratio
 
     def get_current_scaled_gdp(self, country: Country, year: int, rescale_factor: float = 4.0) -> float:
         """
@@ -486,11 +507,11 @@ class WorldBankReader:
         if isinstance(country, Region):
             country = country.parent_country
         df = self.data["tau_exp"]
-        val = df.loc[df["Country Code"] == country, str(year)].values
-        if len(val) == 0 or np.isnan(val[0]):
+        df = df.loc[df["Country Code"] == country]
+        val = self._nearest_year_value(df, year)
+        if np.isnan(val):
             return default_value
-        else:
-            return val[0]
+        return val
 
     def prune(self, prune_date: date) -> None:
         """

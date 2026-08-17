@@ -274,6 +274,36 @@ class DataReaders:
 
         datapaths = DataPaths.default_paths(raw_data_path, all_years)
 
+        # The global OECD ICIO ("{year}_SML.csv") is only available in the model in the pre-2021
+        # classification (through 2020). For the provincial-CAN build the global table merely
+        # scaffolds CAN imputed rent / total output -- the provincial IO table (loaded below)
+        # overrides all economics, ROW included -- so when the requested year's SML is missing we
+        # fall back to the newest available SML while keeping `year` (exchange rates) intact.
+        if use_provincial_can_reader:
+            for scaffold_year in list(all_years):
+                if datapaths.icio_paths[scaffold_year].exists():
+                    continue
+                available = sorted(
+                    int(m.group(1))
+                    for p in (raw_data_path / "icio").glob("*_SML.csv")
+                    if (m := re.match(r"(\d{4})_SML\.csv$", p.name))
+                )
+                candidates = [y for y in available if y <= scaffold_year] or available
+                if not candidates:
+                    raise FileNotFoundError(
+                        f"No global ICIO SML files found under {raw_data_path / 'icio'} to scaffold "
+                        f"the provincial {scaffold_year} build."
+                    )
+                fallback_year = candidates[-1]
+                warnings.warn(
+                    f"Global ICIO '{scaffold_year}_SML.csv' not found; scaffolding the provincial "
+                    f"build off '{fallback_year}_SML.csv' (CAN imputed-rent/total-output scaffold "
+                    f"only -- the {scaffold_year} provincial IO table overrides all economics).",
+                    DataFilterWarning,
+                )
+                datapaths.icio_paths[scaffold_year] = raw_data_path / "icio" / f"{fallback_year}_SML.csv"
+                datapaths.icio_pivot_paths[scaffold_year] = raw_data_path / "icio" / f"{fallback_year}_SML_P.csv"
+
         goods_criticality = GoodsCriticalityReader.from_csv(path=datapaths.goods_criticality_path)
         exchange_rates = ExchangeRatesReader.from_csv(path=datapaths.exchange_rates_path)
 
@@ -321,12 +351,30 @@ class DataReaders:
 
         proxified = [country if country.is_eu_country else proxy_country_dict[country] for country in country_names]
 
+        # HFCS survey waves are discrete vintages (2010/2014/2017/2021). When the exact
+        # simulation-year wave folder is absent, use the nearest available wave <= year (the 2022
+        # build uses the HFCS-2021 wave, per the validated-inputs plan).
+        hfcs_survey_year = simulation_year
+        if not (datapaths.hfcs_path / str(simulation_year)).is_dir():
+            available_waves = sorted(
+                int(p.name) for p in datapaths.hfcs_path.iterdir() if p.is_dir() and p.name.isdigit()
+            )
+            eligible = [y for y in available_waves if y <= simulation_year] or available_waves
+            if not eligible:
+                raise FileNotFoundError(f"No HFCS survey waves found under {datapaths.hfcs_path}.")
+            hfcs_survey_year = eligible[-1]
+            warnings.warn(
+                f"HFCS wave '{simulation_year}' not found; using nearest available wave "
+                f"'{hfcs_survey_year}'.",
+                DataFilterWarning,
+            )
+
         hfcs = {
             proxy_country: HFCSReader.from_csv(
                 country_name=proxy_country,
                 country_name_short=proxy_country.to_two_letter_code(),
                 hfcs_data_path=datapaths.hfcs_path,
-                year=simulation_year,
+                year=hfcs_survey_year,
                 exchange_rates=exchange_rates,
                 num_surveys=1 if force_single_hfcs_survey else 5,
             )
@@ -360,21 +408,68 @@ class DataReaders:
                 raise ValueError("Canada must be in the country names for this reader.")
             if not regions_dict:
                 raise ValueError("Must provide regional disaggregation dictionary.")
-            if simulation_year != 2014:
-                raise ValueError("Only 2014 is supported for this reader.")
-            disagg_path = raw_data_path / "icio" / "icio_2014_can_provinces.csv"
+            # Provincial IO table by base year: 2014 = legacy 10-province/43-industry custom
+            # table; 2022 = OECD-50 / 13-region (incl. YT/NT/NU) compatibility table from the
+            # macroabm-io2022 pipeline. Both share the same (region, industry|VA-row) layout.
+            provincial_io_files = {
+                2014: "icio_2014_can_provinces.csv",
+                2022: "icio_2022_can_provinces.csv",
+            }
+            if simulation_year not in provincial_io_files:
+                raise ValueError(
+                    f"Provincial Canadian reader supports years {sorted(provincial_io_files)}; "
+                    f"got {simulation_year}."
+                )
+            disagg_path = raw_data_path / "icio" / provincial_io_files[simulation_year]
             df = pd.read_csv(disagg_path, header=[0, 1], index_col=[0, 1])
 
             df *= 1e6  # Scale to millions
 
+            # The 2022 OECD-50 table carries two final-demand columns the 3-symbol model layout
+            # (2014) does not: "Changes in Inventories" and "Direct Purchases Abroad". They are
+            # genuine final-demand components (gross capital formation / household final
+            # consumption in SNA), so fold them into the model's Fixed Capital Formation and
+            # Household Consumption columns and drop the originals -- otherwise C+G+I+X-M falls
+            # short of value added by exactly these amounts (the GDP output==expenditure identity
+            # in compile_national_accounts_data fails) and, left in place, they would be
+            # double-counted by get_trade (which sums all non-industry columns). Verified: the
+            # per-region residual goes from +2.6%..+4.8% of VA to 0 after folding.
+            fold_final_demand = {
+                "Changes in Inventories": "Fixed Capital Formation",
+                "Direct Purchases Abroad": "Household Consumption",
+            }
+            # Snapshot PRE-FOLD "Fixed Capital Formation" before Changes in Inventories are folded in.
+            # This is the CAPITAL-TECHNOLOGY composition source (ICIOReader._prefold_capital_composition):
+            # ACCOUNTING net investment keeps the fold (and negative cells) for the GDP identity, while
+            # the capital-input/productivity/stock/depreciation matrices draw their (non-negative)
+            # composition from fixed capital formation only -- inventories must never define capital
+            # technology. Taken before the fold so no inventory swing leaks into the composition.
+            prefold_fcf_block = df.loc[:, df.columns.get_level_values(1) == "Fixed Capital Formation"].copy()
+            icio[simulation_year]._prefold_fcf_block = prefold_fcf_block
+            present_extremes = {extra for _, extra in df.columns if extra in fold_final_demand}
+            if present_extremes:
+                for region in df.columns.get_level_values(0).unique():
+                    for extra_col, target_col in fold_final_demand.items():
+                        if (region, extra_col) in df.columns and (region, target_col) in df.columns:
+                            df[(region, target_col)] = (
+                                df[(region, target_col)].fillna(0.0) + df[(region, extra_col)].fillna(0.0)
+                            )
+                df = df.drop(columns=[c for c in df.columns if c[1] in fold_final_demand])
+
             column_industries = df.columns.get_level_values(1).unique().tolist()
             row_industries = set(df.index.get_level_values(1).unique())
             shared_labels = [industry for industry in column_industries if industry in row_industries]
-            industry_pattern = re.compile(r"^[A-Z](?:\d{2}(?:T\d{2})?)?[a-z]?(?:_[A-Z])?$")
+            # Accept official OECD-50 codes (C17_18, C24A/B, C301, C302T309, J62_63, R, S, T)
+            # as well as legacy codes (B05a/b/c, C24a/b, D01a-e, R_S) so the reader handles both
+            # the 2014 custom table and the 2022 OECD-50 table.
+            industry_pattern = re.compile(r"^[A-Z]\d{0,3}[A-Za-z]?(?:[_T]\d{2,3}|_[A-Z])?$")
             industries = [industry for industry in shared_labels if industry_pattern.match(industry)]
             if not industries:
                 raise ValueError("Provincial ICIO data has no matching industries.")
             icio[simulation_year].industries = industries
+
+            if simulation_year == 2022:
+                _floor_empty_provincial_sectors(df, industries, regions_dict)
 
             all_provinces = []
             for key, value in regions_dict.items():
@@ -441,6 +536,24 @@ class DataReaders:
             for key, value in regions_dict.items():
                 value_added_dict[key] = sum([value_added_dict[region] for region in value])
 
+        # WIOD SEA coverage ends in 2014; for a later provincial build it is only a scaffold
+        # (value added is rescaled to the IO below and capital/compensation are overwritten with
+        # the validated series), so read the latest available WIOD year while still reporting
+        # `simulation_year`.
+        wiod_data_year = None
+        if use_provincial_can_reader:
+            wiod_year_cols = sorted(
+                int(c) for c in pd.read_csv(datapaths.wiod_sea_path, nrows=0).columns if str(c).isdigit()
+            )
+            if wiod_year_cols and simulation_year not in wiod_year_cols:
+                wiod_data_year = max([y for y in wiod_year_cols if y <= simulation_year] or wiod_year_cols)
+                warnings.warn(
+                    f"WIOD SEA has no '{simulation_year}' column; reading the latest available WIOD "
+                    f"year '{wiod_data_year}' as a scaffold (value added rescaled to the IO; capital "
+                    f"stock/compensation overwritten with the validated 2022 series).",
+                    DataFilterWarning,
+                )
+
         wiod_sea = WIODSEAReader.agg_from_csv(
             path=datapaths.wiod_sea_path,
             year=simulation_year,
@@ -450,7 +563,20 @@ class DataReaders:
             value_added_dict=value_added_dict,
             aggregation_type="Aggregate" if aggregate_industries else "All",
             regions_dict=regions_dict,
+            data_year=wiod_data_year,
         )
+
+        # Inject the validated 2022 province x OECD-50 capital stock / capital compensation BEFORE
+        # the SEA<->IO reconciliation, so the validated series act as drop-in replacements for the
+        # WIOD scaffold (which does not cover 2022) rather than overwriting the reconciled,
+        # GFCF-consistent capital-compensation level that the economy GDP identity depends on.
+        if use_provincial_can_reader and simulation_year == 2022:
+            inject_can_provincial_socioeconomic_2022(
+                sea_reader=wiod_sea,
+                regions_dict=regions_dict,
+                raw_data_path=raw_data_path,
+                industries=wiod_sea.industries,
+            )
 
         reconcile_value_added(
             icio_reader=icio[simulation_year],
@@ -543,6 +669,11 @@ class DataReaders:
         provincial_macro = ProvincialMacroReader.from_default(raw_data_path=raw_data_path)
         provincial_tax = ProvincialTaxReader.from_default(raw_data_path=raw_data_path)
         provincial_labour = ProvincialLabourReader.from_default(raw_data_path=raw_data_path)
+
+        # Hand the observed 2022 provincial employer social-contribution rates (loaded onto the SEA
+        # reader during the socioeconomic injection) to the OECD reader, whose read_tau_sif is the
+        # single source of tau_sif for both the wage decomposition and the firm/ government tax side.
+        oecd_econ.can_2022_employer_si_ratio = getattr(wiod_sea, "can_2022_employer_si_ratio", {})
 
         return cls(
             obps_can=obps_can,
@@ -816,6 +947,236 @@ class DataReaders:
         weights_by_income_all.index = range(weights_by_income_all.shape[0])
         weights_by_income = weights_by_income_all
         return weights_by_income
+
+
+CAN_2022_EMPTY_SECTOR_FLOOR = 1.0e6  # 1 CAD million (values are absolute after the x1e6 scaling)
+
+
+def _floor_empty_provincial_sectors(
+    df: pd.DataFrame,
+    industries: list[str],
+    regions_dict: dict[Country, list[Region]],
+    floor: float = CAN_2022_EMPTY_SECTOR_FLOOR,
+) -> None:
+    """Give each genuinely empty (province, sector) cell a negligible, self-consistent presence.
+
+    The finer OECD-50 split leaves exact-zero-output sectors in most provinces (coal B05/B06 in
+    NL/PE/NS/NB/MB, many territory sectors). The model builds one firm per sector and its runtime
+    production/price dynamics degenerate on exactly-zero output/investment (0/0, inf). This mirrors
+    the 2014 table (whose coarser aggregation had no exact-zero sectors) by giving every empty
+    sector a tiny output produced from an equal tiny value added and bought as fixed capital
+    formation in the same region. Because the output/value-added side and the expenditure/investment
+    side each gain the same amount, the GDP output==expenditure identity is preserved.
+    """
+    output_col = ("TOTAL", "Output")
+    output_row = ("TOTAL", "Output")
+    va_row = ("TOTAL", "Value Added")
+    regions = [region for regions in regions_dict.values() for region in regions]
+    floored = 0
+    for region in regions:
+        fcf_col = (region, "Fixed Capital Formation")
+        if fcf_col not in df.columns:
+            continue
+        for sector in industries:
+            cell = (region, sector)
+            if cell not in df.index or output_col not in df.columns:
+                continue
+            current_output = df.at[cell, output_col]
+            if pd.notna(current_output) and current_output > 0.0:
+                continue
+            df.at[cell, output_col] = floor
+            if output_row in df.index:
+                df.at[output_row, cell] = floor
+            if va_row in df.index:
+                df.at[va_row, cell] = floor
+            existing_fcf = df.at[cell, fcf_col]
+            df.at[cell, fcf_col] = (existing_fcf if pd.notna(existing_fcf) else 0.0) + floor
+            floored += 1
+    if floored:
+        warnings.warn(
+            f"2022 provincial build: floored {floored} empty (province, sector) cells at "
+            f"{floor:g} CAD to keep the per-firm dynamics finite (identity-preserving).",
+            DataFilterWarning,
+        )
+
+
+CAN_2022_SOCIOECONOMIC_DIR = "can_2022"
+CAN_2022_CAPITAL_STOCK_FILE = "capital_stock_end2021_oecd50_by_province_CADmillions.csv"
+CAN_2022_CAPITAL_COMPENSATION_FILE = "capital_compensation_oecd50_by_province_CADmillions.csv"
+CAN_2022_EMPLOYMENT_SHARES_FILE = "employment_shares_oecd50_by_province.csv"
+CAN_2022_COMPENSATION_FILE = "compensation_of_employees_oecd50_by_province_CADmillions.csv"
+
+
+def _load_can_2022_compensation_of_employees(
+    raw_data_path: Path,
+    regions_dict: dict[Country, list[Region]],
+    industries: list[str],
+) -> tuple[dict[Region, np.ndarray], dict[Region, float]]:
+    """Load observed 2022 compensation of employees from the StatCan detail VA breakdown
+    (PRM500000 wages_salaries + PRM600000 employers_social_contributions, province x OECD-50, CAD mn).
+
+    Returns:
+        (coe_by_region, employer_ratio_by_region)
+        * coe_by_region[region]  = TOTAL compensation of employees per sector (wages + employer), x1e6.
+          This is the model's ``labour_compensation`` input (== firm-side Total Wages Paid == full firm
+          labour cost); ``tau_sif`` only decomposes it into employee wages vs employer contributions.
+        * employer_ratio_by_region[region] = sum(employer) / sum(wages) at region level -- the observed
+          employer social-contribution rate, used to override ``tau_sif`` so the decomposition matches
+          PRM500000 / PRM600000. (firm labour cost = Total Wages * (1+tau_sif) = CoE regardless of the
+          rate, so this only re-splits employee income vs employer contributions, not firm cost.)
+    """
+    path = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR / CAN_2022_COMPENSATION_FILE
+    if not path.exists():
+        warnings.warn(
+            f"2022 compensation of employees not found at {path}; keeping the residual "
+            "VA - GFCF-reconciled capital compensation for the wage bill (observed CoE NOT wired).",
+            DataFilterWarning,
+        )
+        return {}, {}
+    df = pd.read_csv(path)
+    df["region"] = df["region"].astype(str)
+    wages = df.pivot(index="region", columns="oecd", values="wages_salaries")
+    employer = df.pivot(index="region", columns="oecd", values="employers_social_contributions")
+    coe_by_region: dict[Region, np.ndarray] = {}
+    ratio_by_region: dict[Region, float] = {}
+    for regions in regions_dict.values():
+        for region in regions:
+            short_code = str(region).split("_", 1)[-1]
+            if short_code not in wages.index:
+                continue
+            w = wages.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+            e = employer.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+            coe_by_region[region] = (w + e) * 1e6
+            ratio_by_region[region] = float(e.sum() / w.sum()) if w.sum() > 0 else 0.0
+    return coe_by_region, ratio_by_region
+
+
+def _load_can_2022_employment_shares(
+    raw_data_path: Path,
+    regions_dict: dict[Country, list[Region]],
+    industries: list[str],
+) -> dict[Region, np.ndarray]:
+    """Load validated StatCan 36-10-0489 province x OECD-50 employment shares (sum to 1 per province),
+    aligned to the model's ``industries`` order. Returns {region: shares_vector}; regions absent from
+    the file are omitted (the caller then keeps the HFCS/output-share allocation for them).
+    """
+    path = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR / CAN_2022_EMPLOYMENT_SHARES_FILE
+    if not path.exists():
+        warnings.warn(
+            f"2022 employment shares not found at {path}; keeping the HFCS/output-share employment "
+            "allocation (StatCan 36-10-0489 shares NOT wired).",
+            DataFilterWarning,
+        )
+        return {}
+    shares_df = pd.read_csv(path, index_col=0)
+    shares_df.index = shares_df.index.astype(str)
+    out: dict[Region, np.ndarray] = {}
+    for regions in regions_dict.values():
+        for region in regions:
+            short_code = str(region).split("_", 1)[-1]
+            if short_code not in shares_df.index:
+                continue
+            out[region] = shares_df.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+    return out
+
+
+def inject_can_provincial_socioeconomic_2022(
+    sea_reader: WIODSEAReader,
+    regions_dict: dict[Country, list[Region]],
+    raw_data_path: Path,
+    industries: list[str],
+) -> None:
+    """Replace the WIOD scaffold capital stock / capital compensation in the SEA reader with the
+    validated 2022 province x OECD-50 StatCan series, as a drop-in for the WIOD values.
+
+    IMPORTANT: this must run BEFORE ``reconcile_value_added`` / ``add_investment_matrix_to_icio`` /
+    ``match_iot_with_sea``. Those reconcile SEA "Capital Compensation" to the IO's gross fixed
+    capital formation (``_match_country_iot_with_sea`` overwrites it with the investment-matrix
+    column sums, and sets "Labour Compensation" = VA - reconciled capital compensation). So the
+    validated capital compensation here feeds only the *sectoral investment-allocation pattern*
+    (``cap_factors``); the reconciled level (and hence the GDP output==expenditure identity, which
+    treats capital cost as investment flow) is preserved. Injecting after ``match`` instead
+    over-states gross fixed capital formation (capital compensation >> investment) and breaks the
+    economy identity, so labour compensation is deliberately NOT set here.
+
+    Sources (``raw_data_path/can_2022``):
+      * capital stock  = StatCan 36-10-0096 geometric end-2021 net non-residential stock
+        (opening capital for the 2022 base year), CAD millions -- a genuine level used in
+        output/capital-stock productivity.
+      * capital compensation = 2022 IO GOS + mixed income + production taxes - subsidies,
+        CAD millions, replacing the WIOD ``CAP`` scaffold in the investment allocation.
+
+    Units: SEA fields carry the IO's absolute scale (the provincial IO is x1e6), so CAD-millions
+    inputs are x1e6. Capital stock is floored at 1 CAD million (mirrors the WIOD ``max(1.0)``
+    floor). Any region absent from the validated files keeps its WIOD scaffold (a warning fires).
+    """
+    socio_dir = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR
+    capital_stock_path = socio_dir / CAN_2022_CAPITAL_STOCK_FILE
+    capital_compensation_path = socio_dir / CAN_2022_CAPITAL_COMPENSATION_FILE
+
+    if not capital_stock_path.exists() or not capital_compensation_path.exists():
+        warnings.warn(
+            f"2022 provincial socioeconomic inputs not found under {socio_dir}; "
+            "falling back to WIOD capital stock / compensation.",
+            DataFilterWarning,
+        )
+        return
+
+    capital_stock_df = pd.read_csv(capital_stock_path, index_col=0)
+    capital_stock_df.index = capital_stock_df.index.astype(str)
+
+    capital_comp_long = pd.read_csv(capital_compensation_path)
+    capital_comp_wide = capital_comp_long.pivot(index="region", columns="oecd", values="capital_compensation")
+
+    skipped = []
+    for _, regions in regions_dict.items():
+        for region in regions:
+            short_code = str(region).split("_", 1)[-1]
+            if short_code not in capital_stock_df.index or short_code not in capital_comp_wide.index:
+                skipped.append(str(region))
+                continue
+
+            capital_stock = (
+                capital_stock_df.loc[short_code].reindex(industries).fillna(0.0).clip(lower=1.0).to_numpy(float)
+                * 1e6
+            )
+            capital_compensation = (
+                capital_comp_wide.loc[short_code].reindex(industries).fillna(0.0).clip(lower=0.0).to_numpy(float)
+                * 1e6
+            )
+
+            sea_reader.set_values_in_usd(region, "Capital Stock", capital_stock)
+            sea_reader.set_values_in_usd(region, "Capital Compensation", capital_compensation)
+
+    if skipped:
+        warnings.warn(
+            f"2022 provincial socioeconomic injection skipped (WIOD fallback) for: {skipped}.",
+            DataFilterWarning,
+        )
+
+    # Also load the validated StatCan 36-10-0489 employment shares and stash them on the SEA reader.
+    # These drive the province x sector EMPLOYED-PERSON structure (headcount), applied to the synthetic
+    # population after it is built (see reallocate_employment_by_shares / synthetic_country build). The
+    # sector wage bill (SEA Labour Compensation) is unaffected, so wiring these fixes the employment
+    # distribution and hence wage/worker and labour productivity, without touching the value-added or
+    # GDP-identity reconciliation.
+    sea_reader.can_2022_employment_shares = _load_can_2022_employment_shares(
+        raw_data_path=raw_data_path,
+        regions_dict=regions_dict,
+        industries=industries,
+    )
+
+    # Load observed 2022 compensation of employees (PRM500000 + PRM600000). This replaces the residual
+    # VA - GFCF-capcomp as the firm wage bill (SEA "Labour Compensation"), applied in
+    # _match_country_iot_with_sea. The employer/wages ratio overrides tau_sif so the wages vs employer
+    # split matches PRM500000/PRM600000. Capital compensation and the GFCF/investment path are untouched.
+    coe_by_region, employer_ratio = _load_can_2022_compensation_of_employees(
+        raw_data_path=raw_data_path,
+        regions_dict=regions_dict,
+        industries=industries,
+    )
+    sea_reader.can_2022_compensation_of_employees = coe_by_region
+    sea_reader.can_2022_employer_si_ratio = employer_ratio
 
 
 def prune_icio_dict(icio_dict: dict[int, Any], prune_date: date):

@@ -56,6 +56,7 @@ class WIODSEAReader:
         exchange_rates: ExchangeRatesReader,
         value_added_dict: dict[str, pd.Series],
         regions_dict: Optional[dict[Country, list[Region]]] = None,
+        data_year: Optional[int] = None,
     ) -> "WIODSEAReader":
         """
         Aggregate socioeconomic data from a CSV file. Aggregation is done using a JSON file that maps sectors
@@ -74,6 +75,14 @@ class WIODSEAReader:
         Returns:
             WIOD_SEA_Data: An instance of the WIOD_SEA_Data class containing the aggregated data.
         """
+        # `data_year` selects which WIOD column to read; `year` is the year the reader reports
+        # (used downstream for exchange rates). They differ only when the requested `year` is
+        # outside the WIOD SEA coverage (e.g. the 2022 provincial build reads the latest WIOD
+        # year as a scaffold and reports year=2022 -- capital/compensation are overwritten with
+        # validated series and value added is rescaled to the IO afterwards).
+        if data_year is None:
+            data_year = year
+
         # Aggregate industries
         raw_df = pd.read_csv(path, thousands=",", index_col=[0, 1, 2, 3])
         # aggregation = json.load(open(aggregation_path))
@@ -82,15 +91,15 @@ class WIODSEAReader:
         for key, values in aggregation.items():
             for value in values:
                 agg_dict_full[value] = key
-        stacked = raw_df[str(year)].reset_index()
-        stacked.rename(columns={str(year): "Value"}, inplace=True)
+        stacked = raw_df[str(data_year)].reset_index()
+        stacked.rename(columns={str(data_year): "Value"}, inplace=True)
 
         # Don't include indices or employment info
         stacked = stacked[stacked["variable"].isin(["VA", "COMP", "CAP", "K"])]
 
         # Convert to USD
         stacked["Value"] = np.maximum(1.0, stacked["Value"])  # minimum value
-        stacked["Value"] /= stacked["country"].map(exchange_rates.exchange_rates_dict(year))
+        stacked["Value"] /= stacked["country"].map(exchange_rates.exchange_rates_dict(data_year))
         stacked["Value"] *= 1e6
 
         # Aggregate

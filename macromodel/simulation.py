@@ -17,6 +17,7 @@ from typing import Callable, Optional
 
 import h5py
 import numpy as np
+import pandas as pd
 from numba import njit
 
 from macro_data import DataWrapper
@@ -176,12 +177,27 @@ class Simulation:
 
         row_index = sorted(countries_with_row).index("ROW")
 
+        # The goods market reshapes these flat arrays into (country, country, industry) and indexes
+        # them positionally in the participant order (== goods_market_participants keys ==
+        # countries_with_row). The trade-proportion DataFrames are sort_index()-ed (alphabetical),
+        # so taking .values directly would feed the countries in the WRONG order and permute both the
+        # origin and destination axes (e.g. sourcing C24B from non-producers). Reindex explicitly to
+        # the exact participant order before .values so origin/destination line up with the market's
+        # country indexing. This only realigns the array; it does not change any observed trade flow.
+        _tp_order = [str(c) for c in countries_with_row]
+        _tp_index = pd.MultiIndex.from_product(
+            [_tp_order, _tp_order, range(datawrapper.n_industries)],
+            names=datawrapper.origin_trade_proportions.index.names,
+        )
+        _origin_tp = datawrapper.origin_trade_proportions.reindex(_tp_index).to_numpy()
+        _destin_tp = datawrapper.destination_trade_proportions.reindex(_tp_index).to_numpy()
+
         goods_market = GoodsMarket.from_data(
             n_industries=datawrapper.n_industries,
             configuration=simulation_configuration.goods_market_configuration,
             goods_market_participants=goods_market_participants,
-            origin_trade_proportions=datawrapper.origin_trade_proportions.values,
-            destin_trade_proportions=datawrapper.destination_trade_proportions.values,
+            origin_trade_proportions=_origin_tp,
+            destin_trade_proportions=_destin_tp,
             row_index=row_index,
         )
 

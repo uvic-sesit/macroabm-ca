@@ -43,6 +43,7 @@ Example:
 
 import os
 import re
+import warnings
 from functools import reduce
 from pathlib import Path
 from typing import Literal, Optional
@@ -160,6 +161,11 @@ class ICIOReader:
         self.year = year
         self.investment_matrices = {}
         self.yearly_factor = yearly_factor
+        # Snapshot of PRE-FOLD "Fixed Capital Formation" (before Changes-in-Inventories are folded in),
+        # used ONLY to build the non-negative capital-TECHNOLOGY composition -- see
+        # _prefold_capital_composition and the ACCOUNTING vs CAPITAL-TECHNOLOGY separation documented
+        # there. None for builds that never set it (e.g. legacy 2014), preserving prior behaviour.
+        self._prefold_fcf_block = None
 
         # Normalisation
         # self.normalise_iot()
@@ -650,7 +656,11 @@ class ICIOReader:
         Returns:
             np.ndarray: Net tax rates by industry
         """
-        return self.get_taxes_less_subsidies(country_name) / self.get_total_output(country_name)
+        taxes = self.get_taxes_less_subsidies(country_name)
+        output = self.get_total_output(country_name)
+        # Zero-output (province, sector) cells are common under the finer OECD-50 split (e.g.
+        # coal mining B05 in NL/PE/NS/NB/MB, many territory sectors) -> 0 tax rate, not NaN.
+        return np.divide(taxes, output, out=np.zeros_like(output, dtype=float), where=output != 0)
 
     def get_hh_consumption(self, country_name: str) -> np.ndarray:
         """Get total household consumption by industry.
@@ -805,11 +815,30 @@ class ICIOReader:
         """
         return self.iot.loc[start_country, end_country].sum(axis=1).loc[self.industries] / self.yearly_factor
 
+    def _positive_sourcing_flow(self, start_country: str, end_country: str) -> np.ndarray:
+        """Non-negative sourcing basis for the trade-ALLOCATION proportions.
+
+        ACCOUNTING use flows (``get_trade``) can be negative for net-disinvestment goods, because the
+        summed columns include disposal/net-GFCF and folded Changes-in-Inventories cells (e.g. C24A/C24B
+        metals). But goods-market SOURCING SHARES must represent actual purchases and therefore lie in
+        [0, 1]. This mirrors ``get_trade`` (flow of each good from ``start`` to all of ``end``'s columns)
+        but clips **each cell** to >= 0 before summing, so the basis keeps positive intermediate and
+        positive final purchases (household/government/investment) and drops negative inventory changes
+        and negative/disposal fixed capital formation. The accounting IO/``get_trade`` are untouched;
+        this feeds only the allocation-layer proportions.
+        """
+        return (
+            self.iot.loc[start_country, end_country].clip(lower=0.0).sum(axis=1).loc[self.industries].values
+            / self.yearly_factor
+        )
+
     def get_origin_trade_proportions(self) -> pd.DataFrame:
         """Calculate trade proportions from origin country perspective.
 
-        Computes the fraction of each industry's imports that comes from each
-        source country, including domestic production.
+        Computes the fraction of each industry's sourcing that comes from each source country
+        (including domestic production), from the non-negative sourcing basis (see
+        ``_positive_sourcing_flow``). Shares lie in [0, 1] and sum to 1 across origins per
+        destination×industry.
 
         Returns:
             pd.DataFrame: Multi-indexed DataFrame with trade proportions
@@ -821,25 +850,28 @@ class ICIOReader:
             "industry": [],
             "value": [],
         }
+        origins = self.considered_countries + ["ROW"]
         for end_country in self.considered_countries + ["ROW"]:
-            if end_country == "ROW":
-                imports_total = self.get_imports(end_country)
-            else:
-                imports_total = self.get_imports(end_country) + self.get_trade(end_country, end_country)
-            for start_country in self.considered_countries + ["ROW"]:
+            pos_flows = {
+                start_country: (
+                    np.zeros(len(self.industries))
+                    if start_country == end_country == "ROW"
+                    else self._positive_sourcing_flow(start_country, end_country)
+                )
+                for start_country in origins
+            }
+            sourcing_total = np.sum(list(pos_flows.values()), axis=0)
+            for start_country in origins:
                 trade_proportions["start_country"] += [start_country] * len(self.industries)
                 trade_proportions["end_country"] += [end_country] * len(self.industries)
                 trade_proportions["industry"] += list(range(len(self.industries)))
-                if start_country == end_country == "ROW":
-                    trade_proportions["value"] += list(np.zeros(len(self.industries)))
-                else:
-                    shares = np.divide(
-                        self.get_trade(start_country, end_country).values,
-                        imports_total.values,
-                        out=np.zeros(len(self.industries), dtype=float),
-                        where=imports_total.values != 0.0,
-                    )
-                    trade_proportions["value"] += list(shares)
+                shares = np.divide(
+                    pos_flows[start_country],
+                    sourcing_total,
+                    out=np.zeros(len(self.industries), dtype=float),
+                    where=sourcing_total != 0.0,
+                )
+                trade_proportions["value"] += list(shares)
         return pd.DataFrame(trade_proportions).set_index(["start_country", "end_country", "industry"]).sort_index()
 
     def get_destination_trade_proportions(self) -> pd.DataFrame:
@@ -858,22 +890,25 @@ class ICIOReader:
             "industry": [],
             "value": [],
         }
+        destinations = self.considered_countries + ["ROW"]
         for start_country in self.considered_countries + ["ROW"]:
-            if start_country == "ROW":
-                exports_total = self.get_exports(start_country)
-            else:
-                exports_total = self.get_exports(start_country) + self.get_trade(start_country, start_country)
-            for end_country in self.considered_countries + ["ROW"]:
-                if start_country == end_country == "ROW":
-                    trade_proportions["value"] += list(np.zeros(len(self.industries)))
-                else:
-                    shares = np.divide(
-                        self.get_trade(start_country, end_country).values,
-                        exports_total.values,
-                        out=np.zeros(len(self.industries), dtype=float),
-                        where=exports_total.values != 0.0,
-                    )
-                    trade_proportions["value"] += list(shares)
+            pos_flows = {
+                end_country: (
+                    np.zeros(len(self.industries))
+                    if start_country == end_country == "ROW"
+                    else self._positive_sourcing_flow(start_country, end_country)
+                )
+                for end_country in destinations
+            }
+            distribution_total = np.sum(list(pos_flows.values()), axis=0)
+            for end_country in destinations:
+                shares = np.divide(
+                    pos_flows[end_country],
+                    distribution_total,
+                    out=np.zeros(len(self.industries), dtype=float),
+                    where=distribution_total != 0.0,
+                )
+                trade_proportions["value"] += list(shares)
                 trade_proportions["start_country"] += [start_country] * len(self.industries)
                 trade_proportions["end_country"] += [end_country] * len(self.industries)
                 trade_proportions["industry"] += list(range(len(self.industries)))
@@ -893,7 +928,52 @@ class ICIOReader:
         """
         total_output = self.get_total_output(country_name)
         total_monthly_intermediate_inputs = self.get_intermediate_inputs_use(country_name)
-        return total_output[None, :] / total_monthly_intermediate_inputs  # noqa
+        matrix = total_output[None, :] / total_monthly_intermediate_inputs  # noqa
+        # Zero-output / zero-input (province, sector) cells give 0/0 = NaN (or x/0 = inf) under the
+        # finer OECD-50 split. The model divides production by this productivity matrix, so map any
+        # non-finite entry to +inf => 0 required inputs for a degenerate sector (matches the
+        # get_capital_inputs_matrix fillna(inf) convention). Without this the initial
+        # used_intermediate_inputs is NaN and the economy GDP identity check fails.
+        return matrix.where(np.isfinite(matrix), np.inf)
+
+    def _prefold_capital_composition(self, country_name: str) -> Optional[np.ndarray]:
+        """Non-negative capital-goods composition (supply weights by capital good).
+
+        ACCOUNTING net investment (Fixed Capital Formation, incl. the folded Changes in Inventories,
+        with legitimate negative cells) is NOT the same object as the CAPITAL-TECHNOLOGY composition
+        (which capital goods a sector's technology draws on). The technology object must be
+        non-negative and must not inherit net disinvestment or inventory swings. This method sources
+        the composition from fixed capital formation BEFORE the inventory fold (``_prefold_fcf_block``),
+        clips negative values to zero, and returns the raw non-negative supply vector (callers
+        normalise). The per-country firm/household/government split is a scalar that cancels under
+        that normalisation, so the pre-fold *total* fixed capital formation defines the composition.
+
+        Returns None when no pre-fold snapshot exists (e.g. legacy builds) so callers keep their
+        original behaviour unchanged. When the snapshot exists but has no positive cell for the
+        country, returns an all-zero vector and logs it -- callers then make that capital channel
+        non-binding rather than inventing a distribution.
+        """
+        if self._prefold_fcf_block is None:
+            return None
+        considered = list(self.considered_countries) + ["ROW"]
+        parts = []
+        for supplier in considered:
+            try:
+                series = self._prefold_fcf_block.loc[supplier, (country_name, "Fixed Capital Formation")]
+            except KeyError:
+                continue
+            parts.append(series.reindex(self.industries))
+        if not parts:
+            return None
+        supply = reduce(lambda a, b: a.add(b, fill_value=0.0), parts).fillna(0.0).to_numpy() / self.yearly_factor
+        weights = np.maximum(0.0, supply)
+        if not np.any(weights > 0.0):
+            warnings.warn(
+                f"2022 capital composition: {country_name} has no positive pre-fold fixed capital "
+                f"formation; its capital-input channel is made non-binding (no distribution invented).",
+                stacklevel=2,
+            )
+        return weights
 
     def get_capital_inputs_matrix(
         self,
@@ -906,6 +986,14 @@ class ICIOReader:
         in the production processes of other industries, normalized by
         capital stock.
 
+        The capital-goods composition is a technological object and MUST be non-negative. When a
+        pre-fold capital composition is available (see _prefold_capital_composition) it replaces the
+        accounting-derived (folded, possibly negative) investment composition -- the ACCOUNTING net
+        investment in investment_matrices is left untouched (it still drives the capital-compensation
+        reconciliation and the GDP identity). A zero composition weight yields an infinite coefficient
+        (excluded from the Leontief min, i.e. non-binding), never a zero coefficient (which would bind
+        production at zero).
+
         Args:
             country_name (str): Country to analyze
             capital_stock (np.ndarray): Current capital stock by industry
@@ -914,6 +1002,15 @@ class ICIOReader:
             pd.DataFrame: Matrix of capital input coefficients
         """
         norm_investment_matrix = self.investment_matrices[country_name].copy()
+        composition = self._prefold_capital_composition(country_name)
+        if composition is not None:
+            # investment_matrices columns share one supplying-good composition; overwrite every column
+            # with the non-negative pre-fold weights (aligned to the supplying-good row order).
+            comp_by_good = pd.Series(composition, index=pd.Index(self.industries))
+            col_weights = comp_by_good.reindex(norm_investment_matrix.index.get_level_values(-1)).to_numpy()
+            norm_investment_matrix.iloc[:, :] = np.broadcast_to(
+                col_weights[:, None], norm_investment_matrix.shape
+            )
         norm_investment_matrix /= norm_investment_matrix.sum(axis=0)
         cap_inputs_matrix = (self.get_total_output(country_name) / capital_stock) / norm_investment_matrix
         return cap_inputs_matrix.xs(country_name, axis=0, level=0).xs(country_name, axis=1, level=0).fillna(np.inf)
@@ -936,10 +1033,27 @@ class ICIOReader:
             pd.DataFrame: Matrix of capital depreciation rates, converted to sub-annual frequency
         """
         total_output = self.get_total_output(country_name)
-        gfcf = self.get_firm_capital_inputs(country_name)
+        # Capital consumption is a technological object: use the same non-negative pre-fold capital
+        # composition as get_capital_inputs_matrix (never the folded, possibly negative firm GFCF).
+        # A zero-composition good then contributes zero depreciation weight (non-consuming). Falls
+        # back to the accounting firm GFCF only when no pre-fold snapshot exists (legacy builds).
+        composition = self._prefold_capital_composition(country_name)
+        gfcf = composition if composition is not None else self.get_firm_capital_inputs(country_name)
         investment_matrix = np.array([gfcf for _ in range(len(capital_compensation))]).T
-        norm_investment_matrix = investment_matrix / investment_matrix.sum(axis=0)
-        norm_investment_matrix *= (capital_compensation / total_output)[None, :]
+        # Zero-output / zero-investment (province, sector) cells are common under the finer OECD-50
+        # split. The model MULTIPLIES production by this depreciation matrix (Production x rate), so
+        # a non-finite rate would give 0 * inf = NaN for a zero-output firm. Keep every step finite:
+        # a zero column-sum gives 0 weights, and capital_compensation / output is 0 where output==0.
+        column_sums = investment_matrix.sum(axis=0)
+        norm_investment_matrix = np.divide(
+            investment_matrix, column_sums, out=np.zeros_like(investment_matrix, dtype=float),
+            where=column_sums != 0.0,
+        )
+        depreciation_rate = np.divide(
+            capital_compensation, total_output, out=np.zeros_like(total_output, dtype=float),
+            where=total_output != 0.0,
+        )
+        norm_investment_matrix = norm_investment_matrix * depreciation_rate[None, :]
         return (
             pd.DataFrame(
                 data=norm_investment_matrix,

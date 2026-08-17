@@ -37,7 +37,9 @@ def compile_industry_data(
         )
 
         # Exchange rates
-        exchange_rate = exchange_rates.from_usd_to_lcu(country_name, sea_reader.year)
+        # CAD-native for the 2022 Canadian path: the base-year IO/SEA quantities are already in CAD,
+        # so no USD->CAD conversion (from_usd_to_lcu_io returns 1.0 for CAN 2022, real rate otherwise).
+        exchange_rate = exchange_rates.from_usd_to_lcu_io(country_name, sea_reader.year)
 
         # Industry vectors
         industry_vectors = get_industry_vectors(

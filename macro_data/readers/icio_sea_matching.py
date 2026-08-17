@@ -64,8 +64,12 @@ def _add_country_investment(
         icio_reader.industries,
     )
 
-    # replace nans with 0
-    cap_factors = np.where(np.isnan(cap_factors), 0, cap_factors)
+    # Replace non-finite factors with 0. capital compensation / gfcf is nan for 0/0 and +inf
+    # when a capital-good sector has positive capital compensation but zero firm fixed capital
+    # formation supply -- a few such sectors appear in every province under the finer OECD-50
+    # split (the coarser WIOD-floored 43-sector data never hit exact zeros). Either way the
+    # sector gets zero investment-allocation weight.
+    cap_factors = np.where(np.isfinite(cap_factors), cap_factors, 0.0)
     cap_factors = np.where(active_va_mask, cap_factors, 0.0)
     if cap_factors.sum() == 0:
         cap_factors = np.where(active_va_mask, 1.0, 0.0)
@@ -74,7 +78,7 @@ def _add_country_investment(
     violated_constraint = cap_factors >= icio_reader.get_value_added(country_name) / gfcf.sum()
     if np.any(violated_constraint):
         ratios = sea_reader.get_values_in_usd(country_name, "Capital Compensation") / value_added
-        ratios = np.where(np.isnan(ratios), 0, ratios)
+        ratios = np.where(np.isfinite(ratios), ratios, 0.0)
         max_capital_ratio = ratios.max()
         cap_factors = adjust_c_vector(
             c_vector=cap_factors,
@@ -155,17 +159,21 @@ def _match_country_iot_with_sea(
     #     "Value Added",
     # ] = new_va
     sea_reader.set_values_in_usd(country_name, "Value Added", new_va)
-    # sea_reader.df.loc[
-    #     sea_reader.df.index.get_level_values(0) == country_name,
-    #     "Labour Compensation",
-    # ] = get_sea(
-    #     country_name, "Value Added", sea_reader
-    # ) - get_sea(country_name, "Capital Compensation", sea_reader)
-    sea_reader.set_values_in_usd(
-        country_name,
-        "Labour Compensation",
-        get_sea(country_name, "Value Added", sea_reader) - get_sea(country_name, "Capital Compensation", sea_reader),
-    )
+    # Labour Compensation drives ONLY the firm wage bill (== firm labour cost), not the GDP identity
+    # (which is output/expenditure-based) and not capital technology. Prefer OBSERVED compensation of
+    # employees (PRM500000 wages + PRM600000 employer contributions, annual CAD-abs x1e6 -- the same
+    # units as new_va == annual IO value added) when it has been injected for this region; otherwise
+    # fall back to the legacy residual VA - GFCF-reconciled capital compensation (which over-states
+    # labour because the GFCF-based capcomp is far below true operating surplus). Capital Compensation
+    # stays GFCF-based (set above) for the investment allocation and the depreciation rate.
+    observed_coe = getattr(sea_reader, "can_2022_compensation_of_employees", {}).get(country_name)
+    if observed_coe is not None:
+        labour_compensation = np.asarray(observed_coe, dtype=float)
+    else:
+        labour_compensation = get_sea(country_name, "Value Added", sea_reader) - get_sea(
+            country_name, "Capital Compensation", sea_reader
+        )
+    sea_reader.set_values_in_usd(country_name, "Labour Compensation", labour_compensation)
     # Update Capital Stock values using proper indexing to avoid chained assignment
     mask = (sea_reader.df.index.get_level_values(0) == country_name) & (
         sea_reader.df.index.get_level_values(1).isin(sea_reader.industries)
@@ -202,7 +210,8 @@ def _reconcile_value_added(
     va_factor = new_va.loc[old_va.index] / old_va
 
     va_factor = va_factor.values
-    va_factor = np.where(np.isnan(va_factor), 0, va_factor)
+    # nan (0/0) or +inf (IO VA > 0 over a zero SEA VA sector) -> 0 rescale factor.
+    va_factor = np.where(np.isfinite(va_factor), va_factor, 0.0)
 
     sea_reader.df.loc[country_name, "Value Added"] = new_va.loc[old_va.index].values
 

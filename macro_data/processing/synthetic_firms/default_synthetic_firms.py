@@ -154,7 +154,9 @@ class DefaultSyntheticFirms(SyntheticFirms):
 
         firm_data = pd.DataFrame(index=range(n_firms))
 
-        exchange_rate = readers.exchange_rates.from_usd_to_lcu(country_name, year)
+        # CAD-native for the 2022 Canadian path (firm price numeraire must match the CAD industry
+        # vectors); from_usd_to_lcu_io returns 1.0 for CAN 2022, the real USD->LCU rate otherwise.
+        exchange_rate = readers.exchange_rates.from_usd_to_lcu_io(country_name, year)
         tau_sif = readers.oecd_econ.read_tau_sif(country_name, year)
 
         total_firm_deposits = (

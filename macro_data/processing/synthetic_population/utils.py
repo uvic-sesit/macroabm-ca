@@ -4,6 +4,78 @@ import numpy as np
 import pandas as pd
 
 
+def _largest_remainder(weights: np.ndarray, total: int) -> np.ndarray:
+    """Integer allocation of ``total`` across bins proportional to ``weights`` (need not sum to 1),
+    using the largest-remainder method so the result sums exactly to ``total``.
+    """
+    if total <= 0 or weights.sum() <= 0:
+        return np.zeros(len(weights), dtype=int)
+    raw = weights / weights.sum() * total
+    counts = np.floor(raw).astype(int)
+    shortfall = int(total - counts.sum())
+    if shortfall > 0:
+        order = np.argsort(-(raw - counts))  # largest fractional remainder first
+        counts[order[:shortfall]] += 1
+    return counts
+
+
+def reallocate_employment_by_shares(
+    individual_data: pd.DataFrame,
+    target_shares: np.ndarray,
+    n_industries: int,
+    min_workers: int = 1,
+) -> pd.DataFrame:
+    """Reassign employed individuals' ``Employment Industry`` to match target sector shares.
+
+    Used to wire the validated StatCan 36-10-0489 province x OECD-50 employment structure onto a
+    synthetic population whose employment distribution otherwise comes from the HFCS (aggregate,
+    France-proxy) allocation split by output shares. Only the sector label of already-employed
+    individuals changes -- activity status, income, and household links are preserved, so
+    household/labour-force accounting is untouched. The sector wage bill (set firm-side from SEA
+    Labour Compensation) is independent of headcount, so this corrects wage/worker and labour
+    productivity without touching value added.
+
+    Target counts give every sector at least ``min_workers`` (mirroring
+    ``ensure_minimum_workers_in_industries``): the model builds one firm per sector and needs each
+    staffed, and StatCan reports exact-zero employment for some (province, sector) cells. The
+    remaining workers are distributed across sectors proportional to ``target_shares`` via the
+    largest-remainder method, so the counts sum exactly to the employed total.
+
+    Args:
+        individual_data: population individuals; needs integer-coded ``Employment Industry`` (0..n-1)
+            and ``Activity Status`` (1 == employed).
+        target_shares: length-``n_industries`` shares (aligned to the model industry order).
+        n_industries: number of sectors.
+        min_workers: floor of employed persons per sector.
+
+    Returns:
+        The same DataFrame with reallocated ``Employment Industry`` for employed individuals.
+    """
+    employed_positions = np.flatnonzero((individual_data["Activity Status"] == 1).to_numpy())
+    n_employed = len(employed_positions)
+    floor_total = n_industries * min_workers
+    if n_employed < floor_total:
+        # Not enough employed persons to staff every sector at the floor; leave the existing
+        # allocation (ensure_minimum_workers_in_industries already guaranteed >=1 per sector).
+        return individual_data
+
+    shares = np.asarray(target_shares, dtype=float).copy()
+    shares[~np.isfinite(shares)] = 0.0
+    counts = np.full(n_industries, min_workers, dtype=int)
+    counts += _largest_remainder(shares, n_employed - floor_total)
+    assert counts.sum() == n_employed and counts.min() >= min_workers
+
+    shuffled = employed_positions.copy()
+    np.random.shuffle(shuffled)
+    labels = individual_data.index[shuffled]
+    start = 0
+    for industry in range(n_industries):
+        end = start + counts[industry]
+        individual_data.loc[labels[start:end], "Employment Industry"] = industry
+        start = end
+    return individual_data
+
+
 def ensure_minimum_workers_in_industries(individual_data: pd.DataFrame, n_industries: int) -> pd.DataFrame:
     """
     Ensures that each industry has at least one employed individual (Activity Status == 1).

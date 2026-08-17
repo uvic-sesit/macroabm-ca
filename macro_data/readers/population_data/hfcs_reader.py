@@ -329,12 +329,21 @@ class HFCSReader:
         - Only variables in var_mapping are kept
         """
         # Load data
-        df = pd.read_csv(path, encoding="unicode_escape").astype(object)
+        df = pd.read_csv(path, encoding="unicode_escape", low_memory=False).astype(object)
+
+        # Normalise column names to upper case. HFCS wave exports differ in casing: the older
+        # waves (2010/2014/2017) ship upper-case variable codes (SA0100, PE0400, ...) while the
+        # 2021 wave ships lower-case (sa0100, pe0400, ...). `var_mapping` uses the canonical
+        # upper-case codes, so upper-casing both sides makes the reader wave-agnostic (a no-op
+        # for the already-upper-case waves).
+        df.columns = df.columns.astype(str).str.upper()
+        upper_var_mapping = {key.upper(): value for key, value in var_mapping.items()}
 
         # Filter for country and keep only mapped variables
         df = df[df["SA0100"] == country_name_short]
-        df = df[[col for col in var_mapping.keys() if col in df.columns]]
-        df.rename(columns=var_mapping, inplace=True)
+        df = df[[col for col in upper_var_mapping if col in df.columns]]
+        df.rename(columns=upper_var_mapping, inplace=True)
+        df = df.loc[:, ~df.columns.duplicated()]
         df.set_index("ID", inplace=True)
 
         # Convert monetary values to local currency
