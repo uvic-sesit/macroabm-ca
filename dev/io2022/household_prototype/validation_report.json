@@ -1,0 +1,85 @@
+{
+  "net_worth_share_by_income_quintile_pct": {
+    "after_joint": {
+      "1": 12.2,
+      "2": 11.4,
+      "3": 15.4,
+      "4": 20.6,
+      "5": 40.5
+    },
+    "control_36-10-0660": [
+      11.5,
+      11.1,
+      14.9,
+      22.3,
+      40.2
+    ]
+  },
+  "match_quality_by_key_depth": {
+    "2_keys": 10,
+    "3_keys": 83152
+  },
+  "match_full_cell_fraction": 0.9998797527716986,
+  "BEFORE_hfcs": {
+    "total_assets": 5394058807265.457,
+    "mortgage_debt": 430122905475.6609,
+    "consumer_debt": 61679657000.4496,
+    "deposits": 437164991901.23615,
+    "income": 709392578707.3083,
+    "net_worth": 4902256244789.347
+  },
+  "AFTER_joint": {
+    "total_assets": 18298593000000.004,
+    "mortgage_debt": 2126996000000.0002,
+    "consumer_debt": 729932000000.0001,
+    "deposits": 2034716000000.0,
+    "income": 1502342000000.0002,
+    "net_worth": 15441665000000.004
+  },
+  "AFTER_marginal": {
+    "total_assets": 4435987155985.4375,
+    "mortgage_debt": 0.0,
+    "consumer_debt": 0.0,
+    "deposits": 409708159752.8483,
+    "income": 1738403784290.0696,
+    "net_worth": 4435987155985.4375
+  },
+  "homeownership": {
+    "before": 0.5963590775789523,
+    "after_joint": 0.6541000000000001,
+    "control_CHS_2022_46-10-0083": 0.6541,
+    "cross_checks": {
+      "census_2021": 0.665,
+      "sfs_2023_donor_diag": 0.648
+    }
+  },
+  "joint_structure_mean_abs_corr": {
+    "donor(reference)": 0.13915916174894746,
+    "after_joint_transplant": 0.13959809340134216,
+    "after_marginal_rescale": 0.4234680726115533,
+    "before_hfcs": 0.17832718638928854
+  },
+  "negatives": {
+    "Value of the Main Residence": 0,
+    "Value of other Properties": 0,
+    "Value of Household Vehicles": 0,
+    "Wealth in Deposits": 0,
+    "Wealth in Financial Assets": 0,
+    "Value of Self-Employment Businesses": 0,
+    "Voluntary Pension": 0,
+    "Outstanding Balance of HMR Mortgages": 0,
+    "Outstanding Balance of Mortgages on other Properties": 0,
+    "Outstanding Balance of Credit Line": 0,
+    "Outstanding Balance of Credit Card Debt": 0,
+    "Outstanding Balance of other Non-Mortgage Loans": 0,
+    "Income": 64
+  },
+  "donor_reuse": {
+    "n_donors": 16241,
+    "n_used": 15894,
+    "max_reuse": 41,
+    "mean_reuse_among_used": 5.232288914055618
+  },
+  "n_recipients": 83162,
+  "MODE": "REAL (SFS 2023)"
+}

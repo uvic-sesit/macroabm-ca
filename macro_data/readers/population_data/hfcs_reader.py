@@ -182,6 +182,7 @@ class HFCSReader:
         hfcs_data_path: Path,
         exchange_rates: ExchangeRatesReader,
         num_surveys: int = 5,
+        no_country_filter: bool = False,
     ) -> "HFCSReader":
         """
         Create a HFCSReader instance from CSV files.
@@ -232,6 +233,7 @@ class HFCSReader:
                         country_name_short=country_name_short,
                         year=year,
                         exchange_rates=exchange_rates,
+                        no_country_filter=no_country_filter,
                     )
                     for ind_path in individuals_paths
                 ],
@@ -250,6 +252,7 @@ class HFCSReader:
                         country_name_short=country_name_short,
                         year=year,
                         exchange_rates=exchange_rates,
+                        no_country_filter=no_country_filter,
                     )
                     for hh_path in households_paths
                 ],
@@ -268,6 +271,7 @@ class HFCSReader:
                         country_name_short=country_name_short,
                         year=year,
                         exchange_rates=exchange_rates,
+                        no_country_filter=no_country_filter,
                     )
                     for der_path in derived_paths
                 ],
@@ -293,6 +297,7 @@ class HFCSReader:
         country_name_short: str,
         year: int,
         exchange_rates: ExchangeRatesReader,
+        no_country_filter: bool = False,
     ) -> pd.DataFrame:
         """
         Read and process a single HFCS CSV file.
@@ -339,8 +344,12 @@ class HFCSReader:
         df.columns = df.columns.astype(str).str.upper()
         upper_var_mapping = {key.upper(): value for key, value in var_mapping.items()}
 
-        # Filter for country and keep only mapped variables
-        df = df[df["SA0100"] == country_name_short]
+        # Filter for country and keep only mapped variables. The CAN-2022 Canadianized-household MVP loads
+        # the FULL pooled-European individual/member pool (no_country_filter) so the member skeleton spans
+        # the same all-country household ID space as the validated 83,162-household Canadian skeleton,
+        # restoring exact household<->individual linkage (see canadianized_household_adapter).
+        if not no_country_filter:
+            df = df[df["SA0100"] == country_name_short]
         df = df[[col for col in upper_var_mapping if col in df.columns]]
         df.rename(columns=upper_var_mapping, inplace=True)
         df = df.loc[:, ~df.columns.duplicated()]

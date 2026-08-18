@@ -212,9 +212,9 @@ class DataWrapper:
             proxy_country_dict=proxy_country_dict,
             aggregate_industries=configuration.aggregate_industries,
             use_disagg_can_2014_reader=configuration.can_disaggregation,
-            use_canadianized_households=getattr(configuration, "use_canadianized_households", False),
             use_provincial_can_reader=use_provincial_can_reader,
             regions_dict=regions_dict,
+            canadianized_can_households_csv=getattr(configuration, "canadianized_can_households_csv", None),
         )
 
         if regions_dict:

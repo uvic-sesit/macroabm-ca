@@ -257,8 +257,8 @@ class DataReaders:
         proxy_country_dict: dict[Country, Country] = None,
         use_disagg_can_2014_reader: bool = False,
         use_provincial_can_reader: bool = False,
-        use_canadianized_households: bool = False,
         regions_dict: dict[Country, list[Region]] = None,
+        canadianized_can_households_csv: Optional[Path] = None,
     ):
         if regions_dict:
             all_regions = [region for regions in regions_dict.values() for region in regions]
@@ -382,73 +382,36 @@ class DataReaders:
             for country_name, proxy_country in zip(country_names, proxified)
         }
 
-        if use_canadianized_households:
-            # Replace the proxy micro-data with the Canadianized synthetic households:
-            # HFCS template households nearest-neighbour matched to SFS-2016 / CIS-2017
-            # targets and proportionally rescaled (see canadian_inputs/households_rawdata/
-            # README.md). The frames are CAD-NATIVE, so the proxied path must not apply
-            # its EUR->LCU conversion -- flagged via .native_lcu and honoured in
-            # synthetic_country's proxied construction.
-            can_ind_path = datapaths.hfcs_path / "New_Individuals_provincial.csv"
-            can_hh_path = datapaths.hfcs_path / "New_Household_provincial.csv"
-            if not can_ind_path.exists() or not can_hh_path.exists():
-                raise FileNotFoundError(
-                    f"use_canadianized_households=True but {can_ind_path.name}/"
-                    f"{can_hh_path.name} not found under {datapaths.hfcs_path}"
-                )
-            _can_individuals = pd.read_csv(can_ind_path)
-            _can_households = pd.read_csv(can_hh_path)
-            # sample_households matches individuals through the household frame's INDEX
-            # (individuals' "Corresponding Household ID" values must equal index labels),
-            # so index by the household ID exactly as the survey reader's frames are.
-            _can_households = _can_households.set_index("ID", drop=True)
-            # The matching pipeline's duplicate-ID minting missed a couple of rows; a
-            # non-unique index makes .loc[id] return frames and breaks sampling. Keep
-            # the first copy -- the duplicates are re-draws of the same template
-            # household, and their individuals stay linked to the surviving copy.
-            _dups = int(_can_households.index.duplicated().sum())
-            if _dups:
-                _can_households = _can_households[~_can_households.index.duplicated(keep="first")]
-                warnings.warn(
-                    f"Canadianized households: dropped {_dups} duplicate household ID(s).",
-                    DataFilterWarning,
-                )
-            # Drop the matching pipeline's derived extras so the frames carry the same
-            # schema as the reader's own output (they are recomputed downstream, and a
-            # pre-existing "Corresponding Individuals ID" would be stale after sampling).
-            _can_households = _can_households.drop(
-                columns=[c for c in ("Wealth", "Debt", "Corresponding Individuals ID") if c in _can_households],
+        # CAN-2022 Canadianized-household MVP: replace the (French-proxy) household distribution with the
+        # validated national Canadian household file, adapted to the model schema. Individuals stay the
+        # French skeleton; the reader is flagged cad_native so the EUR->CAD household conversion is skipped
+        # (see hfcs_synthetic_population). Explicit + CAN-2022-only; every other build is untouched.
+        if canadianized_can_households_csv is not None and Country("CAN") in country_names and simulation_year == 2022:
+            from macro_data.readers.population_data.canadianized_household_adapter import (
+                build_canadianized_households_df,
             )
-            _can_individuals = _can_individuals.drop(
-                columns=[c for c in ("Income",) if c in _can_individuals],
+            can_proxy = proxy_country_dict.get(Country("CAN"), Country("CAN")) if proxy_country_dict else Country("CAN")
+            reader = hfcs[can_proxy]
+            # Option 1 (MVP): load the FULL pooled-European individual/member pool so the member skeleton
+            # spans the same all-country household ID space as the validated 83,162-household Canadian
+            # skeleton -- restores exact household<->individual linkage. Individuals are NOT Canadianized
+            # (age/sex/education/composition remain pooled-European HFCS); their employment industry is still
+            # reassigned from StatCan 36-10-0489 downstream, and their EUR incomes still convert once.
+            all_country = HFCSReader.from_csv(
+                country_name=can_proxy,
+                country_name_short=can_proxy.to_two_letter_code(),
+                hfcs_data_path=datapaths.hfcs_path,
+                year=hfcs_survey_year,
+                exchange_rates=exchange_rates,
+                num_surveys=1 if force_single_hfcs_survey else 5,
+                no_country_filter=True,
             )
-            # The matching pipeline preserves survey NaNs in monetary component columns;
-            # downstream (income aggregation, saving-rate normalisation) expects absent
-            # components as zeros, as the processed survey frames provide. Categorical
-            # columns (Education, Labour Status) and the consumption share keep their
-            # NaNs for the pipeline's own imputers.
-            from macro_data.readers.population_data.hfcs_reader import var_numerical as _var_numerical
-
-            _skip = {"Consumption of Consumer Goods/Services as a Share of Income"}
-            for _frame in (_can_households, _can_individuals):
-                _money_cols = [c for c in _frame.columns if c in set(_var_numerical) - _skip]
-                _frame[_money_cols] = (
-                    _frame[_money_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
-                )
-            for _proxy in set(hfcs):
-                _reader = HFCSReader(
-                    country_name_short=_proxy.to_two_letter_code(),
-                    individuals_df=_can_individuals,
-                    households_df=_can_households,
-                )
-                _reader.native_lcu = True
-                hfcs[_proxy] = _reader
-            warnings.warn(
-                "HFCS micro-data replaced by Canadianized synthetic households "
-                f"({len(_can_households)} households, {len(_can_individuals)} individuals, "
-                "CAD-native).",
-                DataFilterWarning,
+            reader.individuals_df = all_country.individuals_df
+            # carry the linkage + residual columns from the ALL-COUNTRY households frame (same 83,162 IDs)
+            reader.households_df = build_canadianized_households_df(
+                Path(canadianized_can_households_csv), all_country.households_df
             )
+            reader.cad_native = True
 
         if use_disagg_can_2014_reader:
             # check that only Canada is in the country names
