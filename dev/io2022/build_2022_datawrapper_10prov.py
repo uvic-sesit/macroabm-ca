@@ -28,6 +28,12 @@ from macro_data.configuration.region import Region
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INPUT_PATH = REPO_ROOT / "dev" / "raw_data_10prov"
 PKL_PATH = REPO_ROOT / "dev" / "pkl_files" / "io2022_10prov_2022.pkl"
+# Validated national Canadian household file (SFS-2023 donor transplant + CIS-2022 income
+# + SHS-2023 consumption). With --canadianized-households every province samples this
+# CAD-native distribution instead of the French HFCS proxy. Generate it with:
+#   uv run python dev/io2022/household_prototype/prepare_household_canadianization.py --real
+#   uv run python dev/io2022/household_prototype/prepare_household_consumption.py
+CANADIANIZED_HH_CSV = REPO_ROOT / "dev" / "io2022" / "household_prototype" / "prototype_household_consumption.csv"
 
 # The production 10 provinces, in the same (alphabetical-by-code) order as the legacy
 # 2014 provincial build, so the goods market's participant order matches the sorted
@@ -62,7 +68,6 @@ def build_data_config(scale: int = 1000, canadianized_households: bool = False):
     data_config.aggregate_industries = False
     data_config.prune_date = None
     data_config.seed = 0
-    data_config.use_canadianized_households = bool(canadianized_households)
 
     base_config = data_config.country_configs[CountryCode("CAN")]
     base_config.single_firm_per_industry = True
@@ -78,6 +83,13 @@ def build_data_config(scale: int = 1000, canadianized_households: bool = False):
         data_config.country_configs[region] = region_config
 
     data_config.aggregation_structure = {CountryCode("CAN"): REGIONS}
+    if canadianized_households:
+        if not CANADIANIZED_HH_CSV.exists():
+            raise FileNotFoundError(
+                f"{CANADIANIZED_HH_CSV} missing -- run the two household_prototype prep "
+                "scripts first (see the note beside CANADIANIZED_HH_CSV)."
+            )
+        data_config.canadianized_can_households_csv = CANADIANIZED_HH_CSV
     return data_config
 
 
@@ -132,8 +144,8 @@ if __name__ == "__main__":
     ap.add_argument("--build-only", action="store_true")
     ap.add_argument("--force", action="store_true", help="rebuild pickle even if it exists")
     ap.add_argument("--canadianized-households", action="store_true",
-                    help="replace the proxy HFCS micro-data with the Canadianized synthetic "
-                         "households (SFS-2016/CIS-2017 matched; CAD-native, EUR conversion skipped)")
+                    help="sample the validated Canadian household distribution "
+                         "(SFS-2023 + CIS-2022 + SHS-2023) instead of the French HFCS proxy")
     ap.add_argument("--lfs-unemployment", action="store_true",
                     help="calibrate t0 unemployment to LFS 2022 per province (option 2: "
                          "surplus unemployed -> inactive; employment untouched)")
