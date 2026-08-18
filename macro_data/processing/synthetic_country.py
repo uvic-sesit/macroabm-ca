@@ -476,6 +476,13 @@ class SyntheticCountry:
         ) / readers.world_bank.get_population(country=proxy_country, year=year)
 
         exch_rate_proxy_to_lcu = readers.exchange_rates.from_eur_to_lcu(country, year)
+        # Canadianized household frames are CAD-native; converting them again would
+        # inflate every monetary column by the EUR->CAD rate. Aggregate proxies
+        # (eurostat deposits etc.) keep the real rate below.
+        _hh_exch_rate = (
+            1.0 if getattr(readers.hfcs[proxy_country], "native_lcu", False)
+            else exch_rate_proxy_to_lcu
+        )
 
         population: SyntheticHFCSPopulation = SyntheticHFCSPopulation.from_readers(
             readers=readers,
@@ -487,7 +494,7 @@ class SyntheticCountry:
             total_unemployment_benefits=total_unemployment_benefits,
             country_name_short=proxy_country.to_two_letter_code(),
             population_ratio=population_ratio,
-            exch_rate=exch_rate_proxy_to_lcu,
+            exch_rate=_hh_exch_rate,
             proxied_country=country,
             quarter=quarter,
             exogenous_data=exogenous_country_data,
