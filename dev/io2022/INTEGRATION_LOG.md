@@ -376,3 +376,51 @@ balanced; the commodity-output the model reads already covers domestic sourcing)
 **Status:** the small-region collapse is resolved on the simple/default baseline. **Scaling (#21) and
 zero-sector cleanup (#28) are deferred — they are no longer blockers** (the ε floor + scale=10 remain as
 harmless placeholders; principled replacements are quality improvements, not stability fixes).
+
+## Household economic block — Canadianized MVP integration (2026-08) [DataWrapper integration]
+
+The validated Canadian household block is now wired into the 2022 DataWrapper (MVP), gated behind a
+`canadianized_can_households_csv` config flag for CAN-2022. Behavioural equations unchanged.
+
+**Integration seam (explicit CAN-2022 branch; legacy/raw-HFCS path untouched):**
+- `macro_data/readers/population_data/canadianized_household_adapter.py` (new) — schema adapter mapping the
+  validated `prototype_household_consumption.csv` onto the model household schema. No validated economic
+  magnitude changes; CIS 2022 income-share split for financial/pension/transfers; rental = documented
+  `rental_gross_yield` residual (owners only) that the housing build rescales to observed Rent Paid.
+- `default_readers.py` — CAN-2022 branch: load the Canadianized households_df directly + the FULL
+  pooled-European individuals (`no_country_filter=True`, HFCS reader) so the member skeleton spans the same
+  83,162-household ID space (exact household↔individual linkage); sets `reader.cad_native = True`.
+- `hfcs_reader.py` — `no_country_filter` option on `read_csv`/`from_csv`.
+- `hfcs_synthetic_population.py` — Canadianized households **bypass EUR→CAD** conversion (`cad_native`);
+  pooled-European individuals still convert **once**. `reconcile_labour_income()` (Option B) resets the
+  household labour term to `validated_income − Canadian non-labour`, rescaling members multiplicatively
+  (within-household shares preserved), so pre-matching household Income matches the validated Canadian
+  distribution. **Observed CoE firm wage bill and 36-10-0489 employment are untouched**; downstream
+  `match_individuals_with_firms` (`normalise_employee_income=True`) still renormalizes individual employee
+  incomes to the CoE-driven firm wage bill.
+
+**What is Canadian vs still national/European (MVP):**
+- Canadian: household income (distribution + level), wealth, debt, tenure (0.654), consumption propensity
+  (APC≈0.82), household counts (per-province via population ratio), employment industry (36-10-0489),
+  firm wage bill (observed CoE $1.39T annual).
+- Still pooled-European: individual demographic/member skeleton (age/sex/education/composition) and the
+  within-household member income split. Individuals are NOT Canadianized (deferred).
+- National household distribution is replicated across all 13 provinces (no provincial household
+  heterogeneity yet); provincial overlays (count, employment, IO/bank anchoring) still apply.
+
+**Income-floor limitation (~11% weighted):** for households whose model-imputed **social transfers**
+exceed their validated total income, the labour residual floors at 0 and household Income slightly exceeds
+validated. Concentrated in the **bottom income quintile** (54% of Q1; <0.5% of Q2–Q5), spread across wealth
+(nwQ1 22% → nwQ5 5%). Driver = the model's **endogenous social-transfer imputation** (regression on
+income/debt rescaled to `total_social_transfers`, `set_household_social_transfers`), NOT the adapter's
+mapping (the adapter's own transfers are a CIS share of income, always < income, and are overwritten by the
+model) and NOT the wealth→financial-income rule (financial is minor among floored). Aggregate income
+overshoot **+1.1%**. Documented MVP limitation; no household redesign.
+
+**13q simple/default baseline (Canadianized) vs pre-household checkpoint:**
+- real GVA **687.3B → 676.0B (−1.6%)** vs 687.3 → 676.9B (−1.5%) — essentially identical; t0 GVA matches.
+- unemployment **7.6% → 9.8%** vs 7.7 → 9.1% (t0 matches; +0.7pp at horizon, household-demand driven).
+- all 13 regions stable (no collapse); **0 NaN/inf**. 4q: 687.3 → 686.3B, u 7.6→8.0%, 0 NaN/inf.
+
+**Status:** household economic block integrated and stable on the MVP baseline. Deferred: individual
+Canadianization, provincial household distributions, the income-floor refinement.

@@ -4,7 +4,10 @@ PUMFs (SFS/CIS/SHS) are NOT here -- they require the manual licence portal."""
 import io, json, sys, urllib.request, zipfile
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent.parent / "raw_data" / "can_2022" / "controls"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import raw_data_root  # configurable raw-data root (env / root raw_data/ / legacy dev/raw_data)
+
+OUT = raw_data_root(Path(__file__).resolve().parents[3]) / "can_2022" / "controls"
 OUT.mkdir(parents=True, exist_ok=True)
 PIDS = {
     "36100660": "DHEA wealth quarterly by characteristic",

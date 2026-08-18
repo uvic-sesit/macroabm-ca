@@ -227,6 +227,7 @@ class DataReaders:
         use_disagg_can_2014_reader: bool = False,
         use_provincial_can_reader: bool = False,
         regions_dict: dict[Country, list[Region]] = None,
+        canadianized_can_households_csv: Optional[Path] = None,
     ):
         if regions_dict:
             all_regions = [region for regions in regions_dict.values() for region in regions]
@@ -343,6 +344,37 @@ class DataReaders:
             )
             for country_name, proxy_country in zip(country_names, proxified)
         }
+
+        # CAN-2022 Canadianized-household MVP: replace the (French-proxy) household distribution with the
+        # validated national Canadian household file, adapted to the model schema. Individuals stay the
+        # French skeleton; the reader is flagged cad_native so the EUR->CAD household conversion is skipped
+        # (see hfcs_synthetic_population). Explicit + CAN-2022-only; every other build is untouched.
+        if canadianized_can_households_csv is not None and Country("CAN") in country_names and simulation_year == 2022:
+            from macro_data.readers.population_data.canadianized_household_adapter import (
+                build_canadianized_households_df,
+            )
+            can_proxy = proxy_country_dict.get(Country("CAN"), Country("CAN")) if proxy_country_dict else Country("CAN")
+            reader = hfcs[can_proxy]
+            # Option 1 (MVP): load the FULL pooled-European individual/member pool so the member skeleton
+            # spans the same all-country household ID space as the validated 83,162-household Canadian
+            # skeleton -- restores exact household<->individual linkage. Individuals are NOT Canadianized
+            # (age/sex/education/composition remain pooled-European HFCS); their employment industry is still
+            # reassigned from StatCan 36-10-0489 downstream, and their EUR incomes still convert once.
+            all_country = HFCSReader.from_csv(
+                country_name=can_proxy,
+                country_name_short=can_proxy.to_two_letter_code(),
+                hfcs_data_path=datapaths.hfcs_path,
+                year=hfcs_survey_year,
+                exchange_rates=exchange_rates,
+                num_surveys=1 if force_single_hfcs_survey else 5,
+                no_country_filter=True,
+            )
+            reader.individuals_df = all_country.individuals_df
+            # carry the linkage + residual columns from the ALL-COUNTRY households frame (same 83,162 IDs)
+            reader.households_df = build_canadianized_households_df(
+                Path(canadianized_can_households_csv), all_country.households_df
+            )
+            reader.cad_native = True
 
         if use_disagg_can_2014_reader:
             # check that only Canada is in the country names

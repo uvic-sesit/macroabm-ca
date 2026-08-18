@@ -50,6 +50,7 @@ Example:
 """
 
 from datetime import date
+from pathlib import Path
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -232,6 +233,9 @@ class DataConfiguration(BaseModel):
     can_disaggregation: bool = False
     seed: Optional[int] = None
     aggregation_structure: Optional[dict[Country, list[Country | Region]]] = None
+    # MVP CAN-2022 Canadianized-household integration: path to the validated national Canadian household
+    # CSV. When set (CAN 2022), the reader replaces the French-proxy household distribution with it.
+    canadianized_can_households_csv: Optional[Path] = None
 
     def model_post_init(self, __context: Any) -> None:
         """

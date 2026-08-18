@@ -1,5 +1,90 @@
 # Household Canadianization prototype — Phase-1 validation report
 
+## Task 2 — SHS 2023 consumption + saving (Phase-2, NOT yet committed) — 2026-08
+
+Module `prepare_household_consumption.py` (`--real`). Reads the Phase-1 skeleton (unchanged), donor-matches
+SHS 2023, derives consumption + saving, calibrates to the 2022 DHEA control. Phase-1 controls confirmed
+untouched (assets $18.30T, income $1.502T, homeownership 0.6541).
+
+**A. Field map / parser.** SHS 2023 fixed-width TXT parsed from its own SAS layout (`pumf_SHS_2023_i.SAS`,
+`parse_shs_layout` → column ranges). Model-relevant fields: WEIGHTD (weight), PROV (region), TENURE
+(1/2 own,3 rent), RP_AGEGP (6-band), HHTOTINC, TX010 (income tax), TC001 (total current consumption),
+TE001 (total expenditure), FD001 (food, sanity only). Numeric fields carry explicit decimals. Per-household
+SHS categories are NOT needed — the model takes consumption category vectors from the IOT, not microdata.
+
+**B. Consumption concept = SHS TC001 "Total current consumption"** (actual demand for goods/services), NOT
+TE001 total expenditure (= TC001 + income tax TX010 + personal insurance/pension EP011 + gifts/support
+MG001). Used as the **BEHAVIOURAL consumption-share** = TC001 / disposable income (matches model field HFCS
+HI0220 + driver "…as a Share of Income"; hfcs_synthetic_population.py: SavingRate = 1 − share). Household
+levels are **NOT** scaled to national-accounts HFCE — HFCE is retained as a macro accounting control only
+(user decision 2026-08).
+
+**C. Donor match.** Hot-deck on tenure × survey-weighted income decile × age-band (HFCS 5-yr → SHS 6-band),
+widening drops age first. Transplant the consumption LEVEL, not the raw ratio (ratio TC001/disp is unstable
+near zero disposable income → runaway consumption; the level is bounded), then set the AGGREGATE household
+APC to the SHS behavioural propensity (see D). Match full-cell 99.85% (126/83,162 widened to 2 keys), donor
+5,479/5,481 used, max reuse 151, mean 15.2. 0 negative/NaN consumption.
+
+**D. Behavioural calibration + saving.** Aggregate household APC calibrated to the **SHS 2022-equivalent
+propensity 0.823** (= SHS TC001 1,188,923 / SHS disposable 1,444,212; APC is a ratio → vintage-stable, no
+separate CPI backcast) applied to the recipient disposable-income base (= 1,502,342 control). Consumption/DI
+= **0.823** (HFCE/DI = 1.006 is the macro reference, deliberately not the micro target). **Saving = DI −
+out-of-pocket consumption = +265,565 $M (rate 17.7%)** — intentionally higher than DHEA HFCE-based net
+saving (+31,545, ~2%) because TC001 excludes imputed rent etc.; not forced ≥0. APC by income quintile
+**1.77 / 1.26 / 1.03 / 0.85 / 0.56** (monotone; Q1 dissaves, Q5 saves). Saving by quintile
+−58.2/−36.2/−7.6/+51.9/+315.6 $B (bottom-3 dissave, top-2 save). Negative-saving incidence 44.9% of
+households. Consumption-share: weighted median **0.903**, 44.7% >1 (low-income dissavers), 0 negative.
+
+**Before → after (HFCE calibration → behavioural TC001/disp + income fix):** C/DI 1.006 → 0.823;
+share median 1.05 → 0.903; share>1 56% → 44.7%; saving −9,039 (−0.6%) → +265,565 (+17.7%, out-of-pocket);
+NaN income 4.7% → **0**.
+
+**E. Status of prior open issues.**
+1. **Consumption-share concept — RESOLVED** (user decision): behavioural SHS TC001/disp, not HFCE-scaled.
+2. **NaN income — FIXED.** The SFS market-income sentinel (99999999, "not stated", spread across the
+   distribution — not a top-code) is now hot-deck imputed within (tenure × after-tax-income-decile) cells in
+   `load_donor`. NaN income 4,421 → 0; income aggregate stays $1.502T and **all Phase-1 controls are
+   unchanged** (wealth quintiles 12.2/11.4/15.4/20.6/40.5, assets $18.30T, homeownership 0.6541).
+3. **Household weight scale — RESOLVED.** See "Task 3" below.
+
+## Task 3 — household weight scale — 2026-08
+
+**Diagnosis of downstream weight use.** (a) Household *count* is set externally by
+`readers.eurostat.number_of_households(country, year) / scale` (hfcs_synthetic_population.py:217), NOT by
+`Weight.sum()`. (b) Synthetic sampling normalizes weights to probabilities `Weight/Weight.sum()` (:944) —
+relative only. (c) Monetary values are re-anchored to external controls downstream: consumption and
+investment to the IOT household columns (:795,:736), household deposits/loans to bank-data totals via
+`rescale()` (matching_households_with_banks.py:101-102,190). So the model normalizes absolute weight AND
+value scale away — the scale error was a **deliverable-correctness** issue (weighted aggregates and
+per-household levels), not a model-breaking one.
+
+**Problem.** Recipient HFCS weights summed to **161.5M** (Eurozone scale, ×10.45 the Canadian count), so the
+Phase-1 value calibration deflated per-household values ~10× to hit the $ controls (mean income $9.3k, mean
+assets $113k — both an order of magnitude too low), even though aggregates matched.
+
+**Fix.** Rescale the recipient weights **uniformly** to the **CHS 2022 count = 15,455,000** households
+(table 46-10-0083, provinces only — the SAME universe as the tenure control), in `load_recipient_hfcs`. A
+uniform scale leaves weighted income-deciles (→ donor assignments), tenure shares, wealth-quintile shares,
+APC/saving ratios and (unweighted) joint correlations exactly invariant; the accompanying value calibration
+now lands per-household levels at realistic Canadian magnitudes. No donor re-matching; no relative-structure
+change. Province could NOT be calibrated — the HFCS skeleton carries no province (all "CAN"); a region
+imputation would be required and is out of scope.
+
+**Validation (after rescale).** Represented households **15,455,000** (= target); owners **10,109,116** /
+renters **5,345,884** (CHS controls 10,109,100 / 5,345,900); homeownership **0.6541**. Per-household means
+now realistic: income **$97,208**, assets **$1,183,992**, consumption **$80,024**, saving **$17,183**.
+Unchanged: assets $18.30T, income $1.502T, mortgage $2.127T, consumer $0.730T, deposits $2.035T; wealth
+quintiles 12.2/11.4/15.4/20.6/40.5; joint mean|corr| donor 0.139 → after 0.140; consumption C/DI 0.823, APC
+by q 1.77/1.26/1.03/0.85/0.56, saving by q −58/−36/−8/+52/+316 $B; match full-cell 99.99%. Province: not
+calibrated (national skeleton) — the only residual gap.
+
+**Household block status: READY for DataWrapper integration** — count, tenure, assets/debt/income, wealth
+quintiles, consumption/saving, and joint structure all validate at Canadian scale; province is the sole
+documented limitation (national pool), to be addressed only if the 13-region build needs household-level
+province.
+
+
+
 ## Task 1 — distributional calibration (wealth concentration + tenure) — 2026-08
 
 Both Phase-1 residuals are now resolved. Pipeline: HFCS skeleton → SFS-2023 donor match
@@ -176,3 +261,54 @@ above — not a blanket clip.
 - `controls_2022.template.json` — 2022 aggregate/quintile control targets to fill from the tables.
 - `PROTOTYPE_STANDIN_household.csv` — stand-in mechanics output (NON-PRODUCTION; git-ignored, not committed).
 - `validation_report.json` — machine-readable metrics.
+
+## DataWrapper MVP integration + Option B income reconciliation (2026-08)
+
+The validated household block is wired into the 2022 DataWrapper behind a `canadianized_can_households_csv`
+flag (CAN-2022; legacy/raw-HFCS path unchanged). See `dev/io2022/INTEGRATION_LOG.md` for the code seam.
+
+**Currency:** Canadianized household monetary fields **bypass** EUR→CAD (`cad_native`); pooled-European
+individual monetary fields convert **once**. Verified: household wealth $1.18M/hh (Canadian, not ×fx).
+
+**Individuals (MVP):** the full pooled-European HFCS member pool is loaded (`no_country_filter`) to restore
+exact household↔individual linkage over the 83,162-household ID space. Age/sex/education/member composition
+and the within-household income split remain **pooled-European — not yet Canadianized**.
+
+**Option B income reconciliation:** `set_household_income()` derives household Income from components whose
+labour term comes from the (European) members. `reconcile_labour_income()` resets that labour term to
+`validated_income − Canadian non-labour` and rescales members multiplicatively (within-household shares
+preserved), so pre-matching household Income matches the validated Canadian distribution. Firm wage bill
+(observed CoE, $346.6B/q unchanged) and 36-10-0489 employment are untouched; firm-matching still
+renormalizes individual employee incomes to CoE. Verified: ON household income mean ≈ $98.8k (validated
+$97.2k), quantiles ≈ validated; 0 NaN/negative; linkage intact.
+
+**Income-floor limitation (~11% weighted):** households whose model-imputed non-labour income exceeds their
+validated total income have labour floored at 0, so Income slightly exceeds validated (aggregate **+1.1%**).
+Distribution by quintile:
+
+| bottom→top | INCOME quintile floored | NET-WORTH quintile floored |
+|---|---|---|
+| Q1 | **54.2%** | 22.4% |
+| Q2 | 0.4% | 11.1% |
+| Q3 | 0.2% | 10.4% |
+| Q4 | 0.1% | 5.7% |
+| Q5 | 0.2% | 5.4% |
+
+**Mechanism (confirmed): the model's endogenous social-transfer imputation, NOT a data/mapping error and
+NOT the wealth→financial rule.** Among floored households, model-imputed transfers ($24.2k/hh annual) alone
+exceed validated income ($17.9k/hh); financial income ($3.6k) is minor (only 5.3% of floored weight have
+financial>income). The adapter's own transfers are a CIS share of income (always < income) and are
+overwritten by `set_household_social_transfers` (regression on income/debt rescaled to
+`total_social_transfers`). It is concentrated in the bottom income quintile (transfer-dependent, low
+income). Documented MVP limitation; no household redesign.
+
+**13q simple/default baseline (Canadianized) vs pre-household checkpoint:** real GVA 687.3→676.0B (−1.6%)
+vs 687.3→676.9B (−1.5%) — essentially identical; unemployment 7.6→9.8% vs 7.7→9.1% (+0.7pp, household-demand
+driven); all 13 regions stable; 0 NaN/inf.
+
+**Provincial source data already available for a future refinement (deferred):** SFS 2023 (regional
+geography, 10 provinces, no territories), CIS 2022 (province), SHS 2023 (province/region), CHS (provincial
+tenure controls), 36-10-0489 (province×industry employment, already wired), provincial IO household
+consumption/investment totals (already used). Territories (YT/NT/NU) need a fallback; small-province donor
+pools may be sparse. Legacy `New_Household_provincial.csv` / `New_Individuals_provincial.csv` contain **no
+province field** and were **not production inputs** (referenced only by `dev/validation/diagnose_gdp_gap.py`).

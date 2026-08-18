@@ -211,6 +211,7 @@ class DataWrapper:
             use_disagg_can_2014_reader=configuration.can_disaggregation,
             use_provincial_can_reader=use_provincial_can_reader,
             regions_dict=regions_dict,
+            canadianized_can_households_csv=getattr(configuration, "canadianized_can_households_csv", None),
         )
 
         if regions_dict:

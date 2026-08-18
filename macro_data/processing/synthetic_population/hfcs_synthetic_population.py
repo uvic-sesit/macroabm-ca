@@ -271,11 +271,16 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             use_logpdf=False,
         )
 
+        # CAD-native household path: the Canadianized household file is already in CAD, so it must NOT be
+        # multiplied by the EUR->LCU proxy rate (that would double-convert, ~+47% for CAN 2022). Individuals
+        # remain the French HFCS EUR skeleton and DO keep their conversion. Legacy/raw-HFCS is unaffected.
+        cad_native_households = getattr(readers.hfcs[country_name], "cad_native", False)
         if exch_rate != 1.0:
             # make sure all the columns are floats
             household_data.loc[:, CONVERT_HH_COLS] = household_data.loc[:, CONVERT_HH_COLS].astype(float)
             individual_data.loc[:, CONVERT_IND_COLS] = individual_data.loc[:, CONVERT_IND_COLS].astype(float)
-            household_data.loc[:, CONVERT_HH_COLS] *= exch_rate
+            if not cad_native_households:
+                household_data.loc[:, CONVERT_HH_COLS] *= exch_rate
             individual_data.loc[:, CONVERT_IND_COLS] *= exch_rate
 
         household_data = household_data.loc[household_data["Corresponding Individuals ID"].notna()]
@@ -389,6 +394,7 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         )
         self.set_household_employee_income()
         self.set_household_income_from_financial_assets()
+        self.reconcile_labour_income()  # Option B: match validated Canadian household income (CAN-2022 only)
         self.set_household_income()
 
     def set_household_other_real_assets_wealth(self) -> None:
@@ -550,6 +556,51 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             self.individual_data.loc[self.household_data["Corresponding Individuals ID"][i], "Income"].sum()
             for i in range(len(self.household_data))
         ]
+
+    def reconcile_labour_income(self) -> None:
+        """Option-B minimal income reconciliation (CAN-2022 Canadianized path only; gated on the
+        'Validated Income' column supplied by the adapter). set_household_income() would otherwise set the
+        household labour term from the pooled-European members, leaving pre-matching household Income at a
+        non-Canadian *distribution*. Here we reset the household labour term to the Canadian residual
+        (validated income minus the Canadian non-labour components) and rescale each household's members
+        multiplicatively, so within-household member income shares are preserved. The observed-CoE firm wage
+        bill and 36-10-0489 employment are untouched: downstream match_individuals_with_firms
+        (normalise_employee_income=True) still renormalizes individual employee incomes to the CoE-driven
+        firm wage bill; this only fixes the household demand-side income distribution."""
+        hh = self.household_data
+        if "Validated Income" not in hh.columns:
+            return
+        # validated income (per-hh annual CAD) -> model units (x scale / yearly_factor), matching components
+        target = hh["Validated Income"].values.astype(float) * (self.scale / self.yearly_factor)
+        non_labour = (
+            hh["Regular Social Transfers"].values.astype(float)
+            + hh["Rental Income from Real Estate"].values.astype(float)
+            + hh["Income from Financial Assets"].values.astype(float)
+        )
+        labour_target = np.clip(target - non_labour, 0.0, None)  # no negative labour income
+        ind = self.individual_data
+        pos = {idx: p for p, idx in enumerate(ind.index)}
+        # guard pre-existing NaNs in the pooled-European member incomes (a few members carry NaN
+        # Employee Income): treat as 0 so the reconciliation and downstream firm-wage rescale stay finite.
+        ind_income = np.nan_to_num(ind["Income"].values.astype(float), nan=0.0)
+        ind_emp = np.nan_to_num(ind["Employee Income"].values.astype(float), nan=0.0)
+        corr = hh["Corresponding Individuals ID"].values
+        emp_hh = np.empty(len(hh))
+        for i in range(len(hh)):
+            rows = [pos[m] for m in corr[i]]
+            cur = ind_income[rows].sum()
+            tgt = labour_target[i]
+            if cur > 0:  # preserve within-household member shares
+                f = tgt / cur
+                ind_income[rows] = ind_income[rows] * f
+                ind_emp[rows] = ind_emp[rows] * f
+            elif rows and tgt > 0:  # documented fallback: no member income -> split equally
+                ind_income[rows] = tgt / len(rows)
+                ind_emp[rows] = tgt / len(rows)
+            emp_hh[i] = tgt
+        ind["Income"] = ind_income
+        ind["Employee Income"] = ind_emp
+        hh["Employee Income"] = emp_hh
 
     def set_household_social_transfers(
         self, total_social_transfers: float, independents: Optional[list[str]] = None

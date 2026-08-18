@@ -25,14 +25,25 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import raw_data_root  # configurable raw-data root (env / root raw_data/ / legacy dev/raw_data)
+
 REPO = Path(__file__).resolve().parents[3]
-HFCS_2021 = REPO / "dev" / "raw_data" / "hfcs" / "2021"
-STANDIN_DONOR = REPO / "dev" / "raw_data" / "hfcs" / "New_Household.csv"
+RAW = raw_data_root(REPO)
+HFCS_2021 = RAW / "hfcs" / "2021"
+# Canadian household-count control (CHS 2022, table 46-10-0083, provinces only -- SAME universe as the
+# tenure control). Recipient HFCS weights are Eurozone-scale; rescale them UNIFORMLY to this total so the
+# represented household count is Canadian and per-household $ levels calibrate to realistic magnitudes. A
+# uniform scale leaves weighted income-deciles (hence donor matching), tenure shares, wealth-quintile
+# shares, APC/saving ratios and (unweighted) joint correlations all invariant.
+CHS_HOUSEHOLDS_2022 = 15_455_000
+STANDIN_DONOR = RAW / "hfcs" / "New_Household.csv"
 OUT_DIR = Path(__file__).resolve().parent
 
 # --- the 12-component joint vector transplanted from the donor, as MODEL fields -------------------
@@ -97,7 +108,7 @@ HFCS_CODE_MAP = {
 
 # --- SFS 2023 PUMF (economic-family) column map, from SFS2023_EFAM_PUMF_vare.sps. Values that are a
 #     list are SUMMED (a model field aggregates several SFS variables). All values are 2023 constant $.
-SFS_CSV = REPO / "dev" / "raw_data" / "can_2022" / "pumf" / "sfs_2023" / "sfs2023_efam_pumf.csv"
+SFS_CSV = RAW / "can_2022" / "pumf" / "sfs_2023" / "sfs2023_efam_pumf.csv"
 SFS_COLUMN_MAP: dict[str, object] = {
     "Value of the Main Residence": "PWAPRVAL",                 # value of principal residence
     "Value of other Properties": "PWASTRST",                   # real estate other than principal
@@ -120,7 +131,7 @@ SFS_OWNER_TENURE = {1, 2}            # 1 own w/o mortgage, 2 own w/ mortgage, 3 
 SFS_INCOME_SENTINEL = 99999999       # PEF*INC top-code / not-available
 # --- CIS 2022 PUMF (person-level); Phase-1 uses it only for the income aggregate cross-check.
 #     Person-level source split is deferred with Individuals.csv. ---
-CIS_CSV = REPO / "dev" / "raw_data" / "can_2022" / "pumf" / "cis_2022" / "CIS2022_PUMF.csv"
+CIS_CSV = RAW / "can_2022" / "pumf" / "cis_2022" / "CIS2022_PUMF.csv"
 CIS_COLUMN_MAP = {"weight": "FWEIGHT", "province": "PROV", "after_tax_income": "ATINC",
                   "earnings": "EARNG", "ei_benefits": "EIBEN", "cpp_qpp": "CPQPP", "transfers_child": "CHBEN"}
 CIS_INCOME_SENTINEL = 999999999996
@@ -151,6 +162,8 @@ def load_recipient_hfcs() -> pd.DataFrame:
             rec["Tenure Status of the Main Residence"] = rec["Tenure Status of the Main Residence_h"]
             rec = rec.drop(columns=["Tenure Status of the Main Residence_h"])
     rec["province"] = "CAN"  # base HFCS carries no province -> national pool (documented fallback)
+    # rescale Eurozone HFCS weights UNIFORMLY to the Canadian 2022 household count (relative structure kept)
+    rec["Weight"] = rec["Weight"].astype(float) * (CHS_HOUSEHOLDS_2022 / rec["Weight"].astype(float).sum())
     rec["tenure_bin"] = (rec["Tenure Status of the Main Residence"] == 1).astype(int)  # HFCS 1 = owner
     rec["income_decile"] = weighted_decile(rec["Income"].values, rec["Weight"].values)  # WEIGHTED (see helper)
     rec["age_band"] = hfcs_age_band(rec["age_5yr"].values) if "age_5yr" in rec else np.nan
@@ -175,14 +188,21 @@ def load_donor(standin: bool) -> pd.DataFrame:
         return don
     # --- REAL: SFS 2023 economic families ---
     s = pd.read_csv(SFS_CSV, low_memory=False)
+    # PEFMTINC carries a 'not stated' sentinel (99999999) for 790 families (2.2% wt), spread across the
+    # after-tax-income distribution (not a top-code -- PEFATINC has real values to ~$2M with no sentinel).
+    # Least-assumptive, SFS-consistent fix: hot-deck impute the suppressed market income with the median of
+    # non-sentinel families in the same (tenure x after-tax-income-decile) cell, keeping the market+transfers
+    # concept. The after-tax decile (the wealth-quintile key) is untouched, so Phase-1 controls are preserved.
+    atdec = weighted_decile(s[SFS_META["after_tax_income"]].values, s[SFS_META["weight"]].values)
+    ten_own = s[SFS_META["tenure"]].isin(SFS_OWNER_TENURE).astype(int).values
+    mt = s["PEFMTINC"].astype(float).copy()
+    mt[mt >= SFS_INCOME_SENTINEL] = np.nan
+    cell = pd.Series(list(zip(ten_own, atdec)), index=s.index)
+    mt = mt.groupby(cell).transform(lambda x: x.fillna(x.median()))
+    s["PEFMTINC"] = mt.fillna(mt.median())  # residual empty-cell fallback -> global median
     don = pd.DataFrame(index=s.index)
     for field, spec in SFS_COLUMN_MAP.items():
-        v = _sfs_col(s, spec)
-        if field == "Income":  # cap top-code sentinel before use
-            for c in (spec if isinstance(spec, list) else [spec]):
-                s.loc[s[c] >= SFS_INCOME_SENTINEL, c] = np.nan
-            v = _sfs_col(s, spec)
-        don[field] = v
+        don[field] = _sfs_col(s, spec)  # Income = PEFMTINC (imputed) + PEFGTR -> no NaN
     # missing/sign handling (step-5 classification): asset/debt STOCKS clip <0 -> 0 (overdraft edge
     # cases); NET positions (net worth) may be negative -> keep; income may be negative (losses) -> keep.
     STOCK_FIELDS = [f for f in VECTOR_FIELDS if f != "Income"]

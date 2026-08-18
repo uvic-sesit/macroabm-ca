@@ -2,9 +2,11 @@
 
 Mirrors dev/validation/build_baseline_2026_07.py but for the 2022 base year:
   * year = 2022, OECD-50 industries, 13 regions incl. territories (YT/NT/NU);
-  * provincial IO = dev/raw_data/icio/icio_2022_can_provinces.csv (macroabm-io2022 compat table);
+  * provincial IO = <raw-data root>/icio/icio_2022_can_provinces.csv (macroabm-io2022 compat table);
   * capital stock / capital compensation / labour compensation injected from
-    dev/raw_data/can_2022/ by the reader (see default_readers.inject_can_provincial_socioeconomic_2022);
+    <root>/can_2022/ by the reader (see default_readers.inject_can_provincial_socioeconomic_2022);
+  * raw-data root is configurable (see _paths.raw_data_root: $MACROABM_RAW_DATA / <repo>/raw_data /
+    legacy <repo>/dev/raw_data);
   * behavioural equations untouched.
 
 use_disagg_can_2014_reader is intentionally OFF (that branch is 2014-only); the provincial
@@ -25,9 +27,16 @@ from macro_data import DataWrapper, configuration_utils
 from macro_data.configuration.countries import Country as CountryCode
 from macro_data.configuration.region import Region
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent / "household_prototype"))
+from _paths import raw_data_root  # configurable raw-data root (env / root raw_data/ / legacy dev/raw_data)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-INPUT_PATH = REPO_ROOT / "dev" / "raw_data"
+INPUT_PATH = raw_data_root(REPO_ROOT)  # <root>/{hfcs, can_2022, icio}; override via $MACROABM_RAW_DATA
 PKL_PATH = REPO_ROOT / "dev" / "pkl_files" / "io2022_13prov_2022.pkl"
+# Validated national Canadian household file (MVP integration). When --canadianized is set, every provincial
+# SyntheticCountry samples this CAD-native distribution instead of the French HFCS proxy (schema-adapted).
+CANADIANIZED_HH_CSV = REPO_ROOT / "dev" / "io2022" / "household_prototype" / "prototype_household_consumption.csv"
 
 # 13 regions (10 provinces + 3 territories), matching the 2022 provincial IO table.
 REGIONS = [
@@ -52,7 +61,7 @@ TERRITORIES = {"CAN_YT", "CAN_NT", "CAN_NU"}
 TERRITORY_SCALE = 10
 
 
-def build_data_config(scale: int = 1000):
+def build_data_config(scale: int = 1000, canadianized_households: bool = False):
     data_config = configuration_utils.default_data_configuration(
         countries=["CAN"],
         aggregate_industries=False,
@@ -86,15 +95,18 @@ def build_data_config(scale: int = 1000):
         data_config.country_configs[region] = region_config
 
     data_config.aggregation_structure = {CountryCode("CAN"): REGIONS}
+    if canadianized_households:
+        data_config.canadianized_can_households_csv = CANADIANIZED_HH_CSV
     return data_config
 
 
-def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = False):
+def build_pickle(pkl_path: Path = PKL_PATH, scale: int = 1000, force: bool = False,
+                 canadianized_households: bool = False):
     if pkl_path.exists() and not force:
         print(f"Pickle already exists at {pkl_path} - skipping (use --force to rebuild).")
         return
     pkl_path.parent.mkdir(parents=True, exist_ok=True)
-    data_config = build_data_config(scale=scale)
+    data_config = build_data_config(scale=scale, canadianized_households=canadianized_households)
     t0 = time.time()
     creator = DataWrapper.from_config(
         configuration=data_config,
@@ -120,14 +132,39 @@ def inspect(pkl_path: Path = PKL_PATH):
               f"n_buyers={sc.n_buyers}")
 
 
+def inspect_households(pkl_path: Path = PKL_PATH, provinces_to_check=("CAN_ON", "CAN_PE", "CAN_NL")):
+    """Cheap household-side acceptance check per province (tenure/income/wealth/APC/NaN)."""
+    data = DataWrapper.init_from_pickle(pkl_path)
+    names = {str(c): c for c in data.all_country_names}
+    for pname in provinces_to_check:
+        if pname not in names:
+            print(f"  {pname}: not built")
+            continue
+        hh = data.synthetic_countries[names[pname]].population.household_data
+        n = len(hh)
+        own = (hh["Tenure Status of the Main Residence"] == 1).mean() if "Tenure Status of the Main Residence" in hh else float("nan")
+        inc = np.nanmean(hh["Income"].values.astype(float)) if "Income" in hh else float("nan")
+        wealth = np.nanmean(hh["Wealth"].values.astype(float)) if "Wealth" in hh else float("nan")
+        apc = np.nanmedian(hh["Consumption of Consumer Goods/Services as a Share of Income"].values.astype(float)) if "Consumption of Consumer Goods/Services as a Share of Income" in hh else float("nan")
+        moncols = [c for c in ["Income", "Wealth", "Value of the Main Residence", "Amount spent on Consumption of Goods and Services"] if c in hh]
+        nbad = int(sum(np.sum(~np.isfinite(hh[c].values.astype(float))) for c in moncols))
+        print(f"  {pname:8s} n_hh={n:6d} owner={own:5.3f} mean_income={inc:11.0f} mean_wealth={wealth:12.0f} "
+              f"median_APC={apc:5.3f} nonfinite_money={nbad}")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--scale", type=int, default=1000)
     ap.add_argument("--pickle", type=Path, default=PKL_PATH)
     ap.add_argument("--build-only", action="store_true")
     ap.add_argument("--force", action="store_true", help="rebuild pickle even if it exists")
+    ap.add_argument("--canadianized", action="store_true", help="use the validated Canadian household file")
+    ap.add_argument("--check-households", action="store_true", help="print per-province household diagnostics")
     args = ap.parse_args()
 
-    build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force)
+    build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force,
+                 canadianized_households=args.canadianized)
     if not args.build_only:
         inspect(args.pickle)
+    if args.check_households:
+        inspect_households(args.pickle)

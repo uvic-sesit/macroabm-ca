@@ -1,10 +1,14 @@
 """Extract the official 2022 controls from the downloaded StatCan tables and write controls_2022.json.
 Balance-sheet snapshot = Q4 2022 (2022-10); flows = 2022 annual. Values in millions CAD unless noted."""
 import json
+import sys
 from pathlib import Path
 import pandas as pd
 
-CTRL = Path(__file__).resolve().parent.parent.parent / "raw_data" / "can_2022" / "controls"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _paths import raw_data_root  # configurable raw-data root (env / root raw_data/ / legacy dev/raw_data)
+
+CTRL = raw_data_root(Path(__file__).resolve().parents[3]) / "can_2022" / "controls"
 OUT = Path(__file__).resolve().parent / "controls_2022.json"
 Q = "2022-10"   # Q4 2022 balance-sheet snapshot
 

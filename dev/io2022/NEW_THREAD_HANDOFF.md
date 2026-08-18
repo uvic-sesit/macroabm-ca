@@ -3,14 +3,28 @@
 Self-contained. A fresh agent can continue from this without the prior thread history.
 Branch: `feature/io-2022-integration` (off verified `real-growth-baseline`; baseline untouched).
 
-## ⭐ CURRENT CHECKPOINT 2026-08-17 — read this first
-**Branch + HEAD:** `feature/io-2022-integration` @ `ab0d2a7` (uvic-sesit/macroabm-ca; not merged;
-`real-growth-baseline` untouched at `d11edc1`).
+## ⭐ CURRENT CHECKPOINT 2026-08 — read this first
+**Branch + HEAD:** `feature/io-2022-integration` @ `a352505` committed (Task-1 household calibration; this
+is `a1854c0` re-authored WITHOUT any attribution trailer — trailer cleanup done, local==remote). **The
+Canadianized-household DataWrapper integration (adapter + Option B reconciliation) is IMPLEMENTED but
+UNCOMMITTED on top of `a352505`.** `real-growth-baseline` untouched at `d11edc1`.
 
 **Where things stand:**
+- **Canadian household economic block is now INTEGRATED into the 2022 DataWrapper (MVP)** behind a
+  `canadianized_can_households_csv` flag. 13q simple/default baseline (Canadianized): real GVA
+  **687.3B → 676.0B (−1.6%)** vs pre-household 687.3 → 676.9B (−1.5%) — essentially identical; unemployment
+  **7.6 → 9.8%** vs 7.7 → 9.1% (+0.7pp at horizon, household-demand driven); all 13 regions stable; 0
+  NaN/inf. Canadian: income/wealth/debt/tenure(0.654)/consumption-propensity(APC≈0.82); firm wage bill =
+  observed CoE; employment = 36-10-0489. Still pooled-European: individual demographic/member skeleton +
+  within-household income split. National household distribution replicated across provinces. Income-floor
+  limitation ~11% wt (model transfer-imputation exceeds validated income for bottom-income-quintile
+  households; agg +1.1%). Detail: `dev/io2022/INTEGRATION_LOG.md`,
+  `dev/io2022/household_prototype/VALIDATION_REPORT.md`. Uncommitted files: `canadianized_household_adapter.py`
+  (new), `default_readers.py`, `hfcs_reader.py`, `hfcs_synthetic_population.py`, `data_wrapper.py`,
+  `dataconfiguration.py`, `dev/io2022/build_2022_datawrapper.py`.
 - Core 2022 IO/DataWrapper integration is mechanically validated and STABLE on the simple/default 13q
   baseline (real GVA 687.3B→676.9B −1.5%, unemployment 7.7→9.1%, all 13 regions, 0 NaN/inf; see #35).
-- **Household Canadianization Phase 1 = VALIDATED as a scaffold (NOT wired into the DataWrapper).**
+- **Household Canadianization Phase 1 = VALIDATED (now wired in as above).**
   Architecture: HFCS household/member skeleton → **SFS 2023** donor match (tenure × income-decile,
   national pool) → joint wealth/debt/income transplant → calibrate to official 2022 NBSA/DHEA controls;
   employment stays 36-10-0489; Individuals.csv untouched. Real SFS 2023 (16,241 families) + CIS 2022 +

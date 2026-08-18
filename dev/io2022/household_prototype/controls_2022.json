@@ -58,6 +58,18 @@
   "flows_2022": {
     "household_disposable_income_millions_CAD": 1502342.0
   },
+  "consumption_saving_2022_DHEA": {
+    "source": "36-10-0587 Distributions of household economic accounts, income/consumption/saving, annual",
+    "geo": "Canada", "ref_date": 2022, "characteristics": "All households", "statistic": "Value",
+    "household_disposable_income_millions_CAD": 1502342.0,
+    "household_final_consumption_expenditure_HFCE_millions_CAD": 1511381.0,
+    "household_actual_final_consumption_millions_CAD": 1941983.0,
+    "household_net_saving_millions_CAD": 31545.0,
+    "consumption_control_used": "HFCE 1,511,381 (SNA household final consumption; conceptual match to SHS TC001 Total current consumption and to the model 'Amount spent on Consumption of Goods and Services'). NOT 'actual final consumption' (adds social transfers in kind) and NOT SHS TE001 (adds income tax/pension/gifts).",
+    "saving_definition": "Task 2: Saving = disposable income - consumption. Identity DI - HFCE = -9,039M (rate -0.6%). DHEA net saving +31,545M additionally includes change in pension entitlements (~+40.6B); not forced >= 0.",
+    "HFCE_by_income_quintile_millions_CAD": {"q1": 202282, "q2": 240675, "q3": 293624, "q4": 327863, "q5": 446937},
+    "net_saving_by_income_quintile_millions_CAD": {"q1": -100731, "q2": -56953, "q3": -39598, "q4": 49596, "q5": 179231}
+  },
   "tenure_2022_CHS": {
     "source": "46-10-0083 Household characteristics, by tenure including first-time homebuyer status (Canadian Housing Survey)",
     "geo": "Canada (provinces only) -- excludes the three territories",
