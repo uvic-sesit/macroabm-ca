@@ -137,11 +137,26 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
         too, which is the point: the cap means "supply never outruns this rate", not
         "the 2015-2024 window is reshaped and the projection is exempt".
         """
-        if not post_sample_growth:
-            return post_sample_growth
+        g = post_sample_growth
+        if isinstance(g, dict):
+            # Per-province tails (e.g. StatCan 15-64 population projections). A province
+            # absent from the mapping keeps the flat tail rather than inheriting someone
+            # else's rate. Negative rates are legitimate and must survive the falsy check
+            # below: QC and NL both have SHRINKING working-age populations to 2050.
+            g = g.get(p)
+        if g is None or g == 0:
+            return g
         if growth_cap and p in growth_cap:
-            return min(float(post_sample_growth), float(growth_cap[p]))
-        return post_sample_growth
+            return min(float(g), float(growth_cap[p]))
+        return g
+
+    if isinstance(post_sample_growth, dict):
+        unknown = sorted(set(post_sample_growth) - set(raw))
+        if unknown:
+            raise ValueError(
+                f"post_sample_growth names unknown provinces: {unknown}. A silently "
+                "unmatched code would leave that province on a flat tail while the "
+                "banner claimed a rate was applied.")
 
     if growth_cap:
         unknown = sorted(set(growth_cap) - set(raw))
@@ -155,7 +170,11 @@ def observed_labour_force_index(n_quarters: int, province: Optional[str] = None,
         # reconstruct the national sum requires levels, which the index drops. The uniform
         # control instead applies the cross-province mean index to every province.
         mean_by_year = {str(y): float(np.mean([raw[p][str(y)] for p in raw])) for y in years}
-        shared = _interp(mean_by_year, post_sample_growth)
+        # The uniform control has one index for everyone, so a per-province mapping
+        # collapses to its mean -- otherwise _interp would receive a dict it cannot use.
+        shared_tail = (float(np.mean(list(post_sample_growth.values())))
+                       if isinstance(post_sample_growth, dict) else post_sample_growth)
+        shared = _interp(mean_by_year, shared_tail)
         result = {p: list(shared) for p in raw}
     else:
         result = {p: _interp(raw[p], _tail_growth_for(p)) for p in raw}
