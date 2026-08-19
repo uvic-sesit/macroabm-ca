@@ -1242,6 +1242,15 @@ def _apply_household_demand_overlay(
                 fac = np.concatenate([fac, np.full(len(frame) - len(fac), fac[-1])])
             fac = fac[:len(frame)]
             fac = fac / fac[0]
+            # The provincial index carries POPULATION growth only. `growth_rate` is the
+            # autonomous component on top of it -- demand per head rising over time -- and
+            # it used to be discarded here, which made the parameter a silent no-op in every
+            # run that passes an index (i.e. all of them). Compounding the two keeps the
+            # supply/demand symmetry that fixes BC/PE while still giving the model an
+            # autonomous demand driver, which is the only thing that moves real growth on a
+            # demand-bound base. At growth_rate = 0.0 this multiplies by exactly 1.0, so
+            # existing runs are bit-identical.
+            fac = fac * (1.0 + growth_rate) ** (np.arange(len(frame)) / 4.0)
         else:
             fac = (1.0 + growth_rate) ** (np.arange(len(frame)) / 4.0)
         for col in _HH_DEMAND_COLS:
