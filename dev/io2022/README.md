@@ -2,8 +2,13 @@
 
 > **Status: work in progress** (branch `feature/io-2022-integration`). The 2022 base year builds and
 > runs on the simple/default baseline; it is **stable over 13 quarters — all 13 regions, no collapse,
-> 0 NaN/inf** (real GVA 687.3B→676.9B, −1.5%; unemployment 7.7→9.1%). The earlier small-region collapse
-> is resolved (INTEGRATION_LOG #35). See [Status & roadmap](#status--roadmap).
+> 0 NaN/inf**. **Canonical baseline (2026-08-19, provincial 2022 labour init adopted): real GVA
+> 687.3B→684.4B (−0.4%, seed 0); unemployment mean 6.1→7.0%; national t0 unemployment 5.34% ≈ StatCan
+> 5.3%; 5-seed mean real-GVA change −0.97% (sd 0.50), all negative; 5-seed mean Δu +1.78pp, all rising.**
+> t0 unemployment/participation now match StatCan 14-10-0327 by province (participation on the age≥16
+> base); territories use a documented national fallback and PEI carries a small-population granularity
+> caveat. The earlier small-region collapse is resolved (INTEGRATION_LOG #35). See
+> [Status & roadmap](#status--roadmap).
 
 Integration of Statistics Canada's 2022 provincial data into the MacroABM-CA DataWrapper: the new
 data, build/run instructions, model changes, and remaining work. Behavioural equations are unchanged;
@@ -36,6 +41,7 @@ data) — see [Inputs](#3-inputs).
 | `can_2022/capital_compensation_oecd50_by_province_CADmillions.csv` | capital compensation (GOS + mixed income + net production tax) | 2022 IO VA breakdown |
 | `can_2022/employment_shares_oecd50_by_province.csv` | province×sector employment shares | StatCan 36-10-0489 |
 | `can_2022/compensation_of_employees_oecd50_by_province_CADmillions.csv` | wages (PRM500000) + employer social contributions (PRM600000) | 2022 IO VA breakdown |
+| `can_2022/labour_2022_by_province.csv` | province t0 unemployment + participation rates (fractions) | StatCan 14-10-0327 (2022 annual, 15+, Total-Gender); rates ÷100. Territories YT/NT/NU = national fallback (table omits them) |
 
 The 2022-specific bundle is ~7.6 MB.
 
@@ -58,7 +64,16 @@ raw_data_path/
     capital_compensation_oecd50_by_province_CADmillions.csv
     employment_shares_oecd50_by_province.csv
     compensation_of_employees_oecd50_by_province_CADmillions.csv
+    labour_2022_by_province.csv
 ```
+
+`labour_2022_by_province.csv` is derived from StatCan **14-10-0327** (Labour force characteristics,
+2022 annual, age 15+, Total-Gender): columns `region, unemployment_rate, participation_rate, source`
+with rates as fractions (StatCan percent ÷ 100). It sets each province/territory's **t0** activity split
+(loaded via `_load_can_2022_provincial_labour`, resolved from the normal `can_2022` data root, wired
+through `synthetic_country` → `SyntheticHFCSPopulation.from_readers`); it is **not** a forward path.
+Territories (YT/NT/NU) use a national fallback (14-10-0327 omits them); PEI has a small-population
+granularity caveat.
 
 The delta is a StatCan-derived output of the private `macroabm-io2022` pipeline; its
 `compatibility/icio_2022_can_provinces_oecd50.csv` (→ `icio/icio_2022_can_provinces.csv`) and
@@ -103,6 +118,7 @@ Data/calibration only — no behavioural equations changed. Detail in `INTEGRATI
 | Firm wage bill | Set to **observed compensation of employees** (PRM500000 wages + PRM600000 employer contributions); `tau_sif` = observed per-province employer ratio. Was the `VA − capital-comp` residual (over-stated). | #32 |
 | Currency handling | `from_usd_to_lcu_io` stops the spurious ~1.30 USD→CAD conversion on the **CAD-native** 2022 IO/SEA inputs (Compustat USD data still converts). Model VA/output/compensation now match canonical 2022 CAD. | #33 |
 | Trade allocation | Goods-market `origin/destination_trade_proportions`: (a) `simulation.py` reindexes to `all_country_names` order before `.values` — fixes a country-ordering permutation that routed sourcing to non-producers; (b) `_positive_sourcing_flow` builds sourcing shares from **positive-purchase** flows (clip negative inventory/disposal cells), keeping shares ∈ [0,1]. Accounting IO flows untouched. Resolves the small-region collapse. | #35 |
+| Labour initialization | Per-province t0 unemployment/participation from **StatCan 14-10-0327** (2022 annual, 15+) replace the single national IMF/WB base rate. Gated CAN-2022 override passed through `synthetic_country`→`SyntheticHFCSPopulation.from_readers` (loaded via `_load_can_2022_provincial_labour`); **t0 initialisation only — no forward path, labour stays endogenous.** Territories use a national fallback (table omits YT/NT/NU); PEI has a small-population granularity caveat. | #36 |
 
 ---
 
@@ -123,9 +139,48 @@ Data/calibration only — no behavioural equations changed. Detail in `INTEGRATI
    for was actually the trade-allocation bug, now fixed).
 
 **Deferred (until otherwise scheduled):**
-- HFCS-2021 Canadianization (household block still uses the raw European wave).
 - Candidate growth baseline (parked, #30).
 - Post-2022 external-series / vintage inputs.
+
+---
+
+## 6a. Next Phase: 2022 Economic Baseline Validation
+
+**Accepted state (do not reopen — see DO-NOT-REOPEN below):**
+- 2022 IO/DataWrapper integration mechanically stable; GDP identity balances all 13 regions.
+- Validated: capital treatment, trade allocation, employment shares (36-10-0489), observed CoE,
+  CAD-native currency, **household Canadianization** (Canadian household MVP integrated, `d74f732`).
+- Simple/default 13q after household integration: GVA **687.3 → 676.0B (−1.6%)**, unemployment
+  **7.6% → 9.8%**, all 13 regions stable, **0 NaN/inf**.
+- Remaining household limitations (pooled-European individual/member skeleton; national distribution
+  replicated across provinces; ~11%-weight transfer-imputation income floor) are **deferred, not blockers**.
+
+**Next work, in order:**
+1. **Active external-input audit.** Trace ONLY the external inputs actually on the current 2022
+   simple/default build+run execution path. Classify each as: Canadian + 2022-consistent / Canadian but
+   stale or nearest-year fallback / foreign proxy / behavioural-calibration parameter (not observed data) /
+   initialization-only vs runtime/time-varying. The earlier audit flagged possible remaining
+   Eurostat/ECB/France proxies (esp. financial / interest-rate and initialization inputs) — these must be
+   **rechecked against the actual active path before any replacement**.
+2. **Economic baseline decomposition.** Explain the remaining 13q drift as economics, not a crash.
+   Decompose the path into at least: household consumption, government demand, investment, exports,
+   inventories/intermediate-input dynamics, imports, production/capacity/productivity, labour
+   demand/employment. Classify the −1.6% GVA / +2.2pp unemployment path as **DATA ISSUE** vs
+   **CALIBRATION / NON-STEADY-STATE ISSUE** vs **EXPECTED MODEL BEHAVIOUR**.
+3. **Targeted data/calibration updates.** Replace or recalibrate ONLY inputs that steps 1–2 show
+   materially move the baseline. Do NOT broadly modernize every external series just because newer data
+   exist.
+4. **Post-2022 / real-growth phase.** Only after the static 2022 baseline is economically understood:
+   determine which variables genuinely need forward time paths; update Canadian series
+   (labour force/population/inflation/rates/productivity/demand/exports) where justified; then return to the
+   parked candidate real-growth baseline. Distinguish **STATIC 2022 INITIALIZATION** from **POST-2022
+   EXOGENOUS PATHS** from **ENDOGENOUS MODEL DYNAMICS**.
+
+**DO-NOT-REOPEN (validated integration components):** capital treatment (#29), trade allocation (#35),
+employment shares 36-10-0489 (#31), observed CoE (#32), CAD-native currency (#33), and the household
+Canadianization block (SFS 2023 joint transplant, survey-weighted deciles + age matching, CHS 2022 tenure
+65.41%, CIS 2022 income reconciliation, SHS 2023 consumption propensity, 15.455M weight rescale, Option B
+labour-income reconciliation).
 
 ---
 

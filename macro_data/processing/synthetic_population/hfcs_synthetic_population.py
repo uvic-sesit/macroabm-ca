@@ -186,6 +186,8 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         exch_rate: float = 1.0,
         proxied_country: str | Country = None,
         yearly_factor: float = 4.0,
+        unemployment_rate_override: float | None = None,
+        participation_rate_override: float | None = None,
     ) -> "SyntheticHFCSPopulation":
         """
         Creates a synthetic population from data readers.
@@ -245,8 +247,20 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             finite = finite[np.isfinite(finite)]
             return float(finite[-1]) if finite.size else 0.0
 
-        unemployment_rate = _base_labour_rate("Unemployment Rate (Value)")
-        participation_rate = _base_labour_rate("Participation Rate (Value)")
+        # CAN-2022 t0 override (gated): use this region's OWN observed 2022 unemployment/participation
+        # (StatCan 14-10-0327) for the initial activity split, instead of the single national IMF/WB
+        # base rate that exogenous_data.labour_stats carries for every province. t0 initialisation
+        # ONLY -- labour stays fully endogenous after t0; None (all non-CAN-2022 builds) = legacy.
+        unemployment_rate = (
+            unemployment_rate_override
+            if unemployment_rate_override is not None
+            else _base_labour_rate("Unemployment Rate (Value)")
+        )
+        participation_rate = (
+            participation_rate_override
+            if participation_rate_override is not None
+            else _base_labour_rate("Participation Rate (Value)")
+        )
 
         n_firms_by_industry = industry_data["industry_vectors"]["Number of Firms"].values
 

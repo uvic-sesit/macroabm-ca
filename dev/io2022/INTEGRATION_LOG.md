@@ -424,3 +424,76 @@ overshoot **+1.1%**. Documented MVP limitation; no household redesign.
 
 **Status:** household economic block integrated and stable on the MVP baseline. Deferred: individual
 Canadianization, provincial household distributions, the income-floor refinement.
+
+## ✅ #36: provincial 2022 labour initialization WIRED + ADOPTED as canonical (2026-08-19)
+
+Classification: **data mapping** (t0 labour state). Simple/default baseline. No behavioural equation,
+closure, or forward path changed — **t0 initialisation only; labour stays fully endogenous after t0.**
+
+**Problem.** Every province initialised to the same national IMF/WB base unemployment/participation
+(~7.6%, a stale pre-2022 COVID-era rate held flat), because `Exogenous.labour_stats` is built at the
+parent-country (CAN) level and shared across regions.
+
+**Change.** New `dev/raw_data/can_2022/labour_2022_by_province.csv` (from StatCan **14-10-0327**, 2022
+annual, 15+, Total-Gender; fractions). `_load_can_2022_provincial_labour` (`default_readers.py`) loads it
+and the gated 2022 socioeconomic injection stashes it on `sea_reader.can_2022_provincial_labour`.
+`synthetic_country.py` (both population-build sites) looks it up by region (like the #31 employment
+shares) and passes `unemployment_rate_override`/`participation_rate_override` into
+`SyntheticHFCSPopulation.from_readers`, which uses them for the initial activity split instead of the
+national base rate. Gated CAN-2022 only; legacy builds (override `None`) unchanged.
+
+**Verification.** t0 unemployment now matches 14-10-0327 by province (QC 4.3 / ON 5.6 / AB 5.8 / NL 11.5);
+**national LF-weighted t0 unemployment 7.53% → 5.34% ≈ StatCan 5.3%**. Participation matches provincial
+targets on the **age≥16 base** the mechanism/StatCan use (gap ±0.1pp all regions); the economy's reported
+`participation_rate` is diluted by under-16 NEA whose count varies with the household draw — a pre-existing
+reporting-base property, not an override failure, and `participation_rate` is a pinned non-dynamic statistic.
+Counts consistent (E+U+NEA=total, 0 bad household links, 0 NaN status). **Caveats (non-blocking):**
+territories on national fallback (14-10-0327 omits YT/NT/NU); PEI unemployment granularity (smallest pop).
+
+**Adopted as canonical (2026-08-19).** Canonical pickle `io2022_13prov_2022_canadianized.pkl` rebuilt
+(pre-labour saved as `…_prelabour.pkl`); one full canonical h5 re-run + verified.
+- **Seed 0 13q: real GVA 687.3B → 684.4B (−0.4%); unemployment mean 6.1 → 7.0%; 0 NaN/inf; no collapse;
+  3-way identity 5.5e-3.** (Milder than the pre-labour 687.3→676.0B / −1.6%, 7.6→9.8% — accurate lower t0
+  unemployment leaves less slack for the demand-outruns-supply churn.)
+- **5-seed: mean real-GVA change −0.97% (sd 0.50), all negative; mean Δu +1.78pp, all rising.** Seed 0 is
+  the mildest of the five → cite the mean, not seed 0.
+- Tier-0 2 FAIL / 26 WARN / 95 PASS and Tier-1 6 FAIL / 21 WARN / 204 PASS — same documented small-region /
+  territory residuals, fewer WARNs; numerical/dynamic sanity intact.
+- **Pre-labour drift decomposition (−1.6% path) is superseded** by the new canonical (`drift_decomposition_seed0.csv`).
+
+## Next Phase: 2022 Economic Baseline Validation (roadmap — 2026-08)
+
+**Accepted state (do not reopen — see DO-NOT-REOPEN):**
+- 2022 IO/DataWrapper integration mechanically stable; GDP identity balances all 13 regions.
+- Validated: capital treatment, trade allocation, employment shares (36-10-0489), observed CoE, CAD-native
+  currency, household Canadianization. Canadian household MVP integrated + pushed (`d74f732`).
+- Simple/default 13q after household integration: GVA 687.3 → 676.0B (-1.6%); unemployment 7.6% -> 9.8%;
+  all 13 regions stable; 0 NaN/inf.
+- Remaining household limitations (pooled-European individual/member skeleton; national distribution
+  replicated across provinces; ~11%-weight transfer-imputation income floor) are deferred, not blockers.
+
+**Next work, in order:**
+1. **Active external-input audit.** Trace ONLY the external inputs actually on the current 2022
+   simple/default build+run execution path. Classify each: Canadian + 2022-consistent / Canadian but stale
+   or nearest-year fallback / foreign proxy / behavioural-calibration parameter (not observed data) /
+   initialization-only vs runtime/time-varying. Earlier audit flagged possible remaining Eurostat/ECB/France
+   proxies (esp. financial / interest-rate and initialization inputs) -- recheck against the ACTUAL active
+   path before any replacement.
+2. **Economic baseline decomposition.** Explain the remaining 13q drift as economics, not a crash.
+   Decompose into at least: household consumption, government demand, investment, exports,
+   inventories/intermediate-input dynamics, imports, production/capacity/productivity, labour
+   demand/employment. Classify the -1.6% GVA / +2.2pp unemployment path as DATA ISSUE vs
+   CALIBRATION / NON-STEADY-STATE ISSUE vs EXPECTED MODEL BEHAVIOUR.
+3. **Targeted data/calibration updates.** Replace/recalibrate ONLY inputs that steps 1-2 show materially
+   move the baseline. Do NOT broadly modernize every external series merely because newer data exist.
+4. **Post-2022 / real-growth phase.** Only after the static 2022 baseline is economically understood:
+   determine which variables genuinely need forward time paths; update Canadian series (labour
+   force/population/inflation/rates/productivity/demand/exports) where justified; then return to the parked
+   candidate real-growth baseline. Distinguish STATIC 2022 INITIALIZATION from POST-2022 EXOGENOUS PATHS
+   from ENDOGENOUS MODEL DYNAMICS.
+
+**DO-NOT-REOPEN (validated integration components):** capital treatment (#29), trade allocation (#35),
+employment shares 36-10-0489 (#31), observed CoE (#32), CAD-native currency (#33), and the household
+Canadianization block (SFS 2023 joint transplant, survey-weighted deciles + age matching, CHS 2022 tenure
+65.41%, CIS 2022 income reconciliation, SHS 2023 consumption propensity, 15.455M weight rescale, Option B
+labour-income reconciliation).

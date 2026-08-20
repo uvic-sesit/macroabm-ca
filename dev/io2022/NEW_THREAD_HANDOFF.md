@@ -3,7 +3,22 @@
 Self-contained. A fresh agent can continue from this without the prior thread history.
 Branch: `feature/io-2022-integration` (off verified `real-growth-baseline`; baseline untouched).
 
-## ⭐ CURRENT CHECKPOINT 2026-08 — read this first
+## ⭐ CURRENT CHECKPOINT 2026-08-19 — read this first
+**Provincial 2022 labour initialization ADOPTED as the canonical 2022 baseline (INTEGRATION_LOG #36;
+uncommitted).** Per-province t0 unemployment/participation from StatCan 14-10-0327 replace the national
+base rate (gated CAN-2022, t0-init only, labour endogenous after t0). **National t0 unemployment 5.34% ≈
+StatCan 5.3%; participation matches provincial targets on the age≥16 base.** Canonical pickle
+`io2022_13prov_2022_canadianized.pkl` rebuilt (pre-labour → `…_prelabour.pkl`); one canonical h5 re-run.
+- **New canonical seed 0 13q: real GVA 687.3B → 684.4B (−0.4%); unemployment mean 6.1 → 7.0%; 0 NaN/inf;
+  no collapse.** 5-seed: mean real-GVA change **−0.97% (sd 0.50), all negative**; mean Δu **+1.78pp, all
+  rising** (seed 0 is the mildest — cite the mean). Tier-0/Tier-1 clean apart from documented small-region
+  residuals. Territory national fallback + PEI granularity caveats documented. Old −1.6% drift superseded.
+- Committable code changes: `macro_data/readers/default_readers.py`,
+  `macro_data/processing/synthetic_country.py`,
+  `macro_data/processing/synthetic_population/hfcs_synthetic_population.py` (+ the three `dev/io2022/*.md`
+  docs). All `dev/` artifacts/scripts/data (pickle, h5, npz, LFS/drift CSVs, PUMFs) are git-ignored.
+
+### Prior checkpoint (superseded)
 **Branch + HEAD:** `feature/io-2022-integration` @ `a352505` committed (Task-1 household calibration; this
 is `a1854c0` re-authored WITHOUT any attribution trailer — trailer cleanup done, local==remote). **The
 Canadianized-household DataWrapper integration (adapter + Option B reconciliation) is IMPLEMENTED but
@@ -59,6 +74,45 @@ stale — deferred to Phase 2); income = CIS 2022.
 **DO NOT REOPEN:** capital treatment (#29), trade allocation (#35), employment shares 36-10-0489 (#31),
 observed CoE (#32), CAD-native currency (#33). Do NOT modify Individuals.csv, wire the household block
 into the DataWrapper, or rerun MacroABM until the household block is fully validated.
+
+---
+
+## ⭐ NEXT PHASE: 2022 Economic Baseline Validation (roadmap — start here next)
+
+**Accepted state (do not reopen — see DO-NOT-REOPEN below):**
+- 2022 IO/DataWrapper integration mechanically stable; GDP identity balances all 13 regions.
+- Validated: capital treatment, trade allocation, employment shares (36-10-0489), observed CoE, CAD-native
+  currency, household Canadianization. Canadian household MVP integrated + pushed (`d74f732`).
+- Simple/default 13q after household integration: GVA **687.3 → 676.0B (−1.6%)**; unemployment
+  **7.6% → 9.8%**; all 13 regions stable; **0 NaN/inf**.
+- Remaining household limitations (pooled-European individual/member skeleton; national distribution
+  replicated across provinces; ~11%-weight transfer-imputation income floor) are **deferred, not blockers**.
+
+**Next work, in order:**
+1. **Active external-input audit.** Trace ONLY the external inputs actually on the current 2022
+   simple/default build+run execution path. Classify each: Canadian + 2022-consistent / Canadian but stale
+   or nearest-year fallback / foreign proxy / behavioural-calibration parameter (not observed data) /
+   initialization-only vs runtime/time-varying. The earlier audit flagged possible remaining
+   Eurostat/ECB/France proxies (esp. financial / interest-rate and initialization inputs) — **recheck
+   against the ACTUAL active execution path before any replacement.**
+2. **Economic baseline decomposition.** Explain the remaining 13q drift as economics, not a crash.
+   Decompose the path into at least: household consumption, government demand, investment, exports,
+   inventories/intermediate-input dynamics, imports, production/capacity/productivity, labour
+   demand/employment. Classify the −1.6% GVA / +2.2pp unemployment path as **DATA ISSUE** vs
+   **CALIBRATION / NON-STEADY-STATE ISSUE** vs **EXPECTED MODEL BEHAVIOUR**.
+3. **Targeted data/calibration updates.** Replace/recalibrate ONLY inputs that steps 1–2 show materially
+   move the baseline. Do NOT broadly modernize every external series merely because newer data exist.
+4. **Post-2022 / real-growth phase.** Only after the static 2022 baseline is economically understood:
+   determine which variables genuinely need forward time paths; update Canadian series (labour
+   force/population/inflation/rates/productivity/demand/exports) where justified; then return to the parked
+   candidate real-growth baseline. Distinguish **STATIC 2022 INITIALIZATION** from **POST-2022 EXOGENOUS
+   PATHS** from **ENDOGENOUS MODEL DYNAMICS**.
+
+**DO-NOT-REOPEN (validated integration components):** capital treatment (#29), trade allocation (#35),
+employment shares 36-10-0489 (#31), observed CoE (#32), CAD-native currency (#33), and the household
+Canadianization block (SFS 2023 joint transplant, survey-weighted deciles + age matching, CHS 2022 tenure
+65.41%, CIS 2022 income reconciliation, SHS 2023 consumption propensity, 15.455M weight rescale, Option B
+labour-income reconciliation).
 
 ---
 

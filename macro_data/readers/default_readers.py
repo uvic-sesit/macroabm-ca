@@ -979,6 +979,7 @@ CAN_2022_CAPITAL_STOCK_FILE = "capital_stock_end2021_oecd50_by_province_CADmilli
 CAN_2022_CAPITAL_COMPENSATION_FILE = "capital_compensation_oecd50_by_province_CADmillions.csv"
 CAN_2022_EMPLOYMENT_SHARES_FILE = "employment_shares_oecd50_by_province.csv"
 CAN_2022_COMPENSATION_FILE = "compensation_of_employees_oecd50_by_province_CADmillions.csv"
+CAN_2022_LABOUR_FILE = "labour_2022_by_province.csv"
 
 
 def _load_can_2022_compensation_of_employees(
@@ -1051,6 +1052,34 @@ def _load_can_2022_employment_shares(
             if short_code not in shares_df.index:
                 continue
             out[region] = shares_df.loc[short_code].reindex(industries).fillna(0.0).to_numpy(float)
+    return out
+
+
+def _load_can_2022_provincial_labour(
+    raw_data_path: Path,
+) -> dict[str, dict[str, float]]:
+    """Load observed 2022 province/territory t0 labour conditions (StatCan 14-10-0327, 2022 annual,
+    15+): unemployment and participation rates as FRACTIONS (0..1). Returns {region_code: {"u": .,
+    "p": .}}. Used ONLY to set the t0 initialisation of the synthetic population's activity split;
+    it does NOT create a forward labour path (the series stays flat-held and labour is endogenous
+    after t0). Territories (YT/NT/NU) carry a documented national fallback (14-10-0327 omits them).
+    Absent file -> empty dict (legacy national IMF/WB base rate is kept).
+    """
+    path = Path(raw_data_path) / CAN_2022_SOCIOECONOMIC_DIR / CAN_2022_LABOUR_FILE
+    if not path.exists():
+        warnings.warn(
+            f"2022 provincial labour file not found at {path}; keeping the national IMF/WB base "
+            "unemployment/participation rate for t0 (provincial LFS NOT wired).",
+            DataFilterWarning,
+        )
+        return {}
+    df = pd.read_csv(path)
+    out: dict[str, dict[str, float]] = {}
+    for _, row in df.iterrows():
+        out[str(row["region"])] = {
+            "u": float(row["unemployment_rate"]),
+            "p": float(row["participation_rate"]),
+        }
     return out
 
 
@@ -1151,6 +1180,12 @@ def inject_can_provincial_socioeconomic_2022(
     )
     sea_reader.can_2022_compensation_of_employees = coe_by_region
     sea_reader.can_2022_employer_si_ratio = employer_ratio
+
+    # Observed 2022 province/territory t0 unemployment + participation (StatCan 14-10-0327). Consumed
+    # in synthetic_country (the per-region population build, keyed by region like the employment shares
+    # above) to set each region's t0 activity split to its own observed condition, replacing the single
+    # national IMF/WB base rate. t0 initialisation only -- no forward path.
+    sea_reader.can_2022_provincial_labour = _load_can_2022_provincial_labour(raw_data_path=raw_data_path)
 
 
 def prune_icio_dict(icio_dict: dict[int, Any], prune_date: date):

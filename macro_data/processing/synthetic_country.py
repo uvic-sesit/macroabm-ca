@@ -241,6 +241,9 @@ class SyntheticCountry:
             country, year, quarter, readers, exogenous_country_data, country_configuration.central_bank_configuration
         )
 
+        # CAN-2022: this region's observed t0 unemployment/participation (StatCan 14-10-0327), keyed
+        # by region like the employment shares below. None for any other build (legacy base rate).
+        _lfs_2022 = getattr(readers.wiod_sea, "can_2022_provincial_labour", {}).get(str(country)) if year == 2022 else None
         population: SyntheticHFCSPopulation = SyntheticHFCSPopulation.from_readers(
             readers=readers,
             country_name=country,
@@ -252,6 +255,8 @@ class SyntheticCountry:
             total_unemployment_benefits=total_unemployment_benefits,
             country_name_short=country.to_two_letter_code(),
             exogenous_data=exogenous_country_data,
+            unemployment_rate_override=_lfs_2022["u"] if _lfs_2022 else None,
+            participation_rate_override=_lfs_2022["p"] if _lfs_2022 else None,
         )
 
         # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
@@ -466,6 +471,9 @@ class SyntheticCountry:
 
         exch_rate_proxy_to_lcu = readers.exchange_rates.from_eur_to_lcu(country, year)
 
+        # CAN-2022: observed t0 unemployment/participation for the PROXIED region (keyed by `country`,
+        # the real region, not the proxy). None for any other build (legacy base rate).
+        _lfs_2022 = getattr(readers.wiod_sea, "can_2022_provincial_labour", {}).get(str(country)) if year == 2022 else None
         population: SyntheticHFCSPopulation = SyntheticHFCSPopulation.from_readers(
             readers=readers,
             country_name=proxy_country,
@@ -480,6 +488,8 @@ class SyntheticCountry:
             proxied_country=country,
             quarter=quarter,
             exogenous_data=exogenous_country_data,
+            unemployment_rate_override=_lfs_2022["u"] if _lfs_2022 else None,
+            participation_rate_override=_lfs_2022["p"] if _lfs_2022 else None,
         )
 
         # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
