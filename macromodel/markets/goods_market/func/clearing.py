@@ -175,55 +175,6 @@ class GoodsMarketClearer(ABC):
         self._row_split_override: dict[int, np.ndarray] = {}
         self._row_split_strict: bool = False
         self._row_split_signal: float = 0.0
-        # ROW export floor: a PARTIAL tranche (scale in (0, 1]) of ROW's demand routed
-        # at base-year origin shares before the pool.  0.0 disables; see
-        # set_row_split_floor().
-        self._row_split_floor_scale: float = 0.0
-        self._row_split_floor_excluded: set[int] = set()
-
-    def set_row_split_floor(self, scale: float, exclude_industries=None) -> None:
-        """Reserve a TRANCHE of ROW's demand at base-year origin shares.
-
-        REJECTED AT 0.5 -- DO NOT ENABLE WITHOUT RE-READING THE ARM MPF RESULT
-        (2026-08-16, docs/cer_macroabm/row_export_floor_rejection_2026-08-16.md).
-        The third distinct failure mode of a ROW-geography intervention: the anchored
-        passes MATERIALISE ROW's IO-calibrated desired imports with first claim ahead
-        of the pool's residual domestic demand, and ROW's shared nominal budget is
-        diverted away from the fossil residual-export sink (excluding the fossil
-        industries from the floor does not protect them -- the budget is shared).
-        Measured on the Current Measures production config (only change vs arm MP,
-        same seed): economy-wide collapse by 2050 -- BC 47.5% / AB 26.2% / SK 15.8%
-        unemployment, AB B05c ROW exports 75.8 -> 3.7bn against an exogenous
-        production pin. The BC ROW-share problem is better addressed from the labour
-        side (BC's supply cap makes it the price-ranked loser of every late-horizon
-        pool contest).
-
-        The all-industry base-year anchor was rejected twice because reserving 100% of
-        ROW's demand at base geography CAPS export reallocation exactly when a scenario
-        moves production geography.  This floor reserves only ``scale`` of ROW's initial
-        demand per industry: each origin's anchored pass is capped at
-        (scale x base-year origin share x ROW's initial demand), and everything an
-        origin cannot or need not fill -- including the whole (1 - scale) remainder --
-        clears in the unconstrained pool exactly as before.  The pool can still hand any
-        origin MORE than its base share; no origin can be pushed to zero while ROW still
-        demands the good and the origin has supply, which is the defect this exists to
-        fix (with real_country_prioritisation clamped at 1.0 the proportions stage
-        zeroes planned province->ROW sales, so ROW's imports otherwise clear ENTIRELY in
-        the winner-take-all pool -- measured: a dozen BC sectors' ROW exports at literal
-        zero by 2050 under Current Measures, reallocated to whichever provinces cleared
-        first).
-
-        Industries with a set_row_split_override entry keep their override (it takes
-        precedence); pass exclude_industries for goods whose export geography must
-        follow an exogenous path instead (fossils, pinned sectors).
-
-        Args:
-            scale: fraction (0..1] of ROW's initial demand reserved at base-year
-                origin shares; 0.0 disables the floor.
-            exclude_industries: industry indices left entirely to pool clearing.
-        """
-        self._row_split_floor_scale = max(0.0, min(1.0, float(scale)))
-        self._row_split_floor_excluded = {int(i) for i in (exclude_industries or [])}
 
     def set_row_split_override(self, shares_by_industry, *, strict: bool = False,
                                signal_shortfall: float = 0.0) -> None:
@@ -758,24 +709,10 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
         # stays in ROW's remaining demand and clears in the pool as it always did,
         # keeping the level residual.
         split_shortfalls: dict[tuple[int, int], float] = {}
-        if (self._row_split_override or self._row_split_floor_scale > 0.0) and row_index >= 0:
+        if self._row_split_override and row_index >= 0:
             anchor_shares = np.zeros(
                 (n_countries, default_origin_trade_proportions.shape[2])
             )
-            # Floor tranche first: scale x normalised base-year origin shares.  These
-            # deliberately sum to scale (< 1) over origins -- the remainder is the
-            # pool's.  Override industries and exclusions are left at zero here.
-            if self._row_split_floor_scale > 0.0:
-                base = default_origin_trade_proportions[:, row_index, :].copy()
-                base[row_index] = 0.0
-                denom = base.sum(axis=0)
-                base = np.divide(
-                    base, denom, out=np.zeros_like(base), where=denom > 0.0
-                )
-                for g in range(anchor_shares.shape[1]):
-                    if g in self._row_split_floor_excluded or g in self._row_split_override:
-                        continue
-                    anchor_shares[:, g] = self._row_split_floor_scale * base[:, g]
             for g_over, shares_over in self._row_split_override.items():
                 if 0 <= int(g_over) < anchor_shares.shape[1] and len(shares_over) == n_countries:
                     anchor_shares[:, int(g_over)] = shares_over
