@@ -385,7 +385,6 @@ def build_link_prehook(
     capacity_floor: bool = False,
     capacity_floor_per_province: bool = False,
     linkage_data_per_province: bool = False,
-    investment_as_capital_intensity: bool = False,
     capacity_factor_from_cer: bool = False,
     electricity_own_use: bool = False,
     household_energy_quantities: bool = False,
@@ -539,28 +538,18 @@ def build_link_prehook(
                     for code in cap.index
                     if code in industries and float(cap.loc[code, col]) > 0.0
                 }
-                # Raise the sector's capital REQUIREMENT by whatever part of the floor is
-                # the investment multiplier, so that part buys capital without also
-                # licensing output. Without it the floor does both at once, and the power
-                # sector -- which has no capacity-factor concept -- produces to a ceiling
-                # set from capacity rather than to CER's generation. See
+                # Capacity-factor uplift: raise the sector's capital REQUIREMENT by
+                # cf(0)/cf(t), representing each MW delivering fewer MWh. Applied with a
+                # capacity-indexed floor, the ceiling lands back on CER's generation path
+                # while the capital stock tracks CER's MW build. See
                 # Firms.set_capital_intensity_uplift for the measured effect.
                 # COLLECTED HERE, APPLIED AFTER link(). `link()` rewrites
                 # `base_capital_inputs_productivity_matrix` (both its own capital-factor
                 # write and `_apply_transition_capital`), so an uplift written before it is
                 # silently discarded -- the same trap `set_transmission_loss_rate` and the
                 # firm quantity anchor are both sequenced around.
-                # Both uplifts raise capital needed per unit of output, so they COMPOSE:
-                # the investment part represents net-zero plant costing more per MW, the
-                # capacity-factor part represents each MW delivering fewer MWh. Applied
-                # together with a capacity-indexed floor, the ceiling lands back on CER's
-                # generation path while the capital stock tracks CER's MW build.
-                # The guard is on the COMPOSED factor, never on the individual terms: the
-                # investment multiplier is below 1 in most provinces, so filtering terms at
-                # > 1 would silently drop it and leave their ceilings under CER's path.
                 _factors: dict[int, float] = {}
-                for _col, _on in (("investment_uplift", investment_as_capital_intensity),
-                                  ("capacity_factor_uplift", capacity_factor_from_cer)):
+                for _col, _on in (("capacity_factor_uplift", capacity_factor_from_cer),):
                     if not _on or _col not in cap.columns:
                         continue
                     for code in cap.index:
@@ -1134,39 +1123,6 @@ def apply_import_limits(
         logger.warning(
             "Goods-market clearer does not support import limits; ROW's additional-exports "
             "backstop will refill capped sectors and the cap will not bind."
-        )
-
-
-def apply_row_split_floor(
-    sim: Simulation, scale: float, exclude_indices: list[int] | None = None
-) -> None:
-    """Reserve a tranche of ROW's demand at base-year origin shares (partial floor).
-
-    The structural repair for the winner-take-all provincial ROW-export split: with
-    real_country_prioritisation clamped at 1.0 the proportions stage zeroes planned
-    province->ROW sales, so ROW's imports clear entirely in the unconstrained pool and
-    the last-ranked province can lose a market to literal zero (measured: ~12 BC
-    sectors' ROW exports at 0 by 2050 under Current Measures, reallocated to other
-    provinces).  Unlike the twice-rejected 100% base-year anchor this reserves only
-    ``scale`` of ROW's demand -- the rest, plus any unfilled tranche, stays fully
-    competitive, so scenarios that move production geography keep (1 - scale) headroom.
-
-    Applied after build/restore like the import limits, so checkpoint-restored sims get
-    it too.  No-op when *scale* is 0.
-    """
-    if not scale or scale <= 0.0:
-        return
-    clearer = sim.goods_market.functions.get("clearing")
-    if clearer is not None and hasattr(clearer, "set_row_split_floor"):
-        clearer.set_row_split_floor(scale, exclude_industries=exclude_indices)
-        logger.info(
-            "ROW export floor ENABLED: %.0f%% of ROW demand reserved at base-year "
-            "origin shares (excluded industry indices: %s)",
-            100.0 * float(scale), sorted(exclude_indices or []),
-        )
-    else:
-        logger.warning(
-            "Goods-market clearer does not support the ROW export floor; flag ignored."
         )
 
 
