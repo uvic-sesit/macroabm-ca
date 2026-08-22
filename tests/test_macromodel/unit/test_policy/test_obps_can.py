@@ -336,3 +336,78 @@ class TestCoverageThreshold:
             input_em=np.array([20_000.0, 0.0]), capital_em=np.array([0.0, 0.0]),
         )
         assert cost[0] != 0.0
+
+
+class TestSequesteredWedge:
+    """Exogenous CCS capture (Country.set_emissions_capture -> sequestered=).
+
+    Subtracted ONLY in the cost expression: baseline accumulation and the
+    coverage threshold stay gross. Pre-set limit arithmetic as above:
+    limit = 100 * 0.8 * 0.5 = 40.
+    """
+
+    def _call_seq(self, obps, input_em, sequestered, production=None,
+                  record_reference=False):
+        if production is None:
+            production = np.array([100.0, 50.0])
+        return obps.compute_obps(
+            use_obps_reg=True,
+            record_obps_reference=record_reference,
+            production=production,
+            input_em=np.array(input_em),
+            capital_em=np.zeros(len(INDUSTRIES)),
+            sequestered=np.array(sequestered),
+        )
+
+    def test_none_matches_missing(self):
+        obps = _make_obps(year=2020)
+        base = _call(obps, input_em=[60.0, 0.0])
+        obps2 = _make_obps(year=2020)
+        with_none = obps2.compute_obps(
+            use_obps_reg=True, record_obps_reference=False,
+            production=np.array([100.0, 50.0]),
+            input_em=np.array([60.0, 0.0]),
+            capital_em=np.zeros(2), sequestered=None)
+        assert np.array_equal(base, with_none)
+
+    def test_cost_reduced_by_capture_times_price_above_limit(self):
+        # gross 60, capture 10 -> net 50 > limit 40 -> cost (50-40)*50 = 500
+        obps = _make_obps(year=2020)
+        cost = self._call_seq(obps, [60.0, 0.0], [10.0, 0.0])
+        assert cost[0] == pytest.approx(500.0)
+
+    def test_capture_can_flip_sign_to_credit_revenue(self):
+        # gross 60, capture 30 -> net 30 < limit 40 -> cost (30-40)*50 = -500
+        obps = _make_obps(year=2020)
+        cost = self._call_seq(obps, [60.0, 0.0], [30.0, 0.0])
+        assert cost[0] == pytest.approx(-500.0)
+
+    def test_capture_clamped_at_gross_emissions(self):
+        # capture 999 > gross 60 -> net 0 -> cost (0-40)*50 = -2000, not more
+        obps = _make_obps(year=2020)
+        cost = self._call_seq(obps, [60.0, 0.0], [999.0, 0.0])
+        assert cost[0] == pytest.approx(-2000.0)
+
+    def test_unregulated_industry_ignores_capture(self):
+        obps = _make_obps(year=2020)
+        cost = self._call_seq(obps, [60.0, 50.0], [0.0, 50.0])
+        assert cost[1] == 0.0
+
+    def test_reference_accumulation_stays_gross(self):
+        obps = _make_obps(year=2017)
+        obps.initial_year = 2014
+        self._call_seq(obps, [60.0, 0.0], [60.0, 0.0], record_reference=True)
+        assert obps.reference_emission[0] == pytest.approx(60.0)
+
+    def test_coverage_threshold_tested_on_gross(self):
+        # gross annual 60*4 = 240 clears a 200 t threshold even though net is 0;
+        # the sector stays covered and receives the below-limit rebate.
+        obps = OutputBasedPriceSystemCAN(
+            country_name="CAN", industries=INDUSTRIES, obps_data=_make_data(),
+            coverage_threshold_tco2_per_year=200.0,
+        )
+        obps.current_year = 2020
+        obps.current_t = 6
+        obps.baseline_emission_intensity[0] = REFERENCE_INTENSITY
+        cost = self._call_seq(obps, [60.0, 0.0], [999.0, 0.0])
+        assert cost[0] == pytest.approx(-2000.0)

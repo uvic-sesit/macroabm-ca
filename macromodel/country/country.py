@@ -244,6 +244,8 @@ class Country:
         self.obps = obps
         self.use_obps_reg = self.configuration.use_obps_reg
         self.extra_marginal_taxes_firm = np.zeros(self.firms.n_industries)
+        # Exogenous OBPS sequestration wedge; see set_emissions_capture.
+        self._emissions_capture: dict[int, float] | None = None
 
     @classmethod
     def from_pickled_country(
@@ -592,6 +594,21 @@ class Country:
             )
         )
 
+    def set_emissions_capture(self, capture_by_industry: "dict[int, float] | None") -> None:
+        """Set an exogenous CO2e capture wedge for the OBPS (tonnes per PERIOD).
+
+        Represents a sequestration program (e.g. Pathways CCS) whose captured
+        tonnes reduce the emissions the OBPS charges the sector for. The wedge
+        lives only in the OBPS cost expression: the emissions time series, the
+        reference-window baseline and the coverage threshold all stay gross --
+        see ``OutputBasedPriceSystemCAN.compute_obps``.
+
+        Args:
+            capture_by_industry: {industry index: tonnes CO2e captured per
+                simulation period (quarter)}, or None to clear the wedge.
+        """
+        self._emissions_capture = dict(capture_by_industry) if capture_by_industry else None
+
     def update_extra_taxes(self, record_obps_reference: bool = True) -> None:
         """Compute extra marginal taxes for firms from active policy instruments.
 
@@ -620,6 +637,15 @@ class Country:
             if capital_em_ch4 is None:
                 capital_em_ch4 = np.zeros_like(self.firms.ts.current("capital_emissions"))
 
+            # getattr: checkpoints saved before the capture wedge existed have no
+            # _emissions_capture attribute (the pre-obps_data shim precedent).
+            capture = getattr(self, "_emissions_capture", None)
+            sequestered = None
+            if capture:
+                sequestered = np.zeros(self.firms.n_industries)
+                for _idx, _tonnes in capture.items():
+                    sequestered[int(_idx)] = float(_tonnes)
+
             sectoral_tax = self.obps.compute_obps(
                 use_obps_reg=self.use_obps_reg,
                 record_obps_reference=record_obps_reference,
@@ -627,6 +653,7 @@ class Country:
                 input_em=self.firms.ts.current("inputs_emissions") + input_em_ch4,
                 capital_em=self.firms.ts.current("capital_emissions") + capital_em_ch4,
                 initial_production=self.firms.ts.initial("production"),
+                sequestered=sequestered,
             )
             self.extra_marginal_taxes_firm = np.divide(
                 sectoral_tax,

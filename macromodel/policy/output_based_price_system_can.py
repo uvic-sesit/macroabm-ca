@@ -192,6 +192,7 @@ class OutputBasedPriceSystemCAN:
         input_em: np.ndarray,
         capital_em: np.ndarray,
         initial_production: np.ndarray | None = None,
+        sequestered: np.ndarray | None = None,
     ) -> np.ndarray:
         """Compute per-sector OBPS tax cost.
 
@@ -205,6 +206,12 @@ class OutputBasedPriceSystemCAN:
             production: Current-period production per industry.
             input_em: Input-related CO₂e emissions per industry.
             capital_em: Capital-related CO₂e emissions per industry.
+            sequestered: Optional per-industry captured CO₂e (tonnes per
+                period), e.g. an exogenous CCS program. Subtracted ONLY in the
+                cost expression, clamped so net emissions cannot go below
+                zero. The reference-period accumulation and the coverage
+                threshold both use GROSS emissions: capture neither rewrites
+                the baseline intensity nor makes covered facilities vanish.
 
         Returns:
             np.ndarray: Signed OBPS cost (dollars) per industry — positive
@@ -270,7 +277,13 @@ class OutputBasedPriceSystemCAN:
             if production[i] > 0:
                 limit = self.get_limit(i, production[i])
                 self.emission_limit[i] = limit
-                difference = (input_em[i] + capital_em[i]) - limit
+                gross = input_em[i] + capital_em[i]
+                # Exogenous sequestration (CCS) reduces the emissions the system
+                # charges for -- and only that. Clamped at zero: a program cannot
+                # capture more than the sector emitted this period.
+                seq = float(sequestered[i]) if sequestered is not None else 0.0
+                net = max(0.0, gross - seq)
+                difference = net - limit
                 obps_cost[i] = difference * current_price
 
         return obps_cost
