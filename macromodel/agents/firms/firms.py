@@ -1002,7 +1002,56 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
-        return self._apply_production_gate(self._apply_production_target(target))
+        return self._apply_production_gate(
+            self._apply_production_floor(self._apply_production_target(target))
+        )
+
+    def set_production_floor(self, industry_indices, index: float | None) -> None:
+        """Floor selected industries' target production at ``initial * index``.
+
+        THE GATE'S MISSING TWIN, for utilisation drifting DOWN rather than up.  The
+        gate (below) clips over-producers whose output-per-capital escapes upward
+        (Manitoba); nothing handled a province whose demand expectations lag a fast
+        external build-out, leaving capacity-floored capital idle -- measured for
+        Alberta's D under Net-zero (2026-08-23): realised output reaches only 0.66 of
+        CER's generation path by 2050 while its capital tracks CER capacity, EVEN
+        THOUGH Alberta's electricity is the cheapest in the country (0.63 vs
+        neighbours 1.5-2.3) -- its sellers are sold out at pool time because they
+        produced to lagging expectations, and the marginal MWh is imported at 3x the
+        price.  Lifting the TARGET to the external path adds supply into a market
+        where the province is already price-competitive, so the market absorbs it by
+        displacing imports rather than being force-fed.
+
+        A LIFT, not an override: a target already above the floor is untouched, so
+        this composes with set_production_target (applied before) and
+        set_production_gate (applied after -- the gate wins where both bind).  Same
+        per-firm accumulation semantics as the gate/target siblings; input and
+        capital constraints still bind downstream, so an unreachable floor shows up
+        as a gap, not a fabrication.
+        """
+        if not industry_indices or index is None:
+            self._production_floor_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_floor_by_firm", None) is None or \
+                self._production_floor_by_firm.shape[0] != mask.shape[0]:
+            self._production_floor_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_floor_by_firm[mask] = float(index)
+
+    def _apply_production_floor(self, target: np.ndarray) -> np.ndarray:
+        """Lift the target for floored firms.  No-op if unset."""
+        idx = getattr(self, "_production_floor_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = np.maximum(out[mask], initial[mask] * idx[mask])
+        return out
 
     def set_production_gate(self, industry_indices, index: float | None) -> None:
         """Cap selected industries' target production at ``initial * index``.

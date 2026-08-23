@@ -396,6 +396,8 @@ def build_link_prehook(
     capacity_ceiling_margin: float = 0.0,
     capacity_gate_margin: float = 0.0,
     capacity_gate_provinces: set[str] | None = None,
+    d_production_floor_margin: float = 0.0,
+    d_production_floor_provinces: set[str] | None = None,
     transition_capital: bool = False,
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
@@ -624,6 +626,46 @@ def build_link_prehook(
                         logger.info(
                             "capacity gate: region=%s year=%s generation path x %.2f -> %s",
                             floor_region, year, float(capacity_gate_margin), _gated,
+                        )
+
+                # D PRODUCTION FLOOR: the gate's under-utilisation twin. A province
+                # whose demand expectations lag a fast external build-out leaves its
+                # capacity-floored capital idle (Alberta NZ: output 0.66 of CER's
+                # generation path by 2050 while being the CHEAPEST seller -- sold out
+                # at pool time, marginal MWh imported at 3x its price). Lift target
+                # production to the CER generation path (same value/_invup/_cfup
+                # recovery as the gate, margin usually 1.0); the market absorbs the
+                # supply by displacing imports because the province is already
+                # price-competitive. D only, selected provinces only, floor never
+                # reduces an already-higher target, and the gate still wins above it.
+                country.firms.set_production_floor(None, None)
+                if (
+                    d_production_floor_margin
+                    and d_production_floor_margin > 0.0
+                    and d_production_floor_provinces
+                    and province_code in d_production_floor_provinces
+                ):
+                    _pfloored = {}
+                    for idx, value in floored.items():
+                        _code = industries[idx]
+                        if _code != "D":
+                            continue
+                        _cfup, _invup = 1.0, 1.0
+                        if "capacity_factor_uplift" in cap.columns and _code in cap.index:
+                            _v = float(cap.loc[_code, "capacity_factor_uplift"])
+                            if np.isfinite(_v) and _v > 0.0:
+                                _cfup = _v
+                        if "investment_uplift" in cap.columns and _code in cap.index:
+                            _v = float(cap.loc[_code, "investment_uplift"])
+                            if np.isfinite(_v) and _v > 0.0:
+                                _invup = _v
+                        _floor_val = (value / _invup / _cfup) * float(d_production_floor_margin)
+                        country.firms.set_production_floor([idx], _floor_val)
+                        _pfloored[_code] = round(_floor_val, 4)
+                    if _pfloored:
+                        logger.info(
+                            "D production floor: region=%s year=%s generation path x %.2f -> %s",
+                            floor_region, year, float(d_production_floor_margin), _pfloored,
                         )
 
                 # Ceiling: the floor's twin, at floor x margin. One-sided guidance let
