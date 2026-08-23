@@ -175,6 +175,11 @@ class GoodsMarketClearer(ABC):
         self._row_split_override: dict[int, np.ndarray] = {}
         self._row_split_strict: bool = False
         self._row_split_signal: float = 0.0
+        # Interprovincial import caps; see set_interprovincial_import_caps().
+        # Empty by default, so behaviour is unchanged unless configured.
+        self._interprov_caps: dict[str, set[int]] = {}
+        self._interprov_cap_signal: float = 0.0
+        self._interprov_cap_anchor: dict[tuple[str, int], float] = {}
 
     def set_row_split_override(self, shares_by_industry, *, strict: bool = False,
                                signal_shortfall: float = 0.0) -> None:
@@ -222,6 +227,52 @@ class GoodsMarketClearer(ABC):
         self._row_split_override = cleaned
         self._row_split_strict = bool(strict)
         self._row_split_signal = max(0.0, min(1.0, float(signal_shortfall)))
+
+    def set_interprovincial_import_caps(self, dest_industries, *, signal_shortfall: float = 0.25) -> None:
+        """Cap a destination country's CROSS-PROVINCE purchases of given industries at
+        their first-simulated-step LEVEL (the base-year volume on a cold-started run).
+
+        The ROW import cap (``set_import_limited_industries`` +
+        ``RestOfTheWorld.set_import_limits``) closes the international border for a
+        sector, but interprovincial flows stay unconstrained: whichever province has
+        slack captures another province's demand growth.  Measured on the CER core pair
+        (2026-08-23): Alberta's own Net-zero electrification demand is increasingly met
+        by other provinces' surplus D (net trade -28.6% of AB's own output by 2050,
+        import bill ~3x Current Measures) while the capacity floor charges AB for
+        CER-scale capacity -- CER itself has AB self-sufficient with net trade under 4%
+        of generation.  Physically, interties are fixed infrastructure: a level cap is
+        the same reading as the ROW cap's "level" mode.
+
+        Semantics per capped (destination, industry):
+        1. bilateral trade-proportion passes are pre-scaled so cross-origin shares do
+           not exceed the anchor;
+        2. before the unconstrained pool pass, a domestic-first pass lets the
+           destination exhaust its OWN remaining supply of the industry;
+        3. remaining demand beyond (anchor - imports so far this step) is WITHDRAWN
+           from the pool (otherwise the pool re-runs the slack-capture defect);
+        4. the withdrawn amount x ``signal_shortfall`` is booked as real excess demand
+           on the destination's OWN sellers of that industry -- the order book its
+           domestic sector keeps missing, damped for the same reason as
+           ``set_row_split_override``'s signal (1.0 measured over-investment).
+
+        Anchors are measured on the first cleared step after configuration; on a
+        WARM-STARTED run that is the restore point, not the base year -- use on
+        cold-started runs.
+
+        Args:
+            dest_industries: {destination country name: iterable of industry indices};
+                empty/None clears the caps (anchors are kept).
+            signal_shortfall: fraction (0..1) of withdrawn demand signalled to the
+                destination's own sellers.
+        """
+        self._interprov_caps = {
+            str(name): {int(g) for g in inds}
+            for name, inds in (dest_industries or {}).items()
+            if inds
+        }
+        self._interprov_cap_signal = max(0.0, min(1.0, float(signal_shortfall)))
+        if not hasattr(self, "_interprov_cap_anchor"):
+            self._interprov_cap_anchor = {}
 
     def set_import_limited_industries(self, industry_indices) -> None:
         """Exclude industries from the additional-ROW-exports backstop.
@@ -687,6 +738,38 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 row_index=row_index,
             )
 
+            # Interprovincial import caps, part 1: pre-scale the bilateral shares of
+            # capped (destination, industry) pairs so the trade-proportion passes
+            # cannot already exceed the anchor (they scale with the destination's
+            # demand, the cap does not).  See set_interprovincial_import_caps().
+            caps = getattr(self, "_interprov_caps", None)
+            anchors = getattr(self, "_interprov_cap_anchor", {})
+            if caps:
+                names = list(goods_market_participants.keys())
+                for dest_name, cap_gs in caps.items():
+                    if dest_name not in names:
+                        continue
+                    d = names.index(dest_name)
+                    for g in cap_gs:
+                        anchor = anchors.get((dest_name, g))
+                        if anchor is None:
+                            continue
+                        initial_dem = self._interprov_buyer_demand(
+                            goods_market_participants, dest_name, g,
+                            "Initial Goods", average_prices_by_country[d][g],
+                        )
+                        projected = 0.0
+                        for c1 in range(n_countries):
+                            if c1 == d or c1 == row_index:
+                                continue
+                            projected += float(origin_trade_proportions[c1, d][g]) * initial_dem
+                        if projected > anchor > 0.0:
+                            s = anchor / projected
+                            for c1 in range(n_countries):
+                                if c1 == d or c1 == row_index:
+                                    continue
+                                origin_trade_proportions[c1, d][g] *= s
+
             # Clear each country pair using trade proportions
             for c1 in range(n_countries):
                 for c2 in range(n_countries):
@@ -770,6 +853,66 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                         for g in override_gs:
                             _tr.transactor_buyer_states["Remaining Goods"][:, g] = 0.0
 
+        # Interprovincial import caps, part 2: domestic-first pass, then withdraw
+        # remaining capped demand beyond the allowance BEFORE the unconstrained pool
+        # (which would otherwise fill it from whichever province has slack -- the
+        # substitution the cap exists to stop).  See set_interprovincial_import_caps().
+        interprov_withdrawn: dict[tuple[str, int], float] = {}
+        caps = getattr(self, "_interprov_caps", None)
+        if caps:
+            names = list(goods_market_participants.keys())
+            anchors = getattr(self, "_interprov_cap_anchor", {})
+            for dest_name, cap_gs in caps.items():
+                if dest_name not in names:
+                    continue
+                d = names.index(dest_name)
+                active_gs = [g for g in sorted(cap_gs) if (dest_name, g) in anchors]
+                if not active_gs:
+                    continue
+                # Domestic-first: let the destination exhaust its own remaining
+                # supply of the capped industries before any clamp.
+                dom_origin = np.zeros_like(default_origin_trade_proportions)
+                dom_destin = np.zeros_like(default_destin_trade_proportions)
+                for g in active_gs:
+                    dom_origin[d, d][g] = 1.0
+                    dom_destin[d, d][g] = 1.0
+                self.perform_clearing(
+                    goods_market_participants=goods_market_participants,
+                    n_industries=n_industries,
+                    average_prices_by_country=average_prices_by_country,
+                    buyer_priorities=buyer_priorities,
+                    start_country=d,
+                    end_country=d,
+                    origin_trade_proportions=dom_origin,
+                    destin_trade_proportions=dom_destin,
+                )
+                for g in active_gs:
+                    price = float(average_prices_by_country[d][g])
+                    if not np.isfinite(price) or price <= 0.0:
+                        price = float(average_prices_by_country[-1][g])
+                    imported = self._interprov_cross_imports(
+                        goods_market_participants, dest_name, g
+                    )
+                    allowance = max(0.0, anchors[(dest_name, g)] - imported)
+                    remaining = self._interprov_buyer_demand(
+                        goods_market_participants, dest_name, g, "Remaining Goods", price
+                    )
+                    excess_over = remaining - allowance
+                    self._interprov_debug(
+                        dest_name, g, anchor=anchors[(dest_name, g)], imported=imported,
+                        allowance=allowance, remaining=remaining, price=price,
+                        withdrawn=max(0.0, excess_over),
+                    )
+                    if excess_over <= 0.0 or remaining <= 0.0:
+                        continue
+                    f = allowance / remaining
+                    for tr in goods_market_participants[dest_name]:
+                        if tr.transactor_buyer_states["Value Type"] != ValueType.NONE:
+                            tr.transactor_buyer_states["Remaining Goods"][:, g] *= f
+                    interprov_withdrawn[(dest_name, g)] = (
+                        interprov_withdrawn.get((dest_name, g), 0.0) + excess_over
+                    )
+
         # Clear remaining supply and demand without trade proportion constraints
         self.perform_clearing(
             goods_market_participants=goods_market_participants,
@@ -809,6 +952,40 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                                 real_short / n_rows
                             )
 
+        # Interprovincial import caps, part 3: the withdrawn demand x signal goes to
+        # the DESTINATION's own sellers as real excess demand, after the global
+        # distribution above (which assigns by supply share and would hand the signal
+        # to the exact provinces the cap shuts out).  Same damping rationale as the
+        # ROW-split signal.
+        signal = getattr(self, "_interprov_cap_signal", 0.0)
+        if signal and interprov_withdrawn:
+            for (dest_name, g), real_short in interprov_withdrawn.items():
+                if real_short <= 0.0:
+                    continue
+                for transactor in goods_market_participants[dest_name]:
+                    if transactor.transactor_seller_states["Value Type"] == ValueType.REAL:
+                        ind = transactor.transactor_seller_states["Industries"] == g
+                        n_rows = int(ind.sum())
+                        if n_rows:
+                            transactor.transactor_seller_states["Real Excess Demand"][ind] += (
+                                real_short * signal / n_rows
+                            )
+
+        # Interprovincial import caps, part 4: anchor each capped pair at the first
+        # cleared step's cross-province flow (the base-year volume on a cold start).
+        caps = getattr(self, "_interprov_caps", None)
+        if caps:
+            anchors = getattr(self, "_interprov_cap_anchor", {})
+            for dest_name, cap_gs in caps.items():
+                if dest_name not in goods_market_participants:
+                    continue
+                for g in cap_gs:
+                    if (dest_name, g) not in anchors:
+                        anchors[(dest_name, g)] = self._interprov_cross_imports(
+                            goods_market_participants, dest_name, g
+                        )
+            self._interprov_cap_anchor = anchors
+
         # Allow additional ROW exports if enabled
         if self.allow_additional_row_exports and self.additionally_available_factor > 0.0:
             self.handle_additional_row_exports(
@@ -816,6 +993,71 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 n_industries=n_industries,
             )
 
+
+    def _interprov_debug(self, dest_name: str, g: int, **fields) -> None:
+        """Append one diagnostic line per capped pair per step when the
+        ``INTERPROV_CAP_DEBUG`` env var names a file.  Diagnostics only."""
+        import os
+        path = os.environ.get("INTERPROV_CAP_DEBUG")
+        if not path:
+            return
+        self._interprov_dbg_n = getattr(self, "_interprov_dbg_n", 0) + 1
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(
+                f"call={self._interprov_dbg_n} dest={dest_name} g={g} "
+                + " ".join(f"{k}={v:.6e}" for k, v in fields.items())
+                + "\n"
+            )
+
+    @staticmethod
+    def _interprov_cross_imports(
+        goods_market_participants: dict[str, list[Agent]], dest_name: str, g: int
+    ) -> float:
+        """Real amount of industry *g* sold to *dest_name* this step by OTHER real
+        countries (ROW excluded -- its exports are capped separately)."""
+        total = 0.0
+        key = "Real Amount sold to " + dest_name
+        for country_name, agents in goods_market_participants.items():
+            if country_name == dest_name or country_name == "ROW":
+                continue
+            for tr in agents:
+                ss = tr.transactor_seller_states
+                if ss["Value Type"] != ValueType.REAL:
+                    continue
+                try:
+                    sold = ss[key]
+                except (KeyError, IndexError):
+                    continue
+                ind = ss["Industries"] == g
+                total += float(np.asarray(sold)[ind].sum())
+        return total
+
+    @staticmethod
+    def _interprov_buyer_demand(
+        goods_market_participants: dict[str, list[Agent]],
+        dest_name: str,
+        g: int,
+        field: str,
+        price: float,
+    ) -> float:
+        """Destination country's buyer-side demand for *g* in REAL units.
+
+        NOMINAL buyers (households) are converted at *price*; a non-positive price
+        drops them rather than dividing by zero.
+        """
+        total = 0.0
+        for tr in goods_market_participants.get(dest_name, []):
+            vt = tr.transactor_buyer_states["Value Type"]
+            if vt == ValueType.NONE:
+                continue
+            amount = float(tr.transactor_buyer_states[field][:, g].sum())
+            if vt == ValueType.NOMINAL:
+                if np.isfinite(price) and price > 0.0:
+                    amount /= price
+                else:
+                    amount = 0.0
+            total += amount
+        return total
 
     def perform_clearing(
         self,
