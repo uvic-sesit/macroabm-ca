@@ -272,9 +272,24 @@ def get_investment_fractions(
     eurostat: EuroStatReader,
     proxy_country_dict: dict[Country, Country],
     year: int,
+    provincial_reader=None,
 ) -> dict[Country, dict[str, float]]:
+    """Compute Firm/Household/Government GFCF fractions per country.
+
+    ``provincial_reader`` is an optional :class:`ProvincialInvestmentReader` (resolved from
+    ``<raw_data>/canadian_inputs`` by :meth:`DataReaders.from_raw_data`); where it has a row for
+    a Canadian province, its StatsCan split overrides the Eurostat/France proxy. When it is
+    ``None`` or has no row, the existing national/proxy path is used.
+    """
     investment_fractions = {}
     for country_name in country_names:
+        # Province-level GFCF-split override (StatsCan); no-op when no provincial data exists.
+        if provincial_reader is not None and provincial_reader.has_region(country_name):
+            override = provincial_reader.get_fractions(country_name, year)
+            if override is not None:
+                investment_fractions[country_name] = override
+                continue
+
         data_country = country_name
         if isinstance(country_name, Region):
             data_country = country_name.parent_country

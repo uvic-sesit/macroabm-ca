@@ -10,8 +10,10 @@ workspace (`dev/`).
 
 Usage:
     uv run python scripts/run_candidate_baseline.py [path/to/datawrapper.pkl] [--quarters 53] [--seed 0] [--legacy]
+        [--output-dir path/to/macroabm]
 
   --legacy : run shipped defaults instead of the candidate baseline (for A/B comparison).
+  --output-dir : write simulation_shallow.h5 and simulation_results.h5 (no checkpoint).
 
 DATA: the DataWrapper pickle is NOT bundled (it is large and rebuildable from raw_data via
 the tracked macro_data pipeline). Default search:
@@ -21,6 +23,7 @@ Pass a path if yours lives elsewhere.
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +35,24 @@ from macromodel.configurations.growth_baseline_preset import apply_candidate_gro
 from macromodel.simulation import Simulation
 
 REPO = Path(__file__).resolve().parents[1]
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
+
+try:
+    from scenarios.run_cims_linkage import (  # type: ignore
+        DEFAULT_H5_FILENAME,
+        DEFAULT_SHALLOW_H5_FILENAME,
+        export_shallow_h5,
+        export_simulation_h5,
+    )
+except ImportError:  # pragma: no cover - file invocation from repo root
+    from run_cims_linkage import (  # type: ignore
+        DEFAULT_H5_FILENAME,
+        DEFAULT_SHALLOW_H5_FILENAME,
+        export_shallow_h5,
+        export_simulation_h5,
+    )
+
 DEFAULT_PKL = REPO / "dev/pkl_files/disagg_sectorprovs_2026_07_10_default.pkl"
 HH_COLS = ["Real Household Consumption (Value)", "Household Consumption (Value)",
            "Real Household Investment (Value)", "Household Investment (Value)"]
@@ -62,6 +83,12 @@ def main() -> None:
     ap.add_argument("--quarters", type=int, default=53)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--legacy", action="store_true", help="run shipped defaults (no candidate overrides)")
+    ap.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="write simulation_shallow.h5 and simulation_results.h5 here (no checkpoint)",
+    )
     args = ap.parse_args()
 
     pkl = Path(args.pkl)
@@ -130,6 +157,16 @@ def main() -> None:
           f"({(rva[-1] / rva[0] - 1) * 100:+.1f}% cumulative, {ann:+.2f}%/yr)")
     print(f"  unemployment: {u[0] * 100:.1f}% -> {u[-1] * 100:.1f}%")
     print("  (provisional baseline; national aggregate only; not validated for quantitative inference)")
+
+    if args.output_dir is not None:
+        out = args.output_dir.resolve()
+        out.mkdir(parents=True, exist_ok=True)
+        shallow_path = out / DEFAULT_SHALLOW_H5_FILENAME
+        full_path = out / DEFAULT_H5_FILENAME
+        export_shallow_h5(m, shallow_path)
+        export_simulation_h5(m, full_path)
+        print(f"  shallow HDF5 : {shallow_path}")
+        print(f"  full HDF5    : {full_path}")
 
 
 if __name__ == "__main__":

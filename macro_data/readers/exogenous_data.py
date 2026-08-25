@@ -31,6 +31,14 @@ class ExogenousCountryData:
         if inflation is None:
             inflation = readers.world_bank.get_inflation(country_name)
 
+        # Province-level CPI override (StatsCan); no-op when no provincial data exists.
+        provincial_macro = getattr(readers, "provincial_macro", None)
+        if provincial_macro is not None and provincial_macro.has_region(country_name):
+            inflation = inflation.copy()
+            inflation["CPI Inflation"] = provincial_macro.override(
+                country_name, "cpi_inflation", inflation["CPI Inflation"]
+            )
+
         national_accounts_growth = readers.get_national_accounts_growth(country_name)
 
         if proxy_country is None:
@@ -52,6 +60,13 @@ class ExogenousCountryData:
         labour_stats = prepare_labour_stats(country_name, readers, base_year=year)
 
         house_price_index = readers.oecd_econ.get_house_price_index(country_name)
+
+        # Province-level nominal house-price-growth override (StatsCan NHPI).
+        if provincial_macro is not None and provincial_macro.has_region(country_name):
+            house_price_index = house_price_index.copy()
+            house_price_index["Nominal House Price Index Growth"] = provincial_macro.override(
+                country_name, "hpi_nominal_growth", house_price_index["Nominal House Price Index Growth"]
+            )
 
         return cls(
             country_name=country_name,
@@ -93,6 +108,19 @@ def prepare_labour_stats(country_name: Country, readers: DataReaders, base_year:
     vacancy_rate = readers.oecd_econ.get_vacancy_rate(country_name)
     participation_rate = readers.world_bank.get_participation_rate(country_name)
     unemployment_rate = readers.world_bank.get_unemployment_rate(country_name)
+
+    # Province-level unemployment-rate and vacancy-rate overrides (StatsCan LFS + JVWS).
+    provincial_macro = getattr(readers, "provincial_macro", None)
+    if provincial_macro is not None and provincial_macro.has_region(country_name):
+        unemployment_rate = unemployment_rate.copy()
+        unemployment_rate["Unemployment Rate"] = provincial_macro.override(
+            country_name, "unemployment_rate", unemployment_rate["Unemployment Rate"]
+        )
+        vacancy_rate = vacancy_rate.copy()
+        vacancy_rate["Vacancy Rate"] = provincial_macro.override(
+            country_name, "vacancy_rate", vacancy_rate["Vacancy Rate"]
+        )
+
     if labour_stats is None:
         labour_stats = pd.concat(
             (
