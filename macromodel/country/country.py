@@ -39,6 +39,11 @@ import numpy as np
 import pandas as pd
 
 from macro_data import SyntheticCountry
+from macro_data.readers.emissions.emissions_reader import (
+    b06_oil_emission_share,
+    emission_factors_for,
+    emitting_industries_for,
+)
 from macromodel.agents.agent import Agent
 from macromodel.agents.banks.banks import Banks
 from macromodel.agents.central_bank.central_bank import CentralBank
@@ -55,8 +60,28 @@ from macromodel.exogenous.exogenous import Exogenous
 from macromodel.markets.credit_market.credit_market import CreditMarket
 from macromodel.markets.housing_market.housing_market import HousingMarket
 from macromodel.markets.labour_market.labour_market import LabourMarket
+from macromodel.policy.output_based_price_system_can import OutputBasedPriceSystemCAN
 from macromodel.rest_of_the_world import RestOfTheWorld
 from macromodel.util.get_histogram import get_histogram
+
+
+# Ceiling on the OBPS per-unit charge, as a multiple of the good's own price.
+#
+# This is a POLITICAL-ECONOMY bound, not merely a numerical guard.  A carbon charge that
+# more than doubled the price of a good would not survive: the pricing regime would be
+# changed before firms paid it, so a model that lets the charge run past that point is
+# projecting a policy that would not exist.  Capping is the more realistic assumption.
+#
+# It also happens to make the per-sector normalisation safe.  Dividing the sector's OBPS
+# cost by that sector's own production is the economically right per-unit charge, but the
+# denominator can approach zero and send the quotient to absurd values (measured:
+# 3.18e+07 against prices of order 10).  That was invisible while the charge only informed
+# price-setting -- which is multiplied by price_setting_speed_cp = 0 -- but is fatal once
+# it feeds realised input costs, where it produced NaNs in goods-market clearing.
+#
+# The cap is logged when it binds: frequent binding means the denominator is degenerate
+# and the sector's production path needs attention, not the cap.
+_OBPS_MAX_TAX_PRICE_MULTIPLE = 2.0
 
 
 class Country:
@@ -141,8 +166,10 @@ class Country:
         add_emissions: bool = False,
         emission_factors_lcu: Optional[np.ndarray] = None,
         emitting_indices: Optional[np.ndarray] = None,
+        b06_oil_emission_share: Optional[float] = None,
         emission_factors_lcu_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[np.ndarray] = None,
+        obps: Optional[OutputBasedPriceSystemCAN] = None,
     ):
         """Initialize a new country economy.
 
@@ -209,9 +236,16 @@ class Country:
         self.add_emissions = add_emissions
         self.emission_factors_lcu = emission_factors_lcu
         self.emitting_indices = emitting_indices
+        self.b06_oil_emission_share = b06_oil_emission_share
         self.emission_factors_lcu_ch4 = emission_factors_lcu_ch4
         self.emitting_indices_ch4 = emitting_indices_ch4
         self.use_emission_multiplier = self.configuration.use_emission_multiplier
+
+        self.obps = obps
+        self.use_obps_reg = self.configuration.use_obps_reg
+        self.extra_marginal_taxes_firm = np.zeros(self.firms.n_industries)
+        # Exogenous OBPS sequestration wedge; see set_emissions_capture.
+        self._emissions_capture: dict[int, float] | None = None
 
     @classmethod
     def from_pickled_country(
@@ -249,15 +283,29 @@ class Country:
         """
         scale = synthetic_country.scale
 
-        emission_industries = ["B05a", "B05b", "B05c", "C19"]
-        add_emissions = all([industry in industries for industry in emission_industries])
+        # Scheme-aware emitting sectors: the legacy 43-code split or the OECD-50
+        # (2022 base) B05/B06/C19 with the value-weighted merged oil-and-gas factor.
+        emission_industries = (
+            emitting_industries_for(list(industries))
+            if synthetic_country.emission_factors is not None
+            else None
+        )
+        add_emissions = emission_industries is not None
 
         if add_emissions:
             emitting_indices = np.array([list(industries).index(industry) for industry in emission_industries])
-            emission_factors_lcu = synthetic_country.emission_factors.emissions_array
+            emission_factors_lcu = emission_factors_for(
+                emission_industries, synthetic_country.emission_factors.emissions_array
+            )
+            _b06_share = (
+                b06_oil_emission_share(synthetic_country.emission_factors.emissions_array)
+                if len(emission_industries) == 3
+                else None
+            )
         else:
             emitting_indices = None
             emission_factors_lcu = None
+            _b06_share = None
 
         if synthetic_country.emission_factors_ch4 is not None:
             emission_factors_lcu_ch4 = synthetic_country.emission_factors_ch4.emission_factors
@@ -400,6 +448,15 @@ class Country:
             scale=scale,
         )
 
+        obps = None
+        if add_emissions and country_configuration.use_obps_reg and synthetic_country.obps_data is not None:
+            obps = OutputBasedPriceSystemCAN(
+                country_name=country_name,
+                industries=list(industries),
+                obps_data=synthetic_country.obps_data,
+                initial_year=initial_year,
+            )
+
         return cls(
             country_name=country_name,
             scale=scale,
@@ -423,8 +480,10 @@ class Country:
             add_emissions=add_emissions,
             emission_factors_lcu=emission_factors_lcu,
             emitting_indices=emitting_indices,
+            b06_oil_emission_share=_b06_share,
             emission_factors_lcu_ch4=emission_factors_lcu_ch4,
             emitting_indices_ch4=emitting_indices_ch4,
+            obps=obps,
         )
 
     def reset(self, configuration: CountryConfiguration) -> None:
@@ -535,6 +594,94 @@ class Country:
             )
         )
 
+    def set_emissions_capture(self, capture_by_industry: "dict[int, float] | None") -> None:
+        """Set an exogenous CO2e capture wedge for the OBPS (tonnes per PERIOD).
+
+        Represents a sequestration program (e.g. Pathways CCS) whose captured
+        tonnes reduce the emissions the OBPS charges the sector for. The wedge
+        lives only in the OBPS cost expression: the emissions time series, the
+        reference-window baseline and the coverage threshold all stay gross --
+        see ``OutputBasedPriceSystemCAN.compute_obps``.
+
+        Args:
+            capture_by_industry: {industry index: tonnes CO2e captured per
+                simulation period (quarter)}, or None to clear the wedge.
+        """
+        self._emissions_capture = dict(capture_by_industry) if capture_by_industry else None
+
+    def update_extra_taxes(self, record_obps_reference: bool = True) -> None:
+        """Compute extra marginal taxes for firms from active policy instruments.
+
+        Currently supports the Output-Based Pricing System (OBPS). The sectoral
+        tax cost is divided by production to obtain a per-unit marginal cost that
+        is added to the sector average price seen by firms during price-setting
+        and input-demand calculations.
+
+        Args:
+            record_obps_reference: If True, accumulate 2017–2019 reference
+                emission data (should be True only in the planning phase).
+        """
+        self.extra_marginal_taxes_firm = np.zeros(self.firms.n_industries)
+
+        if self.use_obps_reg and self.obps is None:
+            logging.warning(
+                "use_obps_reg is True for %s but no OBPS object is set — OBPS has no effect.",
+                self.country_name,
+            )
+
+        if self.use_obps_reg and self.obps is not None:
+            input_em_ch4 = self.firms.ts.current("inputs_emissions_ch4")
+            if input_em_ch4 is None:
+                input_em_ch4 = np.zeros_like(self.firms.ts.current("inputs_emissions"))
+            capital_em_ch4 = self.firms.ts.current("capital_emissions_ch4")
+            if capital_em_ch4 is None:
+                capital_em_ch4 = np.zeros_like(self.firms.ts.current("capital_emissions"))
+
+            # getattr: checkpoints saved before the capture wedge existed have no
+            # _emissions_capture attribute (the pre-obps_data shim precedent).
+            capture = getattr(self, "_emissions_capture", None)
+            sequestered = None
+            if capture:
+                sequestered = np.zeros(self.firms.n_industries)
+                for _idx, _tonnes in capture.items():
+                    sequestered[int(_idx)] = float(_tonnes)
+
+            sectoral_tax = self.obps.compute_obps(
+                use_obps_reg=self.use_obps_reg,
+                record_obps_reference=record_obps_reference,
+                production=self.firms.ts.current("production"),
+                input_em=self.firms.ts.current("inputs_emissions") + input_em_ch4,
+                capital_em=self.firms.ts.current("capital_emissions") + capital_em_ch4,
+                initial_production=self.firms.ts.initial("production"),
+                sequestered=sequestered,
+            )
+            self.extra_marginal_taxes_firm = np.divide(
+                sectoral_tax,
+                self.firms.ts.current("production"),
+                out=np.zeros_like(sectoral_tax),
+                where=self.firms.ts.current("production") != 0,
+            )
+            # A negative rebate cannot bring the effective sector price below zero.
+            self.extra_marginal_taxes_firm = np.maximum(
+                -self.economy.ts.current("good_prices"),
+                self.extra_marginal_taxes_firm,
+            )
+
+            # Ceiling on the positive side (see _OBPS_MAX_TAX_PRICE_MULTIPLE).  Logged
+            # rather than applied silently: if this binds often, the denominator is
+            # degenerate and the sector's production path needs looking at, not the cap.
+            _prices = np.asarray(self.economy.ts.current("good_prices"), dtype=float)
+            _cap = _OBPS_MAX_TAX_PRICE_MULTIPLE * np.abs(_prices)
+            _n_capped = int((self.extra_marginal_taxes_firm > _cap).sum())
+            if _n_capped:
+                logging.warning(
+                    "OBPS (%s): per-unit charge capped at %.1fx price for %d sector(s); "
+                    "max uncapped %.4g vs cap %.4g.",
+                    self.country_name, _OBPS_MAX_TAX_PRICE_MULTIPLE, _n_capped,
+                    float(np.max(self.extra_marginal_taxes_firm)), float(np.max(_cap)),
+                )
+            self.extra_marginal_taxes_firm = np.minimum(self.extra_marginal_taxes_firm, _cap)
+
     def clear_labour_market(self) -> None:
         """Execute labor market clearing.
 
@@ -555,6 +702,9 @@ class Country:
         Computes expected profits, asset values, benefits, and other metrics
         used by agents in their planning decisions.
         """
+        if self.add_emissions:
+            self.update_extra_taxes(record_obps_reference=True)
+
         # Firms estimate profits
         self.firms.ts.expected_profits.append(
             self.firms.compute_estimated_profits(
@@ -576,6 +726,7 @@ class Country:
             self.firms.compute_expected_capital_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
                 estimated_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -669,13 +820,15 @@ class Country:
                     current_estimated_ppi_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
                     previous_average_good_prices=self.economy.ts.current("good_prices"),
                     ppi_during=self.exogenous.national_accounts_during["PPI (Value)"].values.flatten(),
+                    extra_marginal_taxes=self.extra_marginal_taxes_firm,
                 )
             )
 
         # Firm demand for goods
         self.firms.ts.unconstrained_target_intermediate_inputs.append(
             self.firms.compute_unconstrained_demand_for_intermediate_inputs(
-                good_prices=self.economy.ts.current("good_prices")
+                good_prices=self.economy.ts.current("good_prices"),
+                extra_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.unconstrained_target_intermediate_inputs_costs.append(
@@ -685,7 +838,8 @@ class Country:
         )
         self.firms.ts.unconstrained_target_capital_inputs.append(
             self.firms.compute_unconstrained_demand_for_capital_inputs(
-                good_prices=self.economy.ts.current("good_prices")
+                good_prices=self.economy.ts.current("good_prices"),
+                extra_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.unconstrained_target_capital_inputs_costs.append(
@@ -751,11 +905,11 @@ class Country:
                     "unemployment_benefits_by_individual"
                 )[0],
                 tau_vat=self.central_government.states["Value-added Tax"],
-                income_tax=self.central_government.states["Income Tax"],
-                employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
                 assume_zero_growth=self.assume_zero_growth,
                 prices=self.firms.ts.current("price"),
                 initial_prices=self.firms.ts.initial("price"),
+                income_tax=self.central_government.states["Income Tax"],
+                employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
                 taxes=current_additional_taxes,
                 initial_taxes=initial_additional_taxes,
             )
@@ -772,6 +926,7 @@ class Country:
                 ].values.flatten(),
                 tau_cf=self.central_government.states["Capital Formation Tax"],
                 assume_zero_growth=self.assume_zero_growth,
+                good_prices=self.economy.ts.current("good_prices"),
             )
         )
 
@@ -942,6 +1097,7 @@ class Country:
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
             previous_good_prices=self.economy.ts.current("good_prices"),
             expected_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
+            extra_marginal_taxes=self.extra_marginal_taxes_firm,
         )
         self.households.prepare_goods_market_clearing(
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
@@ -1094,6 +1250,7 @@ class Country:
         self.firms.ts.gross_fixed_capital_formation.append(
             self.firms.compute_gross_fixed_capital_formation(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -1101,6 +1258,7 @@ class Country:
         # Update input costs and production metrics
         self.firms.update_total_newly_bought_costs(
             current_good_prices=self.economy.ts.current("good_prices"),
+            extra_marginal_taxes=self.extra_marginal_taxes_firm,
         )
 
         # Execute and record productivity investment after capital purchases are known
@@ -1111,6 +1269,7 @@ class Country:
         self.firms.ts.production_nominal.append(
             self.firms.compute_nominal_production(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -1140,30 +1299,35 @@ class Country:
                 use_emission_multiplier=self.use_emission_multiplier,
                 readjusted_factors_ch4=readjusted_factors_ch4,
                 emitting_indices_ch4=self.emitting_indices_ch4,
+                b06_oil_emission_share=self.b06_oil_emission_share,
             )
 
         self.firms.ts.used_intermediate_inputs.append(self.firms.compute_used_intermediate_inputs())
         self.firms.ts.used_intermediate_inputs_costs.append(
             self.firms.compute_used_intermediate_inputs_costs(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.used_capital_inputs.append(self.firms.compute_used_capital_inputs())
         self.firms.ts.used_capital_inputs_costs.append(
             self.firms.compute_used_capital_inputs_costs(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.inventory.append(self.firms.compute_inventory())
         self.firms.ts.inventory_nominal.append(
             self.firms.compute_nominal_inventory(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.intermediate_inputs_stock.append(self.firms.compute_intermediate_inputs_stock())
         self.firms.ts.intermediate_inputs_stock_value.append(
             self.firms.compute_intermediate_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.intermediate_inputs_stock_industry.append(
@@ -1173,6 +1337,7 @@ class Country:
         self.firms.ts.capital_inputs_stock_value.append(
             self.firms.compute_intermediate_inputs_stock_value(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
         self.firms.ts.capital_inputs_stock_industry.append(self.firms.ts.current("capital_inputs_stock").sum(axis=0))
@@ -1202,6 +1367,7 @@ class Country:
         self.firms.ts.equity.append(
             self.firms.compute_equity(
                 current_good_prices=self.economy.ts.current("good_prices"),
+                extra_marginal_taxes=self.extra_marginal_taxes_firm,
             )
         )
 
@@ -1294,6 +1460,7 @@ class Country:
             use_emission_multiplier=self.use_emission_multiplier,
             readjusted_factors_ch4=readjusted_factors_ch4,
             emitting_indices_ch4=self.emitting_indices_ch4,
+            b06_oil_emission_share=self.b06_oil_emission_share,
         )
         self.households.update_wealth(
             housing_data=self.housing_market.states["properties"],
@@ -1480,6 +1647,60 @@ class Country:
 
         self.exogenous.save_to_h5(group)
 
+    def apply_investment_tax_credit(self, credits_by_industry: dict[int, float],
+                                    steps_per_year: int) -> None:
+        """Refund investment tax credits to firms, via the production-tax channel.
+
+        A refundable ITC is cash back to the investing firm. The model has no direct
+        firm-transfer instrument, but ``Taxes Less Subsidies Rates`` is a per-industry rate
+        on production value where a NEGATIVE value is a subsidy -- and it flows through
+        taxes paid, into profits, into deposits, which is the cash-flow effect an ITC has.
+
+        APPROXIMATION, stated plainly: the credit is a capital subsidy and this delivers it
+        as a production subsidy of equal value. The dollar amount transferred is right; its
+        incidence is not. A firm receives it in proportion to output rather than to what it
+        built, so within sector D the split across firms differs from reality. Sector-level
+        cash flow -- what this is for -- is unaffected by that.
+
+        The rate is set from LAGGED production value, since the current period's is not yet
+        known when taxes are computed. The realised transfer is logged so the two can be
+        compared rather than assumed equal.
+
+        Args:
+            credits_by_industry: {industry index: credit in $ per YEAR}.
+            steps_per_year: model steps per year, to convert to a per-step transfer.
+        """
+        base = getattr(self, "_itc_base_rates", None)
+        rates = self.central_government.states["Taxes Less Subsidies Rates"]
+        if base is None:
+            base = self._itc_base_rates = np.array(rates, dtype=float, copy=True)
+        # Start from the untouched rates each time, so credits never accumulate across
+        # milestones -- the failure mode that made the capacity floor keep stale values.
+        new_rates = np.array(base, copy=True)
+        if not credits_by_industry:
+            self.central_government.states["Taxes Less Subsidies Rates"] = new_rates
+            return
+
+        industry = np.asarray(self.firms.states["Industry"])
+        prod = np.asarray(self.firms.ts.current("production"), dtype=float).ravel()
+        price = np.asarray(self.firms.ts.current("price"), dtype=float).ravel()
+        applied = {}
+        for idx, credit_per_year in credits_by_industry.items():
+            sel = industry == idx
+            value = float((prod[sel] * price[sel]).sum())
+            if not np.isfinite(value) or value <= 0.0 or credit_per_year <= 0.0:
+                continue
+            per_step = float(credit_per_year) / max(int(steps_per_year), 1)
+            new_rates[idx] = base[idx] - per_step / value
+            applied[idx] = (per_step, value, new_rates[idx])
+        self.central_government.states["Taxes Less Subsidies Rates"] = new_rates
+        if applied:
+            logging.getLogger(__name__).info(
+                "investment tax credit: %s",
+                {i: {"per_step_$": round(c, 1), "prod_value": round(v, 1),
+                     "net_rate": round(r, 6)} for i, (c, v, r) in applied.items()},
+            )
+
     def shallow_output(self) -> pd.DataFrame:
         """Create summary DataFrame of key economic indicators.
 
@@ -1511,7 +1732,107 @@ class Country:
             "Consumption Expansion Loan Debt": self.households.consumption_loan_debt(),
             "Mortgage Debt": self.households.mortgage_debt(),
             "Central Bank Policy Rate": self.central_bank.ts.get_aggregate("policy_rate"),
+            # GDP. The shallow summary carried none of the three measures, so provincial
+            # GDP had to be reconstructed from components -- and the reconstruction is
+            # exactly where mixed real/nominal units bite.
+            "GDP Output": self.economy.ts.get_aggregate("gdp_output"),
+            "GDP Expenditure": self.economy.ts.get_aggregate("gdp_expenditure"),
+            "GDP Income": self.economy.ts.get_aggregate("gdp_income"),
+            # NAMING TRAP, preserved for compatibility: the "CPI" key above is the price
+            # LEVEL (economy.ts.cpi), not a rate, despite coming from a method called
+            # `total_cpi_inflation`. The rate is a separate series and is added here
+            # explicitly so nobody has to know that.
+            "CPI Inflation Rate": self.economy.ts.get_aggregate("cpi_inflation"),
+            "PPI Inflation Rate": self.economy.ts.get_aggregate("ppi_inflation"),
         }
+
+        # Real GDP by DOUBLE DEFLATION: real value added = real gross output minus real
+        # intermediate inputs, and the GDP deflator is nominal value added over that.
+        #
+        # This previously deflated nominal GDP by the CPI, which is wrong whenever consumer
+        # prices and value-added prices diverge -- and under an energy transition they do,
+        # in opposite directions. Higher input prices compress nominal value added AND
+        # raise consumer prices, so CPI-deflation counted the same shock twice. Measured on
+        # the 2050 CER runs: Net-zero real gross output was +8.1% and every province's real
+        # output rose, yet CPI-deflation reported real GDP at -19.9% nationally and -64.2%
+        # for New Brunswick. Double deflation gives +7.7% and +8.8%. The reported figure was
+        # 88% price index and 12% economics, and it inverted the sign of the headline
+        # result.
+        #
+        # Double deflation needs no choice of price index, which is the point: it is the
+        # national-accounts standard for exactly this reason. Real quantities here are in
+        # base-year prices (initial prices ~1 across industries), so the two sums are
+        # commensurable and their difference is constant-price value added.
+        #
+        # The deflator is applied to all three measures so Output, Expenditure and Income
+        # stay comparable; it is exported as `GDP Deflator` so the derivation is auditable.
+        # `CPI` is still exported, so the old CPI-deflated series can be reconstructed by
+        # anyone who wants it -- but it should not be called real GDP.
+        # VALUATION BASIS. The deflator's numerator is nominal GROSS VALUE ADDED, not
+        # nominal GDP. Nominal GDP nets out taxes on production and adds taxes on products
+        # and rent (see `compute_gdp`), so dividing it by a value-added-only denominator
+        # would put those wedges in the numerator alone. That is harmless only while the
+        # wedge is a stable share of GDP, and it is not: net product taxes reach 14.3% of
+        # GDP under Net-zero against 12.3% under Current Measures, because carbon revenue
+        # is scenario-dependent. Mixing the bases understated Net-zero's 2050 real GDP by
+        # 1.5pp (+7.7% instead of +9.2%), with no material effect before 2040.
+        #
+        # Both sides use the same series `compute_gdp` uses for its first two terms --
+        # gross output at current prices and USED intermediate consumption -- so the
+        # deflator is exactly the price of value added on the producers'-price, used
+        # basis. `used_intermediate_inputs` (real) pairs with `used_intermediate_inputs_costs`
+        # (nominal); the BOUGHT series would differ by input inventory change and would not
+        # match the GDP identity.
+        #
+        # Taxes and rent are then deflated implicitly at the value-added rate when the
+        # index is applied to nominal GDP. Deflating net product taxes by the taxed
+        # products' own price indices would be more rigorous, but needs a deflator choice
+        # per component and is well beyond what this diagnostic export warrants.
+        try:
+            production = np.asarray(self.firms.ts.historic("production"), dtype=float)
+            price = np.asarray(self.firms.ts.historic("price"), dtype=float)
+            used = np.asarray(self.firms.ts.historic("used_intermediate_inputs"), dtype=float)
+            used_cost = np.asarray(
+                self.firms.ts.historic("used_intermediate_inputs_costs"), dtype=float
+            )
+            n = min(len(production), len(price), len(used), len(used_cost))
+
+            real_output = np.nansum(production[:n].reshape(n, -1), axis=1)
+            real_intermediates = np.nansum(used[:n].reshape(n, -1), axis=1)
+            nominal_output = np.nansum((price[:n] * production[:n]).reshape(n, -1), axis=1)
+            nominal_intermediates = np.nansum(used_cost[:n].reshape(n, -1), axis=1)
+
+            real_va = real_output - real_intermediates
+            nominal_va = nominal_output - nominal_intermediates
+
+            m = n
+            deflator = np.full(m, np.nan)
+            np.divide(nominal_va, real_va, out=deflator,
+                      where=(real_va > 0) & (nominal_va > 0))
+
+            if m and np.isfinite(deflator[0]) and deflator[0] > 0:
+                index = deflator / deflator[0]
+                # Pad to the length of the other columns, which is set by the GDP series,
+                # NOT by the firm histories used to build the deflator -- they can differ
+                # by a step and a short column would misalign the exported frame.
+                target_len = len(np.asarray(data_dict["GDP Output"], dtype=float).ravel())
+                data_dict["GDP Deflator"] = np.concatenate(
+                    [index[:target_len], np.full(max(0, target_len - m), np.nan)]
+                )
+                for measure in ("Output", "Expenditure", "Income"):
+                    nom = np.asarray(data_dict[f"GDP {measure}"], dtype=float).ravel()
+                    k = min(len(nom), m)
+                    real = np.full(len(nom), np.nan)
+                    # NaN, not zero, where the deflator is undefined. Real value added is
+                    # non-positive in a thin province whose real intermediate inputs exceed
+                    # its real gross output (observed for PEI), which is not economically
+                    # meaningful; a zero there would read as a measurement rather than as
+                    # missing data.
+                    real[:k] = np.divide(nom[:k], index[:k], out=np.full(k, np.nan),
+                                         where=index[:k] > 0)
+                    data_dict[f"GDP {measure} Real"] = real
+        except Exception:  # noqa: BLE001 - derived series must not break the export
+            pass
 
         if self.add_emissions:
             data_dict["Firm Input Emissions"] = self.firms.get_total_inputs_emissions()
