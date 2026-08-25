@@ -1176,28 +1176,6 @@ def apply_import_limits(
         )
 
 
-def apply_interprovincial_import_caps(
-    sim: Simulation, caps: dict[str, list[int]] | None, *, signal: float = 0.25
-) -> None:
-    """Cap destination countries' cross-province purchases of given industries at
-    their first-step level (base-year volume on a cold start).
-
-    ``caps`` maps country names (``CAN_AB``) to industry indices.  A no-op when
-    empty.  See :meth:`GoodsMarketClearer.set_interprovincial_import_caps` for the
-    semantics and the measured motivation (AB's D intake).  Cold-started runs only:
-    the anchor is measured on the first cleared step.
-    """
-    if not caps:
-        return
-    clearer = sim.goods_market.functions.get("clearing")
-    if clearer is not None and hasattr(clearer, "set_interprovincial_import_caps"):
-        clearer.set_interprovincial_import_caps(caps, signal_shortfall=signal)
-    else:
-        logger.warning(
-            "Goods-market clearer does not support interprovincial import caps; ignored."
-        )
-
-
 def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
     """Resolve a comma-separated list of macro sector codes to industry indices.
 
