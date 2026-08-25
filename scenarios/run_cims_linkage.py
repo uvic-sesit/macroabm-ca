@@ -405,13 +405,21 @@ def build_link_prehook(
     steps_per_year: int = 4,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
+    extra_export_mode_industries: set[str] | None = None,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
 
     The hook loads the anchor-year and current-year energy/capital intensity
     matrices and passes them to ``firms.link()`` so it can set energy-per-output
     directly (index-anchored to ``anchor_year``).
+
+    ``extra_export_mode_industries`` extends ``_PRODUCTION_TARGET_EXCLUDED`` per
+    run: codes whose export index is routed to export-mode (ROW demand pinning)
+    rather than becoming a production target.  Opt-in from the caller so the
+    shipped set stays untouched for every arm that does not ask (first user:
+    the C10T12 flat export pin, arm IESP).
     """
+    export_mode_excluded = _PRODUCTION_TARGET_EXCLUDED | set(extra_export_mode_industries or ())
     energy_codes = sector_map.energy_bundle_for(industries)
     comparable_codes = sector_map.comparable_for(industries)
     energy_indices = [industries.index(code) for code in energy_codes if code in industries]
@@ -921,7 +929,7 @@ def build_link_prehook(
                 # generation grows 2.07x. Same set that is held out of production
                 # targets below -- one concept, applied on both sides.
                 _export_mode = [i for i, code in enumerate(industries)
-                                if code in _PRODUCTION_TARGET_EXCLUDED and aligned[i] > 0.0]
+                                if code in export_mode_excluded and aligned[i] > 0.0]
                 sim.rest_of_the_world.set_export_target_industries(_export_mode)
                 # Sector D's export index is a PHYSICAL (GW.h) ratio -- interchange
                 # plus electrolysis -- so its budget must convert at D's own market
@@ -961,7 +969,7 @@ def build_link_prehook(
                 # capacity floor and demand, not by its export path.
                 if exogenous_fossil_production:
                     _skip = {i for i, code in enumerate(industries)
-                             if code in _PRODUCTION_TARGET_EXCLUDED}
+                             if code in export_mode_excluded}
                     for _c in sim.countries.values():
                         _c.firms.set_production_target(None, None)
                         for _k, _v in enumerate(aligned):
