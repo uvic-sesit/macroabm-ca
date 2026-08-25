@@ -694,6 +694,257 @@ class Households(Agent):
                 financial_income=self.ts.current("expected_income_financial_assets"),
             )
 
+    def anchor_energy_quantities(
+        self,
+        targets: dict[int, float],
+        prices: dict[int, float],
+        max_step: float = 2.0,
+        increments: dict[int, float] | None = None,
+        energy_indices: list[int] | None = None,
+    ) -> None:
+        """Pin households' REAL consumption of a good to an external quantity path.
+
+        ``apply_energy_share_increments`` sets a nominal budget weight, which does not
+        pin a real quantity once relative prices move -- and under CER's exogenous price
+        path they move a long way.  Electricity's real price falls to 74.3% of a CPI the
+        model generates itself (CER supplies the electricity price, the model's CPI is
+        driven by fossil prices), so households buy roughly 1/0.743 more of it than the
+        share implies.  Measured against CER residential: +16.0% vs +1.2% under Current
+        Measures and +61.1% vs +5.7% under Net-zero, with the budget share actually
+        FALLING 5.6% in the latter.  Setting shares cannot fix that; the target has to be
+        the quantity.
+
+        This is the household analogue of ``linkage_owns_coefficients`` for firms: CER
+        owns the quantity path, the model owns everything else.
+
+        Args:
+            targets: {industry index: desired real quantity as an index on the anchor}.
+            prices: {industry index: that good's current price}, to convert the observed
+                nominal spend into a real quantity.
+            max_step: per-call bound on the weight adjustment.  The correction reads last
+                period's realised consumption, so it is one step behind; the bound stops
+                a large price jump turning that lag into an overshoot.
+            increments: {industry index: change in this good's demand as a SHARE of total
+                residential anchor-year energy demand}.  The additive alternative to an
+                index, for fuels whose external base-year quantity is too small to divide
+                by -- the household counterpart of ``Firms.anchor_energy_quantities``'s
+                increments, and see that method for why an index fails there.  Converted
+                to model units with households' OWN anchor-year energy consumption:
+                ``desired = anchor(j) + delta * total anchor energy``.
+            energy_indices: the good indices making up that energy total.  It must be the
+                WHOLE energy set the caller's denominator covers, not merely the goods
+                being anchored, or the increment changes meaning between the two sides.
+                Required for *increments*, ignored otherwise.
+        """
+        if not (targets or increments) or not prices:
+            return
+        try:
+            nominal = np.asarray(self.ts.current("industry_consumption"), dtype=float).ravel()
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return
+        if nominal.size == 0:
+            return
+
+        if not hasattr(self, "_energy_quantity_anchor"):
+            self._energy_quantity_anchor = {}
+        # The correction must be CUMULATIVE and stored, because
+        # apply_energy_share_increments rebuilds the weights from their anchor on every
+        # milestone.  A per-call multiplier would be discarded by that rebuild and the
+        # weight would oscillate between corrected and uncorrected: the correction lands,
+        # consumption comes back on target, the next call therefore computes a step of
+        # 1.0, the rebuild drops the old factor, and consumption overshoots again.
+        if not hasattr(self, "_energy_quantity_multiplier"):
+            self._energy_quantity_multiplier = {}
+        if not hasattr(self, "_energy_quantity_anchor_total"):
+            self._energy_quantity_anchor_total: float | None = None
+
+        weights = np.array(self.consumption_weights, dtype=float, copy=True)
+        by_income = np.array(self.consumption_weights_by_income, dtype=float, copy=True)
+        n_industries = int(weights.shape[0])
+
+        # One entry per good.  An increment WINS over an index for the same good: the
+        # index is precisely what the caller's guard rejected for it.
+        specs: dict[int, tuple[str, float]] = {
+            int(j): ("index", float(v)) for j, v in targets.items()
+        }
+        for j, delta in (increments or {}).items():
+            specs[int(j)] = ("increment", float(delta))
+
+        def _realised(j: int) -> float | None:
+            price = float(prices.get(j, 0.0))
+            if j >= nominal.size or price <= 0.0:
+                return None
+            q = float(nominal[j]) / price
+            return q if np.isfinite(q) and q > 0.0 else None
+
+        # Anchors first, so the energy total is captured on the same call as the
+        # per-good anchors it is the sum of -- and BEFORE any correction lands, or the
+        # increment would be scaled by a denominator this method had already moved.
+        # On EVERY call, not only calls carrying an increment: the first increment
+        # necessarily arrives a milestone after the first call, because at the anchor
+        # year the external level change is zero by construction, and by then the total
+        # would no longer be the anchor-year one the increment was derived against.
+        if energy_indices:
+            for j in [int(k) for k in energy_indices]:
+                q = _realised(j)
+                if q is not None:
+                    self._energy_quantity_anchor.setdefault(j, q)
+            if self._energy_quantity_anchor_total is None:
+                self._energy_quantity_anchor_total = float(
+                    sum(self._energy_quantity_anchor.get(int(k), 0.0) for k in energy_indices)
+                )
+
+        for j, (kind, value) in specs.items():
+            if not np.isfinite(value) or (kind == "index" and value <= 0.0):
+                continue
+            realised = _realised(j)
+            if realised is None:
+                continue
+            anchor = self._energy_quantity_anchor.setdefault(j, realised)
+            if anchor <= 0.0:
+                continue
+            if kind == "index":
+                desired = anchor * value
+            else:
+                total = float(self._energy_quantity_anchor_total or 0.0)
+                if not np.isfinite(total) or total <= 0.0:
+                    continue
+                desired = anchor + value * total
+            if not np.isfinite(desired) or desired <= 0.0:
+                # A negative increment big enough to zero the good out: let the step
+                # bound below walk the weight down instead of writing a non-positive one.
+                desired = anchor * (1.0 / max_step)
+            # `realised` already embeds the multiplier in force last period, so the ratio
+            # is the ADDITIONAL factor needed and compounds onto the stored one.
+            step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            mult = float(self._energy_quantity_multiplier.get(j, 1.0)) * step
+            mult = float(min(max(mult, 1e-3), 1e3))
+            self._energy_quantity_multiplier[j] = mult
+            weights[j] *= mult
+            axes = [a for a, size in enumerate(by_income.shape) if size == n_industries]
+            if axes:
+                moved = np.moveaxis(by_income, axes[0], 0)
+                moved[j] *= mult
+                by_income = np.moveaxis(moved, 0, axes[0])
+
+        self.consumption_weights = weights
+        self.consumption_weights_by_income = by_income
+
+    def apply_energy_share_increments(
+        self,
+        increments: dict[int, float],
+        relative_prices: dict[int, float] | None = None,
+        loss_rates: dict[int, float] | None = None,
+    ) -> None:
+        """Shift the household budget between energy goods by CER's own share changes.
+
+        Households allocate spending with a FIXED ``consumption_weights`` vector, so
+        nothing in the energy linkage reaches them: firms' coefficients follow CER while
+        households' fuel mix stays frozen at its base year.  Measured consequence -- real
+        household electricity consumption falls 13.5% over 2020-2035 against CER
+        residential at +1.2%.
+
+        This is the household analogue of ``additive_intensity`` on the firm side: CER's
+        ABSOLUTE change in a fuel's share of residential energy, scaled by the household
+        energy budget at the anchor, is added to that good's weight.  Increments across
+        fuels sum to ~zero (they are shares of the same total), so the energy block's
+        share of the budget is preserved and non-energy weights are untouched; the block
+        is renormalised to absorb rounding.  Weights are floored at zero.
+
+        ``consumption_weights`` are NOMINAL budget shares, so a fixed weight buys more
+        real quantity as a good becomes relatively cheaper -- measured under CER's
+        exogenous prices as household electricity rising +43.1% real against +75.5%
+        nominal. CER's shares are PJ shares, i.e. real. Passing ``relative_prices``
+        converts the real target to the nominal weight that delivers it
+        (``weight ~ real_share x price``), so households buy CER's mix rather than
+        whatever the price wedge implies.
+
+        Args:
+            increments: {industry index: change in that fuel's share of residential
+                energy since the anchor year}.
+            relative_prices: {industry index: that good's price relative to its anchor-year
+                price}. Omitted => weights are treated as real shares directly (previous
+                behaviour).
+            loss_rates: {industry index: transmission loss rate}. Applied to the REAL
+                share target, before the price conversion -- households must purchase
+                more than they consume because some is lost in transmission. Applying it
+                to the finished nominal weight instead double-counts against the price
+                conversion: measured as household electricity jumping +10.9% -> +35.9%
+                from a 7.5% gross-up.
+        """
+        if not increments and not loss_rates:
+            return
+        # A fuel with a loss rate but no share increment still needs grossing up, so the
+        # index set is the union.  Keying off `increments` alone would drop the loss
+        # silently in any region where CER happens to report no residential share change.
+        increments = dict(increments or {})
+        for j in loss_rates or {}:
+            increments.setdefault(int(j), 0.0)
+        idx = sorted(increments)
+        if not hasattr(self, "_energy_weight_anchor"):
+            self._energy_weight_anchor = {
+                "flat": np.array(self.consumption_weights, dtype=float, copy=True),
+                "by_income": np.array(self.consumption_weights_by_income, dtype=float, copy=True),
+            }
+
+        n_industries = int(np.asarray(self.consumption_weights).shape[0])
+        for key, target in (
+            ("flat", "consumption_weights"),
+            ("by_income", "consumption_weights_by_income"),
+        ):
+            anchor = self._energy_weight_anchor[key]
+            current = np.array(anchor, dtype=float, copy=True)
+            if anchor.ndim == 1:
+                block = float(anchor[idx].sum())
+                if block <= 0.0:
+                    continue
+                for j in idx:
+                    real_target = anchor[j] + block * float(increments[j])
+                    if relative_prices:
+                        real_target *= float(relative_prices.get(j, 1.0))
+                    current[j] = max(0.0, real_target)
+                new_block = current[idx].sum()
+                if new_block > 0.0:
+                    current[idx] *= block / new_block
+                # Losses are applied AFTER renormalisation.  Inside the loop they would be
+                # scaled straight back out, since the block is renormalised to its anchor
+                # total -- correct for share increments (fuel shares are of one total),
+                # wrong for losses, which legitimately raise energy's share of the budget:
+                # households must buy more to consume the same.
+                for j in idx:
+                    rate = float((loss_rates or {}).get(j, 0.0))
+                    if 0.0 < rate < 0.9:
+                        current[j] /= 1.0 - rate
+            else:
+                # The by-income weights are (industries x income quantiles) -- industries
+                # are NOT on the last axis.  Locate the industry axis rather than assume
+                # it; guessing wrong is an IndexError at best and silent mis-indexing at
+                # worst if the two dimensions ever coincide.
+                axes = [a for a, size in enumerate(anchor.shape) if size == n_industries]
+                if not axes:
+                    continue
+                ax = axes[0]
+                moved = np.moveaxis(current, ax, 0)
+                anchor_moved = np.moveaxis(anchor, ax, 0)
+                block = anchor_moved[idx].sum(axis=0)
+                if not np.any(block > 0.0):
+                    continue
+                for j in idx:
+                    real_target = anchor_moved[j] + block * float(increments[j])
+                    if relative_prices:
+                        real_target = real_target * float(relative_prices.get(j, 1.0))
+                    moved[j] = np.maximum(0.0, real_target)
+                new_block = moved[idx].sum(axis=0)
+                scale = np.divide(block, new_block, out=np.ones_like(block), where=new_block > 0.0)
+                moved[idx] *= scale
+                # See the flat-vector branch: after renormalisation, not inside it.
+                for j in idx:
+                    rate = float((loss_rates or {}).get(j, 0.0))
+                    if 0.0 < rate < 0.9:
+                        moved[j] = moved[j] / (1.0 - rate)
+                current = np.moveaxis(moved, 0, ax)
+            setattr(self, target, current)
+
     def compute_target_investment(
         self,
         expected_inflation: float,
@@ -702,6 +953,7 @@ class Households(Agent):
         exogenous_total_investment: float,
         tau_cf: float,
         assume_zero_growth: bool,
+        good_prices: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate target investment levels.
 
@@ -736,6 +988,7 @@ class Households(Agent):
                 investment_weights=self.investment_weights,
                 investment_rate=self.states["investment_rate"],
                 tau_cf=tau_cf,
+                good_prices=good_prices,
             )
 
     def prepare_housing_market_clearing(
@@ -1094,6 +1347,7 @@ class Households(Agent):
         readjusted_factors_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[np.ndarray] = None,
         use_emission_multiplier: bool = False,
+        b06_oil_emission_share: Optional[float] = None,
     ) -> None:
         """Update consumption and investment outcomes.
 
@@ -1113,6 +1367,22 @@ class Households(Agent):
             emitting_indices_ch4 (Optional[np.ndarray]): CH4 emitting sector indices
             use_emission_multiplier (bool): Whether to apply industry-specific fraction multipliers
         """
+
+        def _fuel_series(disagg: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+            """(col_1, col_2, refined) per the legacy column labelling, scheme-aware.
+
+            Legacy 4-column path: returns columns 1, 2, 3 untouched (their historical
+            labels are kept even though the emitting order is B05a, B05b=gas, B05c=oil,
+            C19 -- do not silently relabel a legacy export).  Merged 3-column path:
+            column 1 is the blended B06; it is split into its exact oil/gas parts with
+            oil's emission share of the blend, and the historical label order
+            (oil first, gas second) is preserved.
+            """
+            if disagg.shape[1] == 4:
+                return disagg[:, 1], disagg[:, 2], disagg[:, 3]
+            share = 0.5 if b06_oil_emission_share is None else float(b06_oil_emission_share)
+            return share * disagg[:, 1], (1.0 - share) * disagg[:, 1], disagg[:, 2]
+
         # Total amount spent
         self.ts.amount_bought.append(self.ts.current("nominal_amount_spent_in_lcu").sum(axis=1))
 
@@ -1161,10 +1431,11 @@ class Households(Agent):
                 self.ts.consumption_emissions_ch4_by_good.append(consumption_emissions_ch4_by_good)
 
             disaggregated_emissions = cons_slice * readjusted_factors
+            _oil_c, _gas_c, _ref_c = _fuel_series(disaggregated_emissions)
             self.ts.coal_consumption_emissions.append(disaggregated_emissions[:, 0])
-            self.ts.oil_consumption_emissions.append(disaggregated_emissions[:, 1])
-            self.ts.gas_consumption_emissions.append(disaggregated_emissions[:, 2])
-            self.ts.refined_products_consumption_emissions.append(disaggregated_emissions[:, 3])
+            self.ts.oil_consumption_emissions.append(_oil_c)
+            self.ts.gas_consumption_emissions.append(_gas_c)
+            self.ts.refined_products_consumption_emissions.append(_ref_c)
 
         # Consumption
         self.ts.consumption.append(consumption_by_good.sum(axis=1))
@@ -1213,10 +1484,11 @@ class Households(Agent):
                 self.ts.investment_emissions_ch4_by_good.append(investment_emissions_ch4_by_good)
 
             disaggregated_emissions = inv_slice * readjusted_factors
+            _oil_i, _gas_i, _ref_i = _fuel_series(disaggregated_emissions)
             self.ts.coal_investment_emissions.append(disaggregated_emissions[:, 0])
-            self.ts.oil_investment_emissions.append(disaggregated_emissions[:, 1])
-            self.ts.gas_investment_emissions.append(disaggregated_emissions[:, 2])
-            self.ts.refined_products_investment_emissions.append(disaggregated_emissions[:, 3])
+            self.ts.oil_investment_emissions.append(_oil_i)
+            self.ts.gas_investment_emissions.append(_gas_i)
+            self.ts.refined_products_investment_emissions.append(_ref_i)
         self.ts.total_investment.append([(1 + tau_cf) * self.ts.current("investment").sum()])
         self.ts.total_investment_before_vat.append([self.ts.current("investment").sum()])
         self.ts.industry_investment.append(self.ts.current("investment").sum(axis=0))
