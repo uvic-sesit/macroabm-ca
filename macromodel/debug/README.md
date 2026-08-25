@@ -5,30 +5,28 @@ This module provides optional, hypothesis-specific logging for investigating sim
 ## Design Philosophy
 
 1. **Parsimonious**: Each logger targets a specific hypothesis with only relevant metrics
-2. **Non-invasive**: Uses posthook system, doesn't modify core simulation logic
+2. **Non-invasive**: Drives `sim.iterate()` from your own loop, doesn't modify core simulation logic
 3. **Clean separation**: Debug code isolated from production code
 4. **Performance-aware**: Only captures data when explicitly enabled
 
 ## Architecture
 
-### Posthook System
+### Manual Stepping Loop
 
-The `Simulation` class now supports `posthooks` - callbacks executed after each timestep:
+(The former `posthooks` list on `Simulation` was removed 2026-08 -- it had no
+in-repo consumers and was not checkpoint-safe.  Drive the same loggers from an
+external loop instead.)
+
+Step the simulation yourself and capture after each timestep:
 
 ```python
-def my_debug_hook(simulation, t, year, month):
-    """Called after each timestep with full access to simulation state."""
-    # Extract and log metrics here
-    pass
-
-# Register the hook
-simulation.posthooks.append(my_debug_hook)
-
-# Run simulation - hook will be called automatically
-simulation.run()
+total_steps = simulation.configuration.t_max
+for t in range(total_steps):
+    simulation.iterate(t)
+    # Extract and log metrics here -- full access to simulation state
 ```
 
-**Key timing**: Posthooks are called AFTER:
+**Key timing**: after `iterate(t)` returns:
 - All markets have cleared (labor, credit, housing, goods)
 - All metrics have been updated
 - All time series have been recorded
@@ -56,16 +54,10 @@ from macromodel.debug import TFPLaborLog, capture_tfp_labor_snapshot
 # Create log object
 labor_log = TFPLaborLog()
 
-# Define hook
-def log_labor_dynamics(sim, t, year, month):
-    snapshot = capture_tfp_labor_snapshot(sim, t)
-    labor_log.add_snapshot(snapshot)
-
-# Register hook
-simulation.posthooks.append(log_labor_dynamics)
-
-# Run simulation
-simulation.run()
+# Step and capture
+for t in range(simulation.configuration.t_max):
+    simulation.iterate(t)
+    labor_log.add_snapshot(capture_tfp_labor_snapshot(simulation, t))
 
 # Analyze results
 import pandas as pd
@@ -115,16 +107,11 @@ sim_no_tfp = Simulation.from_datawrapper(data, config_no_tfp)
 log_with = TFPLaborLog()
 log_without = TFPLaborLog()
 
-sim_with_tfp.posthooks.append(
-    lambda sim, t, y, m: log_with.add_snapshot(capture_tfp_labor_snapshot(sim, t))
-)
-sim_no_tfp.posthooks.append(
-    lambda sim, t, y, m: log_without.add_snapshot(capture_tfp_labor_snapshot(sim, t))
-)
-
-# Run
-sim_with_tfp.run()
-sim_no_tfp.run()
+# Run, capturing after each step
+for sim, log in ((sim_with_tfp, log_with), (sim_no_tfp, log_without)):
+    for t in range(sim.configuration.t_max):
+        sim.iterate(t)
+        log.add_snapshot(capture_tfp_labor_snapshot(sim, t))
 
 # Analyze
 df_with = pd.DataFrame(log_with.to_dict_list())
@@ -215,10 +202,9 @@ from macromodel.debug.hypothesis_name_logger import (
 from macromodel.debug import HypothesisLog, capture_hypothesis_snapshot
 
 log = HypothesisLog()
-simulation.posthooks.append(
-    lambda sim, t, y, m: log.add_snapshot(capture_hypothesis_snapshot(sim, t))
-)
-simulation.run()
+for t in range(simulation.configuration.t_max):
+    simulation.iterate(t)
+    log.add_snapshot(capture_hypothesis_snapshot(simulation, t))
 ```
 
 ## Best Practices
@@ -240,7 +226,7 @@ simulation.run()
 
 ## Performance Considerations
 
-- **Without logging**: Zero overhead (posthooks list is empty)
+- **Without logging**: Zero overhead (`sim.run()` is untouched)
 - **With logging**: ~1-5% overhead per active logger
 - **Memory**: Each snapshot ~1-10 KB depending on metrics
 - **For 1000 timesteps**: ~1-10 MB per log
@@ -254,7 +240,7 @@ If performance becomes an issue:
 
 ### AttributeError: object has no attribute 'X'
 
-Check that you're accessing metrics AFTER they've been computed in the timestep. Posthooks run after `update_realised_metrics()`, so all `ts.current()` values should be available.
+Check that you're accessing metrics AFTER they've been computed in the timestep. Capture after `iterate(t)` returns -- that is after `update_realised_metrics()`, so all `ts.current()` values should be available.
 
 ### Empty/NaN values
 
