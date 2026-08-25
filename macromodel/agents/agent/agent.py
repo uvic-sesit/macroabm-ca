@@ -16,6 +16,44 @@ from numba import njit
 
 from macromodel.timeseries import TimeSeries
 
+# Per-agent goods-market transaction series, appended once per agent per counterparty
+# per step.  These dominate a long run's memory: measured on a 89-step provincial run,
+# they are 97.3% of the ~30 GB the simulation holds (households 18.2 GB, ROW 10.9 GB,
+# every other group together 0.8 GB), because `TimeSeries` appends one
+# (n_transactors, n_industries) array per key per step and never releases it.  Cost is
+# strictly linear in the horizon, so extending 2035 -> 2050 is what pushes a 16 GB
+# machine past its commit limit.
+#
+# Nothing in the model reads their HISTORY.  They are written here and read back only
+# through `current()` (households.py, splitting spending into consumption and
+# investment), so a run that does not write the full HDF5 export can cap them to the
+# last few entries.  See `Agent.history_limit`.
+#
+# EXACT NAMES, never prefixes.  `real_amount_bought_as_capital_goods` and
+# `real_amount_bought_as_intermediate_inputs` are firm series that ARE read with
+# `historic()` (and exported), and a prefix match on "real_amount_bought" would silently
+# truncate them -- the failure would surface as wrong capital formation, not as an error.
+#
+# BUYER SIDE ONLY, and deliberately so.  The seller-side series are excluded because
+# `Simulation.shallow_hdf_save` writes firms' `real_amount_sold` through
+# `industry_timeseries_dataframes()`; trimming it truncated that export from (69, 43) to
+# (4, 43) in testing, silently, while every other output stayed identical.  The exclusion
+# costs almost nothing: the seller series are 1-D (n_transactors_sell) while the buyer
+# series are 2-D (n_transactors_buy, n_industries), and the buyer side is ~93% of the
+# household and ROW memory this exists to reclaim.
+_TRIMMABLE_TS_KEYS = (
+    "nominal_amount_spent_in_usd",
+    "nominal_amount_spent_in_lcu",
+    "real_amount_bought",
+)
+
+# Per-counterparty variants of the same series, one per country in the simulation.
+_TRIMMABLE_TS_KEY_TEMPLATES = (
+    "nominal_amount_spent_in_usd_to_{country}",
+    "nominal_amount_spent_in_lcu_to_{country}",
+    "real_amount_bought_from_{country}",
+)
+
 
 class Agent:
     """Base class for all economic agents in the simulation.
@@ -38,7 +76,14 @@ class Agent:
         transactor_seller_states (dict): Current state for selling activities
         exchange_rate_usd_to_lcu (float): Exchange rate from USD to local currency
         ts (TimeSeries): Time series data for the agent's variables
+        history_limit (Optional[int]): Steps of goods-market transaction history to
+            retain (see `_TRIMMABLE_TS_KEYS`).  ``None``, the default, keeps every
+            step and is what `Simulation.save` needs to write a complete HDF5 export.
     """
+
+    # Off by default: the full HDF5 export reads these series for every step, so
+    # trimming must be opted into by a run that is not writing one.
+    history_limit: Optional[int] = None
 
     def __init__(
         self,
@@ -77,6 +122,14 @@ class Agent:
         self.transactor_buyer_states = {}
         self.transactor_seller_states = {}
         self.exchange_rate_usd_to_lcu = None
+
+        # Resolved once here rather than per step: `record` runs for every agent on every
+        # timestep, and the counterparty names do not change during a run.
+        self._trimmable_ts_keys = _TRIMMABLE_TS_KEYS + tuple(
+            template.format(country=country_name_)
+            for template in _TRIMMABLE_TS_KEY_TEMPLATES
+            for country_name_ in (all_country_names or ())
+        )
 
         # Initiate the time series
         self.ts = ts
@@ -344,6 +397,28 @@ class Agent:
             self.ts.dicts["real_amount_bought_from_" + country_name].append(
                 self.transactor_buyer_states["Real Amount bought from " + country_name]
             )
+
+        self.trim_ts_history()
+
+    def trim_ts_history(self) -> None:
+        """Drop transaction history beyond `history_limit` steps.
+
+        A no-op unless `history_limit` is set, so a default run is unchanged.  Only the
+        keys in `_TRIMMABLE_TS_KEYS` are touched; every other series keeps its full
+        history, including the firm capital-goods, intermediate-input and amount-sold
+        series and the household `industry_consumption` and `investment` series, all of
+        which the shallow export reads back with `historic()`.
+
+        The retained tail must cover `current()` and `prev()`, so limits below 2 would
+        change behaviour; `Simulation.set_agent_history_limit` enforces that floor.
+        """
+        limit = self.history_limit
+        if not limit:
+            return
+        for key in self._trimmable_ts_keys:
+            series = self.ts.dicts.get(key)
+            if series is not None and len(series) > limit:
+                del series[:-limit]
 
     def gen_reset(self) -> None:
         """Reset the agent to its initial state.

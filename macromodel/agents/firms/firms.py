@@ -20,6 +20,99 @@ from macromodel.markets.goods_market.value_type import ValueType
 from macromodel.util.function_mapping import functions_from_model, update_functions
 
 
+# Per-industry series written into the lightweight HDF5 for diagnostics
+# (see :meth:`Firms.industry_timeseries_dataframes`).
+_INDUSTRY_TS_SUM_FIELDS = (
+    "production",
+    "estimated_demand",
+    "real_amount_sold",
+    "inventory",
+    "limiting_intermediate_inputs",
+    # The capital-side constraint.  Without it the shallow summary cannot say whether a
+    # supply-constrained run is short of intermediate inputs or of capital, which is the
+    # first question to ask of any collapse; the full multi-GB save was previously the
+    # only way to see it.
+    "limiting_capital_inputs",
+    # Wage decomposition.  The labour share is wages / value added, and wages are
+    # employment x wage rate -- without both terms the shallow summary cannot say whether a
+    # rising labour share comes from hiring or from a spiralling wage *rate*, which is the
+    # first question to ask of any wage-driven collapse.
+    "total_wage",
+    "number_of_employees",
+    # Value-added components. GVA by sector is nominal production less intermediate
+    # consumption, and neither term was exported -- so the shallow summary could show a
+    # sector's OUTPUT moving without saying whether the value it added moved with it.
+    # Both are NOMINAL (they are cost/receipt aggregates), unlike `production`, which is
+    # real; see the series_units table written alongside.
+    "used_intermediate_inputs_costs",
+    "taxes_paid_on_production",
+)
+_INDUSTRY_TS_WEIGHTED_FIELDS = {
+    "price": "production",
+    # Employment-weighted: these are per-worker/intensive quantities, so summing them
+    # across firms would be meaningless.
+    "real_wage_per_capita": "number_of_employees",
+    "wage_tightness_markup": "number_of_employees",
+    # The two productivity terms wages are indexed to.  set_employee_income multiplies
+    # each stayer's wage by current/prev labour_productivity_factor, and set_offered_wage
+    # multiplies by that ratio *and* the TFP multiplier -- so without these series the
+    # shallow summary cannot say which productivity term (if either) is driving a wage
+    # spiral, only that one is happening.
+    "labour_productivity_factor": "number_of_employees",
+    "labour_productivity": "number_of_employees",
+}
+
+
+def _weighted_effective_coefficient(
+    base_coeff: float,
+    multipliers: np.ndarray | None,
+    firms_idx: np.ndarray,
+    input_j: int,
+    production: np.ndarray,
+) -> float | None:
+    """Production-weighted effective coefficient ``base * multiplier`` for one (industry, input).
+
+    The effective intermediate/capital coefficient of a firm is
+    ``base_coeff * multiplier[firm, input_j]``.  This collapses the firms of a
+    single industry to one representative value, weighting by current
+    production (falling back to a simple mean when production is all zero), so
+    that overwriting the coefficient preserves total input use.  Returns
+    ``None`` when there are no firms for the industry.
+    """
+    if firms_idx.size == 0:
+        return None
+    if multipliers is None:
+        return float(base_coeff)
+    mult = np.asarray(multipliers)[firms_idx, input_j].astype(float)
+    weights = production[firms_idx].astype(float) if production is not None else None
+    if weights is None or weights.sum() <= 0.0:
+        mean_mult = float(np.mean(mult)) if mult.size else 1.0
+    else:
+        mean_mult = float(np.average(mult, weights=weights))
+    return float(base_coeff) * mean_mult
+
+
+def _intensity_target_productivity(
+    baseline_eff: float,
+    anchor_intensity: float,
+    current_intensity: float,
+) -> float | None:
+    """Target productivity coefficient for the intensity-target linkage.
+
+    Productivity is the reciprocal of energy-per-output, so a rise in CIMS
+    intensity relative to the anchor year lowers productivity:
+
+        target = baseline_eff * (anchor_intensity / current_intensity)
+
+    Returns ``None`` (leave the coefficient unchanged) when any input is not a
+    usable positive, finite number.
+    """
+    for v in (baseline_eff, anchor_intensity, current_intensity):
+        if v is None or not np.isfinite(v) or v <= 0.0:
+            return None
+    return float(baseline_eff) * (float(anchor_intensity) / float(current_intensity))
+
+
 class Firms(Agent):
     """A collection of producing firms in the economy.
 
@@ -353,6 +446,242 @@ class Firms(Agent):
 
         return df
 
+    def set_transmission_loss_rate(self, good_index: int, rate: float) -> None:
+        """Gross up every BUYER's requirement for a good by its transmission loss rate.
+
+        The model has no transmission losses: electricity production tracks electricity
+        demand exactly, so it cannot reach CER's generation path, which exceeds CER's
+        end-use demand by 13.8% (2020) to 17.4% (2035).
+
+        The physically obvious representation -- the power sector consuming its own output
+        -- does NOT work here. A self-input cannot bootstrap in a sequential model: firms
+        must purchase inputs before producing, so D needs D that does not yet exist,
+        production falls, less D exists, and it spirals. Measured: -100% production and
+        43/43 sectors dead, with D->D use stuck at 4.2% instead of the intended 7%.
+
+        Grossing up the buyers is equivalent in accounting -- generation = delivered /
+        (1 - rate) either way -- with no circularity, and is arguably the better reading,
+        since transmission loss is something the buyer pays for rather than something the
+        generator consumes.
+
+        Applied to EVERY buyer of the good, not only the linkage-owned pairs. Losses are a
+        property of the grid, not of the CER scenario, so restricting them to the four
+        linked sectors covered barely a fifth of electricity demand and lifted production
+        by 0.5pp instead of the ~7pp intended. The producing sector itself is excluded --
+        that is the self-input case, which cannot bootstrap in a sequential model.
+        """
+        if rate is None or not np.isfinite(rate) or not (0.0 < rate < 0.9):
+            return
+        j = int(good_index)
+        factor = 1.0 / (1.0 - float(rate))
+        base = self.base_intermediate_inputs_productivity_matrix
+        # Every industry that actually uses this good: a finite, positive productivity
+        # entry. inf marks "this industry does not use it".
+        row = np.asarray(base[j], dtype=float)
+        buyers = [
+            i for i in range(base.shape[1])
+            if i != j and np.isfinite(row[i]) and row[i] > 0.0
+        ]
+        if not buyers:
+            return
+        if not hasattr(self, "_loss_grossed_baseline"):
+            self._loss_grossed_baseline: dict[tuple[int, int], float] = {}
+        owned = getattr(self, "_linkage_owned_pairs", {}).get(
+            "intermediate_tech_multipliers", set()
+        )
+        for i in buyers:
+            key = (i, j)
+            # Store the pre-loss coefficient so repeated milestone calls re-derive from it
+            # rather than compounding the gross-up.
+            #
+            # For pairs the linkage OWNS, that store has to be refreshed every milestone.
+            # This runs after `link()`, which rewrites those coefficients from the anchor
+            # baseline each time, so a value cached at the first milestone is a STALE
+            # pre-loss coefficient -- and writing `stale / factor` back silently discarded
+            # every subsequent linkage update.  With `electricity_own_use` on, that froze
+            # every buyer's electricity coefficient at its first-milestone value and
+            # blocked electrification outright: row C20 realised 1-23% of the share change
+            # the linkage had written for it (AB 0.07, ON 0.04, NS 0.01).  Unowned pairs
+            # keep the cached value, because nothing rewrites them and re-deriving from
+            # the live entry there really would compound the gross-up.
+            if key not in self._loss_grossed_baseline or key in owned:
+                self._loss_grossed_baseline[key] = float(base[j, i])
+            productivity = self._loss_grossed_baseline[key]
+            if np.isfinite(productivity) and productivity > 0.0:
+                base[j, i] = productivity / factor
+
+    def set_capital_intensity_uplift(self, industry_indices, factor: float | None) -> None:
+        """Raise how much capital a sector needs per unit of output, by *factor*.
+
+        THE POINT IS TO DECOUPLE INVESTMENT FROM THE PRODUCTION CEILING. The capacity
+        floor is already an investment channel -- it raises the sector's capital TARGET,
+        firms buy capital to reach it, and that is GFCF -- but the same capital also raises
+        `limiting_capital_inputs`, which is stock x productivity, so a floor scaled up to
+        represent higher investment silently licenses more OUTPUT too. For the power sector
+        that is wrong twice over: sector D has no capacity-factor concept, so a ceiling set
+        from capacity produces at capacity, and CER's generation is well below that.
+
+        Measured on the 2050 Net-zero pair, scaling D's floor by the investment multiplier
+        without this: provincial generation share-distance against CER 0.081 -> 0.176,
+        Manitoba 1.14 -> 1.82, and total incremental investment FELL (+786bn -> +665bn)
+        because the misallocated power capital crowded out better uses.
+
+        Dividing capital productivity by the same factor the floor is multiplied by cancels
+        on the ceiling (stock x productivity is unchanged) and compounds on investment. It
+        is also the physically honest reading: net-zero generation needs more capital per
+        MWh because wind and solar have low capacity factors, and "more capital per unit of
+        output" IS a productivity reduction.
+
+        NOT `transition_capital`, which lowers the same productivity but with NO matching
+        floor -- that tells a sector its output got harder to produce and constrains it.
+        Measured there, D's 2035 employment fell 12.2%. The pairing is what makes this
+        expansionary rather than contractionary.
+
+        The pre-uplift coefficient is cached per (capital good, sector) so repeated
+        milestone calls re-derive from it rather than compounding, exactly as
+        `set_transmission_loss_rate` does.
+
+        Args:
+            industry_indices: sectors whose capital requirement to raise; empty/None clears.
+            factor: multiplier on capital needed per unit output; <= 1 is a no-op.
+        """
+        if not hasattr(self, "_capital_uplift_baseline"):
+            self._capital_uplift_baseline: dict[tuple[int, int], float] = {}
+        # Any positive factor, not just > 1. The composed factor is
+        # `floor_index / target_ceiling_index`, and the investment multiplier is BELOW 1 in
+        # seven of ten provinces (AB 0.835, ON 0.777, SK 0.812 ...), so a `> 1` guard drops
+        # exactly the term that keeps their ceilings on CER's generation path -- measured,
+        # it left them 15-20% under it. Below 1 means the sector needs LESS capital per unit
+        # of output, which is the arithmetic consequence of a floor scaled down by that
+        # multiplier; it is not a claim about technology.
+        if not industry_indices or factor is None or not np.isfinite(factor) or factor <= 0.0:
+            return
+        if abs(factor - 1.0) < 1e-9:
+            return
+        base = self.base_capital_inputs_productivity_matrix
+        # Pairs `link()` rewrites every milestone. Their cached pre-uplift value must be
+        # REFRESHED, or the uplift re-derives from a stale coefficient and silently
+        # discards everything link() has written since. Unowned pairs must keep the cached
+        # value, because nothing rewrites them and re-reading the live entry there would
+        # compound the uplift instead. This is the identical hazard, and identical fix, as
+        # `set_transmission_loss_rate` -- which froze every buyer's electricity coefficient
+        # at its first-milestone value before it was found.
+        owned = getattr(self, "_linkage_owned_pairs", {}).get("capital_tech_multipliers", set())
+        for i in industry_indices:
+            i = int(i)
+            if not (0 <= i < base.shape[1]):
+                continue
+            for j in range(base.shape[0]):
+                coeff = float(base[j, i])
+                # inf marks "this sector does not use this capital good"
+                if not np.isfinite(coeff) or coeff <= 0.0:
+                    continue
+                key = (j, i)
+                if key not in self._capital_uplift_baseline or (i, j) in owned:
+                    self._capital_uplift_baseline[key] = coeff
+                base[j, i] = self._capital_uplift_baseline[key] / float(factor)
+
+    def set_capacity_floor(self, industry_indices, index: float | None) -> None:
+        """Floor the reference capital stock of the given industries at ``initial * index``.
+
+        Turns an exogenous capacity path (CER's installed-capacity dataset) into
+        investment: the capital target rises, firms buy capital, and the capital ceiling
+        on production rises with it.  A no-op when the configured target-capital function
+        does not support it.
+
+        Args:
+            industry_indices: industries to floor; empty/None clears the floor.
+            index: capacity index relative to initial capital stock.
+        """
+        fn = self.functions.get("target_capital_inputs")
+        if fn is None or not hasattr(fn, "set_minimum_capital_stock"):
+            return
+        if not industry_indices or index is None:
+            fn.set_minimum_capital_stock(None, None)
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        fn.set_minimum_capital_stock(mask, float(index))
+
+    def set_capacity_ceiling(self, industry_indices, index: float | None) -> None:
+        """Cap the reference capital stock of the given industries at ``initial * index``.
+
+        The capacity floor's twin. The floor turns CER's capacity path into a LOWER
+        bound on investment; nothing bounded it from above, so a slack province could
+        over-build without limit -- Manitoba's D investment ran 3.3x by 2050 against a
+        CER generation path of 1.27x, and the over-production fed the pool's
+        slack-capture loop. A no-op when the configured target-capital function does
+        not support it.
+        """
+        fn = self.functions.get("target_capital_inputs")
+        if fn is None or not hasattr(fn, "set_maximum_capital_stock"):
+            return
+        if not industry_indices or index is None:
+            fn.set_maximum_capital_stock(None, None)
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        fn.set_maximum_capital_stock(mask, float(index))
+
+    def industry_timeseries_dataframes(self) -> dict[str, "pd.DataFrame"]:
+        """Per-industry time series (timesteps x industries) for lightweight diagnostics.
+
+        Aggregates the firm-level history to industry level so the shallow HDF5
+        can carry a compact, lazily-sliceable per-sector view without a full
+        (multi-GB) simulation save: quantity fields are summed across the firms
+        in each industry; ``price`` is a production-weighted average.  Columns are
+        industry codes.
+        """
+        industry = np.asarray(self.states["Industry"])
+        n_ind = len(self.industries)
+
+        def agg_sum(field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            out = np.zeros((len(hist), n_ind))
+            for t, arr in enumerate(hist):
+                np.add.at(out[t], industry, np.asarray(arr, dtype=float).ravel())
+            return out
+
+        def agg_weighted(field: str, weight_field: str) -> np.ndarray:
+            hist = self.ts.historic(field)
+            whist = self.ts.historic(weight_field)
+            steps = min(len(hist), len(whist))
+            out = np.zeros((steps, n_ind))
+            for t in range(steps):
+                vals = np.asarray(hist[t], dtype=float).ravel()
+                weights = np.asarray(whist[t], dtype=float).ravel()
+                num = np.zeros(n_ind)
+                den = np.zeros(n_ind)
+                np.add.at(num, industry, vals * weights)
+                np.add.at(den, industry, weights)
+                out[t] = np.divide(num, den, out=np.zeros(n_ind), where=den > 0)
+            return out
+
+        cols = list(self.industries)
+        frames: dict[str, pd.DataFrame] = {}
+        for field in _INDUSTRY_TS_SUM_FIELDS:
+            frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
+        for field, weight_field in _INDUSTRY_TS_WEIGHTED_FIELDS.items():
+            frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+
+        # Gross value added, derived: nominal output less intermediate consumption.
+        # Exported rather than left to the consumer because getting it wrong is easy --
+        # `production` is REAL and `used_intermediate_inputs_costs` is NOMINAL, so the
+        # two cannot be differenced without applying `price` first. That exact mixed-units
+        # mistake has already cost this project one round of invalid analysis.
+        try:
+            prod = frames["production"].to_numpy()
+            price = frames["price"].to_numpy()
+            inter = frames["used_intermediate_inputs_costs"].to_numpy()
+            steps = min(len(prod), len(price), len(inter))
+            frames["gva_nominal"] = pd.DataFrame(
+                prod[:steps] * price[:steps] - inter[:steps], columns=cols
+            )
+            frames["production_nominal"] = pd.DataFrame(
+                prod[:steps] * price[:steps], columns=cols
+            )
+        except Exception:  # noqa: BLE001 - derived series must not break the export
+            pass
+        return frames
+
     def reset(self, configuration: FirmsConfiguration) -> None:
         """Reset the firms to initial state with new configuration.
 
@@ -656,7 +985,7 @@ class Firms(Agent):
         Returns:
             np.ndarray: Target production quantities for each firm
         """
-        return self.functions["target_production"].compute_target_production(
+        target = self.functions["target_production"].compute_target_production(
             current_estimated_demand=self.ts.current("estimated_demand"),
             initial_inventory=self.ts.initial("inventory"),
             previous_inventory=self.ts.current("inventory"),
@@ -673,6 +1002,149 @@ class Firms(Agent):
             * np.minimum(0.0, self.ts.current("deposits")),
             interest_paid_on_loans=self.ts.current("interest_paid_on_loans"),
         )
+        return self._apply_production_gate(
+            self._apply_production_floor(self._apply_production_target(target))
+        )
+
+    def set_production_floor(self, industry_indices, index: float | None) -> None:
+        """Floor selected industries' target production at ``initial * index``.
+
+        THE GATE'S MISSING TWIN, for utilisation drifting DOWN rather than up.  The
+        gate (below) clips over-producers whose output-per-capital escapes upward
+        (Manitoba); nothing handled a province whose demand expectations lag a fast
+        external build-out, leaving capacity-floored capital idle -- measured for
+        Alberta's D under Net-zero (2026-08-23): realised output reaches only 0.66 of
+        CER's generation path by 2050 while its capital tracks CER capacity, EVEN
+        THOUGH Alberta's electricity is the cheapest in the country (0.63 vs
+        neighbours 1.5-2.3) -- its sellers are sold out at pool time because they
+        produced to lagging expectations, and the marginal MWh is imported at 3x the
+        price.  Lifting the TARGET to the external path adds supply into a market
+        where the province is already price-competitive, so the market absorbs it by
+        displacing imports rather than being force-fed.
+
+        A LIFT, not an override: a target already above the floor is untouched, so
+        this composes with set_production_target (applied before) and
+        set_production_gate (applied after -- the gate wins where both bind).  Same
+        per-firm accumulation semantics as the gate/target siblings; input and
+        capital constraints still bind downstream, so an unreachable floor shows up
+        as a gap, not a fabrication.
+        """
+        if not industry_indices or index is None:
+            self._production_floor_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_floor_by_firm", None) is None or \
+                self._production_floor_by_firm.shape[0] != mask.shape[0]:
+            self._production_floor_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_floor_by_firm[mask] = float(index)
+
+    def _apply_production_floor(self, target: np.ndarray) -> np.ndarray:
+        """Lift the target for floored firms.  No-op if unset."""
+        idx = getattr(self, "_production_floor_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = np.maximum(out[mask], initial[mask] * idx[mask])
+        return out
+
+    def set_production_gate(self, industry_indices, index: float | None) -> None:
+        """Cap selected industries' target production at ``initial * index``.
+
+        THE CAPACITY GATE, and the missing physical constraint the 2026-08-11
+        capacity-factor diagnosis named: the Leontief limiting-capital computation
+        ignores `capital_inputs_utilisation_rate` and uses EFFECTIVE (drifting)
+        coefficients, so technical investment quietly raises output-per-capital --
+        measured at ~1.5x of base by 2035-45 for Manitoba's D under a binding capital
+        ceiling, while every uncapped province held ~1.0. A capital-side bound cannot
+        close that valve; a production-side gate can, and unlike the S7 tighter
+        ceiling it cannot migrate the excess to the next-slackest province, because
+        every gated province is capped at its own external path.
+
+        A CLAMP, not an override: production below the gate is untouched, so this
+        composes with (and is applied after) set_production_target. Same per-firm
+        accumulation semantics as the floor/ceiling/target siblings.
+        """
+        if not industry_indices or index is None:
+            self._production_gate_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_gate_by_firm", None) is None or \
+                self._production_gate_by_firm.shape[0] != mask.shape[0]:
+            self._production_gate_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_gate_by_firm[mask] = float(index)
+
+    def _apply_production_gate(self, target: np.ndarray) -> np.ndarray:
+        """Clamp the target for gated firms.  No-op if unset."""
+        idx = getattr(self, "_production_gate_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = np.minimum(out[mask], initial[mask] * idx[mask])
+        return out
+
+    def set_production_target(self, industry_indices, index: float | None) -> None:
+        """Drive selected industries' target production to ``initial * index``.
+
+        EXOGENOUS PRODUCTION PATH. Where a linkage supplies an external production
+        trajectory -- CER's published oil, gas and coal output -- this replaces the firms'
+        own demand-driven target for those industries. Those sectors become INPUTS to the
+        run rather than results of it, which is the honest framing and should be stated
+        wherever the numbers are used.
+
+        Why this rather than demand-side control: an exogenous demand path is absorbed
+        only partially, because firms produce to their own expected demand and expectations
+        adapt to realised sales. Six demand-side attempts are recorded in
+        docs/cer_macroabm/supply_side_linkage_design.md; the best moved gas from -14.1% to
+        -2.1% against a target of +25.5%, with capital unconstrained and inputs slack. The
+        sector does not expand to fill an order book it has not yet seen.
+
+        It is applied to the TARGET, not
+        to production itself, so the input and capital constraints still bind: if the
+        sector physically cannot reach the path, production falls short and that shows up
+        as a gap rather than being papered over.
+
+        Args:
+            industry_indices: industries to drive; empty/None clears.
+            index: production index relative to each firm's INITIAL production.
+        """
+        # PER-FIRM array (NaN = not driven), so several industries can be driven to
+        # DIFFERENT indices. A single mask plus a single scalar would let each call
+        # overwrite the last -- the exact latent bug found in set_minimum_capital_stock,
+        # where flooring two sectors silently kept only one.
+        if not industry_indices or index is None:
+            self._production_target_by_firm = None
+            return
+        mask = np.isin(np.asarray(self.states["Industry"]), list(industry_indices))
+        if getattr(self, "_production_target_by_firm", None) is None or                 self._production_target_by_firm.shape[0] != mask.shape[0]:
+            self._production_target_by_firm = np.full(mask.shape[0], np.nan)
+        self._production_target_by_firm[mask] = float(index)
+
+    def _apply_production_target(self, target: np.ndarray) -> np.ndarray:
+        """Override the target for firms on an exogenous production path.  No-op if unset."""
+        idx = getattr(self, "_production_target_by_firm", None)
+        if idx is None or idx.shape[0] != target.shape[0]:
+            return target
+        mask = np.isfinite(idx)
+        if not mask.any():
+            return target
+        initial = np.asarray(self.ts.initial("production"), dtype=float).ravel()
+        if initial.shape != target.shape:
+            return target
+        out = np.array(target, copy=True)
+        out[mask] = initial[mask] * idx[mask]
+        return out
 
     def compute_target_intermediate_inputs_production(self) -> np.ndarray:
         """Calculate target intermediate input production levels.
@@ -1014,6 +1486,7 @@ class Firms(Agent):
         current_estimated_ppi_inflation: np.ndarray,
         previous_average_good_prices: np.ndarray,
         ppi_during: np.ndarray,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Set prices for each firm's output.
 
@@ -1054,6 +1527,7 @@ class Firms(Agent):
             ),
             ppi_during=ppi_during,
             current_time=len(self.ts.historic("price")),
+            extra_marginal_taxes=extra_marginal_taxes,
         )
 
     def compute_unconstrained_demand_for_intermediate_inputs(
@@ -1262,6 +1736,7 @@ class Firms(Agent):
         previous_good_prices: np.ndarray,
         expected_inflation: float,
         assume_zero_growth: bool = False,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> None:
         """Prepare firms' buying plans for goods market.
 
@@ -1278,6 +1753,12 @@ class Firms(Agent):
             expected_inflation (float): Expected inflation rate
             assume_zero_growth (bool, optional): Whether to assume no growth. Defaults to False.
         """
+        # Firms evaluate affordability at the price they will actually pay, so a
+        # marginal tax (e.g. OBPS) tightens the budget for the same real basket.
+        _emt = (
+            np.zeros_like(previous_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        _taxed_prices = previous_good_prices + _emt
         # Target intermediate inputs
         if assume_zero_growth:
             self.ts.target_intermediate_inputs.append(self.ts.initial("target_intermediate_inputs"))
@@ -1289,7 +1770,7 @@ class Firms(Agent):
                     ),
                     target_short_term_credit=self.ts.current("target_short_term_credit"),
                     received_short_term_credit=self.ts.current("received_short_term_credit"),
-                    previous_good_prices=previous_good_prices,
+                    previous_good_prices=_taxed_prices,
                     expected_inflation=expected_inflation,
                 )
             )
@@ -1303,7 +1784,7 @@ class Firms(Agent):
                     unconstrained_target_capital_inputs=self.ts.current("unconstrained_target_capital_inputs"),
                     target_long_term_credit=self.ts.current("target_long_term_credit"),
                     received_long_term_credit=self.ts.current("received_long_term_credit"),
-                    previous_good_prices=previous_good_prices,
+                    previous_good_prices=_taxed_prices,
                     expected_inflation=expected_inflation,
                 )
             )
@@ -1332,6 +1813,7 @@ class Firms(Agent):
         exchange_rate_usd_to_lcu: float,
         previous_good_prices: np.ndarray,
         expected_inflation: float,
+        extra_marginal_taxes: Optional[np.ndarray] = None,
     ) -> None:
         """Prepare all aspects of goods market participation.
 
@@ -1348,6 +1830,7 @@ class Firms(Agent):
         self.set_exchange_rate(exchange_rate_usd_to_lcu)
         self.prepare_buying_goods(
             previous_good_prices=previous_good_prices,
+            extra_marginal_taxes=extra_marginal_taxes,
             expected_inflation=expected_inflation,
         )
         self.prepare_selling_goods()
@@ -1382,7 +1865,7 @@ class Firms(Agent):
         )
         """
 
-    def compute_gross_fixed_capital_formation(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_gross_fixed_capital_formation(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate gross fixed capital formation.
 
         Computes value of capital goods purchases at current prices.
@@ -1393,9 +1876,12 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of capital formation by industry
         """
-        return (self.ts.current("real_amount_bought_as_capital_goods") * current_good_prices).sum(axis=0)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
 
-    def update_total_newly_bought_costs(self, current_good_prices: np.ndarray) -> None:
+    def update_total_newly_bought_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> None:
         """Update costs of newly purchased inputs.
 
         Allocates purchase costs between:
@@ -1406,8 +1892,11 @@ class Firms(Agent):
         Args:
             current_good_prices (np.ndarray): Current prices for valuation
         """
-        amount_ii = (self.ts.current("real_amount_bought_as_intermediate_inputs") * current_good_prices).sum(axis=1)
-        amount_cap = (self.ts.current("real_amount_bought_as_capital_goods") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        amount_ii = (self.ts.current("real_amount_bought_as_intermediate_inputs") * (current_good_prices + _emt)).sum(axis=1)
+        amount_cap = (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=1)
 
         # Just take fractions
         self.ts.total_intermediate_inputs_bought_costs.append(
@@ -1439,7 +1928,7 @@ class Firms(Agent):
             excess_demand=self.ts.current("real_excess_demand"),
         )
 
-    def compute_nominal_production(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_nominal_production(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate nominal value of production.
 
         Args:
@@ -1448,7 +1937,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Nominal production value for each firm
         """
-        return current_good_prices[self.states["Industry"]] * self.ts.current("production")
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (current_good_prices + _emt)[self.states["Industry"]] * self.ts.current("production")
 
     def compute_inventory(self) -> np.ndarray:
         """Calculate end-of-period inventory levels.
@@ -1467,7 +1959,7 @@ class Firms(Agent):
             self.ts.current("inventory") + self.ts.current("production") - self.ts.current("real_amount_sold"),
         )
 
-    def compute_nominal_inventory(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_nominal_inventory(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate nominal value of inventories.
 
         Args:
@@ -1476,7 +1968,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Nominal inventory value for each firm
         """
-        return current_good_prices[self.states["Industry"]] * self.ts.current("inventory")
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (current_good_prices + _emt)[self.states["Industry"]] * self.ts.current("inventory")
 
     def compute_used_intermediate_inputs(self):
         """Calculate intermediate inputs used in production.
@@ -1498,7 +1993,7 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
         )
 
-    def compute_used_intermediate_inputs_costs(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_used_intermediate_inputs_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate cost of intermediate inputs used in production.
 
         Args:
@@ -1507,7 +2002,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Cost of used intermediate inputs for each firm
         """
-        return (self.ts.current("used_intermediate_inputs") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("used_intermediate_inputs") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_intermediate_inputs_stock(self) -> np.ndarray:
         """Calculate end-of-period intermediate input stocks.
@@ -1527,7 +2025,7 @@ class Firms(Agent):
             + self.ts.current("real_amount_bought_as_intermediate_inputs"),
         )
 
-    def compute_intermediate_inputs_stock_value(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_intermediate_inputs_stock_value(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate value of intermediate input stocks.
 
         Args:
@@ -1536,7 +2034,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of intermediate input stocks for each firm
         """
-        return (self.ts.current("intermediate_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("intermediate_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_used_capital_inputs(self):
         """Calculate capital inputs used in production.
@@ -1560,7 +2061,7 @@ class Firms(Agent):
             substitution_bundle_matrix=self.substitution_bundles,
         )
 
-    def compute_used_capital_inputs_costs(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_used_capital_inputs_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate cost of capital inputs used in production.
 
         Args:
@@ -1569,12 +2070,16 @@ class Firms(Agent):
         Returns:
             np.ndarray: Cost of used capital inputs for each firm
         """
-        return (self.ts.current("used_capital_inputs") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("used_capital_inputs") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_expected_capital_inputs_stock_value(
         self,
         current_good_prices: np.ndarray,
         estimated_inflation: float,
+        extra_marginal_taxes: Optional[np.ndarray] = None
     ) -> np.ndarray:
         """Calculate expected future value of capital input stocks.
 
@@ -1590,7 +2095,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Expected value of capital input stocks for each firm
         """
-        return (1 + estimated_inflation) * (self.ts.current("capital_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (1 + estimated_inflation) * (self.ts.current("capital_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_capital_inputs_stock(self) -> np.ndarray:
         """Calculate end-of-period capital input stocks.
@@ -1616,7 +2124,7 @@ class Firms(Agent):
             self.ts.current("capital_inputs_stock") - self.ts.current("used_capital_inputs") + delayed_bought_capital,
         )
 
-    def compute_capital_inputs_stock_value(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_capital_inputs_stock_value(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate value of capital input stocks.
 
         Args:
@@ -1625,7 +2133,10 @@ class Firms(Agent):
         Returns:
             np.ndarray: Value of capital input stocks for each firm
         """
-        return (self.ts.current("capital_inputs_stock") * current_good_prices).sum(axis=1)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        return (self.ts.current("capital_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
 
     def compute_total_inventory_change(self) -> np.ndarray:
         """Calculate nominal change in inventory value.
@@ -1799,7 +2310,7 @@ class Firms(Agent):
         else:
             return bad_firm_loans / total_loans_granted
 
-    def compute_equity(self, current_good_prices: np.ndarray) -> np.ndarray:
+    def compute_equity(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate equity value for each firm.
 
         Computes firm equity as:
@@ -1812,8 +2323,11 @@ class Firms(Agent):
         Returns:
             np.ndarray: Equity values for each firm
         """
-        material = np.dot(self.ts.current("intermediate_inputs_stock"), current_good_prices)
-        capital = np.dot(self.ts.current("capital_inputs_stock"), current_good_prices)
+        _emt = (
+            np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
+        )
+        material = np.dot(self.ts.current("intermediate_inputs_stock"), (current_good_prices + _emt))
+        capital = np.dot(self.ts.current("capital_inputs_stock"), (current_good_prices + _emt))
         return (
             self.ts.current("inventory") * self.ts.current("price")
             + material
@@ -1850,6 +2364,7 @@ class Firms(Agent):
         use_emission_multiplier: bool = False,
         readjusted_factors_ch4: Optional[np.ndarray] = None,
         emitting_indices_ch4: Optional[list | np.ndarray] = None,
+        b06_oil_emission_share: Optional[float] = None,
     ):
         """Update emissions from production activities.
 
@@ -1905,14 +2420,34 @@ class Firms(Agent):
         inputs_emissions_disaggregated[refining_firms] = 0
         capital_emissions_disaggregated[refining_firms] = 0
 
+        if inputs_emissions_disaggregated.shape[1] == 4:
+            gas_inputs = inputs_emissions_disaggregated[:, 1]
+            oil_inputs = inputs_emissions_disaggregated[:, 2]
+            refined_inputs = inputs_emissions_disaggregated[:, 3]
+            gas_capital = capital_emissions_disaggregated[:, 1]
+            oil_capital = capital_emissions_disaggregated[:, 2]
+            refined_capital = capital_emissions_disaggregated[:, 3]
+        else:
+            # Merged OECD-50 scheme: column 1 is the blended oil-and-gas B06 sector.
+            # Split it into exact Oil/Gas series with oil's emission share of the blend
+            # (constant, computed at Country construction from the stored 4-factor
+            # array); the two sum back to the merged column exactly.
+            share = 0.5 if b06_oil_emission_share is None else float(b06_oil_emission_share)
+            oil_inputs = share * inputs_emissions_disaggregated[:, 1]
+            gas_inputs = (1.0 - share) * inputs_emissions_disaggregated[:, 1]
+            refined_inputs = inputs_emissions_disaggregated[:, 2]
+            oil_capital = share * capital_emissions_disaggregated[:, 1]
+            gas_capital = (1.0 - share) * capital_emissions_disaggregated[:, 1]
+            refined_capital = capital_emissions_disaggregated[:, 2]
+
         self.ts.coal_inputs_emissions.append(inputs_emissions_disaggregated[:, 0])
-        self.ts.gas_inputs_emissions.append(inputs_emissions_disaggregated[:, 1])
-        self.ts.oil_inputs_emissions.append(inputs_emissions_disaggregated[:, 2])
-        self.ts.refined_products_inputs_emissions.append(inputs_emissions_disaggregated[:, 3])
+        self.ts.gas_inputs_emissions.append(gas_inputs)
+        self.ts.oil_inputs_emissions.append(oil_inputs)
+        self.ts.refined_products_inputs_emissions.append(refined_inputs)
         self.ts.coal_capital_emissions.append(capital_emissions_disaggregated[:, 0])
-        self.ts.gas_capital_emissions.append(capital_emissions_disaggregated[:, 1])
-        self.ts.oil_capital_emissions.append(capital_emissions_disaggregated[:, 2])
-        self.ts.refined_products_capital_emissions.append(capital_emissions_disaggregated[:, 3])
+        self.ts.gas_capital_emissions.append(gas_capital)
+        self.ts.oil_capital_emissions.append(oil_capital)
+        self.ts.refined_products_capital_emissions.append(refined_capital)
 
     def compute_total_deposits(self) -> float:
         """Calculate total deposits across all firms.
@@ -2087,6 +2622,492 @@ class Firms(Agent):
 
         self.base_intermediate_inputs_productivity_matrix[input_index, producing_index] *= 1 + increase_pct
 
+    def link(
+        self,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+        *,
+        energy_intensity: pd.DataFrame | None = None,
+        anchor_energy_intensity: pd.DataFrame | None = None,
+        capital_intensity: pd.DataFrame | None = None,
+        anchor_capital_intensity: pd.DataFrame | None = None,
+        is_anchor: bool = False,
+        reset_multipliers: bool = True,
+        linkage_owns_coefficients: bool = False,
+        additive_intensity: bool = False,
+        transition_capital=None,
+    ) -> None:
+        """Adjust productivity matrices using CIMS linkage data (no file I/O).
+
+        Directly *sets* each comparable industry's energy-per-unit-output
+        coefficient toward the CIMS engineering result, index-anchored to a
+        base/anchor year.  Because the macroABM production technology is
+        Leontief (``used_input = production / productivity``), ``productivity``
+        is the reciprocal of energy-per-output, so this is a direct assignment
+        rather than a search.  Anchoring on the macroABM's own base-year
+        coefficient keeps the units (monetary IO intensities) and eliminates a
+        base-year level shock.  Both the energy (intermediate) and investment
+        (capital) channels are overwritten.  (A legacy damped "nudge" method
+        existed and was removed 2026-08 as unreachable; see git history.)
+
+        NOTE: this mutates the *base* coefficient matrices.  The affected
+        firm-level tech multipliers are reset to 1 (unless
+        ``reset_multipliers=False``) so the *effective* energy mix equals the
+        CIMS target at each milestone; between milestones the model is free to
+        drift them again (e.g. bundle arbitrage), which is what lets the
+        macroABM substitute across the 5-year period.
+
+        Args:
+            comparable_codes: Industry codes with a CIMS counterpart.
+            energy_bundle_codes: Energy-input codes (columns to update).
+            energy_intensity: current-year energy-per-output matrix.
+            anchor_energy_intensity: anchor-year energy-per-output matrix.
+            capital_intensity / anchor_capital_intensity: same for the capital
+                (investment) channel.
+            is_anchor: True when this call is at the anchor year; captures the
+                macroABM baseline effective coefficients and leaves the model
+                otherwise unchanged (index = 1).
+            reset_multipliers: reset the affected energy-column tech multipliers
+                to 1 at each milestone so the effective mix is overwritten.
+        """
+        self._link_intensity_target(
+            comparable_codes,
+            energy_bundle_codes,
+            energy_intensity=energy_intensity,
+            anchor_energy_intensity=anchor_energy_intensity,
+            capital_intensity=capital_intensity,
+            anchor_capital_intensity=anchor_capital_intensity,
+            is_anchor=is_anchor,
+            reset_multipliers=reset_multipliers,
+            linkage_owns_coefficients=linkage_owns_coefficients,
+            additive_intensity=additive_intensity,
+            transition_capital=transition_capital,
+        )
+
+    def _link_intensity_target(
+        self,
+        comparable_codes: list[str],
+        energy_bundle_codes: list[str],
+        *,
+        energy_intensity: pd.DataFrame | None,
+        anchor_energy_intensity: pd.DataFrame | None,
+        capital_intensity: pd.DataFrame | None,
+        anchor_capital_intensity: pd.DataFrame | None,
+        is_anchor: bool,
+        reset_multipliers: bool,
+        linkage_owns_coefficients: bool = False,
+        additive_intensity: bool = False,
+        transition_capital=None,
+    ) -> None:
+        """Set energy/capital productivity toward the CIMS intensity target.
+
+        See :meth:`link` for the method description.  On the anchor call this
+        captures the macroABM's baseline effective coefficients (production-
+        weighted across firms) and makes no other change; on later milestones it
+        sets ``base[j, i] = baseline_eff[j, i] * anchor_intensity / current_intensity``
+        (productivity is the reciprocal of intensity) and optionally resets the
+        affected firm multipliers to 1.
+        """
+        industries_list = list(self.industries)
+        industry_idx = np.asarray(self.states["Industry"])
+        production = np.asarray(self.ts.current("production")).ravel()
+        self._linkage_owns_coefficients = bool(linkage_owns_coefficients)
+
+        valid_comparable = [c for c in comparable_codes if c in industries_list]
+        valid_energy = [c for c in energy_bundle_codes if c in industries_list]
+
+        # (industry, input) pairs this linkage writes, per multiplier state.  Used to hold
+        # endogenous technical growth off coefficients the linkage owns.
+        if not hasattr(self, "_linkage_owned_pairs"):
+            self._linkage_owned_pairs: dict[str, set[tuple[int, int]]] = {}
+
+        # (base matrix, multiplier state key, current intensity, anchor intensity, baseline attr)
+        channels = [
+            (
+                self.base_intermediate_inputs_productivity_matrix,
+                "intermediate_tech_multipliers",
+                energy_intensity,
+                anchor_energy_intensity,
+                "_link_intermediate_baseline",
+            ),
+            (
+                self.base_capital_inputs_productivity_matrix,
+                "capital_tech_multipliers",
+                capital_intensity,
+                anchor_capital_intensity,
+                "_link_capital_baseline",
+            ),
+        ]
+
+        for base_matrix, mult_key, cur_intensity, anchor_intensity, baseline_attr in channels:
+            if anchor_intensity is None:
+                continue
+            baseline = getattr(self, baseline_attr, None)
+            if baseline is None:
+                baseline = {}
+                setattr(self, baseline_attr, baseline)
+            multipliers = self.states.get(mult_key)
+
+            for i_code in valid_comparable:
+                i = industries_list.index(i_code)
+                firms_i = np.where(industry_idx == i)[0]
+                for j_code in valid_energy:
+                    if j_code not in getattr(anchor_intensity, "columns", []):
+                        continue
+                    if i_code not in anchor_intensity.index:
+                        continue
+                    j = industries_list.index(j_code)
+
+                    if is_anchor or (i_code, j_code) not in baseline:
+                        # Capture the production-weighted effective coefficient
+                        # as the macroABM baseline for this (industry, energy).
+                        eff = _weighted_effective_coefficient(
+                            base_matrix[j, i], multipliers, firms_i, j, production
+                        )
+                        if eff is None or not np.isfinite(eff) or eff <= 0.0:
+                            continue
+                        baseline[(i_code, j_code)] = float(eff)
+
+                    baseline_eff = baseline.get((i_code, j_code))
+                    if baseline_eff is None:
+                        continue
+
+                    a_int = float(anchor_intensity.loc[i_code, j_code])
+                    c_int = (
+                        float(cur_intensity.loc[i_code, j_code])
+                        if cur_intensity is not None
+                        and i_code in cur_intensity.index
+                        and j_code in cur_intensity.columns
+                        else a_int
+                    )
+                    if additive_intensity and mult_key == "intermediate_tech_multipliers":
+                        # Additive share increments.  Ratio targeting multiplies CER's
+                        # intensity growth onto the model's own baseline coefficient,
+                        # which explodes wherever the two bases differ: the model's H49
+                        # electricity share of energy is 6.1% against CER transport's
+                        # 0.27% (H49 spans rail, transit and pipelines; CER transport is
+                        # road-dominated), so CER's x15 share growth drove H49 to 74%
+                        # electric and a x58 rise in its electricity use -- measured as
+                        # the ENTIRE economy-wide overshoot (+118pp of firms' +112%).
+                        # Adding CER's absolute share change, scaled by the sector's own
+                        # anchor-year total-energy coefficient, transfers CER's mix
+                        # change at the model's energy level instead: zero at the anchor
+                        # (no discontinuity), symmetric for declining fuels, floored so
+                        # a coefficient cannot go negative.
+                        coeff_base = 1.0 / baseline_eff
+                        sector_energy_coeff = sum(
+                            1.0 / baseline[(i_code, jj)]
+                            for jj in valid_energy
+                            if (i_code, jj) in baseline and baseline[(i_code, jj)] > 0.0
+                        )
+                        coeff_t = coeff_base + sector_energy_coeff * (c_int - a_int)
+                        coeff_t = max(coeff_t, 0.01 * coeff_base)
+                        target = 1.0 / coeff_t
+                    else:
+                        target = _intensity_target_productivity(baseline_eff, a_int, c_int)
+                    if target is None:
+                        continue
+
+                    base_matrix[j, i] = target
+                    self._linkage_owned_pairs.setdefault(mult_key, set()).add((i, j))
+                    if reset_multipliers and multipliers is not None:
+                        multipliers[firms_i, j] = 1.0
+
+        if transition_capital is not None:
+            self._apply_transition_capital(
+                transition_capital,
+                valid_comparable,
+                industries_list,
+                industry_idx,
+                production,
+                is_anchor=is_anchor,
+                reset_multipliers=reset_multipliers,
+            )
+
+    def anchor_energy_quantities(
+        self,
+        targets: dict[tuple[int, int], float],
+        *,
+        increments: dict[tuple[int, int], float] | None = None,
+        energy_indices: list[int] | None = None,
+        max_step: float = 2.0,
+    ) -> None:
+        """Pin firms' REAL intermediate purchases of a good to an external quantity path.
+
+        The firm analogue of :meth:`Households.anchor_energy_quantities`, and for the same
+        reason.  ``_link_intensity_target`` is OPEN-loop: it writes a technical
+        coefficient and never checks whether the purchase followed.  Measured on the
+        2026-08-09 Net-zero run, row ``C20`` realised only 1-23% of the electricity share
+        change the linkage had written for it (AB 0.07, ON 0.04, NS 0.01, QC 0.11,
+        SK 0.16, BC 0.23), even though the written coefficients reproduce CER's industrial
+        fuel shares exactly.  A coefficient is a desired ratio, not a delivered quantity:
+        firms rescale it by their own multipliers, ration against available supply and
+        substitute on relative price, and the target dissipates through all three.  The
+        household channel, which closes the loop, tracks CER to within 2-7%.
+
+        So read what was actually bought and correct toward the target.  This is the
+        firm-side complement to ``linkage_owns_coefficients``: CER owns the quantity path
+        for the pairs named in *targets*, the model owns everything else.
+
+        Call this AFTER :meth:`link` in the same milestone.  ``link`` rebuilds
+        ``base_intermediate_inputs_productivity_matrix`` from the anchor baseline every
+        time, so the correction has to be re-applied on top of that rebuild -- and has to
+        be CUMULATIVE and stored, or the rebuild would discard it and the coefficient
+        would oscillate between corrected and uncorrected.
+
+        Args:
+            targets: ``{(industry index, good index): desired real quantity as an index on
+                the anchor}``.  The anchor is whatever that pair actually bought on the
+                first call, so an index of 1.0 is a no-op by construction.
+            increments: ``{(industry index, good index): change in this good's demand
+                expressed as a SHARE of that industry's total anchor-year energy demand}``.
+                The additive alternative to an index, for pairs where the external model's
+                own anchor is too small to divide by -- see below.
+            energy_indices: the good indices that make up the energy total *increments* are
+                measured against.  Required for *increments*, ignored otherwise.
+            max_step: per-call bound on the adjustment.  The correction reads the last
+                period's realised purchases, so it is one milestone behind; the bound
+                stops that lag turning a large intensity change into an overshoot.
+
+        **Why increments exist.**  An index needs a base-year quantity in the denominator,
+        and the external path has pairs whose base is essentially zero and whose target
+        year is real -- electric vehicles in a small province, say.  Any positive base
+        passes a ``base > 0`` test however tiny, so those pairs produce enormous indices
+        (measured per province: up to 1800x, with PE and NL at a 95th percentile near
+        280), firms are told to buy 1800x their base-year electricity, and the run
+        collapses.  Aggregating provinces hides this by giving every pair a non-trivial
+        denominator, so it is a latent fragility in the anchor rather than a property of
+        per-province data.
+
+        The fix is not to drop those pairs -- that silently discards real demand -- but to
+        stop dividing by a number that is not there.  An increment carries the LEVEL
+        change instead, made unit-free by both sides dividing by a denominator that is
+        well determined: the industry's total energy.  ``delta`` of 0.4 means "this fuel
+        grew by 40% of the industry's base-year energy", and this method converts that to
+        model units with the industry's OWN anchor-year energy purchases:
+
+            desired = anchor(i, j) + delta * total anchor energy of industry i
+
+        which is well defined at a zero base and bounded by the industry's energy scale,
+        which is exactly what the ratio was not.
+        """
+        if not targets and not increments:
+            return
+        try:
+            bought = np.asarray(
+                self.ts.current("real_amount_bought_as_intermediate_inputs"), dtype=float
+            )
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return
+        if bought.ndim != 2 or bought.size == 0:
+            return
+
+        base_matrix = self.base_intermediate_inputs_productivity_matrix
+        industry_idx = np.asarray(self.states["Industry"])
+        multipliers = self.states.get("intermediate_tech_multipliers")
+
+        if not hasattr(self, "_linkage_owned_pairs"):
+            self._linkage_owned_pairs: dict[str, set[tuple[int, int]]] = {}
+        if not hasattr(self, "_firm_quantity_anchor"):
+            self._firm_quantity_anchor: dict[tuple[int, int], float] = {}
+        if not hasattr(self, "_firm_quantity_multiplier"):
+            self._firm_quantity_multiplier: dict[tuple[int, int], float] = {}
+        if not hasattr(self, "_firm_energy_anchor_total"):
+            self._firm_energy_anchor_total: dict[int, float] = {}
+
+        # One entry per pair.  An increment WINS over an index for the same pair: the
+        # index is precisely what the caller's guard rejected for it.
+        specs: dict[tuple[int, int], tuple[str, float]] = {
+            (int(i), int(j)): ("index", float(v)) for (i, j), v in targets.items()
+        }
+        for (i, j), delta in (increments or {}).items():
+            specs[(int(i), int(j))] = ("increment", float(delta))
+
+        # Capture the energy totals BEFORE applying anything, and on EVERY call rather
+        # than only on calls that carry an increment.  Measured later they would embed
+        # corrections this method had already made, and the increment would be scaled by
+        # a moving denominator instead of the anchor-year one it was derived against --
+        # and the first increment necessarily arrives a milestone AFTER the first call,
+        # because at the anchor year the external level change is zero by construction.
+        energy_j = [int(k) for k in (energy_indices or [])]
+        if energy_j:
+            for (i, _j) in specs:
+                if i in self._firm_energy_anchor_total:
+                    continue
+                firms_i = np.where(industry_idx == i)[0]
+                total = 0.0
+                for k in energy_j:
+                    # Exclude the self-input, as the caller's denominator does: an energy
+                    # sector's purchases of its own output are not anchored at all.
+                    if k == i or k >= bought.shape[1] or firms_i.size == 0:
+                        continue
+                    v = float(np.nansum(bought[firms_i, k]))
+                    if np.isfinite(v) and v > 0.0:
+                        total += v
+                self._firm_energy_anchor_total[i] = total
+
+        for (i, j), (kind, value) in specs.items():
+            if not np.isfinite(value) or (kind == "index" and value <= 0.0):
+                continue
+            if j >= bought.shape[1] or j >= base_matrix.shape[0] or i >= base_matrix.shape[1]:
+                continue
+            firms_i = np.where(industry_idx == i)[0]
+            if firms_i.size == 0:
+                continue
+            realised = float(np.nansum(bought[firms_i, j]))
+            if not np.isfinite(realised) or realised <= 0.0:
+                # A pair the model does not buy at all cannot be reached from here: the
+                # correction travels through a MULTIPLIER on an existing coefficient, and
+                # nothing multiplies zero into a quantity.  Not the case the increment is
+                # for, which is a real model purchase against a missing external base.
+                continue
+            anchor = self._firm_quantity_anchor.setdefault((i, j), realised)
+            if anchor <= 0.0:
+                continue
+            if kind == "index":
+                desired = anchor * value
+            else:
+                total = float(self._firm_energy_anchor_total.get(i, 0.0))
+                if not np.isfinite(total) or total <= 0.0:
+                    continue
+                desired = anchor + value * total
+            if not np.isfinite(desired) or desired <= 0.0:
+                # A negative increment big enough to zero the pair out: let the step bound
+                # below walk it down instead of writing a non-positive coefficient.
+                desired = anchor * (1.0 / max_step)
+            # `realised` already embeds the multiplier in force last milestone, so the
+            # ratio is the ADDITIONAL factor needed and compounds onto the stored one.
+            step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            mult = float(self._firm_quantity_multiplier.get((i, j), 1.0)) * step
+            mult = float(min(max(mult, 1e-3), 1e3))
+            self._firm_quantity_multiplier[(i, j)] = mult
+            # The matrix holds PRODUCTIVITY, the reciprocal of the input coefficient, so
+            # buying more per unit of output means dividing it.
+            current = float(base_matrix[j, i])
+            if not np.isfinite(current) or current <= 0.0:
+                continue
+            base_matrix[j, i] = current / mult
+            self._linkage_owned_pairs.setdefault("intermediate_tech_multipliers", set()).add(
+                (i, j)
+            )
+            if multipliers is not None:
+                multipliers[firms_i, j] = 1.0
+
+    def _apply_transition_capital(
+        self,
+        transition_capital,
+        valid_comparable: list[str],
+        industries_list: list[str],
+        industry_idx: np.ndarray,
+        production: np.ndarray,
+        *,
+        is_anchor: bool,
+        reset_multipliers: bool,
+    ) -> None:
+        """Raise a sector's capital requirement for the equipment that lets it switch fuel.
+
+        Without this, changing the energy mix costs only the fuel price difference, so
+        energy demand responds to price far more sharply than any real economy could -- a
+        firm cannot burn electricity instead of diesel without first buying the equipment.
+        The uplift multiplies the sector's baseline requirement for machinery, electrical
+        equipment and construction, so productivity (its reciprocal) is divided by
+        ``1 + uplift``.
+
+        Crucially this needs no new rate rule: the model's existing capital machinery does
+        the pacing.  ``compute_target_capital_inputs`` already applies firms' own financial
+        constraints and ``limiting_capital_inputs`` already gates production on installed
+        capital, so how fast a sector can switch falls out of what it can finance.  A no-op
+        when no table is supplied.
+        """
+        if transition_capital is None or getattr(transition_capital, "empty", True):
+            return
+        cap_matrix = self.base_capital_inputs_productivity_matrix
+        cap_multipliers = self.states.get("capital_tech_multipliers")
+        if not hasattr(self, "_link_transition_baseline"):
+            self._link_transition_baseline: dict[tuple[str, str], float] = {}
+
+        for i_code in valid_comparable:
+            if i_code not in transition_capital.columns:
+                continue
+            i = industries_list.index(i_code)
+            firms_i = np.where(industry_idx == i)[0]
+            for j_code in transition_capital.index:
+                if j_code not in industries_list:
+                    continue
+                uplift = float(transition_capital.loc[j_code, i_code])
+                if not np.isfinite(uplift) or uplift <= 0.0:
+                    continue
+                j = industries_list.index(j_code)
+                key = (i_code, j_code)
+                if is_anchor or key not in self._link_transition_baseline:
+                    eff = _weighted_effective_coefficient(
+                        cap_matrix[j, i], cap_multipliers, firms_i, j, production
+                    )
+                    if eff is None or not np.isfinite(eff) or eff <= 0.0:
+                        continue
+                    self._link_transition_baseline[key] = float(eff)
+                baseline_eff = self._link_transition_baseline.get(key)
+                if baseline_eff is None or baseline_eff <= 0.0:
+                    continue
+                cap_matrix[j, i] = baseline_eff / (1.0 + uplift)
+                self._linkage_owned_pairs.setdefault("capital_tech_multipliers", set()).add((i, j))
+                if reset_multipliers and cap_multipliers is not None:
+                    cap_multipliers[firms_i, j] = 1.0
+
+    def get_production_annual(
+        self,
+        current_year: int,
+        sim_start_year: int = 2014,
+        steps_per_year: int = 4,
+        base_year: int = 2015,
+        year_step: int = 5,
+    ) -> pd.DataFrame:
+        """Return annual production by industry for each completed CIMS period.
+
+        Sums the per-step production over the final year of each completed
+        ``year_step``-year block since *base_year* and aggregates from firm to
+        industry level.  Returned as a DataFrame so that the CIMS production
+        writer can build service-request CSVs without any I/O in the model.
+
+        Args:
+            current_year: Calendar year reached by the simulation so far.
+            sim_start_year: Calendar year of simulation step 0.
+            steps_per_year: Simulation steps per calendar year.
+            base_year: First CIMS milestone year; periods start here.
+            year_step: Interval (years) between CIMS milestone years.
+
+        Returns:
+            DataFrame indexed by milestone year (2020, 2025, ...) with industry
+            codes as columns.  Empty if no full period has elapsed yet.
+        """
+        industries_list = list(self.industries)
+        if current_year <= base_year:
+            return pd.DataFrame(columns=industries_list)
+
+        production_history = self.ts.historic("production")
+        industry_idx = self.states["Industry"]
+        n_ind = len(industries_list)
+
+        num_blocks = (current_year - base_year) // year_step
+        if num_blocks == 0:
+            return pd.DataFrame(columns=industries_list)
+
+        base_offset = (base_year - sim_start_year) * steps_per_year
+        years = [base_year + (block + 1) * year_step for block in range(num_blocks)]
+
+        records: dict[int, dict[str, float]] = {}
+        for block, year in enumerate(years):
+            end_idx = base_offset + (block + 1) * year_step * steps_per_year - 1
+            start_idx = end_idx - steps_per_year + 1
+            if end_idx >= len(production_history):
+                break
+            annual = np.zeros(n_ind)
+            for t_idx in range(start_idx, end_idx + 1):
+                annual += np.bincount(industry_idx, weights=production_history[t_idx], minlength=n_ind)
+            records[year] = dict(zip(industries_list, annual))
+
+        return pd.DataFrame.from_dict(records, orient="index")
+
     def compute_productivity_investment(self) -> np.ndarray:
         """Calculate investment above depreciation replacement.
 
@@ -2198,6 +3219,30 @@ class Firms(Agent):
         tfp_growth = self.compute_tfp_growth()
         self.states["tfp_multiplier"] *= 1 + tfp_growth
 
+    def _mask_linkage_owned(self, growth: np.ndarray, multiplier_key: str) -> np.ndarray:
+        """Zero technical-coefficient growth on (industry, input) pairs the linkage owns.
+
+        A no-op unless :meth:`link` was called with ``linkage_owns_coefficients=True``,
+        and only for pairs the linkage has actually written.
+
+        Args:
+            growth: multiplier growth rates, shape (n_firms, n_industries).
+            multiplier_key: which multiplier state the growth applies to.
+
+        Returns:
+            The growth array with linkage-owned entries set to zero.
+        """
+        if not getattr(self, "_linkage_owns_coefficients", False):
+            return growth
+        pairs = getattr(self, "_linkage_owned_pairs", {}).get(multiplier_key)
+        if not pairs:
+            return growth
+        industry_idx = np.asarray(self.states["Industry"])
+        masked = np.array(growth, copy=True)
+        for i, j in pairs:
+            masked[industry_idx == i, j] = 0.0
+        return masked
+
     def update_technical_coefficients(self) -> None:
         """Update technical coefficient multipliers based on computed growth rates.
 
@@ -2245,6 +3290,15 @@ class Firms(Agent):
             production=self.ts.current("production"),
             prices=self.ts.current("price"),  # Use current firm prices as proxy for industry prices
         )
+
+        # Coefficients the energy linkage sets are owned by it: CIMS/CER already supply a
+        # full intensity path for those (industry, input) pairs, one that embeds the
+        # efficiency improvement they assume.  Letting endogenous technical growth also
+        # move them double-counts efficiency and makes the linkage's own baseline stale
+        # between milestones -- which is what produced the step change measured two
+        # quarters after each milestone.  Growth still applies to every unlinked pair.
+        intermediate_growth = self._mask_linkage_owned(intermediate_growth, "intermediate_tech_multipliers")
+        capital_growth = self._mask_linkage_owned(capital_growth, "capital_tech_multipliers")
 
         # Apply growth to multipliers
         self.states["intermediate_tech_multipliers"] *= 1 + intermediate_growth

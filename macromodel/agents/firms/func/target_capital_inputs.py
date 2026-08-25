@@ -54,6 +54,19 @@ class TargetCapitalInputsSetter(ABC):
                 is by construction fully forward-looking in the numerator.
         """
         self.target_capital_inputs_fraction = target_capital_inputs_fraction
+        # Optional floor on the reference capital stock, used by the energy linkage to
+        # drive capacity investment in the sectors it covers.  Inert until set.
+        # PER-FIRM index array (NaN = not floored). Previously a single mask plus a single
+        # scalar, which meant each call OVERWROTE the last: flooring two sectors left only
+        # the one applied last, silently. That was latent while electricity was the only
+        # floored sector and would have broken the moment a second one was added.
+        self._min_capital_index_by_firm: np.ndarray | None = None
+        # Optional CEILING, the floor's twin (same per-firm layout).  The floor turns
+        # CER's capacity path into a lower bound on investment; without an upper bound
+        # a slack province can over-build without limit -- Manitoba's D capital ran
+        # 3.3x by 2050 against a CER path of 1.27x, feeding the slack loop that sells
+        # over-production to whoever the pool hands it.  Inert until set.
+        self._max_capital_index_by_firm: np.ndarray | None = None
         self.credit_gap_fraction = credit_gap_fraction
         self.forward_looking_reference_fraction = forward_looking_reference_fraction
         self.rolling_reference = rolling_reference
@@ -61,6 +74,81 @@ class TargetCapitalInputsSetter(ABC):
         self.zero_prev_production_count = 0
         self.zero_prev_capital_count = 0
         self.zero_prev_capital_active_count = 0
+
+    def set_minimum_capital_stock(self, firm_mask, index: float | None) -> None:
+        """Floor the reference capital stock of selected firms at ``initial * index``.
+
+        The energy linkage uses this to turn an exogenous capacity path into investment:
+        raising the reference stock raises the capital target, so firms buy capital and
+        the capital ceiling on production rises endogenously.  ``index=None`` clears it.
+
+        Args:
+            firm_mask: boolean mask over firms, or None to clear.
+            index: capacity index relative to the firms' initial capital stock.
+        """
+        if firm_mask is None or index is None:
+            self._min_capital_index_by_firm = None
+            return
+        mask = np.asarray(firm_mask, dtype=bool)
+        if self._min_capital_index_by_firm is None or                 self._min_capital_index_by_firm.shape[0] != mask.shape[0]:
+            self._min_capital_index_by_firm = np.full(mask.shape[0], np.nan)
+        # ACCUMULATES across calls, so several sectors can be floored independently.
+        self._min_capital_index_by_firm[mask] = float(index)
+
+    def set_maximum_capital_stock(self, firm_mask, index: float | None) -> None:
+        """Cap the reference capital stock of selected firms at ``initial * index``.
+
+        The floor's twin: same per-firm accumulation semantics, opposite bound.
+        ``index=None`` clears it.
+        """
+        if firm_mask is None or index is None:
+            self._max_capital_index_by_firm = None
+            return
+        mask = np.asarray(firm_mask, dtype=bool)
+        if self._max_capital_index_by_firm is None or \
+                self._max_capital_index_by_firm.shape[0] != mask.shape[0]:
+            self._max_capital_index_by_firm = np.full(mask.shape[0], np.nan)
+        self._max_capital_index_by_firm[mask] = float(index)
+
+    def _apply_minimum_capital_stock(
+        self, reference_capital_stock: np.ndarray, initial_capital_inputs_stock: np.ndarray
+    ) -> np.ndarray:
+        """Apply the capacity floor, then the ceiling.  No-ops unless configured.
+
+        Ceiling second, deliberately: if both are set and conflict, the exogenous
+        upper bound wins, because the ceiling exists to stop runaway over-building
+        and a floor above the ceiling means the caller misconfigured the indices.
+        """
+        idx = self._min_capital_index_by_firm
+        out = reference_capital_stock
+        if idx is not None and idx.shape[0] == out.shape[0]:
+            mask = np.isfinite(idx)
+            if mask.any():
+                floored = np.array(out, copy=True)
+                # The stock is 2-D (firms x capital goods) while the index is per FIRM,
+                # so it needs a trailing axis to broadcast across goods. The previous
+                # single-scalar index broadcast against both dimensions for free; a
+                # per-firm vector does not.
+                scale = idx[mask]
+                if initial_capital_inputs_stock.ndim > 1:
+                    scale = scale[:, None]
+                floored[mask] = np.maximum(
+                    floored[mask], initial_capital_inputs_stock[mask] * scale
+                )
+                out = floored
+        cap = self._max_capital_index_by_firm
+        if cap is not None and cap.shape[0] == out.shape[0]:
+            mask = np.isfinite(cap)
+            if mask.any():
+                capped = np.array(out, copy=True)
+                scale = cap[mask]
+                if initial_capital_inputs_stock.ndim > 1:
+                    scale = scale[:, None]
+                capped[mask] = np.minimum(
+                    capped[mask], initial_capital_inputs_stock[mask] * scale
+                )
+                out = capped
+        return out
 
     def _reference_capital_stock(
         self,
@@ -336,6 +424,9 @@ class FinancialTargetCapitalInputsSetter(TargetCapitalInputsSetter):
             prev_capital_inputs_stock=prev_capital_inputs_stock,
             initial_capital_inputs_stock=initial_capital_inputs_stock,
             initial_production=initial_production,
+        )
+        reference_capital_stock = self._apply_minimum_capital_stock(
+            reference_capital_stock, initial_capital_inputs_stock
         )
 
         # Take current stock of capital inputs into accounts
