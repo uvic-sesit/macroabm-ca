@@ -291,8 +291,19 @@ def get_country_coke_refining_kwh_per_tco2(icio_reader: ICIOReader, country: str
         Uses input-output coefficients to weight the energy content
         of different fuel inputs to the refining process
     """
-    coefficients = (1 / icio_reader.get_intermediate_inputs_matrix(country)).loc[["B05a", "B05b", "B05c"], "C19"]
-    return coefficients @ np.array([COAL_KWH_PER_TCO2, OIL_KWH_PER_TCO2, GAS_KWH_PER_TCO2])
+    matrix = 1 / icio_reader.get_intermediate_inputs_matrix(country)
+    if "B05a" in matrix.index:
+        # Legacy 43-scheme path, byte-identical to the historical computation.
+        # (NOTE: the OIL/GAS pairing here is swapped relative to the row order
+        # [coal, gas, oil] -- preserved as-is so legacy results do not move;
+        # flagged for a separate fix.)
+        coefficients = matrix.loc[["B05a", "B05b", "B05c"], "C19"]
+        return coefficients @ np.array([COAL_KWH_PER_TCO2, OIL_KWH_PER_TCO2, GAS_KWH_PER_TCO2])
+    # OECD-50 scheme: coal (B05) and merged oil-and-gas (B06), the latter on the
+    # value-weighted blend of the oil and gas energy contents.
+    coefficients = matrix.loc[["B05", "B06"], "C19"]
+    blend = B06_OIL_VALUE_WEIGHT * OIL_KWH_PER_TCO2 + (1.0 - B06_OIL_VALUE_WEIGHT) * GAS_KWH_PER_TCO2
+    return coefficients @ np.array([COAL_KWH_PER_TCO2, blend])
 
 
 def get_avg_coke_refining_kwh_per_tco2(icio_reader: ICIOReader, countries: list[str | Country]) -> float:
@@ -334,7 +345,102 @@ _EMISSION_INDUSTRIES_CH4 = [
     "H49",
     "H50",
     "H51",
+    # OECD-50 (2022 base) codes; absent from every 43-scheme wrapper so their
+    # presence here is inert for legacy builds.
+    "B05",
+    "B06",
+    "C17_18",
+    "C24A",
+    "C24B",
 ]
+
+# The 2022 provincial wrapper uses the standard OECD-50 scheme, which merges crude
+# petroleum (B05c) and natural gas (B05b) extraction into a single B06 and renames
+# coal mining B05a -> B05.  Per-VALUE emission factors for the merged sector are the
+# value-weighted mean of the oil and gas factors: (E_oil + E_gas) / (V_oil + V_gas).
+# The 2022 revenue split of Canadian oil-and-gas extraction is roughly 80:20 oil:gas
+# (crude ~4.9 Mbbl/d at 2022 prices vs marketable gas ~17.5 Bcf/d at 2022 AECO), an
+# oil-price-dependent approximation -- revisit if a StatCan revenue split is wired in.
+B06_OIL_VALUE_WEIGHT = 0.8
+
+
+def emitting_industries_for(industries) -> list[str] | None:
+    """The CO2-emitting industry codes present in *industries*, scheme-aware.
+
+    Returns the legacy 43-scheme list, the OECD-50 (2022 base) list, or None when
+    neither fossil scheme is present (emissions disabled).  Single source of truth
+    for every construction site that previously hardcoded the 43-scheme list.
+    """
+    if all(i in industries for i in ("B05a", "B05b", "B05c", "C19")):
+        return ["B05a", "B05b", "B05c", "C19"]
+    if all(i in industries for i in ("B05", "B06", "C19")):
+        return ["B05", "B06", "C19"]
+    return None
+
+
+def emission_factors_for(emitting_industries: list[str], emissions_array) -> "np.ndarray":
+    """Per-sector factor vector matching *emitting_industries*.
+
+    *emissions_array* is always the stored 4-vector [coal, gas, oil, refining]; the
+    OECD-50 scheme's merged B06 takes the value-weighted oil/gas blend.
+    """
+    if len(emitting_industries) == 4:
+        return emissions_array
+    blend = (B06_OIL_VALUE_WEIGHT * emissions_array[2]
+             + (1.0 - B06_OIL_VALUE_WEIGHT) * emissions_array[1])
+    return np.array([emissions_array[0], blend, emissions_array[3]])
+
+
+def b06_oil_emission_share(emissions_array) -> float:
+    """Oil's share of the merged B06 sector's EMISSIONS (not value).
+
+    The blended B06 factor is w*f_oil + (1-w)*f_gas (value weights); within the
+    resulting emissions, oil's share is w*f_oil / (w*f_oil + (1-w)*f_gas).  Constant
+    across countries (the USD->LCU conversion cancels in the ratio).  Used to split
+    the merged sector's emissions back into exact Oil and Gas diagnostic series.
+    """
+    w = B06_OIL_VALUE_WEIGHT
+    oil = w * float(emissions_array[2])
+    gas = (1.0 - w) * float(emissions_array[1])
+    return oil / (oil + gas)
+
+
+def emission_fuel_components(emitting_industries: list[str], emissions_array) -> list[tuple[str, int, float]]:
+    """Per-fuel decomposition specs: (column name, position in emitting list, factor).
+
+    Component emissions = flow[:, emitting_indices[position]] * factor.  The four
+    legacy fuel names are kept under BOTH schemes -- the Households agent (and any
+    other reader) looks the columns up by name.  Under the merged OECD-50 scheme the
+    B06 position appears twice, split into its exact Gas ((1-w) x gas factor) and
+    Oil (w x oil factor) parts, which sum to the blended B06 factor by construction.
+
+    *emissions_array* is always the stored 4-vector [coal, gas, oil, refining].
+    """
+    a = emissions_array
+    if len(emitting_industries) == 4:
+        return [("Coal", 0, a[0]), ("Gas", 1, a[1]), ("Oil", 2, a[2]), ("Refined Products", 3, a[3])]
+    w = B06_OIL_VALUE_WEIGHT
+    return [
+        ("Coal", 0, a[0]),
+        ("Gas", 1, (1.0 - w) * a[1]),
+        ("Oil", 1, w * a[2]),
+        ("Refined Products", 2, a[3]),
+    ]
+
+# 43-scheme -> OECD-50 translation for CH4 inventory codes (the EN-GHG CSV's ID
+# column is written in the 43-scheme).  Applied ONLY when the wrapper carries the
+# OECD-50 scheme (B06 present, B05b absent), so legacy builds are untouched.
+# D01b/D01c (generation) are deliberately NOT mapped onto the aggregate D: the 43-code
+# production wrapper also runs a single D and drops them, and keeping that parity keeps
+# CH4 coverage comparable across the two bases.
+_CH4_CODE_TO_OECD50 = {
+    "B05a": "B05",
+    "B05b": "B06",
+    "B05c": "B06",
+    "C17": "C17_18",
+    "C24a": "C24A",
+    "C24b": "C24B",
+}
 
 
 @dataclass
@@ -413,6 +519,17 @@ class CH4EmissionsDataCAN:
             year: Base year for the emissions data
         """
         ch4_by_code = reader.get_ch4_by_industry_code(year)
+
+        # OECD-50 wrapper: translate the inventory's 43-scheme codes (summing the
+        # oil+gas pair into B06).  Only fires when the wrapper is unambiguously on
+        # the OECD-50 scheme, so 43-scheme builds see the historical behaviour.
+        if "B06" in industries and "B05b" not in industries:
+            remapped: dict[str, float] = {}
+            for code, val in ch4_by_code.items():
+                target = code if code in industries else _CH4_CODE_TO_OECD50.get(code)
+                if target is not None:
+                    remapped[target] = remapped.get(target, 0.0) + val
+            ch4_by_code = remapped
 
         ch4 = np.zeros(len(industries))
         for code, val in ch4_by_code.items():

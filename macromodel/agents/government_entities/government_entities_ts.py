@@ -68,12 +68,18 @@ def create_government_entities_timeseries(
     """
     if add_emissions:
         emissions = np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu)
+        # Per-fuel diagnostic fields.  Under the merged OECD-50 scheme the factor vector
+        # has 3 entries [coal, oil-and-gas blend, refining]; positions are clamped so the
+        # "gas" and "oil" diagnostics both carry the merged component and "refined"
+        # takes the last entry.  The legacy 4-vector path is byte-identical.
+        _n = len(emission_factors_lcu)
+        _pos = [0, 1, 2, 3] if _n == 4 else [0, 1, 1, 2]
         emissions_dict = {
-            "coal_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[0]),
-            "gas_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[1]),
-            "oil_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[2]),
+            "coal_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[_pos[0]]),
+            "gas_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[_pos[1]]),
+            "oil_emissions": np.sum(data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[_pos[2]]),
             "refined_products_emissions": np.sum(
-                data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[3]
+                data["Consumption in LCU"].values[emitting_indices] * emission_factors_lcu[_pos[3]]
             ),
         }
     else:

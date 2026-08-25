@@ -110,9 +110,16 @@ from macro_data.processing.synthetic_population.synthetic_population import (
 from macro_data.processing.synthetic_population.utils import reallocate_employment_by_shares
 from macro_data.readers import AGGREGATED_INDUSTRIES, ALL_INDUSTRIES, DataReaders
 from macro_data.readers.emission_fraction.emission_fraction_reader import EmissionFractions
-from macro_data.readers.emissions.emissions_reader import CH4EmissionsDataCAN, EmissionsData
+from macro_data.readers.emissions.emissions_reader import (
+    CH4EmissionsDataCAN,
+    EmissionsData,
+    emission_factors_for,
+    emission_fuel_components,
+    emitting_industries_for,
+)
 from macro_data.readers.exo_prices.exo_prices_reader import SectorExoPrices
 from macro_data.readers.exogenous_data import ExogenousCountryData
+from macro_data.readers.policy_data.obps_can_reader import OBPSCANData
 
 
 @dataclass
@@ -174,6 +181,7 @@ class SyntheticCountry:
     emission_factors: EmissionsData
     emission_fractions: Optional[EmissionFractions] = None
     firm_exo_prices: Optional[SectorExoPrices] = None
+    obps_data: Optional[OBPSCANData] = None
     emission_factors_ch4: Optional[CH4EmissionsDataCAN] = None
     historical_emissions_df: Optional[pd.DataFrame] = None
 
@@ -321,14 +329,15 @@ class SyntheticCountry:
 
         housing_market = DefaultSyntheticHousingMarket(country, housing_data)
 
-        if emission_factors is not None:
-            emitting_industry_indices = np.array(
-                [list(industries).index(industry) for industry in ["B05a", "B05b", "B05c", "C19"]]
-            )
-            emission_factors_array = emission_factors.emissions_array
+        _emitting = emitting_industries_for(list(industries)) if emission_factors is not None else None
+        if _emitting is not None:
+            emitting_industry_indices = np.array([list(industries).index(industry) for industry in _emitting])
+            emission_factors_array = emission_factors_for(_emitting, emission_factors.emissions_array)
+            fuel_components = emission_fuel_components(_emitting, emission_factors.emissions_array)
         else:
             emitting_industry_indices = None
             emission_factors_array = None
+            fuel_components = None
 
         credit_market = cls.set_wealth_and_credit(
             banks=banks,
@@ -342,6 +351,7 @@ class SyntheticCountry:
             weights_by_income=weights_by_income,
             emitting_indices=emitting_industry_indices,
             emission_factors_array=emission_factors_array,
+            fuel_components=fuel_components,
         )
 
         if readers.emission_fractions is not None:
@@ -393,6 +403,7 @@ class SyntheticCountry:
             firm_exo_prices=(
                 SectorExoPrices.from_reader(readers.exo_prices) if readers.exo_prices is not None else None
             ),
+            obps_data=readers.obps_can.obps_data if readers.obps_can is not None else None,
         )
 
     @classmethod
@@ -551,14 +562,15 @@ class SyntheticCountry:
 
         housing_market = DefaultSyntheticHousingMarket(country, housing_data)
 
-        if emission_factors is not None:
-            emitting_industry_indices = np.array(
-                [list(industries).index(industry) for industry in ["B05a", "B05b", "B05c", "C19"]]
-            )
-            emission_factors_array = emission_factors.emissions_array
+        _emitting = emitting_industries_for(list(industries)) if emission_factors is not None else None
+        if _emitting is not None:
+            emitting_industry_indices = np.array([list(industries).index(industry) for industry in _emitting])
+            emission_factors_array = emission_factors_for(_emitting, emission_factors.emissions_array)
+            fuel_components = emission_fuel_components(_emitting, emission_factors.emissions_array)
         else:
             emitting_industry_indices = None
             emission_factors_array = None
+            fuel_components = None
 
         credit_market = cls.set_wealth_and_credit(
             banks=banks,
@@ -572,6 +584,7 @@ class SyntheticCountry:
             weights_by_income=weights_by_income,
             emitting_indices=emitting_industry_indices,
             emission_factors_array=emission_factors_array,
+            fuel_components=fuel_components,
         )
 
         if readers.emission_fractions is not None:
@@ -623,6 +636,7 @@ class SyntheticCountry:
             firm_exo_prices=(
                 SectorExoPrices.from_reader(readers.exo_prices) if readers.exo_prices is not None else None
             ),
+            obps_data=readers.obps_can.obps_data if readers.obps_can is not None else None,
         )
 
     @classmethod
@@ -639,6 +653,7 @@ class SyntheticCountry:
         weights_by_income: pd.DataFrame,
         emission_factors_array: Optional[np.ndarray] = None,
         emitting_indices: Optional[np.ndarray] = None,
+        fuel_components: Optional[list[tuple[str, int, float]]] = None,
     ) -> SyntheticCreditMarket:
         """
         This function takes care of matching the different agents together and initialising the Credit
@@ -682,6 +697,7 @@ class SyntheticCountry:
             independents=independents,
             emission_factors_array=emission_factors_array,
             emitting_industry_indices=emitting_indices,
+            fuel_components=fuel_components,
         )
 
         credit_market = cls.init_credit_market(
@@ -851,6 +867,7 @@ class SyntheticCountry:
         independents: Optional[list[str]] = None,
         emission_factors_array: Optional[np.ndarray] = None,
         emitting_industry_indices: Optional[np.ndarray] = None,
+        fuel_components: Optional[list[tuple[str, int, float]]] = None,
     ):
         """
         Initialize population wealth, income, and consumption patterns.
@@ -900,7 +917,10 @@ class SyntheticCountry:
 
         if (emission_factors_array is not None) and (emitting_industry_indices is not None):
             population.add_emissions(
-                emission_factors_array, emitting_industry_indices, tau_cf=tax_data.capital_formation_tax
+                emission_factors_array,
+                emitting_industry_indices,
+                tau_cf=tax_data.capital_formation_tax,
+                fuel_components=fuel_components,
             )
 
         banks.initialise_deposits_and_loans(

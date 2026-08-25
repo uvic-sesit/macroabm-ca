@@ -17,7 +17,12 @@ from macro_data.processing.synthetic_government_entities.synthetic_government_en
     SyntheticGovernmentEntities,
 )
 from macro_data.readers.default_readers import DataReaders
-from macro_data.readers.emissions.emissions_reader import EmissionsData
+from macro_data.readers.emissions.emissions_reader import (
+    EmissionsData,
+    emission_factors_for,
+    emission_fuel_components,
+    emitting_industries_for,
+)
 from macro_data.readers.exogenous_data import ExogenousCountryData
 
 
@@ -163,15 +168,17 @@ class DefaultSyntheticGovernmentEntities(SyntheticGovernmentEntities):
         else:
             government_consumption_model = None
 
-        if emission_factors is not None:
-            array = emission_factors.emissions_array
-            emitting_consumption = industry_data["industry_vectors"]["Government Consumption in LCU"].loc[
-                ["B05a", "B05b", "B05c", "C19"]
-            ]
+        _gov_consumption = industry_data["industry_vectors"]["Government Consumption in LCU"]
+        _emitting = (
+            emitting_industries_for(list(_gov_consumption.index)) if emission_factors is not None else None
+        )
+        if _emitting is not None:
+            array = emission_factors_for(_emitting, emission_factors.emissions_array)
+            emitting_consumption = _gov_consumption.loc[_emitting]
             emissions = emitting_consumption.values @ array
             gov_entity_data["Consumption Emissions"] = emissions
-            for i, name in enumerate(["Coal", "Gas", "Oil", "Refined Products"]):
-                gov_entity_data[f"{name} Consumption Emissions"] = emitting_consumption.values[i] * array[i]
+            for name, pos, factor in emission_fuel_components(_emitting, emission_factors.emissions_array):
+                gov_entity_data[f"{name} Consumption Emissions"] = emitting_consumption.values[pos] * factor
 
         return cls(
             country_name,

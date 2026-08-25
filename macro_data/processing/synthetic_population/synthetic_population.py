@@ -526,7 +526,11 @@ class SyntheticPopulation(ABC):
     def set_wealth_distribution_function(self, independents: Optional[list[str]] = None) -> None: ...
 
     def add_emissions(
-        self, emission_factors_array: np.ndarray, emitting_indices: list[int] | np.ndarray, tau_cf: float
+        self,
+        emission_factors_array: np.ndarray,
+        emitting_indices: list[int] | np.ndarray,
+        tau_cf: float,
+        fuel_components: list[tuple[str, int, float]] | None = None,
     ) -> None:
         """Calculate and add emissions data to household records.
 
@@ -549,14 +553,21 @@ class SyntheticPopulation(ABC):
 
         self.household_data["Investment Emissions"] = investment_emissions
 
-        # decompose in oil, gas, coal and refined products emissions
-        for i, name in enumerate(["Coal", "Gas", "Oil", "Refined Products"]):
+        # decompose by fuel.  The four legacy column names are kept under both sector
+        # schemes (Households.from_pickled_agent reads them by name); under the merged
+        # OECD-50 scheme, Gas and Oil are the exact value-weighted split of B06's blend
+        # (see emission_fuel_components).  When no components are given, derive the
+        # legacy 4-way decomposition from the factor vector itself.
+        if fuel_components is None:
+            names = ["Coal", "Gas", "Oil", "Refined Products"]
+            fuel_components = [(n, i, emission_factors_array[i]) for i, n in enumerate(names)]
+        for name, pos, factor in fuel_components:
             self.household_data[f"{name} Consumption Emissions"] = (
-                self.industry_consumption_before_vat[:, emitting_indices[i]] * emission_factors_array[i]
+                self.industry_consumption_before_vat[:, emitting_indices[pos]] * factor
             )
             # investment
             self.household_data[f"{name} Investment Emissions"] = (
-                self.get_current_hh_investment_by_industry(tau_cf)[:, emitting_indices[i]] * emission_factors_array[i]
+                self.get_current_hh_investment_by_industry(tau_cf)[:, emitting_indices[pos]] * factor
             )
 
     @property

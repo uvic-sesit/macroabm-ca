@@ -48,7 +48,12 @@ from macro_data.processing.synthetic_firms.firm_tools import (
 )
 from macro_data.processing.synthetic_firms.synthetic_firms import SyntheticFirms
 from macro_data.readers.default_readers import DataReaders
-from macro_data.readers.emissions.emissions_reader import EmissionsData
+from macro_data.readers.emissions.emissions_reader import (
+    EmissionsData,
+    emission_factors_for,
+    emission_fuel_components,
+    emitting_industries_for,
+)
 
 
 class DefaultSyntheticFirms(SyntheticFirms):
@@ -236,25 +241,33 @@ class DefaultSyntheticFirms(SyntheticFirms):
 
         firm_data["Employees ID"] = [[] for _ in range(n_firms)]
 
-        if emission_factors is not None:
-            emitting_industries = ["B05a", "B05b", "B05c", "C19"]
-            # get indices of emitting industries
+        emitting_industries = (
+            emitting_industries_for(list(industries)) if emission_factors is not None else None
+        )
+        if emitting_industries is not None:
+            # get indices of emitting industries (scheme-aware: 43-code B05a/b/c/C19 or
+            # OECD-50 B05/B06/C19 with the value-weighted merged factor)
             emitting_indices = [list(industries).index(industry) for industry in emitting_industries]
+            factors = emission_factors_for(emitting_industries, emission_factors.emissions_array)
             emitting_intermediate_inputs = used_intermediate_inputs[:, emitting_indices]
-            input_emissions = emitting_intermediate_inputs @ emission_factors.emissions_array
+            input_emissions = emitting_intermediate_inputs @ factors
             firm_data["Input Emissions"] = input_emissions
 
-            capital_emissions = used_capital_inputs[:, emitting_indices] @ emission_factors.emissions_array
+            capital_emissions = used_capital_inputs[:, emitting_indices] @ factors
             firm_data["Capital Emissions"] = capital_emissions
 
-            # decompose emissions of oil, gas, coal and refined products emissions
-            for i, name in enumerate(["Coal", "Gas", "Oil", "Refined Products"]):
+            # decompose emissions by fuel; the four legacy column names are kept under
+            # both schemes (the Households/agent layer reads them by name) -- under the
+            # merged OECD-50 scheme, Gas and Oil are the exact split of B06's blend.
+            for name, pos, factor in emission_fuel_components(
+                emitting_industries, emission_factors.emissions_array
+            ):
                 firm_data[f"{name} Input Emissions"] = (
-                    used_intermediate_inputs[:, emitting_indices[i]] * emission_factors.emissions_array[i]
+                    used_intermediate_inputs[:, emitting_indices[pos]] * factor
                 )
                 # same for capital emissions
                 firm_data[f"{name} Capital Emissions"] = (
-                    used_capital_inputs[:, emitting_indices[i]] * emission_factors.emissions_array[i]
+                    used_capital_inputs[:, emitting_indices[pos]] * factor
                 )
 
             firm_data.loc[
