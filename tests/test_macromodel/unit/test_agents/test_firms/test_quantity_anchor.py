@@ -153,3 +153,76 @@ def test_negative_increment_walks_down_by_the_step_bound():
     )
     assert firms._firm_quantity_multiplier[(0, 1)] == pytest.approx(0.5)
     assert firms.base_intermediate_inputs_productivity_matrix[1, 0] > 0.0
+
+
+# --- conserve_total: the composition-mismatch fix -------------------------------
+# Two buying industries (0 and 2) both purchasing good 1, so a per-good total exists.
+def _two_buyer_firms(bought=((0.0, 1.0, 0.0), (0.0, 3.0, 0.0))):
+    n = 3
+    return types.SimpleNamespace(
+        states={
+            "Industry": np.array([0, 2]),
+            "intermediate_tech_multipliers": np.ones((2, n)),
+        },
+        ts=types.SimpleNamespace(current=lambda key: np.asarray(bought, dtype=float)),
+        base_intermediate_inputs_productivity_matrix=np.full((n, n), 4.0),
+    )
+
+
+def test_conserve_total_holds_the_anchored_total_to_the_source_rate():
+    # Anchors 1.0 and 3.0 (total 4.0).  Raw indices 8.0 and 1.0 would give a desired
+    # total of 8 + 3 = 11 (2.75x) -- the runaway.  The source says the total grows 2.0x,
+    # so the pairs must be rescaled to sum to 8.0 while keeping their 8:1 ratio.
+    firms = _two_buyer_firms()
+    Firms.anchor_energy_quantities(
+        firms, {(0, 1): 8.0, (2, 1): 1.0}, max_step=100.0, conserve_total={1: 2.0}
+    )
+    scale = 8.0 / 11.0
+    assert firms._firm_quantity_multiplier[(0, 1)] == pytest.approx(8.0 * scale)
+    # Composition preserved: the ratio between the two pairs' desired levels is unchanged.
+    got = (firms._firm_quantity_multiplier[(0, 1)] * 1.0,
+           firms._firm_quantity_multiplier[(2, 1)] * 3.0)
+    assert got[0] / got[1] == pytest.approx(8.0 / 3.0)
+    assert sum(got) == pytest.approx(4.0 * 2.0)
+
+
+def test_conserve_total_absent_is_bit_identical():
+    a, b = _two_buyer_firms(), _two_buyer_firms()
+    Firms.anchor_energy_quantities(a, {(0, 1): 8.0, (2, 1): 1.0}, max_step=100.0)
+    Firms.anchor_energy_quantities(b, {(0, 1): 8.0, (2, 1): 1.0}, max_step=100.0,
+                                   conserve_total=None)
+    assert np.array_equal(a.base_intermediate_inputs_productivity_matrix,
+                          b.base_intermediate_inputs_productivity_matrix)
+    assert a._firm_quantity_multiplier == b._firm_quantity_multiplier
+
+
+def test_conserve_total_leaves_increment_pairs_fixed():
+    # The increment's denominator is industry 0's OWN anchor energy (1.0), so that pair
+    # desires 1.0 + 0.4*1.0 = 1.4 and must not move.  The index pair absorbs the whole
+    # rescale: target total 4.0*2.0 = 8.0, less the 1.4 increment, leaves 6.6.
+    firms = _two_buyer_firms()
+    Firms.anchor_energy_quantities(
+        firms, {(2, 1): 1.0}, increments={(0, 1): 0.4}, energy_indices=[1],
+        max_step=100.0, conserve_total={1: 2.0},
+    )
+    assert firms._firm_quantity_multiplier[(0, 1)] * 1.0 == pytest.approx(1.4)
+    assert firms._firm_quantity_multiplier[(2, 1)] * 3.0 == pytest.approx(6.6)
+
+
+def test_conserve_total_ignores_a_good_whose_increments_exceed_the_target():
+    # Increments alone want 1.0 + 8.0*1.0 = 9.0 against a target total of 8.0: the index
+    # pair cannot be driven negative, so the good is left unscaled.
+    firms = _two_buyer_firms()
+    Firms.anchor_energy_quantities(
+        firms, {(2, 1): 1.0}, increments={(0, 1): 8.0}, energy_indices=[1],
+        max_step=100.0, conserve_total={1: 2.0},
+    )
+    assert firms._firm_quantity_multiplier[(2, 1)] == pytest.approx(1.0)
+
+
+def test_conserve_total_ignores_non_positive_or_unknown_goods():
+    firms = _two_buyer_firms()
+    Firms.anchor_energy_quantities(
+        firms, {(0, 1): 2.0}, max_step=100.0, conserve_total={1: 0.0, 2: 5.0},
+    )
+    assert firms._firm_quantity_multiplier[(0, 1)] == pytest.approx(2.0)

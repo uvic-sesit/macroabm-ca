@@ -2831,6 +2831,7 @@ class Firms(Agent):
         increments: dict[tuple[int, int], float] | None = None,
         energy_indices: list[int] | None = None,
         max_step: float = 2.0,
+        conserve_total: dict[int, float] | None = None,
     ) -> None:
         """Pin firms' REAL intermediate purchases of a good to an external quantity path.
 
@@ -2868,6 +2869,31 @@ class Firms(Agent):
             max_step: per-call bound on the adjustment.  The correction reads the last
                 period's realised purchases, so it is one milestone behind; the bound
                 stops that lag turning a large intensity change into an overshoot.
+            conserve_total: ``{good index: the SOURCE's own total index for this good
+                over the anchored rows}``.  Rescales this good's per-pair indices so the
+                anchored TOTAL grows at the source's total rate, keeping the source's
+                composition but not its arithmetic.  ``None`` (default) leaves every
+                index exactly as passed -- bit-identical to the un-normalised channel.
+
+        **Why conserve_total exists.**  An index is a RATIO applied to the MODEL's
+        base, and the model's base composition is not the source's.  Where a pair the
+        source barely uses is large in the model, the source's growth ratio lands on an
+        oversized base and the anchored total runs away from the path it is supposed to
+        pin.  Measured on the 2026-08-25 CIMS-COPPER Net-zero run, Manitoba: CIMS's own
+        firm-side electricity grows 3.02x by 2045 while the anchor delivered 8.14x,
+        because excluding the residential row leaves the firm-side anchor dominated by
+        transport pairs carrying an index of 7.22, and this model's ``H49`` spans rail,
+        transit and pipelines where the source's freight is road-dominated.  Electricity
+        went from 3.1% to 12.9% of Manitoba's intermediate spending, crowding out every
+        other input, and the run collapsed from 2046 in all five seeds.
+
+        This is the quantity-channel counterpart of ``additive_intensity``, which fixed
+        exactly this ratio-onto-a-different-base failure for the COEFFICIENT channel,
+        and it follows the rule the industry-energy-shape reweight already uses: pooled
+        totals are conserved by construction, composition is the source's to set.
+        Increment pairs are held FIXED and their desired levels are counted against the
+        total, so the rescale falls entirely on the index pairs -- an increment is
+        already a bounded level change and is not the thing that ran away.
 
         **Why increments exist.**  An index needs a base-year quantity in the denominator,
         and the external path has pairs whose base is essentially zero and whose target
@@ -2946,6 +2972,10 @@ class Firms(Agent):
                         total += v
                 self._firm_energy_anchor_total[i] = total
 
+        # PASS 1 -- resolve every pair to a desired LEVEL, without touching the matrix.
+        # Separated from the write below so `conserve_total` can rescale a good's index
+        # pairs against the totals they collectively imply.
+        resolved: dict[tuple[int, int], tuple[str, float, float, np.ndarray]] = {}
         for (i, j), (kind, value) in specs.items():
             if not np.isfinite(value) or (kind == "index" and value <= 0.0):
                 continue
@@ -2975,6 +3005,36 @@ class Firms(Agent):
                 # A negative increment big enough to zero the pair out: let the step bound
                 # below walk it down instead of writing a non-positive coefficient.
                 desired = anchor * (1.0 / max_step)
+            resolved[(i, j)] = (kind, desired, realised, firms_i)
+
+        # PASS 2 -- per good, rescale the INDEX pairs so the anchored total grows at the
+        # source's own total rate.  Increment desires are subtracted first and left
+        # untouched; a good whose increments alone already exceed the target total is
+        # left alone rather than driven negative.
+        for j_good, total_index in (conserve_total or {}).items():
+            j_good = int(j_good)
+            if not np.isfinite(total_index) or total_index <= 0.0:
+                continue
+            anchor_sum = sum(self._firm_quantity_anchor[(i, j)]
+                             for (i, j) in resolved if j == j_good)
+            idx_sum = sum(d for (i, j), (k, d, _r, _f) in resolved.items()
+                          if j == j_good and k == "index")
+            inc_sum = sum(d for (i, j), (k, d, _r, _f) in resolved.items()
+                          if j == j_good and k != "index")
+            if anchor_sum <= 0.0 or idx_sum <= 0.0:
+                continue
+            target_idx_sum = anchor_sum * float(total_index) - inc_sum
+            if not np.isfinite(target_idx_sum) or target_idx_sum <= 0.0:
+                continue
+            scale = target_idx_sum / idx_sum
+            if not np.isfinite(scale) or scale <= 0.0:
+                continue
+            for key, (kind, desired, realised, firms_i) in list(resolved.items()):
+                if key[1] == j_good and kind == "index":
+                    resolved[key] = (kind, desired * scale, realised, firms_i)
+
+        # PASS 3 -- write the corrections.
+        for (i, j), (kind, desired, realised, firms_i) in resolved.items():
             # `realised` already embeds the multiplier in force last milestone, so the
             # ratio is the ADDITIONAL factor needed and compounds onto the stored one.
             step = float(min(max(desired / realised, 1.0 / max_step), max_step))

@@ -390,6 +390,7 @@ def build_link_prehook(
     household_energy_quantities: bool = False,
     firm_energy_quantities: bool = False,
     quantity_anchor_floor: float = 0.0,
+    quantity_anchor_conserve_total: bool = False,
     row_electricity_split: dict | None = None,
     row_electricity_split_strict: bool = False,
     row_electricity_split_signal: float = 0.0,
@@ -1056,11 +1057,35 @@ def build_link_prehook(
                             firm_targets[pair] = value
                         else:
                             firm_increments[pair] = value
+                # The SOURCE's own total index per fuel, over exactly the rows this
+                # channel anchors (household proxy and self-input excluded, matching
+                # the loop above).  Handed to the anchor so the model's anchored total
+                # grows at the source's rate while the source still sets composition --
+                # see `Firms.anchor_energy_quantities` for the Manitoba measurement
+                # that made this necessary.
+                conserve: dict[int, float] | None = None
+                if quantity_anchor_conserve_total:
+                    conserve = {}
+                    for j_code in energy_codes:
+                        if j_code not in industries:
+                            continue
+                        cur = base = 0.0
+                        for i_code in rq.index:
+                            if (i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries
+                                    or i_code == j_code or i_code not in rq_anchor_f.index):
+                                continue
+                            if j_code not in rq.columns or j_code not in rq_anchor_f.columns:
+                                continue
+                            cur += float(rq.loc[i_code, j_code])
+                            base += float(rq_anchor_f.loc[i_code, j_code])
+                        if base > 0.0 and cur > 0.0:
+                            conserve[industries.index(j_code)] = cur / base
                 if firm_targets or firm_increments:
                     country.firms.anchor_energy_quantities(
                         firm_targets,
                         increments=firm_increments or None,
                         energy_indices=energy_indices,
+                        conserve_total=conserve,
                     )
                     by_fuel: dict[str, list[float]] = {}
                     for (_i, _j), _v in firm_targets.items():
