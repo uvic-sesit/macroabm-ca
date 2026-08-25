@@ -33,9 +33,13 @@ Example:
     ```
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal
+
+from macro_data.readers.util.prune_util import DataFilterWarning
 
 
 def remove_outliers(
@@ -96,6 +100,21 @@ def remove_outliers(
     for col in cols:
         data_r.loc[:, col] = pd.to_numeric(data_r[col], errors="coerce")  #
     data_r = data_r.dropna().astype(float)
+
+    # Degenerate sample: the multivariate fit needs at least two COMPLETE observations.
+    # With fewer, np.cov returns NaN and multivariate_normal raises inside eigh, killing
+    # the whole build. Observed on the 2022 Canadianized-household path: Prince Edward
+    # Island's 77-dwelling housing frame, where the rows carrying Rent (renters) and
+    # those carrying Value (owners) were disjoint, so no row was complete. Nothing can
+    # be inferred about outliers from such a sample, so leave the data untouched --
+    # strictly a no-op where the fit was previously well defined.
+    if len(data_r) < 2:
+        warnings.warn(
+            f"remove_outliers: only {len(data_r)} complete observation(s) for {cols}; "
+            "skipping outlier removal for this frame.",
+            DataFilterWarning,
+        )
+        return data
 
     # Find outliers
     covariance_matrix = np.cov(data_r.values.T)
