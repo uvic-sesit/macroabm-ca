@@ -1,0 +1,4 @@
+# Generated scenario outputs — never tracked (regenerable from the runners).
+outputs/
+*.npz
+*.csv
