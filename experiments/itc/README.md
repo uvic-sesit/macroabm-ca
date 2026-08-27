@@ -5,9 +5,24 @@ paper. This is a **scenario layer**, not a change to `macromodel/` core: every
 policy effect is applied by runtime configuration and target-production wedges on
 top of the frozen baseline. No core model files are modified.
 
-> Scaffolding note: this commit adds the shared `projection.py`, this README, and
-> the outputs `.gitignore`. The scenario runners and analysis scripts land in the
-> following commits; the sections below document the intended interface.
+## Layout
+
+```
+experiments/itc/
+  projection.py                 shared projection utilities (growth path, horizon, _qf)
+  scenario_broad.py             broad C27/C28 ITC (30%), cell-level scale response
+  scenario_clean_electricity.py stylized Clean Electricity ITC (D-only, 15%)
+  trace_edges.py                edge-capture rerun (network/decomposition diagnostics)
+  smoke_test.py                 short 13-quarter validation (no saved output)
+  analysis/
+    consolidate.py              cross-policy headline, heterogeneity, fiscal tables
+    report_eps.py               epsilon = 0.5 / 1 / 1.5 comparison
+    report_clean_electricity.py Clean Electricity macro + provincial-incidence + fossil
+  outputs/                      generated .npz/.csv (git-ignored)
+```
+
+Sector-level breakdowns of the broad scenario are produced by `analysis/consolidate.py`
+(Δtarget by sector/province and the full 650-cell heterogeneity table).
 
 ## Baseline
 
