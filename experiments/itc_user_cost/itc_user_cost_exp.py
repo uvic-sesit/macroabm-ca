@@ -16,6 +16,7 @@ Usage:
     uv run python experiments/itc_user_cost/itc_user_cost_exp.py long
     uv run python experiments/itc_user_cost/itc_user_cost_exp.py design_a_long
     uv run python experiments/itc_user_cost/itc_user_cost_exp.py design_b_long 0.50
+    uv run python experiments/itc_user_cost/itc_user_cost_exp.py design_b_pre_stock_long 0.50
 """
 
 import sys
@@ -55,6 +56,11 @@ DESIGNS = {
         "mode": "eligible_goods_only",
         "equation": "K*_ijt = K*_base,ijt * (1 - tau)^(-eta_K) for j in {C27,C28}; unchanged otherwise",
         "description": "eligible-goods-only desired capital response",
+    },
+    "design_b_pre_stock": {
+        "mode": "lagged_share_pre_stock_adjustment",
+        "equation": "K*_ijt = max(0, K_req,base,ijt * (1 - tau * s_i,t-1)^(-eta_K) - stock_gap_ijt)",
+        "description": "whole-bundle user-cost response before stock adjustment",
     },
 }
 
@@ -341,8 +347,15 @@ def main():
         report(Q_LONG, "design_a", eta_k=eta_k)
     elif mode == "design_b_long":
         report(Q_LONG, "design_b", eta_k=eta_k)
+    elif mode == "design_b_pre_stock_smoke":
+        report(Q_SMOKE, "design_b_pre_stock", eta_k=eta_k)
+    elif mode == "design_b_pre_stock_long":
+        report(Q_LONG, "design_b_pre_stock", eta_k=eta_k)
     else:
-        raise SystemExit("Use: smoke, long, design_a_smoke, design_a_long, or design_b_long")
+        raise SystemExit(
+            "Use: smoke, long, design_a_smoke, design_a_long, design_b_long, "
+            "design_b_pre_stock_smoke, or design_b_pre_stock_long"
+        )
 
 
 if __name__ == "__main__":
