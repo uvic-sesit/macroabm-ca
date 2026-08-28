@@ -1471,6 +1471,44 @@ def export_shallow_h5(sim: Simulation, h5_path: Path) -> None:
     logger.info("Saved shallow macroABM summary to %s", h5_path)
 
 
+def export_labour_force_index(sim: Simulation, csv_path: Path) -> bool:
+    """Write the per-province quarterly labour-force index the run actually used.
+
+    Reads the index back out of each country's demography configuration (the
+    ExogenousLabourForcePath parameters), so the export is byte-for-byte the
+    trajectory the demography followed -- no re-derivation from CLI flags that
+    could drift.  Downstream, the LabourABM stage consumes this to grow its own
+    labour force consistently with the macro run.
+
+    CSV layout: one row per province (``region`` = "CAN_XX"), columns
+    ``time_step_1..N`` holding the quarterly index (base 1.0 at the simulation
+    start).  Returns False (writing nothing) when no province ran with an
+    exogenous labour-force path, e.g. NoAging runs.
+    """
+    rows = {}
+    for country_name, cc in sim.configuration.country_configurations.items():
+        demography = cc.individuals.functions.demography
+        if demography.name != "ExogenousLabourForcePath":
+            continue
+        index = (demography.parameters or {}).get("labour_force_index")
+        if index:
+            rows[_province_code(country_name)] = list(index)
+    if not rows:
+        logger.info("No ExogenousLabourForcePath in this run; labour-force index not exported.")
+        return False
+    n = max(len(v) for v in rows.values())
+    frame = pd.DataFrame(
+        {f"time_step_{i + 1}": {p: (v[i] if i < len(v) else v[-1]) for p, v in rows.items()}
+         for i in range(n)}
+    )
+    frame.index.name = "region"
+    csv_path = csv_path.resolve()
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.sort_index().to_csv(csv_path)
+    logger.info("Saved labour-force index for %d provinces to %s", len(rows), csv_path)
+    return True
+
+
 def export_h5_from_checkpoint(checkpoint_path: Path, h5_path: Path) -> None:
     """Load a saved simulation checkpoint and write it to HDF5."""
     payload = load_sim_checkpoint(checkpoint_path.resolve())
@@ -1891,6 +1929,8 @@ def main() -> None:
 
     if args.save_shallow_h5:
         export_shallow_h5(sim, output_dir / args.shallow_h5_filename)
+
+    export_labour_force_index(sim, output_dir / "labour_force_index.csv")
 
     if args.save_export_checkpoint:
         export_checkpoint = output_dir / EXPORT_CHECKPOINT_NAME
