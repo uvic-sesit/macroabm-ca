@@ -33,6 +33,10 @@ class TargetCapitalInputsSetter(ABC):
         credit_gap_fraction: float,
         forward_looking_reference_fraction: float = 0.0,
         rolling_reference: bool = False,
+        itc_user_cost_rate: float = 0.0,
+        itc_user_cost_eta: float = 0.0,
+        itc_user_cost_eligible_indices: Optional[list[int]] = None,
+        itc_user_cost_mode: str = "lagged_share_all",
     ):
         """Initialize the target capital inputs setter.
 
@@ -57,6 +61,10 @@ class TargetCapitalInputsSetter(ABC):
         self.credit_gap_fraction = credit_gap_fraction
         self.forward_looking_reference_fraction = forward_looking_reference_fraction
         self.rolling_reference = rolling_reference
+        self.itc_user_cost_rate = itc_user_cost_rate
+        self.itc_user_cost_eta = itc_user_cost_eta
+        self.itc_user_cost_eligible_indices = itc_user_cost_eligible_indices or []
+        self.itc_user_cost_mode = itc_user_cost_mode
         # Safeguard trigger counters (diagnostic only; never affect behaviour).
         self.zero_prev_production_count = 0
         self.zero_prev_capital_count = 0
@@ -213,6 +221,8 @@ class TargetCapitalInputsSetter(ABC):
         substitution_bundle_matrix: np.ndarray,
         extra_taxes: Optional[np.ndarray] = None,
         unconstrained_target_production: Optional[np.ndarray] = None,
+        lagged_planned_capital_inputs: Optional[np.ndarray] = None,
+        lagged_good_prices: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate unconstrained target capital inputs for each firm.
 
@@ -300,6 +310,8 @@ class FinancialTargetCapitalInputsSetter(TargetCapitalInputsSetter):
         substitution_bundle_matrix: np.ndarray,
         extra_taxes: Optional[np.ndarray] = None,
         unconstrained_target_production: Optional[np.ndarray] = None,
+        lagged_planned_capital_inputs: Optional[np.ndarray] = None,
+        lagged_good_prices: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate unconstrained capital input targets with stock adjustment.
 
@@ -344,6 +356,36 @@ class FinancialTargetCapitalInputsSetter(TargetCapitalInputsSetter):
             target_capital_inputs
             - self.target_capital_inputs_fraction * (prev_capital_inputs_stock - reference_capital_stock),
         )
+
+        if (
+            self.itc_user_cost_rate > 0.0
+            and self.itc_user_cost_eta != 0.0
+            and len(self.itc_user_cost_eligible_indices) > 0
+            and lagged_planned_capital_inputs is not None
+            and lagged_good_prices is not None
+        ):
+            eligible_indices = np.asarray(self.itc_user_cost_eligible_indices, dtype=int)
+            if self.itc_user_cost_mode == "eligible_goods_only":
+                user_cost_reduction = np.clip(self.itc_user_cost_rate, 0.0, 1.0 - 1e-12)
+                target_capital_inputs[:, eligible_indices] = target_capital_inputs[:, eligible_indices] * (
+                    1.0 - user_cost_reduction
+                ) ** (-self.itc_user_cost_eta)
+            else:
+                lagged_planned_capital_inputs = np.asarray(lagged_planned_capital_inputs, dtype=float)
+                lagged_good_prices = np.asarray(lagged_good_prices, dtype=float).reshape(-1)
+                lagged_planned_values = lagged_planned_capital_inputs * lagged_good_prices[None, :]
+                total_lagged_planned_values = lagged_planned_values.sum(axis=1)
+                eligible_lagged_planned_values = lagged_planned_values[:, eligible_indices].sum(axis=1)
+                eligible_share = np.divide(
+                    eligible_lagged_planned_values,
+                    total_lagged_planned_values,
+                    out=np.zeros_like(total_lagged_planned_values),
+                    where=total_lagged_planned_values > 0.0,
+                )
+                user_cost_reduction = np.clip(self.itc_user_cost_rate * eligible_share, 0.0, 1.0 - 1e-12)
+                target_capital_inputs = target_capital_inputs * (1.0 - user_cost_reduction)[:, None] ** (
+                    -self.itc_user_cost_eta
+                )
 
         return target_capital_inputs
 
@@ -403,6 +445,10 @@ class BundleWeightedTargetCapitalInputsSetter(FinancialTargetCapitalInputsSetter
         beta: float = 1.0,
         forward_looking_reference_fraction: float = 0.0,
         rolling_reference: bool = False,
+        itc_user_cost_rate: float = 0.0,
+        itc_user_cost_eta: float = 0.0,
+        itc_user_cost_eligible_indices: Optional[list[int]] = None,
+        itc_user_cost_mode: str = "lagged_share_all",
     ) -> None:
         """Initialize the bundle-weighted target capital inputs setter.
 
@@ -421,6 +467,10 @@ class BundleWeightedTargetCapitalInputsSetter(FinancialTargetCapitalInputsSetter
             credit_gap_fraction,
             forward_looking_reference_fraction,
             rolling_reference,
+            itc_user_cost_rate,
+            itc_user_cost_eta,
+            itc_user_cost_eligible_indices,
+            itc_user_cost_mode,
         )
         self.beta = beta
 
@@ -436,6 +486,8 @@ class BundleWeightedTargetCapitalInputsSetter(FinancialTargetCapitalInputsSetter
         substitution_bundle_matrix: np.ndarray,
         extra_taxes: Optional[np.ndarray] = None,
         unconstrained_target_production: Optional[np.ndarray] = None,
+        lagged_planned_capital_inputs: Optional[np.ndarray] = None,
+        lagged_good_prices: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate bundle-weighted unconstrained capital input targets.
 
@@ -476,6 +528,8 @@ class BundleWeightedTargetCapitalInputsSetter(FinancialTargetCapitalInputsSetter
             substitution_bundle_matrix,
             extra_taxes,
             unconstrained_target_production,
+            lagged_planned_capital_inputs,
+            lagged_good_prices,
         )
 
         # Calculate average price (using nanmean to handle potential NaN values)

@@ -232,6 +232,12 @@ class TargetCapitalInputs(BaseModel):
         # Rolling reference: K_ref = K_{t-1} * (Q_desired / Q_{t-1}) instead of
         # scaling the base-year stock. False = base-year rule (shipped default).
         "rolling_reference": False,
+        # Dormant by default. When activated, desired capital is scaled by
+        # (1 - itc_user_cost_rate * lagged_eligible_value_share) ** (-itc_user_cost_eta).
+        "itc_user_cost_rate": 0.0,
+        "itc_user_cost_eta": 0.0,
+        "itc_user_cost_eligible_indices": [],
+        "itc_user_cost_mode": "lagged_share_all",
     }
 
 

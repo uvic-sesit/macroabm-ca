@@ -1139,6 +1139,10 @@ class Firms(Agent):
             # reference-capital-stock rule when forward_looking_reference_fraction > 0;
             # ignored at the default of 0.0.
             unconstrained_target_production=self.ts.current("target_production"),
+            # At this point the current-period unconstrained capital target has not
+            # been appended yet, so current(...) is the previous planned bundle.
+            lagged_planned_capital_inputs=self.ts.current("unconstrained_target_capital_inputs"),
+            lagged_good_prices=good_prices,
         )
 
     def compute_unconstrained_demand_for_capital_inputs_value(self, current_good_prices: np.ndarray) -> np.ndarray:
