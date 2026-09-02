@@ -1102,6 +1102,13 @@ class Country:
         self.firms.update_total_newly_bought_costs(
             current_good_prices=self.economy.ts.current("good_prices"),
         )
+        self.firms.ts.itc_refunds.append(
+            self.central_government.compute_itc_refunds(
+                firm_realised_capital_purchases=self.firms.ts.current("real_amount_bought_as_capital_goods"),
+                current_good_prices=self.economy.ts.current("good_prices"),
+            )
+        )
+        self.central_government.ts.itc_refunds.append([self.firms.ts.current("itc_refunds").sum()])
 
         # Execute and record productivity investment after capital purchases are known
         self.firms.execute_productivity_investment()
@@ -1396,6 +1403,7 @@ class Country:
                     "nominal_amount_spent_in_lcu"
                 ),
                 government_interest_rates=self.central_bank.ts.current("policy_rate")[0],
+                current_itc_refunds=self.central_government.ts.current("itc_refunds")[0],
             )
         )
         self.central_government.ts.debt.append(self.central_government.compute_debt())

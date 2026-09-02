@@ -59,6 +59,7 @@ def create_central_government_timeseries(
         taxes_employee_si=[data["Employee SI Tax"].values[0]],
         taxes_employer_si=[data["Employer SI Tax"].values[0]],
         taxes_on_products=[data["Taxes on Products"].values[0]],
+        itc_refunds=[0.0],
         total_rent_received=[data["Total Social Housing Rent"].values[0]],
         #
         revenue=[data["Revenue"].values[0]],

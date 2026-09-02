@@ -126,6 +126,8 @@ class CentralGovernment(Agent):
             "Income Tax": tax_data.income_tax,
             "Capital Formation Tax": tax_data.capital_formation_tax,
             "Taxes Less Subsidies Rates": taxes_net_subsidies,
+            "ITC Refund Rate": 0.0,
+            "ITC Eligible Capital Indices": [],
             "unemployment_benefits_model": synthetic_central_government.unemployment_benefits_model,
             "other_benefits_model": synthetic_central_government.other_benefits_model,
         }
@@ -371,12 +373,31 @@ class CentralGovernment(Agent):
             + household_rent_paid_to_government
         )
 
+    def compute_itc_refunds(
+        self,
+        firm_realised_capital_purchases: np.ndarray,
+        current_good_prices: np.ndarray,
+    ) -> np.ndarray:
+        """Refund investment tax credits on realised eligible firm purchases."""
+        rate = float(self.states.get("ITC Refund Rate", 0.0))
+        eligible_indices = np.asarray(self.states.get("ITC Eligible Capital Indices", []), dtype=int)
+        firm_realised_capital_purchases = np.asarray(firm_realised_capital_purchases, dtype=float)
+        if rate <= 0.0 or eligible_indices.size == 0:
+            return np.zeros(firm_realised_capital_purchases.shape[0])
+
+        current_good_prices = np.asarray(current_good_prices, dtype=float).reshape(-1)
+        eligible_values = (
+            firm_realised_capital_purchases[:, eligible_indices] * current_good_prices[eligible_indices][None, :]
+        ).sum(axis=1)
+        return rate * eligible_values
+
     def compute_deficit(
         self,
         current_ind_activity: np.ndarray,
         current_household_social_transfers: np.ndarray,
         current_government_nominal_amount_spent: np.ndarray,
         government_interest_rates: float,
+        current_itc_refunds: float = 0.0,
     ) -> np.ndarray:
         """Calculate the government deficit.
 
@@ -409,6 +430,7 @@ class CentralGovernment(Agent):
             [
                 all_benefits
                 + np.sum(current_government_nominal_amount_spent)
+                + current_itc_refunds
                 + interest_payments
                 - self.ts.current("revenue")[0]
             ]
