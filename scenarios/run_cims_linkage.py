@@ -971,18 +971,42 @@ def build_link_prehook(
                 if exogenous_fossil_production:
                     _skip = {i for i, code in enumerate(industries)
                              if code in export_mode_excluded}
-                    for _c in sim.countries.values():
-                        _c.firms.set_production_target(None, None)
-                        for _k, _v in enumerate(aligned):
+                    # PROVINCIAL production path, when the extractor wrote one: this
+                    # province's own file carries a `production_index` column (its own
+                    # crude + gas path). Applied to THIS country only; the national
+                    # `export_index` above keeps pinning ROW. Without the column the
+                    # national index drives every province, as before.
+                    _prod = None
+                    if reader.export_demand_index_available(itr, year, demand_region):
+                        _xp = reader.get_export_demand_index(itr, year, demand_region)
+                        if "production_index" in _xp.columns:
+                            _prod = (_xp["production_index"].reindex(industries)
+                                     .fillna(0.0).to_numpy(dtype=float))
+                    if _prod is not None:
+                        country.firms.set_production_target(None, None)
+                        for _k, _v in enumerate(_prod):
                             if _v > 0.0 and _k not in _skip:
-                                _c.firms.set_production_target([_k], float(_v))
-                    logger.info(
-                        "exogenous production path: %s (excluded from production "
-                        "targets, export-pinned only: %s)",
-                        {industries[k]: round(float(v), 4)
-                         for k, v in enumerate(aligned) if v > 0.0 and k not in _skip},
-                        {industries[k] for k in _skip if aligned[k] > 0.0},
-                    )
+                                country.firms.set_production_target([_k], float(_v))
+                        logger.info(
+                            "exogenous production path (province %s): %s (excluded from "
+                            "production targets, export-pinned only: %s)", demand_region,
+                            {industries[k]: round(float(v), 4)
+                             for k, v in enumerate(_prod) if v > 0.0 and k not in _skip},
+                            {industries[k] for k in _skip if aligned[k] > 0.0},
+                        )
+                    else:
+                        for _c in sim.countries.values():
+                            _c.firms.set_production_target(None, None)
+                            for _k, _v in enumerate(aligned):
+                                if _v > 0.0 and _k not in _skip:
+                                    _c.firms.set_production_target([_k], float(_v))
+                        logger.info(
+                            "exogenous production path: %s (excluded from production "
+                            "targets, export-pinned only: %s)",
+                            {industries[k]: round(float(v), 4)
+                             for k, v in enumerate(aligned) if v > 0.0 and k not in _skip},
+                            {industries[k] for k in _skip if aligned[k] > 0.0},
+                        )
             if electricity_own_use and reader.own_use_available(itr, year, demand_region):
                 # AFTER link(): the gross-up applies to the linkage-owned coefficients,
                 # which link() has just written, and needs _linkage_owned_pairs populated.
