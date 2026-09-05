@@ -371,6 +371,9 @@ class SectorExogenousPriceSetter(DefaultPriceSetter):
             if industry_name not in self.overriden_industries:
                 continue
             ratio = self._normalised_price(industry_name, current_quarter=current_time)
+            # Optional price-level scale set by the caller (see SectorExoPrices.nominal_scale);
+            # 1.0 by default, so untouched runs are bit-identical.
+            ratio *= float(getattr(self.firm_exo_prices, "nominal_scale", 1.0) or 1.0)
             for idx in self._indices_for(industry_name):
                 # DELIBERATE DEVIATION from the upstream OBPS branch, which adds
                 # ``+ tax_by_firm[idx]`` here.  These sectors' prices are pinned to CER's

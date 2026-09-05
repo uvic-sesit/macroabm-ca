@@ -25,11 +25,18 @@ class SectorExoPrices:
         initial_model_prices: Per-firm anchor prices injected from the model
             at construction time; each firm is scaled by its own anchor so
             relative price levels within a sector are preserved.
+        nominal_scale: Multiplier applied on top of the normalised file path
+            every step (default 1.0 = the file is used as is). A caller that
+            supplies the file in REAL terms can drive this from the model's
+            own price level (e.g. CPI(t-1)/CPI(0)) through a prehook, so the
+            exogenous sectors inflate with the economy they sit in instead of
+            at a rate fixed in advance.
     """
 
     prices: Optional[pd.DataFrame] = None
     initial_year: int = 2014
     initial_model_prices: Optional[np.ndarray] = None
+    nominal_scale: float = 1.0
 
     @property
     def values_dictionary(self) -> dict:
