@@ -761,7 +761,7 @@ class DataReaders:
             for year in years
         ]
         other = [
-            self.oecd_econ.all_benefits_gdp_pct(country_name, year)
+            self.oecd_econ.public_cash_benefits_gdp_pct(country_name, year)
             * self.world_bank.get_current_scaled_gdp(country_name, year)
             - unemp[i]
             for i, year in enumerate(years)
@@ -789,19 +789,21 @@ class DataReaders:
         return data
 
     def get_total_benefits_lcu(self, country_name: Country, year: int) -> float:
-        """Calculate total benefits in local currency units.
+        """Calculate public cash social benefits in local currency units.
 
-        This method computes the total benefits (including unemployment and other benefits)
-        for a country in its local currency units.
+        This method computes public cash social expenditure (including
+        unemployment and other cash benefits) for a country in local currency
+        units. It intentionally excludes in-kind social expenditure already
+        represented through IO government consumption.
 
         Args:
             country_name (Country): Country to analyze
             year (int): Reference year
 
         Returns:
-            float: Total benefits in local currency units
+            float: Public cash benefits in local currency units
         """
-        return self.oecd_econ.all_benefits_gdp_pct(country_name, year) * self.world_bank.get_current_scaled_gdp(
+        return self.oecd_econ.public_cash_benefits_gdp_pct(country_name, year) * self.world_bank.get_current_scaled_gdp(
             country_name, year
         )
 

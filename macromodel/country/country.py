@@ -602,7 +602,7 @@ class Country:
         self.central_bank.ts.policy_rate.append(
             [
                 self.central_bank.compute_rate(
-                    inflation=self.economy.ts.current("ppi_inflation")[0],
+                    inflation=self.economy.ts.current("cpi_inflation")[0],
                     growth=self.economy.ts.current("total_growth")[0],
                 )
             ]

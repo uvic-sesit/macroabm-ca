@@ -36,6 +36,7 @@ import h5py
 import numpy as np
 
 from macro_data import SyntheticCreditMarket
+from macromodel.agents.central_bank.func.policy_rate import annual_to_quarterly_effective
 from macromodel.configurations import CreditMarketConfiguration
 from macromodel.markets.credit_market.credit_market_ts import (
     create_credit_market_timeseries,
@@ -47,6 +48,14 @@ if TYPE_CHECKING:
     from macromodel.agents.banks.banks import Banks
     from macromodel.agents.firms import Firms
     from macromodel.agents.households.households import Households
+
+
+def _convert_annual_interest_amounts_to_quarterly(loans: np.ndarray) -> np.ndarray:
+    """Convert initial loan interest amounts implied by annual rates to quarterly amounts."""
+    principal = loans[0]
+    annual_rate = np.divide(loans[1], principal, out=np.zeros_like(loans[1]), where=principal != 0.0)
+    loans[1] = principal * annual_to_quarterly_effective(annual_rate)
+    return loans
 
 
 class CreditMarket:
@@ -145,6 +154,14 @@ class CreditMarket:
         payday_loans = synthetic_credit_market.payday_loans.stack()
         consumption_expansion_loans = synthetic_credit_market.consumption_expansion_loans.stack()
         mortgage_loans = synthetic_credit_market.mortgage_loans.stack()
+        for loans in [
+            shortterm_loans,
+            longterm_loans,
+            payday_loans,
+            consumption_expansion_loans,
+            mortgage_loans,
+        ]:
+            _convert_annual_interest_amounts_to_quarterly(loans)
 
         ts = create_credit_market_timeseries(
             total_consumption_expansion_loans=consumption_expansion_loans.sum(),

@@ -32,6 +32,9 @@ sys.path.insert(0, str(REPO / "dev" / "validation"))
 
 import provincial_validation_2022 as P
 from macro_data import DataWrapper
+from macro_data.configuration.countries import Country as MacroCountry
+from macro_data.readers.economic_data.oecd_economic_data import OECDEconData
+from macro_data.readers.economic_data.world_bank_reader import WorldBankReader
 from macromodel.agents.households.func.consumption import DisposableIncomeHouseholdConsumption
 from macromodel.agents.households.func.investment import DefaultHouseholdInvestment, ExogenousHouseholdInvestment
 from macromodel.agents.government_entities.func.consumption import (
@@ -73,6 +76,7 @@ def build_closure_model(
     try:
         data = DataWrapper.init_from_pickle(PKL)
         provs, cfg = build_config(data, seed, q)
+        _apply_public_cash_benefits(data)
         P.configure(cfg, provs, candidate=True)
         model = Simulation.from_datawrapper(datawrapper=data, simulation_configuration=cfg)
         P.post_build(model, provs, "candidate_prov")
@@ -139,6 +143,44 @@ def _configure_prices(country, price_dp: float) -> None:
 def _configure_fiscal_itc(country, itc_rate: float, eligible_indices: Iterable[int]) -> None:
     country.central_government.states["ITC Refund Rate"] = float(itc_rate)
     country.central_government.states["ITC Eligible Capital Indices"] = list(eligible_indices)
+
+
+def _apply_public_cash_benefits(data: DataWrapper) -> None:
+    """Replace broad SOCX public-total benefits with public cash benefits.
+
+    The validated pickle was built from OECD SOCX public total social expenditure.
+    For endogenous household-consumption closure, household transfers should use
+    public cash social expenditure instead; in-kind services remain represented by
+    IO government consumption. Existing unemployment-benefit handling is preserved:
+    other cash benefits = total public cash benefits - unemployment benefits.
+    """
+    raw_data = DATA_REPO / "dev" / "raw_data"
+    oecd = OECDEconData(raw_data / "oecd_econ", scale_dict={MacroCountry("CAN"): 1})
+    world_bank = WorldBankReader(raw_data / "world_bank")
+    year = data.configuration.year
+
+    for country_name, synthetic_country in data.synthetic_countries.items():
+        central_gov = synthetic_country.central_government.central_gov_data
+        total_cash_benefits = (
+            oecd.public_cash_benefits_gdp_pct(country_name, year)
+            * world_bank.get_current_scaled_gdp(country_name, year)
+        )
+        unemployment_benefits = float(central_gov["Total Unemployment Benefits"].iloc[0])
+        other_cash_benefits = total_cash_benefits - unemployment_benefits
+        if other_cash_benefits < -1e-6:
+            raise ValueError(
+                f"Public cash benefits below unemployment benefits for {country_name}: "
+                f"{total_cash_benefits} < {unemployment_benefits}"
+            )
+        other_cash_benefits = max(0.0, other_cash_benefits)
+        central_gov.loc[:, "Other Social Benefits"] = other_cash_benefits
+
+        households = synthetic_country.population.household_data
+        old_other = float(households["Regular Social Transfers"].sum())
+        if old_other > 0.0:
+            households.loc[:, "Regular Social Transfers"] *= other_cash_benefits / old_other
+        elif other_cash_benefits > 0.0:
+            raise ValueError(f"Cannot allocate positive cash benefits from a zero transfer base for {country_name}")
 
 
 def _wrap_government_purchase_protection(country) -> None:
