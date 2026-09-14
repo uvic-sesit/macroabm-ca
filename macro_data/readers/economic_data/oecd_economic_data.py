@@ -203,6 +203,10 @@ class OECDEconData:
         self.data = {
             key: pd.read_csv(path / (self.files_with_codes[key] + ".csv")) for key in self.files_with_codes.keys()
         }
+        public_cash_socx_path = Path(__file__).with_name("socx_public_cash_can.csv")
+        self.public_cash_socx = (
+            pd.read_csv(public_cash_socx_path) if public_cash_socx_path.exists() else pd.DataFrame()
+        )
 
         self.default_industries = [
             "A",
@@ -873,6 +877,24 @@ class OECDEconData:
             return average_oecd
         else:
             return val[0] / 100.0
+
+    def public_cash_benefits_gdp_pct(self, country: Country | str | Region, year: int) -> float:
+        """Get public cash social expenditure as a percentage of GDP.
+
+        This is OECD SOCX public in-cash social expenditure, not total public
+        social expenditure. It excludes in-kind public service provision such as
+        health and social services already represented through government final
+        consumption in the IO table.
+        """
+        if isinstance(country, Region):
+            country = country.parent_country
+        if isinstance(country, Country):
+            country = country.value
+        if self.public_cash_socx.empty or country not in self.public_cash_socx["COUNTRY"].values:
+            return self.all_benefits_gdp_pct(country, year)
+        sub = self.public_cash_socx.loc[self.public_cash_socx["COUNTRY"] == country]
+        cash_year = _closest_time(sub["YEAR"], year)
+        return sub.loc[sub["YEAR"] == cash_year, "Value"].iloc[0] / 100.0
 
     def general_gov_debt(self, country: Country, year: int) -> float:
         """
