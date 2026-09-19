@@ -258,6 +258,7 @@ class FirmTimeSeries(TimeSeries):
             used_capital_inputs_costs=np.matmul(used_capital_inputs, initial_good_prices),
             total_capital_inputs_bought_costs=np.matmul(used_capital_inputs, initial_good_prices),
             gross_fixed_capital_formation=(used_capital_inputs * initial_good_prices).sum(axis=0),
+            itc_refunds=np.zeros(data.shape[0]),
             #
             real_amount_bought_as_intermediate_inputs=np.full((data.shape[0], n_industries), np.nan),
             real_amount_bought_as_capital_goods=np.full((data.shape[0], n_industries), np.nan),
@@ -467,6 +468,7 @@ def create_firms_timeseries(
         used_capital_inputs_costs=np.matmul(used_capital_inputs, initial_good_prices),
         total_capital_inputs_bought_costs=np.matmul(used_capital_inputs, initial_good_prices),
         gross_fixed_capital_formation=(used_capital_inputs * initial_good_prices).sum(axis=0),
+        itc_refunds=np.zeros(data.shape[0]),
         #
         real_amount_bought_as_intermediate_inputs=np.full((data.shape[0], n_industries), np.nan),
         real_amount_bought_as_capital_goods=np.full((data.shape[0], n_industries), np.nan),

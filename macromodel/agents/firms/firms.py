@@ -1731,6 +1731,7 @@ class Firms(Agent):
             - self.ts.current("taxes_paid_on_production")
             - self.ts.current("corporate_taxes_paid")
             - self.ts.current("interest_paid")
+            + self.ts.current("itc_refunds")
             + self.ts.current("received_credit")
             - self.ts.current("debt_installments")
         )
