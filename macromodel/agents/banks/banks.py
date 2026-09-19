@@ -24,6 +24,7 @@ import numpy as np
 from macro_data import SyntheticBanks
 from macromodel.agents.agent import Agent
 from macromodel.agents.banks.banks_ts import create_banks_timeseries
+from macromodel.agents.central_bank.func.policy_rate import annual_to_quarterly_effective
 from macromodel.configurations import BankParameters, BanksConfiguration
 from macromodel.markets.credit_market.credit_market import CreditMarket
 from macromodel.timeseries import TimeSeries
@@ -135,6 +136,19 @@ class Banks(Agent):
         functions = functions_from_model(model=configuration.functions, loc="macromodel.agents.banks")
 
         data = synthetic_banks.bank_data.drop(columns=["Corresponding Firms ID", "Corresponding Households ID"])
+        annual_rate_columns = [
+            "Short-Term Interest Rates on Firm Loans",
+            "Long-Term Interest Rates on Firm Loans",
+            "Interest Rates on Household Consumption Loans",
+            "Interest Rates on Mortgages",
+            "Interest Rates on Firm Deposits",
+            "Overdraft Rate on Firm Deposits",
+            "Interest Rates on Household Deposits",
+            "Overdraft Rate on Household Deposits",
+        ]
+        for column in annual_rate_columns:
+            if column in data:
+                data[column] = annual_to_quarterly_effective(data[column])
         ts = create_banks_timeseries(
             bank_data=data,
             scale=scale,

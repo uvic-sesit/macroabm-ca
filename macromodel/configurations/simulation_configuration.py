@@ -29,3 +29,6 @@ class SimulationConfiguration(BaseModel):
     row_configuration: RestOfTheWorldConfiguration = RestOfTheWorldConfiguration()
     goods_market_configuration: GoodsMarketConfiguration = GoodsMarketConfiguration()
     exchange_rates_configuration: ExchangeRatesConfiguration = ExchangeRatesConfiguration()
+    # Establish exogenous labour-force membership before quarterly labour matching.
+    # The default preserves the parent model's end-of-period update convention.
+    labour_force_update_before_markets: bool = False

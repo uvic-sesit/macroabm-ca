@@ -18,6 +18,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from macromodel.agents.central_bank.func.policy_rate import (
+    annual_to_quarterly_effective,
+    quarterly_to_annual_effective,
+)
+
 
 class InterestRatesSetter(ABC):
     """Abstract base class for interest rate determination.
@@ -229,6 +234,13 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
     - Ensures rate consistency
     """
 
+    @staticmethod
+    def _ect_annual_quote_to_quarterly(prev_quarterly_rate, central_bank_quarterly_rate, pass_through, ect):
+        prev_annual_rate = quarterly_to_annual_effective(prev_quarterly_rate)
+        policy_annual_rate = quarterly_to_annual_effective(central_bank_quarterly_rate)
+        annual_rate = prev_annual_rate + ect * (prev_annual_rate - pass_through * policy_annual_rate)
+        return annual_to_quarterly_effective(annual_rate)
+
     def get_interest_rates_on_short_term_firm_loans(
         self,
         central_bank_policy_rate: float,
@@ -254,8 +266,11 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New short-term firm loan rates by bank
         """
-        return prev_interest_rates_on_short_term_firm_loans + firm_ect * (
-            prev_interest_rates_on_short_term_firm_loans - firm_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_interest_rates_on_short_term_firm_loans,
+            central_bank_policy_rate,
+            firm_pt,
+            firm_ect,
         )
 
     def get_interest_rates_on_long_term_firm_loans(
@@ -283,8 +298,11 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New long-term firm loan rates by bank
         """
-        return prev_interest_rates_on_long_term_firm_loans + firm_ect * (
-            prev_interest_rates_on_long_term_firm_loans - firm_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_interest_rates_on_long_term_firm_loans,
+            central_bank_policy_rate,
+            firm_pt,
+            firm_ect,
         )
 
     def get_interest_rates_on_household_consumption_loans(
@@ -312,8 +330,11 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New household consumption loan rates by bank
         """
-        return prev_interest_rate_on_hh_consumption_loans + hh_cons_ect * (
-            prev_interest_rate_on_hh_consumption_loans - hh_cons_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_interest_rate_on_hh_consumption_loans,
+            central_bank_policy_rate,
+            hh_cons_pt,
+            hh_cons_ect,
         )
 
     def get_interest_rate_on_mortgages(
@@ -341,8 +362,11 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New mortgage rates by bank
         """
-        return prev_interest_rate_on_mortgages + hh_mortgage_ect * (
-            prev_interest_rate_on_mortgages - hh_mortgage_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_interest_rate_on_mortgages,
+            central_bank_policy_rate,
+            hh_mortgage_pt,
+            hh_mortgage_ect,
         )
 
     def compute_interest_rate_on_firm_deposits(
@@ -393,8 +417,11 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New firm overdraft rates by bank
         """
-        return prev_overdraft_rate_on_firm_deposits + firm_ect * (
-            prev_overdraft_rate_on_firm_deposits - firm_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_overdraft_rate_on_firm_deposits,
+            central_bank_policy_rate,
+            firm_pt,
+            firm_ect,
         )
 
     def compute_interest_rate_on_household_deposits(
@@ -445,6 +472,9 @@ class DefaultInterestRatesSetter(InterestRatesSetter):
         Returns:
             np.ndarray: New household overdraft rates by bank
         """
-        return prev_overdraft_rate_on_hh_deposits + hh_cons_ect * (
-            prev_overdraft_rate_on_hh_deposits - hh_cons_pt * central_bank_policy_rate
+        return self._ect_annual_quote_to_quarterly(
+            prev_overdraft_rate_on_hh_deposits,
+            central_bank_policy_rate,
+            hh_cons_pt,
+            hh_cons_ect,
         )

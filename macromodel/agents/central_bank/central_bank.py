@@ -23,6 +23,7 @@ from macromodel.agents.agent import Agent
 from macromodel.agents.central_bank.central_bank_ts import (
     create_central_bank_timeseries,
 )
+from macromodel.agents.central_bank.func.policy_rate import annual_to_quarterly_effective
 from macromodel.configurations import CentralBankConfiguration
 from macromodel.timeseries import TimeSeries
 from macromodel.util.function_mapping import functions_from_model, update_functions
@@ -119,6 +120,7 @@ class CentralBank(Agent):
         functions = functions_from_model(model=configuration.functions, loc="macromodel.agents.central_bank")
 
         data = synthetic_central_bank.central_bank_data.astype(float).rename_axis("Central Bank ID")
+        data["policy_rate"] = annual_to_quarterly_effective(data["policy_rate"])
 
         # Create the corresponding time series object
         ts = create_central_bank_timeseries(data)

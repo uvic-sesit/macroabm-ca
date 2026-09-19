@@ -319,6 +319,8 @@ class Simulation:
         # self.exchange_rates.set_current_exchange_rates(current_year=self.timestep.year)
 
         for ind, country in enumerate(self.countries.values()):
+            if self.configuration.labour_force_update_before_markets:
+                country.update_population_structure()
             exchange_rate = self.exchange_rates.get_current_exchange_rates_from_usd_to_lcu(
                 country_name=country.country_name,
                 current_year=self.timestep.year,
@@ -374,7 +376,8 @@ class Simulation:
         self.rest_of_the_world.record_bought_goods()
         for country in self.countries.values():
             country.update_realised_metrics()
-            country.update_population_structure()
+            if not self.configuration.labour_force_update_before_markets:
+                country.update_population_structure()
 
         # Execute post-hooks after all metrics are updated
         self.run_posthooks(t, self.timestep.year, self.timestep.month)

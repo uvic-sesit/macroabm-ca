@@ -17,6 +17,16 @@ The policy rate setting considers:
 from abc import ABC, abstractmethod
 
 
+def annual_to_quarterly_effective(rate):
+    """Convert annual quoted rates to quarterly effective model-period rates."""
+    return (1.0 + rate) ** 0.25 - 1.0
+
+
+def quarterly_to_annual_effective(rate):
+    """Convert quarterly effective model-period rates back to annual quotes."""
+    return (1.0 + rate) ** 4.0 - 1.0
+
+
 class PolicyRate(ABC):
     """Abstract base class for determining policy interest rates.
 
@@ -97,26 +107,20 @@ class ConstantPolicyRate(PolicyRate):
             [same as parent class]
 
         Returns:
-            float: Previous policy rate (unchanged)
+            float: Previous policy rate (unchanged, quarterly effective)
         """
         return prev_rate
 
 
 class PolednaPolicyRate(PolicyRate):
-    """Implementation of Poledna et al. monetary policy rule.
+    """Stylized Taylor-type monetary-policy robustness rule.
 
-    This class implements a Taylor-type rule that:
-    - Responds to inflation gaps
-    - Considers economic growth
-    - Smooths interest rates
-    - Maintains non-negative rates
-
-    The approach provides:
-    - Systematic policy responses
-    - Price stability focus
-    - Growth considerations
-    - Policy predictability
-
+    The historical Poledna-style ARDL coefficients stored in old pickles are not
+    used here: the inflation coefficient has the wrong sign for policy use and is
+    explicitly flagged as suspect in the preprocessing code. For diagnostics this
+    class keeps the existing configuration hook but uses transparent Taylor-style
+    parameters on annual-rate units, then converts the output to the model's
+    quarterly effective rate convention.
     """
 
     def compute_rate(
@@ -126,29 +130,30 @@ class PolednaPolicyRate(PolicyRate):
         growth: float,
         central_bank_states: dict[str, float],
     ) -> float:
-        """Calculate policy rate using Poledna et al. rule.
+        """Calculate a stylized Taylor policy rate.
 
-        Implements a Taylor-type rule with:
-        - Interest rate smoothing (rho parameter)
-        - Inflation gap response (xi_pi parameter)
-        - Growth response (xi_gamma parameter)
-        - Zero lower bound constraint
+        Annual scale:
+            i_t = rho i_{t-1}
+                  + (1-rho)[r* + pi* + phi_pi(pi_t - pi*)]
 
-        Args:
-            [same as parent class]
-
-        Returns:
-            float: New policy rate based on rule calculation,
-                constrained to be non-negative
+        with rho=0.85, r*=0.005, pi*=0.02, phi_pi=1.5, and an 8%
+        annual cap by default unless overridden in central_bank_states.
+        The model's growth variable is not used here because it is not a
+        calibrated output-gap measure in the CAN-2022 diagnostic closure.
         """
-        return max(
-            0.0,
-            central_bank_states["rho"] * prev_rate
-            + (1 - central_bank_states["rho"])
-            * (
-                central_bank_states["r_star"]
-                + central_bank_states["targeted_inflation_rate"]
-                + central_bank_states["xi_pi"] * (inflation - central_bank_states["targeted_inflation_rate"])
-                + central_bank_states["xi_gamma"] * growth
+        prev_rate_annual = quarterly_to_annual_effective(prev_rate)
+        inflation_annual = quarterly_to_annual_effective(inflation)
+        rho = central_bank_states.get("stylized_taylor_rho", 0.85)
+        r_star = central_bank_states.get("stylized_taylor_r_star", 0.005)
+        pi_star = central_bank_states.get("stylized_taylor_inflation_target", 0.02)
+        phi_pi = central_bank_states.get("stylized_taylor_phi_pi", 1.5)
+        max_rate = central_bank_states.get("stylized_taylor_max_rate", 0.08)
+        annual_policy_rate = min(
+            max_rate,
+            max(
+                0.0,
+                rho * prev_rate_annual
+                + (1 - rho) * (r_star + pi_star + phi_pi * (inflation_annual - pi_star)),
             ),
         )
+        return annual_to_quarterly_effective(annual_policy_rate)
