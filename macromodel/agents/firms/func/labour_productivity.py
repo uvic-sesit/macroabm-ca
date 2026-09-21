@@ -143,10 +143,18 @@ class WorkEffortLabourProductivitySetter(LabourProductivitySetter):
             current_target_production
             + self.consider_capital_inputs * (current_limiting_capital_inputs - current_target_production),
         )
+        # A firm with no employees, or a zero industry productivity, has no labour capacity to
+        # measure the target against; leave its work effort unchanged rather than dividing by zero.
+        labour_capacity = labour_inputs_from_employees * industry_labour_productivity_by_firm
         return 1.0 + self.work_effort_increase_speed * (
             np.minimum(
                 self.max_increase_in_work_effort,
-                current_target_production / (labour_inputs_from_employees * industry_labour_productivity_by_firm),
+                np.divide(
+                    current_target_production,
+                    labour_capacity,
+                    out=np.ones(labour_capacity.shape),
+                    where=labour_capacity != 0.0,
+                ),
             )
             - 1.0
         )
