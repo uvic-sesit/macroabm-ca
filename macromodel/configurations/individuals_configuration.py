@@ -35,9 +35,7 @@ class LabourInputsFunction(BaseModel):
     """
 
     path_name: str = "labour_inputs"
-    name: Literal["ScaledIndividualsProductivitySetter", "ConstantIndividualsLabourInputsSetter"] = (
-        "ScaledIndividualsProductivitySetter"
-    )
+    name: Literal["ScaledIndividualsProductivitySetter"] = "ScaledIndividualsProductivitySetter"
     parameters: dict[str, Any] = {"decrease_unemployed": 0.0, "increase_employed": 0.0}
 
 
