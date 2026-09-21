@@ -205,7 +205,7 @@ class HousingMarket:
         """
         self.ts.reset()
         update_functions(
-            model=configuration.functions, loc="macromodel.agents.housing_market", functions=self.functions
+            model=configuration.functions, loc="macromodel.markets.housing_market", functions=self.functions
         )
         self.states = deepcopy(self.initial_states)
 

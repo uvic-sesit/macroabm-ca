@@ -187,7 +187,9 @@ class LabourMarket:
         Args:
             configuration: New configuration parameters to apply
         """
-        update_functions(model=configuration.functions, loc="macromodel.agents.labour_market", functions=self.functions)
+        update_functions(
+            model=configuration.functions, loc="macromodel.markets.labour_market", functions=self.functions
+        )
         self.ts.reset()
 
     def clear(
