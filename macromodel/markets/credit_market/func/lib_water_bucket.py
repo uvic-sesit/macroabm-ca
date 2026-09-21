@@ -237,7 +237,7 @@ def fill_buckets(
 
         Final allocation: [65, 10, 75]
     """
-    if np.sum(capacities) == np.sum(capacities) + 1:
+    if not np.isfinite(np.sum(capacities)):
         return np.full_like(capacities, fill_amount / len(capacities))
     if np.sum(capacities) == 0 or fill_amount == 0.0:
         return np.zeros_like(capacities)

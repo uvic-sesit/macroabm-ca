@@ -238,7 +238,7 @@ def fill_buckets(
         Final allocation: [65, 10, 75]
     """
     # Handle special case of NaN capacities
-    if np.sum(capacities) == np.sum(capacities) + 1:
+    if not np.isfinite(np.sum(capacities)):
         return np.full_like(capacities, fill_amount / len(capacities))
 
     # Handle zero capacity or zero fill amount
