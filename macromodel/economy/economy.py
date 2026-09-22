@@ -44,6 +44,7 @@ measurement approaches (output, expenditure, income) while handling
 temporal evolution and cross-market interactions.
 """
 
+import logging
 from typing import Any, Optional
 
 import h5py
@@ -1290,6 +1291,15 @@ class Economy:
                 self.ts.current("gdp_output")[0],
                 self.ts.current("gdp_expenditure")[0],
             )
+            # The income leg is reported rather than asserted: it carries the statistical
+            # discrepancy the trade adjustment places in net trade, so a mismatch is
+            # information about the run, not a reason to stop it.
+            if not np.isclose(self.ts.current("gdp_output")[0], self.ts.current("gdp_income")[0], rtol=1e-2):
+                logging.warning(
+                    "%s: mismatch, output/income GDP: %s",
+                    self.country_name,
+                    self.ts.current("gdp_output")[0] / self.ts.current("gdp_income")[0],
+                )
 
     def save_to_h5(self, group: h5py.Group):
         """Save economy time series data to HDF5 format.
