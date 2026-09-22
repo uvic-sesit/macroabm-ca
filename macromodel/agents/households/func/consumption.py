@@ -20,6 +20,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numba import njit
 
+from macromodel.util.partition import partition_into_quintiles
+
 
 class HouseholdConsumption(ABC):
     """Abstract base class for household consumption behavior.
@@ -149,6 +151,12 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
         Returns:
             np.ndarray: Target consumption by household and industry
         """
+        if take_consumption_weights_by_income_quantile:
+            # One weight vector per household, taken from its income quintile. The kernel
+            # receives the flag as well but has never acted on it.
+            quintile_indices = partition_into_quintiles(np.asarray(income))
+            consumption_weights = consumption_weights_by_income[:, quintile_indices].T
+
         return self._compute_target_consumption(
             historic_consumption_sum=historic_consumption_sum,
             saving_rates=saving_rates,
@@ -222,9 +230,11 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
         target_consumption = (
             1.0
             / (1 + tau_vat)
-            * np.outer(
-                consumption_weights,
-                np.maximum(
+            * (
+                # Broadcasting rather than an outer product, so that consumption_weights may be
+                # one vector for every household or one per household.
+                consumption_weights
+                * np.maximum(
                     np.maximum(
                         minimum_consumption_fraction * (1 - saving_rates) * household_benefits,
                         (1 - saving_rates) * income,
@@ -233,8 +243,8 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
                     * (1 + tau_vat)
                     * (1 / smoothing_window)
                     * historic_consumption_sum[1:][-smoothing_window:].sum(axis=0),
-                ),
-            ).T
+                )[:, np.newaxis]
+            )
         )
         return np.maximum(0.0, target_consumption)
 
