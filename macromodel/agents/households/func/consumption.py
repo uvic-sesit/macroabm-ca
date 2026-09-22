@@ -225,8 +225,10 @@ class DefaultHouseholdConsumption(HouseholdConsumption):
             * np.outer(
                 consumption_weights,
                 np.maximum(
-                    minimum_consumption_fraction * (1 - saving_rates) * household_benefits,
-                    (1 - saving_rates) * income,
+                    np.maximum(
+                        minimum_consumption_fraction * (1 - saving_rates) * household_benefits,
+                        (1 - saving_rates) * income,
+                    ),
                     consumption_smoothing_fraction
                     * (1 + tau_vat)
                     * (1 / smoothing_window)
@@ -472,8 +474,10 @@ class CESHouseholdConsumption(HouseholdConsumption):
             * np.outer(
                 ces_weights,
                 np.maximum(
-                    self.minimum_consumption_fraction * (1 - saving_rates) * household_benefits,
-                    (1 - saving_rates) * income,
+                    np.maximum(
+                        self.minimum_consumption_fraction * (1 - saving_rates) * household_benefits,
+                        (1 - saving_rates) * income,
+                    ),
                     self.consumption_smoothing_fraction
                     * (1 + tau_vat)
                     * (1 / smoothing_window)
