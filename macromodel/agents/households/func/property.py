@@ -40,8 +40,13 @@ class HouseholdDemandForProperty(ABC):
         maximum_price_noise_variance (float): Price noise distribution variance
         maximum_rent_income_coefficient (float): Rent/income ratio coefficient
         maximum_rent_income_exponent (float): Rent/income ratio exponent
-        psychological_pressure_of_renting (float): Renting preference factor
-        cost_comparison_temperature (float): Decision sensitivity parameter
+        psychological_pressure_of_renting (float): Renting preference factor. It scales the annual
+            cost of renting, which enters the decision as a difference divided by 10000; once that
+            quotient is large the buying probability is 0 or 1 and the factor does not change the
+            decision.
+        cost_comparison_temperature (float): Decision sensitivity parameter, multiplying the cost
+            difference divided by 10000; like the factor above, it does not change a saturated
+            decision.
         price_initial_markup (float): Initial price markup factor
         price_decrease_probability (float): Price reduction probability
         price_decrease_mean (float): Price reduction mean
@@ -122,7 +127,7 @@ class HouseholdDemandForProperty(ABC):
             observed_fraction_rent_value (np.ndarray): Rent/value ratios
             expected_hpi_growth (float): Expected house price growth
             assumed_mortgage_maturity (int): Mortgage term length
-            rental_income_taxes (float): Tax rate on rental income
+            rental_income_taxes (float): Tax rate on rental income. Not read by this implementation.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: Maximum price willing to pay,
@@ -250,7 +255,7 @@ class DefaultHouseholdDemandForProperty(HouseholdDemandForProperty):
             observed_fraction_rent_value (np.ndarray): Rent/value ratios
             expected_hpi_growth (float): Expected house price growth
             assumed_mortgage_maturity (int): Mortgage term length
-            rental_income_taxes (float): Tax rate on rental income
+            rental_income_taxes (float): Tax rate on rental income. Not read by this implementation.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: Maximum price willing to pay,

@@ -357,8 +357,9 @@ class HousingMarket:
     def compute_observed_fraction_value_price(self) -> np.ndarray:
         """Calculate the relationship between property values and sale prices.
 
-        This method analyzes completed sales transactions to determine the
-        current relationship between property values and actual sale prices.
+        This method analyzes the sale offers matched in the current clearing round,
+        before settlement decides which of them complete, to determine the
+        relationship between property values and asking prices at match time.
         It uses linear regression to estimate the value-to-price ratio.
 
         Returns:
