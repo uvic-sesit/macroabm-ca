@@ -45,12 +45,24 @@ def _call(rule, income, W, F, income_tax, si=0.0, benefits=None, saving=0.3, tau
     )
 
 
-def test_disposable_identity_matches_formula():
-    W = np.array([100.0, 80.0, 0.0, 40.0]); F = np.array([10.0, 0.0, 5.0, 0.0])
-    income = W + F + np.array([20.0, 50.0, 30.0, 25.0])  # + transfers/rental
+def test_disposable_income_does_not_deduct_from_the_wage_again():
+    # employee_income enters expected_income as take-home pay, so neither levy is charged on
+    # it a second time: the wage may change without moving disposable income.
+    F = np.array([10.0, 0.0, 5.0, 0.0])
+    other = np.array([20.0, 50.0, 30.0, 25.0])  # + transfers/rental
+    W = np.array([100.0, 80.0, 0.0, 40.0])
+    income = W + F + other
     disp = DisposableIncomeHouseholdConsumption.disposable_income(income, W, F, income_tax=0.2, employee_social_insurance_tax=0.1)
-    expected = income - 0.2 * ((1 - 0.1) * W + F) - 0.1 * W
-    assert np.allclose(disp, np.maximum(0.0, expected))
+    doubled = DisposableIncomeHouseholdConsumption.disposable_income(income, W * 2.0, F, income_tax=0.2, employee_social_insurance_tax=0.1)
+    assert np.allclose(disp, doubled)
+
+
+def test_disposable_income_taxes_financial_income():
+    F = np.array([10.0, 0.0, 5.0, 0.0])
+    W = np.array([100.0, 80.0, 0.0, 40.0])
+    income = W + F + np.array([20.0, 50.0, 30.0, 25.0])
+    disp = DisposableIncomeHouseholdConsumption.disposable_income(income, W, F, income_tax=0.2, employee_social_insurance_tax=0.1)
+    assert np.allclose(income - disp, 0.2 * F)
 
 
 def test_higher_personal_tax_reduces_aggregate_consumption():

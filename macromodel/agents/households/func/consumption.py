@@ -242,15 +242,13 @@ class DisposableIncomeHouseholdConsumption(DefaultHouseholdConsumption):
 
     Identical to ``DefaultHouseholdConsumption`` (same benefit/smoothing floors, weight
     allocation and VAT wedge) except that the income entering the consumption target is net
-    of the personal income tax and employee social-insurance contribution the government
-    levies on this household (mirrors ``CentralGovernment.compute_taxes``):
+    of the personal income tax the government levies on this household's financial income:
 
-        disposable = expected_income
-                     - income_tax * ((1 - employee_social_insurance_tax) * employee_income + financial_income)
-                     - employee_social_insurance_tax * employee_income
+        disposable = expected_income - income_tax * financial_income
 
-    Rental income is already recorded net of income tax in ``expected_income``; social
-    transfers are untaxed and therefore retained in full. If the income components are not
+    Every other component of ``expected_income`` is already net of whatever levy applies to
+    it: the wage is take-home pay, the dividend term is net of the income tax, rental income
+    is recorded net of it, and social transfers are untaxed. If the income components are not
     supplied (e.g. a direct call), it falls back to gross income and reduces to the default
     rule. It does not rescale the aggregate to any external path, so household allocation
     preserves the (disposable-income) aggregate total.
@@ -263,11 +261,8 @@ class DisposableIncomeHouseholdConsumption(DefaultHouseholdConsumption):
             return income
         employee_income = np.asarray(employee_income, dtype=float)
         financial_income = np.asarray(financial_income, dtype=float)
-        personal_income_tax = income_tax * (
-            (1.0 - employee_social_insurance_tax) * employee_income + financial_income
-        )
-        social_contributions = employee_social_insurance_tax * employee_income
-        return np.maximum(0.0, income - personal_income_tax - social_contributions)
+        personal_income_tax = income_tax * financial_income
+        return np.maximum(0.0, income - personal_income_tax)
 
     def compute_target_consumption(
         self,
