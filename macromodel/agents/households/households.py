@@ -663,10 +663,12 @@ class Households(Agent):
 
         # Target consumption
         if assume_zero_growth:
-            return np.outer(
-                self.ts.initial("consumption"),
-                self.states["consumption_weights_data"],
-            ).astype(float)
+            # The industry weights the household already holds, as the other branch passes them;
+            # clipped at zero as the default consumption function does before returning.
+            return np.maximum(
+                0.0,
+                np.outer(self.ts.initial("consumption"), self.consumption_weights).astype(float),
+            )
         else:
             return self.functions["consumption"].compute_target_consumption(
                 expected_inflation=expected_inflation,
