@@ -23,9 +23,11 @@ lists every file; the parts specific to the 2022 build are:
 | Provincial series and rates | `canadian_inputs/*.csv` and the Statistics Canada labour-share extract | Statistics Canada |
 | Shared inputs of the framework (HFCS 2021 skeleton, WIOD SEA scaffold, OECD, exchange rates, Eurostat, World Bank, emission factors, policy tables) | `hfcs/`, `wiod_sea/`, `oecd_econ/`, ... | as for the national model |
 
-The build scripts resolve the root through `dev/io2022/household_prototype/_paths.py`:
-the `MACROABM_RAW_DATA` environment variable, else `<repo>/raw_data/`, else
-`<repo>/dev/raw_data/`. Set `MACROABM_RAW_DATA` to the shared-drive root.
+The household preparation scripts resolve the root through
+`dev/io2022/household_prototype/_paths.py`: the `MACROABM_RAW_DATA` environment
+variable, else `<repo>/raw_data/`, else `<repo>/dev/raw_data/`; set
+`MACROABM_RAW_DATA` to the shared-drive root. The pickle builder itself reads the
+local overlay `dev/raw_data_10prov/` (section 2), not the environment variable.
 
 ## 2. Fold the territories
 
@@ -37,10 +39,11 @@ uv run python dev/io2022/fold_territories_2022.py --input <root>/icio/icio_2022_
 ```
 
 The script writes `icio_2022_can_provinces_10prov.csv` next to the input. The 10-province
-builder reads its inputs from the local overlay `dev/raw_data_10prov/`, whose `icio/`
-folder holds that folded table under the standard filename
-`icio_2022_can_provinces.csv`; every other folder of the overlay is a link to the shared
-root, so no derived file is written back to the shared drive.
+builder reads its inputs from the local overlay `dev/raw_data_10prov/`: create that
+folder with every subfolder linked to the shared root except `icio/`, which is a real
+folder holding the folded table copied over the standard filename
+`icio_2022_can_provinces.csv` (the builder looks for the standard name). No derived
+file is written back to the shared drive.
 
 Folding is a pure aggregation: every accounting identity is preserved, and
 territory-province trade becomes external trade, which is how the CER linkage treats the
@@ -71,6 +74,11 @@ uv run python dev/io2022/build_2022_datawrapper_10prov.py --force \
     --canadianized-households --lfs-unemployment \
     --pickle dev/pkl_files/io2022_10prov_2022_v2_pumf_built-<date>.pkl
 ```
+
+Run it as a file from the repository root, as shown, not with `-m`: the
+`--lfs-unemployment` step imports its sibling module by name. `--pickle` names the
+output (the default is `io2022_10prov_2022.pkl`) and `--force` overwrites an existing
+file.
 
 * `--canadianized-households` makes every province sample the Canadian household file
   instead of the framework's proxy households.

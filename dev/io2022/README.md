@@ -16,7 +16,7 @@ described in [`docs/canada/raw_data_reference.md`](../../docs/canada/raw_data_re
 | `household_prototype/download_controls.py`, `extract_controls.py` | fetch and reduce the 2022 Statistics Canada control tables to `controls_2022.json` |
 | `household_prototype/PUMF_DOWNLOAD_INSTRUCTIONS.md`, `SOURCE_MANIFEST.md` | where to obtain the microdata and what each source is used for |
 
-Build, from the repository root with `MACROABM_RAW_DATA` pointing at the raw-data root:
+Build, from the repository root, with `MACROABM_RAW_DATA` pointing at the raw-data root for the preparation scripts and the `dev/raw_data_10prov/` overlay in place for the builder (see the data-build page):
 
 ```bash
 uv run python dev/io2022/fold_territories_2022.py --input <root>/icio/icio_2022_can_provinces.csv

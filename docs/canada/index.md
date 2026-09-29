@@ -16,6 +16,34 @@ policy environment, the calibration and the standing limitations, is at
 <https://sesit.gitlab.io/m3-linkages/projects/powering_canadas_growth/methodology/>.
 This page records what is specific to the model on this branch and how it was run.
 
+## The model and its lineage
+
+The model itself, its data construction, its historical validation and a worked
+policy application are described in the working paper, which is kept in this folder:
+
+* Izadi, E., D. Azevedo and M. McPherson (2026). *MacroABM-CA: An Open-Source
+  Regional Agent-Based Model of Canada, with an Application to Investment Tax
+  Credits.* Working paper, September 2026 version.
+  [PDF](MacroABM-CA_working_paper_2026-09.pdf)
+  (on GitHub: <https://github.com/uvic-sesit/macroabm-ca/blob/powering_canadas_growth/docs/canada/MacroABM-CA_working_paper_2026-09.pdf>).
+
+MacroABM-CA regionalises the MacroABM framework developed at INET Oxford, which in
+turn descends from the Austrian agent-based model of Poledna and co-authors. The
+behavioural structure, and the parameter values that the Canadian adaptation does not
+re-estimate, are inherited from those two papers:
+
+* Poledna, S., M. G. Miess, C. H. Hommes and K. Rabitsch (2023). "Economic
+  Forecasting with an Agent-Based Model." *European Economic Review* 151: 104306.
+  <https://doi.org/10.1016/j.euroecorev.2022.104306>
+* Wiese, S., J. Kaszowska-Mojsa, J. Dyer, J. Moran, M. Pangallo, F. Lafond,
+  J. Muellbauer, A. Calinescu and J. D. Farmer (2024). *Forecasting Macroeconomic
+  Dynamics Using a Calibrated Data-Driven Agent-Based Model.* INET Oxford working
+  paper, arXiv:2409.18760. <https://doi.org/10.48550/arXiv.2409.18760>
+
+The working paper describes the model with all thirteen provinces and territories; the
+Powering Canada's Growth runs use the ten-province configuration described below, with
+the territories folded into the rest of the world.
+
 | Read this | for |
 |---|---|
 | [Onboarding guide](onboarding_guide.md) | the repository layout, where raw data enters, how the model object is built, the model components, and the team workflow for syncing with the upstream INET repository |
