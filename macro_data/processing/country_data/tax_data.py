@@ -60,7 +60,7 @@ class TaxData:
             non-Canadian countries, so those paths are unchanged. The sales-tax override targets
             ``value_added_tax`` because the model applies that rate as a flat wedge on final
             household consumption (no staged VAT / input credits), which is mechanically a
-            retail sales tax. See ``ProvincialTaxReader`` and ``docs/provincial_raw_data.md``.
+            retail sales tax. See ``ProvincialTaxReader`` and ``docs/canada/raw_data_reference.md``.
         """
         value_added_tax = readers.world_bank.get_tau_vat(country, year)
         profit_tax = readers.oecd_econ.read_tau_firm(country, year)

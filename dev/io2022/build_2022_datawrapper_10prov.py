@@ -1,13 +1,13 @@
-"""Build the 10-PROVINCE 2022 DataWrapper (production-workflow variant).
+"""Build the 10-PROVINCE 2022 DataWrapper (the production build).
 
-Same as build_2022_datawrapper.py (the colleague's validated 13-region build) except:
+Compared with a 13-region build that simulates the territories:
   * territories YT/NT/NU are folded into ROW at the IO-table level
     (fold_territories_2022.py) instead of being simulated -- the production
     CER-MacroABM workflow is a 10-province structure end to end, and the CER linkage
     drops the territories from every channel by design;
   * INPUT_PATH is dev/raw_data_10prov (a local overlay whose icio/ holds the folded
     table under the standard 2022 filename);
-  * no territory scale hack needed.
+  * no territory-specific scaling is needed.
 
 Usage:
     uv run python dev/io2022/build_2022_datawrapper_10prov.py --force \
@@ -35,10 +35,10 @@ PKL_PATH = REPO_ROOT / "dev" / "pkl_files" / "io2022_10prov_2022.pkl"
 #   uv run python dev/io2022/household_prototype/prepare_household_consumption.py
 CANADIANIZED_HH_CSV = REPO_ROOT / "dev" / "io2022" / "household_prototype" / "prototype_household_consumption.csv"
 
-# The production 10 provinces, in the same (alphabetical-by-code) order as the legacy
-# 2014 provincial build, so the goods market's participant order matches the sorted
-# trade-proportion DataFrames exactly as before (the explicit reindex in simulation.py
-# makes this a belt-and-braces choice rather than a correctness requirement).
+# The production 10 provinces, in alphabetical-by-code order, so the goods market's
+# participant order matches the sorted trade-proportion DataFrames (the explicit reindex
+# in simulation.py makes this a belt-and-braces choice rather than a correctness
+# requirement).
 REGIONS = [
     Region.from_code("CAN_AB", "Alberta"),
     Region.from_code("CAN_BC", "British Columbia"),

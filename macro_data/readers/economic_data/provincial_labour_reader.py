@@ -1,22 +1,14 @@
 """
-Optional labour-compensation calibration reader for the Canadian provincial model.
+Labour-compensation calibration reader for the Canadian provincial model.
 
-Firms' initial wage bills come from ``industry_vectors["Labour Compensation in LCU"]``, which
-is built from the WIOD Socio-Economic Accounts (``raw_data/wiod_sea/wiod_sea.csv``). For
-Canada that source is effectively empty -- of 56 industry rows for 2014, exactly **one** is
-non-zero ("Fishing and aquaculture") -- so the vector is filled via the
-``proxy_country_dict={"CAN": "FRA"}`` proxy from French data that is itself only 4-of-56
-populated.
-
-Value added, by contrast, comes from the Canadian provincial IO table and is accurate: the
-model's total (~$1.733T annualised) matches StatCan 2014 value added ($1.730T) to 0.17%.
-The mismatch therefore lands entirely on the labour side, giving an initial labour share of
-**84.4%** against Canada's actual **49.8%** -- firms are loss-making from the first
-simulated year, before any scenario mechanism acts, and the model has no margin to absorb
-any shock.
-
-This reader supplies the observed Canadian labour share so the wage vector can be rescaled
-onto it, preserving the existing within-province industry distribution.
+Firms' initial wage bills come from ``industry_vectors["Labour Compensation in LCU"]``.
+The generic pipeline builds that vector from the WIOD Socio-Economic Accounts
+(``raw_data/wiod_sea/wiod_sea.csv``), which are a proxy-filled scaffold for Canada, while
+value added comes from the Canadian provincial IO table.  This reader supplies the
+observed Canadian labour share (wages and salaries / value added, StatCan) so the wage
+vector is rescaled onto it, preserving the within-province industry distribution.  On the
+2022 production path compensation of employees is observed per sector, and the rescaling
+keeps the wage bill consistent with that observed share.
 
 Backward compatible: if the source file is missing the caller keeps the existing behaviour,
 so national and non-Canadian runs are unaffected.
@@ -26,19 +18,11 @@ Data file
 ``<raw_data>/3610000101_customizedLayoutData - <year> - processed.csv`` -- the StatCan
 supply-use extract that the provincial IO table itself was built from, so numerator and
 denominator come from one source and the resulting share is consistent by construction.
-Value-added component rows used (column ``Total use``, $ thousands):
-
-===========================  ==============
-Wages and salaries              861,052,898
-Gross mixed income              227,170,359
-Gross operating surplus         557,797,503
-Taxes on production              89,918,751
-Subsidies on production          -5,597,127
-**= Value added**             1,730,342,384
-===========================  ==============
-
-giving ``861,052,898 / 1,730,342,384 = 49.8%``. See ``docs/provincial_raw_data.md``
-(labour-compensation section) for the full provenance and assumptions.
+Value-added component rows used (column ``Total use``, $ thousands): wages and salaries,
+gross mixed income, gross operating surplus, taxes on production and subsidies on
+production (negative in the source); the labour share is wages and salaries over their
+sum, about 50% for Canada.  See ``docs/canada/raw_data_reference.md`` (labour-compensation
+section) for the full provenance and assumptions.
 """
 
 from __future__ import annotations

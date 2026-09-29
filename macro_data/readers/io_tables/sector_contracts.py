@@ -19,7 +19,7 @@ SEA_TO_IO_CANDIDATE_TARGETS: dict[str, list[str]] = {
     # oil/gas/coal and keeps B07/B09, while older tables may keep B05.
     "B": ["B05a", "B05b", "B05c", "B05", "B07", "B09"],
     "B05": ["B05a", "B05b", "B05c"],
-    # Current provincial IO table collapses agriculture and information sectors.
+    # Current provincial IO table merges agriculture and information sectors.
     "A01": ["A"],
     "A02": ["A"],
     "A03": ["A"],

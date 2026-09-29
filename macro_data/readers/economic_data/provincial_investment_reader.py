@@ -9,7 +9,7 @@ provinces receive the same French split. This reader replaces that with StatsCan
 data.
 
 Backward compatible: if the data file is missing, or a region has no row, the caller keeps
-the existing Eurostat/proxy behaviour. See ``docs/canada/provincial_raw_data.md``.
+the existing Eurostat/proxy behaviour. See ``docs/canada/raw_data_reference.md``.
 
 Data file
 ---------

@@ -2,7 +2,7 @@
 
 Reads the raw LFS CSV and writes a small annual index (base 1.0 at 2014) per province to
 `scripts/data/labour_force_index_2014_2024.json`. That JSON is bundled on the branch so
-the candidate baseline runs turnkey; this script only needs to be re-run if the LFS data
+the real-growth baseline runs turnkey; this script only needs to be re-run if the LFS data
 is updated.
 
 The runtime interpolation (annual -> quarterly, held flat after the last year) lives in

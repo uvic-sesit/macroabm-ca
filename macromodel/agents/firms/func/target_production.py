@@ -109,15 +109,11 @@ class TargetProductionSetter(ABC):
             result = min(target, target + weight * (limit - target))
                    = min(target, (1-weight)*target + weight*limit)
 
-        Written this way to avoid a 0 * inf -> NaN hazard. A firm with no binding
-        capital constraint has `limit = inf`; the naive expression then evaluates
-        `0.0 * (inf - target)` = NaN when weight is 0.0, `np.minimum` propagates the
-        NaN, and the caller's `fillna` (firms.py:701) silently rewrites it to **0** --
-        i.e. the firm would order zero inputs and stop producing. An infinite limit
-        means "no constraint", so it must leave `target` untouched at every weight.
-
-        Behaviour is identical to the naive expression wherever `limit` is finite, and
-        for any weight > 0 where it is infinite, so shipped defaults are unaffected.
+        Written this way because an infinite `limit` means "no constraint" and must
+        leave `target` untouched at every weight: the naive expression evaluates
+        `0.0 * (inf - target)` = NaN when weight is 0.0, and the caller's `fillna` would
+        turn that into a zero input order.  Behaviour is identical to the naive
+        expression wherever `limit` is finite.
         """
         limit = np.asarray(limit, dtype=float)
         adjusted = np.where(

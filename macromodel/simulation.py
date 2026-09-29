@@ -180,10 +180,9 @@ class Simulation:
         # The goods market reshapes these flat arrays into (country, country, industry) and indexes
         # them positionally in the participant order (== goods_market_participants keys ==
         # countries_with_row). The trade-proportion DataFrames are sort_index()-ed (alphabetical),
-        # so taking .values directly would feed the countries in the WRONG order and permute both the
-        # origin and destination axes (e.g. sourcing C24B from non-producers). Reindex explicitly to
-        # the exact participant order before .values so origin/destination line up with the market's
-        # country indexing. This only realigns the array; it does not change any observed trade flow.
+        # so they are reindexed explicitly to the exact participant order before .values, keeping
+        # the origin and destination axes aligned with the market's country indexing. This only
+        # realigns the array; it does not change any observed trade flow.
         _tp_order = [str(c) for c in countries_with_row]
         _tp_index = pd.MultiIndex.from_product(
             [_tp_order, _tp_order, range(datawrapper.n_industries)],
@@ -314,14 +313,11 @@ class Simulation:
         # One national inflation expectation, shared by every province.
         #
         # Each province otherwise forecasts inflation from its OWN prices, and firms pass
-        # that straight back into those prices (price_setting_speed_gf = 1.0), so prices ->
-        # own PPI -> own expectation -> prices is a closed per-province loop with no anchor.
-        # Measured consequence: provincial price LEVELS compound apart, reaching a 3.5x
-        # spread by 2050 with 91% of Ontario's industries above 1.5x its Current Measures
-        # level while 90% of Saskatchewan's sit below 0.8x -- a province-wide drift with no
-        # economic driver, which fed straight into real GDP via the deflator.
+        # that back into those prices (price_setting_speed_gf), so prices -> own PPI ->
+        # own expectation -> prices is a closed per-province loop with no anchor, and
+        # provincial price LEVELS would compound apart with no economic driver.
         #
-        # Sharing the expectation breaks the per-province loop while KEEPING full
+        # Sharing the expectation removes the per-province loop while KEEPING
         # pass-through, so firms still respond to inflation; they just cannot bootstrap
         # their own province's price level away from everyone else's.
         #
@@ -588,33 +584,27 @@ class Simulation:
             # National production-weighted market price per industry.  ROW uses it ONLY
             # for the industries opted in via set_real_terms_export_industries (sector D
             # today); every other pin keeps ROW's aggregate-indexed price, which the
-            # fix1b A/B showed is load-bearing for the fossil budgets.
+            # fossil budgets rely on.
             row.set_market_prices(np.divide(
                 price_num, production, out=np.zeros(n), where=production > 0))
             # Base production is captured at the FIRST STEP, unconditionally -- NOT the
-            # first time an index arrives. The linkage's first milestone is 2020 while the
-            # index is anchored to the simulation start (2014), so capturing it lazily
-            # would multiply a 2014-anchored ratio by a 2020 base. That is the same
-            # anchor mismatch that already made this feature move demand the wrong way
-            # once; both ends are now tied to the simulation start by construction and do
-            # not depend on which milestones the linkage happens to write.
+            # first time an index arrives. The index is anchored to the simulation start
+            # while the linkage's first milestone comes later, so capturing it lazily
+            # would multiply a start-anchored ratio by a later base. Both ends are tied to
+            # the simulation start by construction and do not depend on which milestones
+            # the linkage happens to write.
             if getattr(row, "_production_base", None) is None:
                 row.set_production_base(production.copy())
             if getattr(row, "_export_demand_index", None) is None:
                 return
             # Countries' EXPORTS, deflated to real. NOT `row.ts.exports_real`, which is
-            # what ROW SELLS to the countries -- their imports. `record_bought_goods` sets
-            # it from `real_amount_sold`; the name says exports, the definition does not.
-            # Using it overstated absorption ~4x (39.2bn/yr against an actual 10.1bn).
+            # what ROW SELLS to the countries -- their imports (`record_bought_goods` sets
+            # it from `real_amount_sold`; the name says exports, the definition does not).
             #
-            # HISTORY, so this is not flip-flopped again: this correction was tried once
-            # while production was still demand-determined and made results markedly worse
-            # (oil +10.4% -> +46.7%, national output 3,933 -> 4,098bn), because a larger
-            # export target then inflated production itself. With production driven by
-            # `exogenous_fossil_production` that feedback is cut: production is fixed by
-            # the external path, so absorption only decides the SPLIT between domestic use
-            # and exports. The correction is safe in that configuration and wrong-headed
-            # without it.
+            # This absorption measure pairs with `exogenous_fossil_production`: with
+            # production fixed by the external path, absorption only decides the SPLIT
+            # between domestic use and exports. With demand-determined production a larger
+            # export target would feed back into production itself.
             exports_real = np.zeros_like(production)
             for country in self.countries.values():
                 industry = np.asarray(country.firms.states["Industry"])
@@ -769,11 +759,9 @@ class Simulation:
         # per timestep.  Trade proportions and the ROW split only *steer* clearing --
         # they "influence but do not strictly determine actual trade flows" -- so a run
         # that routes electricity geographically cannot be verified from the inputs.
-        # It has to be measured on the output side, and nothing here previously carried
-        # it: `exports_by_good_nominal` is summed over destinations, and the
-        # per-destination series that *does* exist
-        # (`economy.ts["exports_before_taxes_to_<c>"]`) is NOMINAL and lives only in the
-        # multi-GB full save.
+        # It has to be measured on the output side: `exports_by_good_nominal` is summed
+        # over destinations, and the per-destination series in `economy.ts`
+        # (`exports_before_taxes_to_<c>`) is NOMINAL and lives only in the full save.
         #
         # REAL, and that is the point.  Cross-province electricity is a quantity claim
         # (CER's GW.h), and the nominal aggregates are dominated by ROW, so a nominal
@@ -788,8 +776,7 @@ class Simulation:
         #
         # Every good, not just the linkage-owned ones: the frames are (timesteps x
         # industries) and there are n_countries per country, so the whole matrix is a few
-        # MB, and scoping it to today's question would just have to be widened again for
-        # the next one (C20 and hydrogen).
+        # MB.
         try:
             import pandas as pd
 
@@ -822,12 +809,10 @@ class Simulation:
         except Exception as exc:  # noqa: BLE001 - diagnostics are non-critical
             logging.getLogger(__name__).warning("Sales-by-destination export failed: %s", exc)
 
-        # Units metadata. Mixed real/nominal units in this file have already caused one
-        # round of invalid analysis (firm series are REAL, household/government/trade
-        # series are NOMINAL), and the naming is not always a reliable guide -- the "CPI"
-        # column is a price LEVEL despite coming from a method called
-        # `total_cpi_inflation`. A suffix convention helps but does not cover the
-        # per-country summary columns, so the units travel as data.
+        # Units metadata. This file mixes real and nominal units (firm series are REAL,
+        # household/government/trade series are NOMINAL), and the naming is not always a
+        # reliable guide -- the "CPI" column is a price LEVEL. A suffix convention does
+        # not cover the per-country summary columns, so the units travel as data.
         try:
             import pandas as pd
 
@@ -859,9 +844,10 @@ class Simulation:
                 ("<country>:GDP Output", "nominal LCU", "current prices", ""),
                 ("<country>:GDP Expenditure", "nominal LCU", "current prices", ""),
                 ("<country>:GDP Income", "nominal LCU", "current prices", ""),
-                ("<country>:GDP Output Real", "real LCU", "CPI-deflated, base = first timestep", "nominal / (cpi/cpi[0])"),
-                ("<country>:GDP Expenditure Real", "real LCU", "CPI-deflated, base = first timestep", ""),
-                ("<country>:GDP Income Real", "real LCU", "CPI-deflated, base = first timestep", ""),
+                ("<country>:GDP Deflator", "index", "value-added deflator, base = first timestep", "nominal VA / real VA (double deflation)"),
+                ("<country>:GDP Output Real", "real LCU", "double-deflated, base = first timestep", "nominal / GDP Deflator"),
+                ("<country>:GDP Expenditure Real", "real LCU", "double-deflated, base = first timestep", "nominal / GDP Deflator"),
+                ("<country>:GDP Income Real", "real LCU", "double-deflated, base = first timestep", "nominal / GDP Deflator"),
                 ("<country>:CPI", "index", "price LEVEL", "NOT a rate, despite the name"),
                 ("<country>:PPI", "index", "price LEVEL", "NOT a rate"),
                 ("<country>:CFPI", "index", "price LEVEL", "NOT a rate"),

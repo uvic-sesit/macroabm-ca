@@ -158,13 +158,11 @@ class ExchangeRatesReader:
     def from_usd_to_lcu_io(self, country: str, year: int) -> float:
         """USD->LCU rate for CAD-NATIVE 2022 Canadian IO/SEA quantities.
 
-        The 2022 provincial IO table and the canonical VA / compensation-of-employees inputs are
-        already denominated in CAD (StatCan, CAD millions). The generic pipeline labels SEA/IO values
-        "USD" and applies ``from_usd_to_lcu`` (~1.30 for CAN 2022), which would spuriously inflate every
-        CAD magnitude (VA, output, compensation) by the market rate. For this CAD-native path no
-        conversion is warranted, so return 1.0 for CAN + 2022. All other countries/years -- and,
-        crucially, genuinely USD-denominated sources (e.g. Compustat bank balance sheets, which keep
-        ``from_usd_to_lcu``) -- are unaffected. Scoped so the legacy 2014 baseline is untouched.
+        The 2022 provincial IO table and the VA / compensation-of-employees inputs are already
+        denominated in CAD (StatCan, CAD millions), so for CAN + 2022 this returns 1.0: CAD-native
+        magnitudes (VA, output, compensation) are not converted at the market rate. All other
+        countries/years, and genuinely USD-denominated sources (e.g. Compustat bank balance sheets,
+        which keep ``from_usd_to_lcu``), are unaffected.
         """
         resolved = country.parent_country if isinstance(country, Region) else country
         if resolved == "CAN" and year == 2022:

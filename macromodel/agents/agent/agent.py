@@ -17,12 +17,9 @@ from numba import njit
 from macromodel.timeseries import TimeSeries
 
 # Per-agent goods-market transaction series, appended once per agent per counterparty
-# per step.  These dominate a long run's memory: measured on a 89-step provincial run,
-# they are 97.3% of the ~30 GB the simulation holds (households 18.2 GB, ROW 10.9 GB,
-# every other group together 0.8 GB), because `TimeSeries` appends one
-# (n_transactors, n_industries) array per key per step and never releases it.  Cost is
-# strictly linear in the horizon, so extending 2035 -> 2050 is what pushes a 16 GB
-# machine past its commit limit.
+# per step.  These dominate a long run's memory (well over 90% of what a 2022-2050
+# provincial run holds), because `TimeSeries` appends one (n_transactors, n_industries)
+# array per key per step and never releases it; the cost is linear in the horizon.
 #
 # Nothing in the model reads their HISTORY.  They are written here and read back only
 # through `current()` (households.py, splitting spending into consumption and
@@ -36,9 +33,8 @@ from macromodel.timeseries import TimeSeries
 #
 # BUYER SIDE ONLY, and deliberately so.  The seller-side series are excluded because
 # `Simulation.shallow_hdf_save` writes firms' `real_amount_sold` through
-# `industry_timeseries_dataframes()`; trimming it truncated that export from (69, 43) to
-# (4, 43) in testing, silently, while every other output stayed identical.  The exclusion
-# costs almost nothing: the seller series are 1-D (n_transactors_sell) while the buyer
+# `industry_timeseries_dataframes()`, so it must keep its full history for that export.
+# The exclusion costs almost nothing: the seller series are 1-D (n_transactors_sell) while the buyer
 # series are 2-D (n_transactors_buy, n_industries), and the buyer side is ~93% of the
 # household and ROW memory this exists to reclaim.
 _TRIMMABLE_TS_KEYS = (

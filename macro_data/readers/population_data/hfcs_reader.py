@@ -344,7 +344,7 @@ class HFCSReader:
         df.columns = df.columns.astype(str).str.upper()
         upper_var_mapping = {key.upper(): value for key, value in var_mapping.items()}
 
-        # Filter for country and keep only mapped variables. The CAN-2022 Canadianized-household MVP loads
+        # Filter for country and keep only mapped variables. The CAN-2022 Canadian-household build loads
         # the FULL pooled-European individual/member pool (no_country_filter) so the member skeleton spans
         # the same all-country household ID space as the validated 83,162-household Canadian skeleton,
         # restoring exact household<->individual linkage (see canadianized_household_adapter).

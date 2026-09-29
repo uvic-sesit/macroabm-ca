@@ -1,9 +1,8 @@
 """Calibrate the built wrapper's t0 unemployment to LFS 2022, per province.
 
-The synthetic population lands at 7-13% t0 unemployment against LFS 2022 actuals of
-4-11%: the build's base-year target lookup picks a stale series value (see the
-diagnosis note in the io2022 port doc), and firm-matching pushes some provinces
-further above target.  This post-build step reclassifies a seeded random surplus of
+The synthetic population lands above the LFS 2022 provincial unemployment rates at t0
+(the build's base-year target and firm matching both push it up).  This post-build
+step reclassifies a seeded random surplus of
 UNEMPLOYED individuals to NOT ECONOMICALLY ACTIVE until each province's rate
 u = U / (E + U) matches its LFS 2022 annual mean.  Employment, firm matching, output
 and wealth are untouched -- only the U pool shrinks, so the participation rate falls
@@ -19,8 +18,9 @@ second-order): social_housing_rent and per-capita unemployment benefits were com
 from the pre-calibration unemployed count.
 
 Scenario note: initial labour-market slack changes the MECHANISM of the NZ-vs-CM
-comparison (see the slack-sensitivity record), so runs on an LFS-calibrated pickle are
-a different experiment from the uncalibrated ones, not a cleaner version of the same.
+comparison, so runs on an LFS-calibrated pickle are a different experiment from the
+uncalibrated ones, not a cleaner version of the same.  The production pickle is
+LFS-calibrated.
 """
 from __future__ import annotations
 

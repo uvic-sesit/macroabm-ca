@@ -26,12 +26,11 @@ from macro_data.readers.policy_data.obps_can_reader import OBPSCANData
 # facility, so it is not regulated.  It does not exclude sectors that clear the bar in
 # aggregate but consist of many small sites -- that would need facility resolution.
 #
-# It also removes the degenerate benchmarks.  Seven of ten provinces have at least one
-# regulated sector with 2014 production of order 1e-4 against a peer median of 1e8 --
-# empty cells in the IO table -- and dividing emissions by those produced baseline
-# intensities up to 2.5e10 against Alberta's 0.0072, hence emission limits of 1e14 and
-# per-unit charges that broke goods-market clearing.  Those sectors emit ~0 and are
-# excluded by this rule automatically.
+# It also removes the degenerate benchmarks.  Several provinces have a regulated sector
+# with base-year production many orders of magnitude below its peers -- empty cells in
+# the IO table -- and dividing emissions by those would give baseline intensities,
+# emission limits and per-unit charges far outside anything goods-market clearing can
+# absorb.  Those sectors emit ~0 and are excluded by this rule automatically.
 #
 # Model emissions are in tonnes CO2e: regulated sectors total ~5.7e8 t/yr against
 # Canada's actual ~6.7e8 t/yr, so the statutory figure is used directly.
@@ -165,9 +164,9 @@ class OutputBasedPriceSystemCAN:
 
         self.coverage_threshold_tco2_per_year = float(coverage_threshold_tco2_per_year)
         self._excluded_logged: set[int] = set()
-        # The simulation clock's year zero -- the wrapper's base year.  Previously
-        # hardcoded to 2014; a 2022-base run would otherwise sit 8 years behind on the
-        # price schedule and tightening arithmetic.
+        # The simulation clock's year zero -- the wrapper's base year (2022 in
+        # production), which the price schedule and tightening arithmetic are indexed
+        # from.
         self.initial_year = int(initial_year)
         self.current_t = 0
         self.current_year = self.initial_year
@@ -221,7 +220,7 @@ class OutputBasedPriceSystemCAN:
         if not use_obps_reg:
             return np.zeros(len(self.industries))
 
-        # Reference production comes from the 2014 IO initialisation (real StatCan data)
+        # Reference production comes from the IO initialisation (real StatCan data)
         # rather than 2017-18 simulated output.  Modelled output bakes accumulated model
         # drift into a policy benchmark that then governs the whole projection, and makes
         # the benchmark move whenever a macro assumption changes -- so two scenarios
@@ -234,7 +233,7 @@ class OutputBasedPriceSystemCAN:
         # Instead the reference is recorded over the simulation's FIRST year, whose
         # production/emissions are the wrapper's real base-year data (the same
         # initialisation-not-simulation rationale as above), and taxing starts the year
-        # after.  For a 2014 start these expressions reduce exactly to the historical
+        # after.  For a start at or before 2017 these expressions reduce exactly to the historical
         # (2017, 2018) window / 2019 tax start.
         if self.initial_year <= 2017:
             reference_years: tuple[int, ...] = (2017, 2018)

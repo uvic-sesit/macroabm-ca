@@ -136,8 +136,8 @@ CIS_COLUMN_MAP = {"weight": "FWEIGHT", "province": "PROV", "after_tax_income": "
                   "earnings": "EARNG", "ei_benefits": "EIBEN", "cpp_qpp": "CPQPP", "transfers_child": "CHBEN"}
 CIS_INCOME_SENTINEL = 999999999996
 
-# --- TO FILL from 2022 control tables (SOURCE_MANIFEST.md). Aggregate class totals ($) + optional
-#     quintile splits. Placeholders here are NOT verified values -> --real requires filling them. ---
+# --- 2022 control tables (SOURCE_MANIFEST.md). Aggregate class totals ($) + optional quintile
+#     splits. The stand-in values below are for --dry-run only; --real requires the real controls. ---
 CONTROLS_2022 = {
     "source": "36-10-0660 (wealth), 36-10-0587 (income), 36-10-0580 (NBSA), 38-10-0238 (credit)",
     "aggregate_totals": {},   # {"Value of the Main Residence": <CAD>, "Outstanding Balance of HMR Mortgages": <CAD>, ...}

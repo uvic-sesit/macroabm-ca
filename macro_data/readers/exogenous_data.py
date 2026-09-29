@@ -212,7 +212,7 @@ def create_all_exogenous_data(
 
     # get the set intersection of country_names and the keys of exogenous_industry_data
     exog_countries = list(set(country_names).intersection(exogenous_industry_data.keys()))
-    # TODO this is a hack; sectoral growth needs to be readjusted
+    # TODO: sectoral growth needs to be readjusted
     exogenous_data = {
         country_name: {
             "inflation": prepare_inflation(country_name, readers),

@@ -53,13 +53,12 @@ def compile_industry_data(
             yearly_factor=yearly_factor,
         )
 
-        # Calibrate the wage bill onto the observed Canadian labour share.  The labour
-        # compensation vector comes from WIOD SEA, whose Canadian rows are effectively
-        # empty (1 of 56 industries populated for 2014) and are therefore filled from the
-        # French proxy, while value added comes from the accurate provincial IO table.
-        # Left uncorrected that yields an 84.4% labour share against Canada's actual
-        # 49.8%, making firms loss-making from the first simulated year.  A no-op unless
-        # the StatCan source is present.
+        # Calibrate the wage bill onto the observed Canadian labour share.  The generic
+        # labour-compensation vector comes from the WIOD SEA scaffold (proxy-filled for
+        # Canada), while value added comes from the provincial IO table; rescaling the
+        # vector onto the StatCan observed share keeps the two consistent.  On the 2022
+        # path compensation of employees is observed per sector upstream, so this is a
+        # consistency step there.  A no-op unless the StatCan source is present.
         provincial_labour = getattr(readers, "provincial_labour", None)
         if provincial_labour is not None and provincial_labour.available:
             industry_vectors["Labour Compensation in LCU"] = provincial_labour.rescale(

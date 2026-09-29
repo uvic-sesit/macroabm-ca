@@ -136,24 +136,22 @@ class RestOfTheWorld(Agent):
         self._import_limit_mode: str = "share"
 
     def set_import_limits(self, industry_indices, *, mode: str = "share") -> None:
-        """Cap ROW exports of the given industries so their import *share* cannot grow.
+        """Cap ROW exports (= domestic imports) of the given industries.
 
         The rest of the world is an unconstrained residual supplier: whenever domestic
         firms cannot meet demand for a good, ROW fills the gap.  That is realistic for
-        tradeable goods but not for ones where the intent is to force the domestic
-        sector to build capacity (e.g. electricity under an electrification scenario) --
-        there, unconstrained imports silently absorb the entire demand increase and the
-        domestic sector never expands.
+        tradeable goods but not for ones where the domestic sector is meant to build
+        capacity (electricity under an electrification scenario) -- there, unconstrained
+        imports would absorb the demand increase and the domestic sector never expands.
 
-        Limited industries have their desired real exports clamped to the base-year
-        level scaled by the aggregate production index, i.e. imports may still grow with
-        the economy but their share of it cannot rise above the base-year share.
+        ``mode="share"`` clamps desired real exports to the base-year level scaled by the
+        aggregate production index, so imports may grow with the economy but their share
+        of it cannot rise above the base-year share.
 
-        ``mode="level"`` instead freezes imports at their base-year VOLUME, dropping the
-        production-index scaling.  For electricity that is the more physical cap:
-        cross-border transfer capacity is fixed transmission infrastructure and does not
-        grow with GDP, so letting the cap scale with the economy still allows imports to
-        roughly double by 2050.  It is also the stricter reading -- if the domestic sector
+        ``mode="level"`` freezes imports at their base-year VOLUME, dropping the
+        production-index scaling.  This is the production setting for electricity (sector
+        D): cross-border transfer capacity is fixed transmission infrastructure and does
+        not grow with GDP.  It is also the stricter reading -- if the domestic sector
         cannot build fast enough, the shortfall becomes unmet demand rather than an import.
 
         Args:
@@ -322,8 +320,7 @@ class RestOfTheWorld(Agent):
         Production = domestic absorption + exports. Pinning exports to an external
         PRODUCTION path fails whenever domestic demand is moving: under a deep
         electrification scenario the model's domestic gas demand falls, so exports growing
-        in line with production growth still leave production falling. Measured, that
-        approach moved gas production only +9.6% against a 38-point gap to CER.
+        in line with production growth still leave production falling.
 
         So exports absorb the residual:
 
@@ -345,12 +342,12 @@ class RestOfTheWorld(Agent):
         are the same series, so one index serves both.
 
         Electricity is the opposite case.  CER has Canada's international electricity
-        exports FALLING to 0.892x of the 2014 anchor by 2050 while generation GROWS 2.07x,
-        so residual targeting reads the export index as a production target, asks for
-        national output at 89% of 2014 minus everything the country consumes, and clamps the
-        deeply negative result to zero -- measured: exports to zero and provincial generation
-        error worsening from 0.364 to 0.399.  For these industries the index means what it
-        says: exports = index x base-year exports, and production stays endogenous.
+        exports FALLING relative to the simulation-start anchor by 2050 while generation
+        roughly doubles, so residual targeting would read the export index as a production
+        target, ask for national output below the anchor minus everything the country
+        consumes, and clamp the negative result to zero.  For these industries the index
+        means what it says: exports = index x base-year exports, and production stays
+        endogenous.
 
         Empty by default, so behaviour is unchanged unless this is called.
         """
@@ -384,18 +381,15 @@ class RestOfTheWorld(Agent):
         `desired_imports_in_lcu` is a NOMINAL budget the goods market converts back to
         a real quantity at the market's average price, while ROW's own `price_in_lcu`
         moves every industry by ONE aggregate index. For a pinned industry whose market
-        price drifts against that aggregate, the realized real quantity is the target
-        times the drift -- measured for D (whose price is exogenously pinned to CER's
-        real path, ~0.74x of model CPI by 2050 Net-zero): national D growth 2.35
-        against a target consistent with CER's 2.07.
+        price drifts against that aggregate, the realized real quantity would be the
+        target times the drift -- which matters for D, whose price is exogenously pinned
+        to CER's real path and falls relative to the model's CPI under Net-zero.
 
-        SELECTIVE BY DESIGN. Converting EVERY pinned industry this way was tried
-        (2026-08-13, arm fix1b) and wrecked Net-zero -- the aggregate-indexed nominal
-        budgets silently cap the fossil residual export targets (B05b real exports
-        9.9bn -> 55.6bn when converted faithfully) and that cap is load-bearing. The
-        do-not-rebuild note in _apply_export_demand_index refers to the blanket
-        version; this per-industry set exists so D can be corrected without touching
-        the fossils. Empty by default, so behaviour is unchanged unless called.
+        SELECTIVE BY DESIGN. The fossil pins keep ROW's aggregate-indexed nominal budget,
+        which bounds their residual export targets under Net-zero, where CER's fossil
+        prices fall relative to the aggregate. This per-industry set exists so D converts
+        at its own market price without touching the fossils. Empty by default, so
+        behaviour is unchanged unless called.
         """
         self._real_terms_export_industries = {int(i) for i in (industry_indices or [])}
 
@@ -412,16 +406,11 @@ class RestOfTheWorld(Agent):
         if len(shapes) != 1:
             logger.warning("export pinning shape mismatch %s; not applied.", shapes)
             return
-        # NOTE (2026-08-13, negative result -- do not rebuild the BLANKET version):
-        # converting ALL these real targets at a production-weighted MARKET price
-        # instead of ROW's aggregate-indexed `price_in_lcu` was tried to close a
-        # relative-price drift in the pinned quantities. A controlled Net-zero pair
-        # showed it is much worse: total 2050 production -13.3%, BC to 23%
-        # unemployment, generation share-distance 0.161 -> 0.226. ROW's
-        # aggregate-indexed nominal budget for the fossil pins is load-bearing under
-        # Net-zero, where CER's fossil prices fall relative to the aggregate. The
-        # SELECTIVE per-industry conversion below (set_real_terms_export_industries)
-        # is the safe form: it touches only the industries explicitly opted in.
+        # Real targets convert at ROW's aggregate-indexed `price_in_lcu` except for the
+        # industries opted in through set_real_terms_export_industries (sector D), which
+        # convert at the production-weighted MARKET price. The aggregate-indexed budget
+        # for the fossil pins bounds their residual export targets under Net-zero, where
+        # CER's fossil prices fall relative to the aggregate.
         market = getattr(self, "_market_prices", None)
         real_terms = getattr(self, "_real_terms_export_industries", set())
         if real_terms and market is not None and market.shape == p_now.shape:
@@ -446,8 +435,8 @@ class RestOfTheWorld(Agent):
             init_p = np.array(self.ts.initial("price_in_lcu"), dtype=float)
             ok = export_mode & np.isfinite(init_p) & (init_p > 0.0) & np.isfinite(init_nom)
             # REAL base-year exports. Deflating by the INITIAL price and re-inflating by the
-            # current one below keeps this a real target: the same real/nominal trap the
-            # guard at the end of this method was written to catch.
+            # current one below keeps this a real target (the check at the end of this
+            # method verifies the direction of the result).
             base_exports_real[ok] = init_nom[ok] / init_p[ok]
         exp_pinned = (index > 0.0) & priced & export_mode & (base_exports_real > 0.0)
 
@@ -482,11 +471,8 @@ class RestOfTheWorld(Agent):
         pinned = prod_pinned | exp_pinned
         before = before_all[pinned]
 
-        # DIAGNOSTIC GUARD. Three separate bugs in this feature each produced a clean run
-        # with no error and a plausible number: a flag never threaded to its consumer, an
-        # index anchored to a different year than the base it multiplied, and a REAL index
-        # applied to a NOMINAL series. The last two showed up as demand moving OPPOSITE to
-        # its index -- cheap to detect, so it is checked rather than left to the reader.
+        # DIAGNOSTIC CHECK: pinned demand moving OPPOSITE to its index is cheap to detect
+        # and usually worth a look, so it is logged rather than left to the reader.
         after = current[pinned]
         idx = index[pinned]
         contradictory = ((idx > 1.0) & (after < before)) | ((idx < 1.0) & (after > before))
@@ -496,7 +482,7 @@ class RestOfTheWorld(Agent):
                 "export pinning moved demand AGAINST its index for industry indices %s -- "
                 "index %s, demand %s -> %s. Note this CAN be legitimate under residual "
                 "targeting (rising domestic absorption leaves less for export), so check "
-                "absorption before assuming a unit or anchor bug.",
+                "absorption first.",
                 where.tolist(), np.round(idx[contradictory], 4).tolist(),
                 np.round(before[contradictory], 1).tolist(),
                 np.round(after[contradictory], 1).tolist(),

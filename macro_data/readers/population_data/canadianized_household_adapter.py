@@ -1,6 +1,7 @@
-"""CAN-2022 Canadianized-household schema adapter (MVP DataWrapper integration).
+"""CAN-2022 Canadian-household schema adapter for the DataWrapper.
 
-Maps the validated national Canadian household file (SFS 2023 balance sheet + CIS 2022 income + CHS 2022
+Households are Canadian (SFS/CIS/SHS PUMF); individual-level demographics keep the HFCS
+skeleton.  Maps the national Canadian household file (SFS 2023 balance sheet + CIS 2022 income + CHS 2022
 tenure + SHS 2023 behavioural consumption; weights rescaled to 15.455M households -- see
 dev/io2022/household_prototype/) onto the model's full HFCS household schema, WITHOUT changing any validated
 economic magnitude. This is a *schema adapter*, not new economic data:
@@ -23,7 +24,7 @@ economic magnitude. This is a *schema adapter*, not new economic data:
     residual), not an embedded constant, and is not a free economic magnitude;
   * the household<->individual LINKAGE ("Corresponding Individuals ID") and two non-Canadianized residual
     fields ("Rent Paid", "Number of Properties...") are carried from the retained French HFCS household row
-    by ID (individuals stay the French skeleton for this MVP).
+    by ID (individual-level demographics keep the HFCS skeleton).
 
 Currency: every column here is CAD-native, so the CAN path must skip the EUR->CAD household conversion
 (hfcs_synthetic_population applies it only when the reader is NOT cad_native). Individuals remain French EUR

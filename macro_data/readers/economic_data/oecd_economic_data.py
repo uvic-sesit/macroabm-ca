@@ -520,7 +520,7 @@ class OECDEconData:
         """
         # Observed 2022 provincial employer social-contribution rate (PRM600000 / PRM500000), injected
         # alongside the observed compensation of employees. Checked BEFORE the Region -> parent_country
-        # collapse so each province keeps its own rate. This makes the model's wage vs employer split
+        # fallback so each province keeps its own rate. This makes the model's wage vs employer split
         # (Total Wages vs the (1+tau_sif) markup) match PRM500000 / PRM600000; firm labour cost stays
         # equal to total CoE regardless of the rate.
         can_2022_ratio = getattr(self, "can_2022_employer_si_ratio", {})

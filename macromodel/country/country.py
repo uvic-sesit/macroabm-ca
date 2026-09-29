@@ -74,10 +74,8 @@ from macromodel.util.get_histogram import get_histogram
 #
 # It also happens to make the per-sector normalisation safe.  Dividing the sector's OBPS
 # cost by that sector's own production is the economically right per-unit charge, but the
-# denominator can approach zero and send the quotient to absurd values (measured:
-# 3.18e+07 against prices of order 10).  That was invisible while the charge only informed
-# price-setting -- which is multiplied by price_setting_speed_cp = 0 -- but is fatal once
-# it feeds realised input costs, where it produced NaNs in goods-market clearing.
+# denominator can approach zero and send the quotient to absurd values, which would feed
+# straight into realised input costs and goods-market clearing.
 #
 # The cap is logged when it binds: frequent binding means the denominator is degenerate
 # and the sector's production path needs attention, not the cap.
@@ -1675,7 +1673,7 @@ class Country:
         if base is None:
             base = self._itc_base_rates = np.array(rates, dtype=float, copy=True)
         # Start from the untouched rates each time, so credits never accumulate across
-        # milestones -- the failure mode that made the capacity floor keep stale values.
+        # milestones.
         new_rates = np.array(base, copy=True)
         if not credits_by_industry:
             self.central_government.states["Taxes Less Subsidies Rates"] = new_rates
@@ -1732,16 +1730,14 @@ class Country:
             "Consumption Expansion Loan Debt": self.households.consumption_loan_debt(),
             "Mortgage Debt": self.households.mortgage_debt(),
             "Central Bank Policy Rate": self.central_bank.ts.get_aggregate("policy_rate"),
-            # GDP. The shallow summary carried none of the three measures, so provincial
-            # GDP had to be reconstructed from components -- and the reconstruction is
-            # exactly where mixed real/nominal units bite.
+            # GDP: all three measures are exported, so provincial GDP never has to be
+            # reconstructed from mixed real/nominal components.
             "GDP Output": self.economy.ts.get_aggregate("gdp_output"),
             "GDP Expenditure": self.economy.ts.get_aggregate("gdp_expenditure"),
             "GDP Income": self.economy.ts.get_aggregate("gdp_income"),
-            # NAMING TRAP, preserved for compatibility: the "CPI" key above is the price
-            # LEVEL (economy.ts.cpi), not a rate, despite coming from a method called
-            # `total_cpi_inflation`. The rate is a separate series and is added here
-            # explicitly so nobody has to know that.
+            # Note on naming, kept for compatibility: the "CPI" key above is the price
+            # LEVEL (economy.ts.cpi), not a rate. The rate is a separate series and is
+            # added here explicitly.
             "CPI Inflation Rate": self.economy.ts.get_aggregate("cpi_inflation"),
             "PPI Inflation Rate": self.economy.ts.get_aggregate("ppi_inflation"),
         }
@@ -1749,15 +1745,10 @@ class Country:
         # Real GDP by DOUBLE DEFLATION: real value added = real gross output minus real
         # intermediate inputs, and the GDP deflator is nominal value added over that.
         #
-        # This previously deflated nominal GDP by the CPI, which is wrong whenever consumer
-        # prices and value-added prices diverge -- and under an energy transition they do,
-        # in opposite directions. Higher input prices compress nominal value added AND
-        # raise consumer prices, so CPI-deflation counted the same shock twice. Measured on
-        # the 2050 CER runs: Net-zero real gross output was +8.1% and every province's real
-        # output rose, yet CPI-deflation reported real GDP at -19.9% nationally and -64.2%
-        # for New Brunswick. Double deflation gives +7.7% and +8.8%. The reported figure was
-        # 88% price index and 12% economics, and it inverted the sign of the headline
-        # result.
+        # Deflating nominal GDP by the CPI instead would be wrong whenever consumer prices
+        # and value-added prices diverge -- and under an energy transition they do, in
+        # opposite directions: higher input prices compress nominal value added AND raise
+        # consumer prices, so CPI-deflation would count the same shock twice.
         #
         # Double deflation needs no choice of price index, which is the point: it is the
         # national-accounts standard for exactly this reason. Real quantities here are in
@@ -1766,16 +1757,13 @@ class Country:
         #
         # The deflator is applied to all three measures so Output, Expenditure and Income
         # stay comparable; it is exported as `GDP Deflator` so the derivation is auditable.
-        # `CPI` is still exported, so the old CPI-deflated series can be reconstructed by
-        # anyone who wants it -- but it should not be called real GDP.
+        # `CPI` is still exported as the consumer price level; it is not the GDP deflator.
         # VALUATION BASIS. The deflator's numerator is nominal GROSS VALUE ADDED, not
         # nominal GDP. Nominal GDP nets out taxes on production and adds taxes on products
         # and rent (see `compute_gdp`), so dividing it by a value-added-only denominator
         # would put those wedges in the numerator alone. That is harmless only while the
-        # wedge is a stable share of GDP, and it is not: net product taxes reach 14.3% of
-        # GDP under Net-zero against 12.3% under Current Measures, because carbon revenue
-        # is scenario-dependent. Mixing the bases understated Net-zero's 2050 real GDP by
-        # 1.5pp (+7.7% instead of +9.2%), with no material effect before 2040.
+        # wedge is a stable share of GDP, and it is not: net product taxes are
+        # scenario-dependent because carbon revenue is.
         #
         # Both sides use the same series `compute_gdp` uses for its first two terms --
         # gross output at current prices and USED intermediate consumption -- so the
@@ -1787,7 +1775,8 @@ class Country:
         # Taxes and rent are then deflated implicitly at the value-added rate when the
         # index is applied to nominal GDP. Deflating net product taxes by the taxed
         # products' own price indices would be more rigorous, but needs a deflator choice
-        # per component and is well beyond what this diagnostic export warrants.
+        # per component; this headline real-GDP series uses the value-added deflator
+        # throughout.
         try:
             production = np.asarray(self.firms.ts.historic("production"), dtype=float)
             price = np.asarray(self.firms.ts.historic("price"), dtype=float)

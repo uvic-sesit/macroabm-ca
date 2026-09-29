@@ -382,21 +382,22 @@ class DataReaders:
             for country_name, proxy_country in zip(country_names, proxified)
         }
 
-        # CAN-2022 Canadianized-household MVP: replace the (French-proxy) household distribution with the
-        # validated national Canadian household file, adapted to the model schema. Individuals stay the
-        # French skeleton; the reader is flagged cad_native so the EUR->CAD household conversion is skipped
-        # (see hfcs_synthetic_population). Explicit + CAN-2022-only; every other build is untouched.
+        # CAN-2022 Canadian households: replace the (French-proxy) household distribution with the
+        # national Canadian household file (SFS/CIS/SHS PUMF), adapted to the model schema. Individual-
+        # level demographics keep the HFCS skeleton; the reader is flagged cad_native so the EUR->CAD
+        # household conversion is skipped (see hfcs_synthetic_population). Explicit + CAN-2022-only;
+        # every other build is untouched.
         if canadianized_can_households_csv is not None and Country("CAN") in country_names and simulation_year == 2022:
             from macro_data.readers.population_data.canadianized_household_adapter import (
                 build_canadianized_households_df,
             )
             can_proxy = proxy_country_dict.get(Country("CAN"), Country("CAN")) if proxy_country_dict else Country("CAN")
             reader = hfcs[can_proxy]
-            # Option 1 (MVP): load the FULL pooled-European individual/member pool so the member skeleton
-            # spans the same all-country household ID space as the validated 83,162-household Canadian
-            # skeleton -- restores exact household<->individual linkage. Individuals are NOT Canadianized
-            # (age/sex/education/composition remain pooled-European HFCS); their employment industry is still
-            # reassigned from StatCan 36-10-0489 downstream, and their EUR incomes still convert once.
+            # Load the FULL pooled-European individual/member pool so the member skeleton spans the same
+            # all-country household ID space as the Canadian household skeleton, giving an exact
+            # household<->individual linkage. Individual-level demographics (age/sex/education/
+            # composition) keep the pooled-European HFCS skeleton; employment industry is reassigned
+            # from StatCan 36-10-0489 downstream, and EUR incomes convert once.
             all_country = HFCSReader.from_csv(
                 country_name=can_proxy,
                 country_name_short=can_proxy.to_two_letter_code(),
@@ -1121,15 +1122,14 @@ def inject_can_provincial_socioeconomic_2022(
     """Replace the WIOD scaffold capital stock / capital compensation in the SEA reader with the
     validated 2022 province x OECD-50 StatCan series, as a drop-in for the WIOD values.
 
-    IMPORTANT: this must run BEFORE ``reconcile_value_added`` / ``add_investment_matrix_to_icio`` /
+    Ordering: this runs BEFORE ``reconcile_value_added`` / ``add_investment_matrix_to_icio`` /
     ``match_iot_with_sea``. Those reconcile SEA "Capital Compensation" to the IO's gross fixed
     capital formation (``_match_country_iot_with_sea`` overwrites it with the investment-matrix
-    column sums, and sets "Labour Compensation" = VA - reconciled capital compensation). So the
-    validated capital compensation here feeds only the *sectoral investment-allocation pattern*
-    (``cap_factors``); the reconciled level (and hence the GDP output==expenditure identity, which
-    treats capital cost as investment flow) is preserved. Injecting after ``match`` instead
-    over-states gross fixed capital formation (capital compensation >> investment) and breaks the
-    economy identity, so labour compensation is deliberately NOT set here.
+    column sums, and sets "Labour Compensation" from the observed compensation of employees or
+    the VA residual). So the capital compensation injected here feeds only the *sectoral
+    investment-allocation pattern* (``cap_factors``); the reconciled level (and hence the GDP
+    output==expenditure identity, which treats capital cost as investment flow) is preserved,
+    and labour compensation is not set here.
 
     Sources (``raw_data_path/can_2022``):
       * capital stock  = StatCan 36-10-0096 geometric end-2021 net non-residential stock

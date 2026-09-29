@@ -706,13 +706,11 @@ class Households(Agent):
 
         ``apply_energy_share_increments`` sets a nominal budget weight, which does not
         pin a real quantity once relative prices move -- and under CER's exogenous price
-        path they move a long way.  Electricity's real price falls to 74.3% of a CPI the
+        path they move a long way: electricity's real price falls well below a CPI the
         model generates itself (CER supplies the electricity price, the model's CPI is
-        driven by fossil prices), so households buy roughly 1/0.743 more of it than the
-        share implies.  Measured against CER residential: +16.0% vs +1.2% under Current
-        Measures and +61.1% vs +5.7% under Net-zero, with the budget share actually
-        FALLING 5.6% in the latter.  Setting shares cannot fix that; the target has to be
-        the quantity.
+        driven by fossil prices), so households would buy correspondingly more of it than
+        the share implies.  Setting shares cannot address that; the target has to be the
+        quantity.
 
         This is the household analogue of ``linkage_owns_coefficients`` for firms: CER
         owns the quantity path, the model owns everything else.
@@ -839,10 +837,8 @@ class Households(Agent):
         """Shift the household budget between energy goods by CER's own share changes.
 
         Households allocate spending with a FIXED ``consumption_weights`` vector, so
-        nothing in the energy linkage reaches them: firms' coefficients follow CER while
-        households' fuel mix stays frozen at its base year.  Measured consequence -- real
-        household electricity consumption falls 13.5% over 2020-2035 against CER
-        residential at +1.2%.
+        without this nothing in the energy linkage reaches them: firms' coefficients
+        follow CER while households' fuel mix stays frozen at its base year.
 
         This is the household analogue of ``additive_intensity`` on the firm side: CER's
         ABSOLUTE change in a fuel's share of residential energy, scaled by the household
@@ -852,9 +848,8 @@ class Households(Agent):
         is renormalised to absorb rounding.  Weights are floored at zero.
 
         ``consumption_weights`` are NOMINAL budget shares, so a fixed weight buys more
-        real quantity as a good becomes relatively cheaper -- measured under CER's
-        exogenous prices as household electricity rising +43.1% real against +75.5%
-        nominal. CER's shares are PJ shares, i.e. real. Passing ``relative_prices``
+        real quantity as a good becomes relatively cheaper. CER's shares are PJ shares,
+        i.e. real. Passing ``relative_prices``
         converts the real target to the nominal weight that delivers it
         (``weight ~ real_share x price``), so households buy CER's mix rather than
         whatever the price wedge implies.
@@ -863,14 +858,12 @@ class Households(Agent):
             increments: {industry index: change in that fuel's share of residential
                 energy since the anchor year}.
             relative_prices: {industry index: that good's price relative to its anchor-year
-                price}. Omitted => weights are treated as real shares directly (previous
-                behaviour).
+                price}. Omitted => weights are treated as real shares directly.
             loss_rates: {industry index: transmission loss rate}. Applied to the REAL
                 share target, before the price conversion -- households must purchase
                 more than they consume because some is lost in transmission. Applying it
-                to the finished nominal weight instead double-counts against the price
-                conversion: measured as household electricity jumping +10.9% -> +35.9%
-                from a 7.5% gross-up.
+                to the finished nominal weight instead would double-count against the
+                price conversion.
         """
         if not increments and not loss_rates:
             return

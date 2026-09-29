@@ -180,21 +180,18 @@ class GoodsMarketClearer(ABC):
                                signal_shortfall: float = 0.0) -> None:
         """Route ROW's demand for SPECIFIC industries to externally supplied origin shares.
 
-        Unlike an all-industry base-year anchor -- rejected twice for destabilising
-        scenarios that move production geography -- this takes
-        {industry_index: shares_over_countries} for a chosen few
-        industries, and the shares may be updated per year by the caller.  Built for
+        This takes {industry_index: shares_over_countries} for a chosen few
+        industries rather than anchoring every industry to base-year shares, and the
+        shares may be updated per year by the caller.  Built for
         sector D: ROW's electricity purchases (international interchange plus
         hydrogen-electrolysis load) belong in the provinces CER says export and make
         hydrogen, not wherever the pool finds slack.  Shares are normalised here; the
         entry for ROW's own position must be 0.  Passing None or {} disables it.
 
         As a pure first-pass hint the split does NOT bind: the pool backfills whatever an
-        origin could not supply, from whichever province has slack.  Measured (S2 pair,
-        2026-08-13): Ontario delivered 0.8% of ROW's D demand against a 24.2% anchored
-        share -- its supply is fully committed domestically by the time the anchored pass
-        runs -- while Quebec delivered 31% against 15.6% and Manitoba 11.5% against 4.4%.
-        Two opt-ins close the loop:
+        origin could not supply, from whichever province has slack, and an origin whose
+        supply is fully committed domestically by the time the anchored pass runs
+        delivers well under its share.  Two opt-ins close the loop:
 
         - ``strict``: ROW's demand for an override industry that its anchored origins
           cannot fill is WITHDRAWN, not pooled. Realised exports may run under the index
@@ -205,11 +202,10 @@ class GoodsMarketClearer(ABC):
           the global excess-demand distribution, which would otherwise hand the signal
           to whichever province has spare supply -- the same defect the split corrects,
           one step earlier). This is what lets an origin PLAN for the order book it
-          keeps missing: demand estimation reads recorded excess demand. DAMP IT:
-          measured at 1.0 (arm S3), Ontario -- under-filled for 20 straight years --
-          over-invested past its share (generation ratio 1.52 vs CER, growth 2.48 vs
-          2.05) and its cheapened electricity inflated its own demand; 0.0 (arm S4)
-          leaves the origin blind and exports permanently under-run.
+          keeps missing: demand estimation reads recorded excess demand. Damped in
+          production (0.25): at 1.0 a persistently under-filled origin over-invests past
+          its share and its cheapened electricity inflates its own demand; at 0.0 the
+          origin is blind to the shortfall and exports permanently under-run.
         """
         cleaned: dict[int, np.ndarray] = {}
         for g, shares in (shares_by_industry or {}).items():
@@ -762,8 +758,8 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                         split_shortfalls[(c1, g)] = split_shortfalls.get((c1, g), 0.0) + short
 
             # STRICT split: demand the anchored origins could not fill is withdrawn,
-            # not pooled.  Without this the pool re-runs the defect the split exists to
-            # fix -- whichever province has slack captures the sale (Manitoba).
+            # not pooled.  Without this the pool would hand the sale to whichever
+            # province has slack.
             if self._row_split_strict and override_gs:
                 for _tr in goods_market_participants[row_name]:
                     if _tr.transactor_buyer_states["Value Type"] != ValueType.NONE:

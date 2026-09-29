@@ -56,16 +56,13 @@ class TargetCapitalInputsSetter(ABC):
         self.target_capital_inputs_fraction = target_capital_inputs_fraction
         # Optional floor on the reference capital stock, used by the energy linkage to
         # drive capacity investment in the sectors it covers.  Inert until set.
-        # PER-FIRM index array (NaN = not floored). Previously a single mask plus a single
-        # scalar, which meant each call OVERWROTE the last: flooring two sectors left only
-        # the one applied last, silently. That was latent while electricity was the only
-        # floored sector and would have broken the moment a second one was added.
+        # PER-FIRM index array (NaN = not floored), so several sectors can be floored at
+        # different indices in successive calls.
         self._min_capital_index_by_firm: np.ndarray | None = None
         # Optional CEILING, the floor's twin (same per-firm layout).  The floor turns
         # CER's capacity path into a lower bound on investment; without an upper bound
-        # a slack province can over-build without limit -- Manitoba's D capital ran
-        # 3.3x by 2050 against a CER path of 1.27x, feeding the slack loop that sells
-        # over-production to whoever the pool hands it.  Inert until set.
+        # a slack province could over-build past its CER path and sell the surplus to
+        # whichever province the pool hands it.  Inert until set.
         self._max_capital_index_by_firm: np.ndarray | None = None
         self.credit_gap_fraction = credit_gap_fraction
         self.forward_looking_reference_fraction = forward_looking_reference_fraction
@@ -116,7 +113,7 @@ class TargetCapitalInputsSetter(ABC):
         """Apply the capacity floor, then the ceiling.  No-ops unless configured.
 
         Ceiling second, deliberately: if both are set and conflict, the exogenous
-        upper bound wins, because the ceiling exists to stop runaway over-building
+        upper bound wins, because the ceiling exists to stop unbounded over-building
         and a floor above the ceiling means the caller misconfigured the indices.
         """
         idx = self._min_capital_index_by_firm

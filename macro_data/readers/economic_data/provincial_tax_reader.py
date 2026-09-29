@@ -3,7 +3,7 @@ Optional province-level effective-tax-rate override reader.
 
 Supplies province-specific *effective* corporate income, personal income, and consumption
 (sales / VAT) tax rates for the Canadian provincial model. Without this override, all three
-rates collapse a :class:`Region` to its ``parent_country`` and every province receives the
+rates map a :class:`Region` to its ``parent_country`` and every province receives the
 same national value: ``read_tau_firm`` returns Canada's single statutory combined corporate
 rate, ``read_tau_income`` returns a hard-coded 0.09, and ``get_tau_vat`` returns one national
 VAT figure. This reader replaces those with province-specific effective rates derived from the
@@ -21,7 +21,7 @@ Data file
 ``<raw_data>/canadian_inputs/provincial_tax_rates.csv`` (in the raw_data bundle, not the model
 repo) with columns:
 ``region, year, corporate_tax_rate, personal_income_tax_rate, sales_tax_rate`` (decimals). One
-row per province x year (2007-2024). See ``docs/provincial_raw_data.md`` (tax section) for the
+row per province x year (2007-2024). See ``docs/canada/raw_data_reference.md`` (tax section) for the
 full provenance and assumptions.
 """
 

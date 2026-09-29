@@ -28,20 +28,17 @@ _INDUSTRY_TS_SUM_FIELDS = (
     "real_amount_sold",
     "inventory",
     "limiting_intermediate_inputs",
-    # The capital-side constraint.  Without it the shallow summary cannot say whether a
-    # supply-constrained run is short of intermediate inputs or of capital, which is the
-    # first question to ask of any collapse; the full multi-GB save was previously the
-    # only way to see it.
+    # The capital-side constraint, so the shallow summary can say whether a
+    # supply-constrained run is short of intermediate inputs or of capital without the
+    # full save.
     "limiting_capital_inputs",
     # Wage decomposition.  The labour share is wages / value added, and wages are
-    # employment x wage rate -- without both terms the shallow summary cannot say whether a
-    # rising labour share comes from hiring or from a spiralling wage *rate*, which is the
-    # first question to ask of any wage-driven collapse.
+    # employment x wage rate; both terms are exported so the shallow summary can separate
+    # hiring from wage-rate movements.
     "total_wage",
     "number_of_employees",
     # Value-added components. GVA by sector is nominal production less intermediate
-    # consumption, and neither term was exported -- so the shallow summary could show a
-    # sector's OUTPUT moving without saying whether the value it added moved with it.
+    # consumption; both terms are exported so the shallow summary can derive it.
     # Both are NOMINAL (they are cost/receipt aggregates), unlike `production`, which is
     # real; see the series_units table written alongside.
     "used_intermediate_inputs_costs",
@@ -55,9 +52,8 @@ _INDUSTRY_TS_WEIGHTED_FIELDS = {
     "wage_tightness_markup": "number_of_employees",
     # The two productivity terms wages are indexed to.  set_employee_income multiplies
     # each stayer's wage by current/prev labour_productivity_factor, and set_offered_wage
-    # multiplies by that ratio *and* the TFP multiplier -- so without these series the
-    # shallow summary cannot say which productivity term (if either) is driving a wage
-    # spiral, only that one is happening.
+    # multiplies by that ratio *and* the TFP multiplier -- so these series let the
+    # shallow summary attribute wage growth to its productivity term.
     "labour_productivity_factor": "number_of_employees",
     "labour_productivity": "number_of_employees",
 }
@@ -73,7 +69,7 @@ def _weighted_effective_coefficient(
     """Production-weighted effective coefficient ``base * multiplier`` for one (industry, input).
 
     The effective intermediate/capital coefficient of a firm is
-    ``base_coeff * multiplier[firm, input_j]``.  This collapses the firms of a
+    ``base_coeff * multiplier[firm, input_j]``.  This reduces the firms of a
     single industry to one representative value, weighting by current
     production (falling back to a simple mean when production is all zero), so
     that overwriting the coefficient preserves total input use.  Returns
@@ -449,15 +445,14 @@ class Firms(Agent):
     def set_transmission_loss_rate(self, good_index: int, rate: float) -> None:
         """Gross up every BUYER's requirement for a good by its transmission loss rate.
 
-        The model has no transmission losses: electricity production tracks electricity
-        demand exactly, so it cannot reach CER's generation path, which exceeds CER's
-        end-use demand by 13.8% (2020) to 17.4% (2035).
+        Without this the model has no transmission losses: electricity production tracks
+        delivered demand exactly, so it cannot reach CER's generation path, which exceeds
+        CER's end-use demand by roughly 14-17%.
 
-        The physically obvious representation -- the power sector consuming its own output
-        -- does NOT work here. A self-input cannot bootstrap in a sequential model: firms
-        must purchase inputs before producing, so D needs D that does not yet exist,
-        production falls, less D exists, and it spirals. Measured: -100% production and
-        43/43 sectors dead, with D->D use stuck at 4.2% instead of the intended 7%.
+        The losses are NOT represented as the power sector consuming its own output. A
+        self-input cannot bootstrap in a sequential model: firms must purchase inputs
+        before producing, so D would need D that does not yet exist and production would
+        contract step by step.
 
         Grossing up the buyers is equivalent in accounting -- generation = delivered /
         (1 - rate) either way -- with no circularity, and is arguably the better reading,
@@ -465,9 +460,9 @@ class Firms(Agent):
         generator consumes.
 
         Applied to EVERY buyer of the good, not only the linkage-owned pairs. Losses are a
-        property of the grid, not of the CER scenario, so restricting them to the four
-        linked sectors covered barely a fifth of electricity demand and lifted production
-        by 0.5pp instead of the ~7pp intended. The producing sector itself is excluded --
+        property of the grid, not of the CER scenario, so restricting them to the linked
+        sectors would cover only a fraction of electricity demand. The producing sector
+        itself is excluded --
         that is the self-input case, which cannot bootstrap in a sequential model.
         """
         if rate is None or not np.isfinite(rate) or not (0.0 < rate < 0.9):
@@ -494,16 +489,11 @@ class Firms(Agent):
             # Store the pre-loss coefficient so repeated milestone calls re-derive from it
             # rather than compounding the gross-up.
             #
-            # For pairs the linkage OWNS, that store has to be refreshed every milestone.
-            # This runs after `link()`, which rewrites those coefficients from the anchor
-            # baseline each time, so a value cached at the first milestone is a STALE
-            # pre-loss coefficient -- and writing `stale / factor` back silently discarded
-            # every subsequent linkage update.  With `electricity_own_use` on, that froze
-            # every buyer's electricity coefficient at its first-milestone value and
-            # blocked electrification outright: row C20 realised 1-23% of the share change
-            # the linkage had written for it (AB 0.07, ON 0.04, NS 0.01).  Unowned pairs
-            # keep the cached value, because nothing rewrites them and re-deriving from
-            # the live entry there really would compound the gross-up.
+            # For pairs the linkage OWNS, that store is refreshed every milestone: this
+            # runs after `link()`, which rewrites those coefficients from the anchor
+            # baseline each time, so the pre-loss value is re-read from the live entry.
+            # Unowned pairs keep the cached value, because nothing rewrites them and
+            # re-deriving from the live entry there would compound the gross-up.
             if key not in self._loss_grossed_baseline or key in owned:
                 self._loss_grossed_baseline[key] = float(base[j, i])
             productivity = self._loss_grossed_baseline[key]
@@ -521,11 +511,6 @@ class Firms(Agent):
         that is wrong twice over: sector D has no capacity-factor concept, so a ceiling set
         from capacity produces at capacity, and CER's generation is well below that.
 
-        Measured on the 2050 Net-zero pair, scaling D's floor by the investment multiplier
-        without this: provincial generation share-distance against CER 0.081 -> 0.176,
-        Manitoba 1.14 -> 1.82, and total incremental investment FELL (+786bn -> +665bn)
-        because the misallocated power capital crowded out better uses.
-
         Dividing capital productivity by the same factor the floor is multiplied by cancels
         on the ceiling (stock x productivity is unchanged) and compounds on investment. It
         is also the physically honest reading: net-zero generation needs more capital per
@@ -534,8 +519,8 @@ class Firms(Agent):
 
         NOT `transition_capital`, which lowers the same productivity but with NO matching
         floor -- that tells a sector its output got harder to produce and constrains it.
-        Measured there, D's 2035 employment fell 12.2%. The pairing is what makes this
-        expansionary rather than contractionary.
+        The pairing with the floor is what makes this expansionary rather than
+        contractionary.
 
         The pre-uplift coefficient is cached per (capital good, sector) so repeated
         milestone calls re-derive from it rather than compounding, exactly as
@@ -549,9 +534,9 @@ class Firms(Agent):
             self._capital_uplift_baseline: dict[tuple[int, int], float] = {}
         # Any positive factor, not just > 1. The composed factor is
         # `floor_index / target_ceiling_index`, and the investment multiplier is BELOW 1 in
-        # seven of ten provinces (AB 0.835, ON 0.777, SK 0.812 ...), so a `> 1` guard drops
-        # exactly the term that keeps their ceilings on CER's generation path -- measured,
-        # it left them 15-20% under it. Below 1 means the sector needs LESS capital per unit
+        # seven of ten provinces (AB 0.835, ON 0.777, SK 0.812 ...), so a `> 1` guard would
+        # drop exactly the term that keeps their ceilings on CER's generation path. Below 1
+        # means the sector needs LESS capital per unit
         # of output, which is the arithmetic consequence of a floor scaled down by that
         # multiplier; it is not a claim about technology.
         if not industry_indices or factor is None or not np.isfinite(factor) or factor <= 0.0:
@@ -559,13 +544,11 @@ class Firms(Agent):
         if abs(factor - 1.0) < 1e-9:
             return
         base = self.base_capital_inputs_productivity_matrix
-        # Pairs `link()` rewrites every milestone. Their cached pre-uplift value must be
-        # REFRESHED, or the uplift re-derives from a stale coefficient and silently
-        # discards everything link() has written since. Unowned pairs must keep the cached
-        # value, because nothing rewrites them and re-reading the live entry there would
-        # compound the uplift instead. This is the identical hazard, and identical fix, as
-        # `set_transmission_loss_rate` -- which froze every buyer's electricity coefficient
-        # at its first-milestone value before it was found.
+        # Pairs `link()` rewrites every milestone have their cached pre-uplift value
+        # refreshed from the live entry, so the uplift re-derives from what link() has
+        # just written. Unowned pairs keep the cached value, because nothing rewrites them
+        # and re-reading the live entry there would compound the uplift instead. Same
+        # sequencing as `set_transmission_loss_rate`.
         owned = getattr(self, "_linkage_owned_pairs", {}).get("capital_tech_multipliers", set())
         for i in industry_indices:
             i = int(i)
@@ -663,10 +646,9 @@ class Firms(Agent):
             frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
 
         # Gross value added, derived: nominal output less intermediate consumption.
-        # Exported rather than left to the consumer because getting it wrong is easy --
-        # `production` is REAL and `used_intermediate_inputs_costs` is NOMINAL, so the
-        # two cannot be differenced without applying `price` first. That exact mixed-units
-        # mistake has already cost this project one round of invalid analysis.
+        # Exported rather than left to the consumer because `production` is REAL and
+        # `used_intermediate_inputs_costs` is NOMINAL, so the two cannot be differenced
+        # without applying `price` first.
         try:
             prod = frames["production"].to_numpy()
             price = frames["price"].to_numpy()
@@ -1009,16 +991,12 @@ class Firms(Agent):
     def set_production_floor(self, industry_indices, index: float | None) -> None:
         """Floor selected industries' target production at ``initial * index``.
 
-        THE GATE'S MISSING TWIN, for utilisation drifting DOWN rather than up.  The
-        gate (below) clips over-producers whose output-per-capital escapes upward
-        (Manitoba); nothing handled a province whose demand expectations lag a fast
-        external build-out, leaving capacity-floored capital idle -- measured for
-        Alberta's D under Net-zero (2026-08-23): realised output reaches only 0.66 of
-        CER's generation path by 2050 while its capital tracks CER capacity, EVEN
-        THOUGH Alberta's electricity is the cheapest in the country (0.63 vs
-        neighbours 1.5-2.3) -- its sellers are sold out at pool time because they
-        produced to lagging expectations, and the marginal MWh is imported at 3x the
-        price.  Lifting the TARGET to the external path adds supply into a market
+        THE GATE'S TWIN, for utilisation drifting DOWN rather than up.  The gate
+        (below) clips over-producers whose output-per-capital escapes upward; this
+        handles a province whose demand expectations lag a fast external build-out,
+        leaving capacity-floored capital idle even where its electricity is the
+        cheapest available and the marginal MWh is imported instead (Alberta under
+        Net-zero).  Lifting the TARGET to the external path adds supply into a market
         where the province is already price-competitive, so the market absorbs it by
         displacing imports rather than being force-fed.
 
@@ -1056,15 +1034,13 @@ class Firms(Agent):
     def set_production_gate(self, industry_indices, index: float | None) -> None:
         """Cap selected industries' target production at ``initial * index``.
 
-        THE CAPACITY GATE, and the missing physical constraint the 2026-08-11
-        capacity-factor diagnosis named: the Leontief limiting-capital computation
-        ignores `capital_inputs_utilisation_rate` and uses EFFECTIVE (drifting)
-        coefficients, so technical investment quietly raises output-per-capital --
-        measured at ~1.5x of base by 2035-45 for Manitoba's D under a binding capital
-        ceiling, while every uncapped province held ~1.0. A capital-side bound cannot
-        close that valve; a production-side gate can, and unlike the S7 tighter
-        ceiling it cannot migrate the excess to the next-slackest province, because
-        every gated province is capped at its own external path.
+        THE CAPACITY GATE, the production-side physical constraint: the Leontief
+        limiting-capital computation ignores `capital_inputs_utilisation_rate` and uses
+        EFFECTIVE (drifting) coefficients, so technical investment raises
+        output-per-capital under a binding capital ceiling. A capital-side bound cannot
+        close that valve; a production-side gate can, and unlike a tighter ceiling it
+        cannot migrate the excess to the next-slackest province, because every gated
+        province is capped at its own external path.
 
         A CLAMP, not an override: production below the gate is untouched, so this
         composes with (and is applied after) set_production_target. Same per-firm
@@ -1105,10 +1081,8 @@ class Firms(Agent):
 
         Why this rather than demand-side control: an exogenous demand path is absorbed
         only partially, because firms produce to their own expected demand and expectations
-        adapt to realised sales. Six demand-side attempts are recorded in
-        docs/cer_macroabm/supply_side_linkage_design.md; the best moved gas from -14.1% to
-        -2.1% against a target of +25.5%, with capital unconstrained and inputs slack. The
-        sector does not expand to fill an order book it has not yet seen.
+        adapt to realised sales; the sector does not expand to fill an order book it has
+        not yet seen.
 
         It is applied to the TARGET, not
         to production itself, so the input and capital constraints still bind: if the
@@ -1120,9 +1094,8 @@ class Firms(Agent):
             index: production index relative to each firm's INITIAL production.
         """
         # PER-FIRM array (NaN = not driven), so several industries can be driven to
-        # DIFFERENT indices. A single mask plus a single scalar would let each call
-        # overwrite the last -- the exact latent bug found in set_minimum_capital_stock,
-        # where flooring two sectors silently kept only one.
+        # DIFFERENT indices; a single mask plus a single scalar would let each call
+        # overwrite the last.
         if not industry_indices or index is None:
             self._production_target_by_firm = None
             return
@@ -2647,8 +2620,7 @@ class Firms(Agent):
         rather than a search.  Anchoring on the macroABM's own base-year
         coefficient keeps the units (monetary IO intensities) and eliminates a
         base-year level shock.  Both the energy (intermediate) and investment
-        (capital) channels are overwritten.  (A legacy damped "nudge" method
-        existed and was removed 2026-08 as unreachable; see git history.)
+        (capital) channels are overwritten.
 
         NOTE: this mutates the *base* coefficient matrices.  The affected
         firm-level tech multipliers are reset to 1 (unless
@@ -2781,14 +2753,12 @@ class Firms(Agent):
                         else a_int
                     )
                     if additive_intensity and mult_key == "intermediate_tech_multipliers":
-                        # Additive share increments.  Ratio targeting multiplies CER's
-                        # intensity growth onto the model's own baseline coefficient,
-                        # which explodes wherever the two bases differ: the model's H49
-                        # electricity share of energy is 6.1% against CER transport's
-                        # 0.27% (H49 spans rail, transit and pipelines; CER transport is
-                        # road-dominated), so CER's x15 share growth drove H49 to 74%
-                        # electric and a x58 rise in its electricity use -- measured as
-                        # the ENTIRE economy-wide overshoot (+118pp of firms' +112%).
+                        # Additive share increments.  Ratio targeting would multiply
+                        # CER's intensity growth onto the model's own baseline
+                        # coefficient, which overshoots wherever the two bases differ
+                        # (the model's H49 spans rail, transit and pipelines while CER
+                        # transport is road-dominated, so their electricity shares of
+                        # energy differ by an order of magnitude).
                         # Adding CER's absolute share change, scaled by the sector's own
                         # anchor-year total-energy coefficient, transfers CER's mix
                         # change at the model's energy level instead: zero at the anchor
@@ -2836,14 +2806,10 @@ class Firms(Agent):
 
         The firm analogue of :meth:`Households.anchor_energy_quantities`, and for the same
         reason.  ``_link_intensity_target`` is OPEN-loop: it writes a technical
-        coefficient and never checks whether the purchase followed.  Measured on the
-        2026-08-09 Net-zero run, row ``C20`` realised only 1-23% of the electricity share
-        change the linkage had written for it (AB 0.07, ON 0.04, NS 0.01, QC 0.11,
-        SK 0.16, BC 0.23), even though the written coefficients reproduce CER's industrial
-        fuel shares exactly.  A coefficient is a desired ratio, not a delivered quantity:
-        firms rescale it by their own multipliers, ration against available supply and
-        substitute on relative price, and the target dissipates through all three.  The
-        household channel, which closes the loop, tracks CER to within 2-7%.
+        coefficient and never checks whether the purchase followed.  A coefficient is a
+        desired ratio, not a delivered quantity: firms rescale it by their own
+        multipliers, ration against available supply and substitute on relative price,
+        and the target dissipates through all three.
 
         So read what was actually bought and correct toward the target.  This is the
         firm-side complement to ``linkage_owns_coefficients``: CER owns the quantity path
@@ -2872,15 +2838,12 @@ class Firms(Agent):
         **Why increments exist.**  An index needs a base-year quantity in the denominator,
         and the external path has pairs whose base is essentially zero and whose target
         year is real -- electric vehicles in a small province, say.  Any positive base
-        passes a ``base > 0`` test however tiny, so those pairs produce enormous indices
-        (measured per province: up to 1800x, with PE and NL at a 95th percentile near
-        280), firms are told to buy 1800x their base-year electricity, and the run
-        collapses.  Aggregating provinces hides this by giving every pair a non-trivial
-        denominator, so it is a latent fragility in the anchor rather than a property of
-        per-province data.
+        passes a ``base > 0`` test however tiny, so those pairs would produce indices of
+        several hundred or more and firms would be told to buy that multiple of their
+        base-year electricity.  Per-province CER data has many such pairs.
 
-        The fix is not to drop those pairs -- that silently discards real demand -- but to
-        stop dividing by a number that is not there.  An increment carries the LEVEL
+        The answer is not to drop those pairs -- that silently discards real demand -- but
+        to stop dividing by a number that is not there.  An increment carries the LEVEL
         change instead, made unit-free by both sides dividing by a denominator that is
         well determined: the industry's total energy.  ``delta`` of 0.4 means "this fuel
         grew by 40% of the industry's base-year energy", and this method converts that to
@@ -2924,7 +2887,7 @@ class Firms(Agent):
             specs[(int(i), int(j))] = ("increment", float(delta))
 
         # Capture the energy totals BEFORE applying anything, and on EVERY call rather
-        # than only on calls that carry an increment.  Measured later they would embed
+        # than only on calls that carry an increment.  Captured later they would embed
         # corrections this method had already made, and the increment would be scaled by
         # a moving denominator instead of the anchor-year one it was derived against --
         # and the first increment necessarily arrives a milestone AFTER the first call,
@@ -3057,9 +3020,9 @@ class Firms(Agent):
     def get_production_annual(
         self,
         current_year: int,
-        sim_start_year: int = 2014,
+        sim_start_year: int = 2022,
         steps_per_year: int = 4,
-        base_year: int = 2015,
+        base_year: int = 2022,
         year_step: int = 5,
     ) -> pd.DataFrame:
         """Return annual production by industry for each completed CIMS period.
@@ -3294,9 +3257,8 @@ class Firms(Agent):
         # Coefficients the energy linkage sets are owned by it: CIMS/CER already supply a
         # full intensity path for those (industry, input) pairs, one that embeds the
         # efficiency improvement they assume.  Letting endogenous technical growth also
-        # move them double-counts efficiency and makes the linkage's own baseline stale
-        # between milestones -- which is what produced the step change measured two
-        # quarters after each milestone.  Growth still applies to every unlinked pair.
+        # move them would double-count efficiency and drift the linkage's own baseline
+        # between milestones.  Growth still applies to every unlinked pair.
         intermediate_growth = self._mask_linkage_owned(intermediate_growth, "intermediate_tech_multipliers")
         capital_growth = self._mask_linkage_owned(capital_growth, "capital_tech_multipliers")
 

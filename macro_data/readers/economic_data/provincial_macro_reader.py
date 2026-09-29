@@ -4,7 +4,7 @@ Optional province-level macro override reader.
 This reader supplies province-specific macroeconomic time series for the Canadian
 provincial model, replacing the national (or proxy) series that the standard readers
 return for every province. It exists because the economic readers
-(``world_bank``, ``oecd``, ``imf``, ``eurostat`` ...) all collapse a :class:`Region`
+(``world_bank``, ``oecd``, ``imf``, ``eurostat`` ...) all map a :class:`Region`
 to its ``parent_country`` before looking up data, so without an override every
 province receives the *same* national CPI / unemployment / house-price / vacancy path.
 
@@ -33,7 +33,7 @@ model repo) with columns:
 - ``hpi_nominal_growth`` quarter-over-quarter change of the quarterly-average New Housing Price Index (decimal)
 - ``vacancy_rate``      quarterly-average job vacancy rate (decimal); NaN before 2015
 
-See ``docs/canada/provincial_raw_data.md`` for the full provenance and processing notes.
+See ``docs/canada/raw_data_reference.md`` for the full provenance and processing notes.
 """
 
 from __future__ import annotations

@@ -1,16 +1,19 @@
-"""Tests for post-sample labour-force growth in the candidate growth baseline.
+"""Tests for post-sample labour-force growth in the real-growth baseline.
 
 The bundled observed labour-force index ends in 2024.  By default the index is held flat
-past that tail, so a run to 2035 has eleven years of *zero* labour-force growth while
-demand keeps rising -- which drives unemployment to 0.00% and leaves the economy with no
-slack.  ``post_sample_growth`` lets labour supply keep expanding instead.
+past that tail; ``post_sample_growth`` continues it at a constant annual rate so labour
+supply keeps expanding over the projection (production passes StatCan's per-province
+working-age population projections).
 """
 
 import numpy as np
 
 from macromodel.configurations.growth_baseline_preset import observed_labour_force_index
 
-N_QUARTERS = 90          # 2014Q1 .. 2036Q2, matching the CER runs
+# The tests below read the bundled index on its own 2014 base (the loader default), so
+# the quarter offsets are counted from 2014Q1.  Production rebases to the 2022 start via
+# ``base_year``; that path is covered in test_growth_baseline_preset.py.
+N_QUARTERS = 90          # 2014Q1 .. 2036Q2
 LAST_OBSERVED_Q = 40     # 2024
 Q_2030, Q_2035 = 64, 84
 
@@ -20,14 +23,14 @@ def _index(rate=None, province="CAN_ON"):
 
 
 def test_default_is_flat_past_the_data_tail():
-    """Regression: the default must keep the historical frozen-tail behaviour."""
+    """Regression: the default must keep the flat-tail behaviour."""
     a = _index()
     assert a[Q_2030] == a[Q_2035]
     np.testing.assert_allclose(a[Q_2035], a[Q_2030], rtol=0, atol=0)
 
 
 def test_growth_rate_expands_labour_supply_past_the_tail():
-    a = _index(0.0072)  # CER EF2026 population path
+    a = _index(0.0072)
     assert a[Q_2035] > a[Q_2030] > a[LAST_OBSERVED_Q]
 
 
@@ -57,6 +60,12 @@ def test_index_is_still_normalised_to_one_at_t0():
 
 def test_zero_growth_matches_the_flat_default():
     np.testing.assert_allclose(_index(0.0), _index(), rtol=1e-12)
+
+
+def test_negative_growth_shrinks_the_tail():
+    """Negative rates are legitimate (QC and NL working-age populations shrink to 2050)."""
+    a = _index(-0.005)
+    assert a[Q_2035] < a[Q_2030] < a[LAST_OBSERVED_Q + 2]
 
 
 def test_applies_to_every_province():

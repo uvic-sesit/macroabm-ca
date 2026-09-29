@@ -269,12 +269,12 @@ class SectorExogenousPriceSetter(DefaultPriceSetter):
         CLAMPED rather than extrapolated, and the distinction is not cosmetic.  Passing
         `fill_value="extrapolate"` stops scipy delegating linear interpolation to
         `np.interp` (`_call_linear_np`) and switches it to its own `_call_linear`, which
-        differs in the last bit: 15 of the 145 quarters a 2014-2050 run requests move by
-        ~1e-16 relative.  In this model that is not negligible -- the perturbation is
-        amplified to 2e-08 by 2017 and to 18% (Ontario) and 55% (Alberta) of GDP by 2036,
-        so the whole path shifts and results stop being comparable with earlier runs.
+        differs in the last bit for some of the quarters a multi-decade run requests.  In
+        this model that is not negligible -- a last-bit perturbation is amplified over the
+        horizon until the whole path shifts and results stop being comparable with
+        earlier runs.
         Clamping keeps the fast path and is bit-identical in range, confining the change
-        to the quarters that previously raised.
+        to the quarters past the end of the price data.
 
         Holding the last annual value flat across the final year's quarters is also the
         honest reading of an annual series: the file says what 2050 is, not what its Q4
