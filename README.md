@@ -24,7 +24,7 @@ how to reproduce a run, and the published methodology at
 <https://sesit.gitlab.io/m3-linkages/projects/powering_canadas_growth/methodology/>.
 The model, its data construction and its validation are described in the working paper
 [MacroABM-CA: An Open-Source Regional Agent-Based Model of Canada, with an Application
-to Investment Tax Credits](docs/canada/MacroABM-CA_working_paper_2026-09.pdf) (Izadi,
+to Investment Tax Credits](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7538598) (Izadi,
 Azevedo and McPherson, September 2026), which builds on Poledna et al. (2023,
 <https://doi.org/10.1016/j.euroecorev.2022.104306>) and Wiese et al. (2024,
 <https://doi.org/10.48550/arXiv.2409.18760>).

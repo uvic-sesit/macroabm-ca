@@ -19,13 +19,12 @@ This page records what is specific to the model on this branch and how it was ru
 ## The model and its lineage
 
 The model itself, its data construction, its historical validation and a worked
-policy application are described in the working paper, which is kept in this folder:
+policy application are described in the working paper, available on SSRN:
 
 * Izadi, E., D. Azevedo and M. McPherson (2026). *MacroABM-CA: An Open-Source
   Regional Agent-Based Model of Canada, with an Application to Investment Tax
   Credits.* Working paper, September 2026 version.
-  [PDF](MacroABM-CA_working_paper_2026-09.pdf)
-  (on GitHub: <https://github.com/uvic-sesit/macroabm-ca/blob/powering_canadas_growth/docs/canada/MacroABM-CA_working_paper_2026-09.pdf>).
+  <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7538598>
 
 MacroABM-CA regionalises the MacroABM framework developed at INET Oxford, which in
 turn descends from the Austrian agent-based model of Poledna and co-authors. The
