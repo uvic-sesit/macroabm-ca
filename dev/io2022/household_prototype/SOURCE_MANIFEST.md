@@ -1,4 +1,4 @@
-# Household Canadianization — source manifest (balance sheet + income + consumption; integrated MVP)
+# Household Canadianization — source manifest (balance sheet + income + consumption)
 
 ## Raw-data root (configurable) & canonical layout
 All prep/build scripts resolve ONE raw-data root via `dev/io2022/household_prototype/_paths.py`
@@ -24,14 +24,14 @@ raw_data/
 └── icio/               SHARED IO tables incl. icio_2022_can_provinces.csv — NOT duplicated
 ```
 
-## STATUS 2026-08 — integrated MVP; household economic block validated + wired into the 2022 DataWrapper
+## Status — household economic block validated and wired into the 2022 DataWrapper (production)
 - ✅ SFS 2023 PUMF (`can_2022/pumf/sfs_2023/sfs2023_efam_pumf.csv`, 16,241 economic families) + label files.
 - ✅ CIS 2022 PUMF (`can_2022/pumf/cis_2022/CIS2022_PUMF.csv`) + data-dictionary/layout. (Income-source
   shares are baked into `canadianized_household_adapter.py`; CIS is read only to regenerate them.)
 - ✅ SHS 2023 PUMF (`can_2022/pumf/shs_2023/`, fixed-width TXT + SAS layout); 2019/2021 archived under
   `can_2022/pumf/shs_archive/`. **SHS 2023 selected** (behavioural consumption propensity).
 - ✅ 11 control tables downloaded → `controls_2022.json` populated (incl. **CHS 46-10-0083** tenure).
-- ✅ Household block integrated (adapter + Option B income reconciliation); 13q baseline stable.
+- ✅ Household block integrated (adapter + income reconciliation) and used by the production pickle.
 All PUMFs / generated household CSVs / control-table CSVs are git-ignored and NOT committed. Regenerate the
 controls with `download_controls.py` + `extract_controls.py`; place the licensed PUMFs manually (below), then
 run `prepare_household_canadianization.py --real` and `prepare_household_consumption.py --real`.
@@ -53,8 +53,8 @@ noted; then fill `SFS_COLUMN_MAP` / `CIS_COLUMN_MAP` / `CONTROLS_2022` in
 | income / person allocation | Canadian Income Survey PUMF | **72M0003X** | **2022** (ref year) | ref-year 2022, released 2024 | https://www150.statcan.gc.ca/n1/pub/72m0003x/72m0003x2024001-eng.htm |
 | consumption (behavioural propensity) | Survey of Household Spending PUMF | **62M0004X** | **2023** | 2023 (TC001 total current consumption) | https://www150.statcan.gc.ca/n1/en/catalogue/62M0004X |
 
-SFS geographic coverage: **10 provinces only — no YT/NT/NU** (both 2019 and 2023). Territories use a
-documented national/nearest-province donor fallback in the prototype.
+SFS geographic coverage: **10 provinces only — no YT/NT/NU** (both 2019 and 2023), which matches the
+production ten-province build (the territories are folded into the rest of the world).
 
 ## 2022 aggregate controls (benchmark targets; distributional + aggregate)
 

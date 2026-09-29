@@ -75,14 +75,16 @@ New to the project? Start with our comprehensive contribution guides:
 
 The project is designed for use by multiple teams. Please read our [repository guidelines](contributing/development.md#repository-guidelines) to keep the codebase generic and maintainable.
 
-## Canada (macroabm-ca)
+## Canada (MacroABM-CA)
 
-Documentation specific to the Canada MacroABM adaptation:
+Documentation specific to the Canadian provincial adaptation, as used for the
+*Powering Canada's Growth* analysis:
 
-- [MacroABM-CA Onboarding Guide](canada/canada_beta_model_onboarding_guide.md) - Practical orientation for running and interpreting the Canada model
-- [Canada Provincial IO Development](canada/canada_provincial_io_development.md) - Preparing the repository for the updated provincial IO table
-- [Raw Data Reference](canada/raw_data_reference.md) - Description of all raw data sources used by the Canada model
+- [Overview](canada/index.md) - What MacroABM-CA is, the configuration used for the analysis, and how to reproduce a run
+- [Onboarding Guide](canada/onboarding_guide.md) - Repository layout, where raw data enters, model components, team workflow
+- [Data Build](canada/data_build.md) - How the pinned 2022 provincial population pickle was built
+- [Raw Data Reference](canada/raw_data_reference.md) - Every raw-data input of the 2022 provincial build and how it is used
 
 ## Support
 
-- Open an issue on the [INET](https://github.com/inet-complexity/macro-main), [macrocosm](https://github.com/macro-cosm/macro-main/) or [SESIT](https://gitlab.com/sesit/macrocosm/macromodel) repositories when you run into something, or ping José Moran.
+- For the Canadian adaptation, open an issue on [uvic-sesit/macroabm-ca](https://github.com/uvic-sesit/macroabm-ca). For the shared framework, open an issue on the [INET](https://github.com/inet-complexity/macro-main) or [macrocosm](https://github.com/macro-cosm/macro-main/) repositories.

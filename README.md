@@ -16,7 +16,16 @@ The framework supports multi-country simulations with:
 - Environmental impact tracking
 
 
-The documentation can be found in [this URL.](http://macrodocs.macrocosm.group)
+This repository, **MacroABM-CA**, is the Canadian provincial adaptation of the framework,
+maintained by SESIT (University of Victoria). The branch `powering_canadas_growth` is the
+version used for the *Powering Canada's Growth* analysis; see
+[`docs/canada/index.md`](docs/canada/index.md) for the configuration, the data build and
+how to reproduce a run, and the published methodology at
+<https://sesit.gitlab.io/m3-linkages/projects/powering_canadas_growth/methodology/>.
+
+The framework documentation is built from `docs/` with MkDocs (`uv sync --extra docs`,
+`uv run mkdocs serve`); the upstream framework's copy is published at
+<http://macrodocs.macrocosm.group>.
 
 ## Installation
 
@@ -241,7 +250,7 @@ uv run pytest --cov=macro_data --cov=macromodel
 uv run black --config="pyproject.toml" .
 uv run isort --settings-path pyproject.toml .
 
-# Build documentation, but mind that there is a github action that builds the documentation for each push to the docs branch, done in the macrocosm repository.
+# Build the documentation locally (a GitHub Action also builds it on pushes to main)
 uv sync --extra docs
 uv run mkdocs serve
 ```
@@ -444,7 +453,7 @@ The calibration package provides tools for sampling from the macromodel and runn
 
 Contributions are welcome! By submitting a pull request or patch, you agree to license your contribution under the Apache License 2.0, consistent with this project's license.
 
-Please ensure any contributions follow the guidelines in [the documentation](http://macrodocs.macrocosm.group).
+Please ensure any contributions follow the guidelines in [the documentation](docs/contributing/development.md).
 
 For significant changes, please open an issue first to discuss the proposed changes.  
 

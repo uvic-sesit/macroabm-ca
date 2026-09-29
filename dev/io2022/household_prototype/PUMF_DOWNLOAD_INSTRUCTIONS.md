@@ -2,7 +2,7 @@
 
 These files are **not** programmatically downloadable: StatCan PUMFs require going through the catalogue
 page and accepting the open-data licence; there is no WDS/API endpoint for microdata. Download them
-manually and unzip into the drop-in folders below. **Do not substitute synthetic/stand-in data.**
+manually and unzip into the drop-in folders below; the preparation scripts need the real files (`--real`).
 
 ## Raw-data root
 Scripts resolve ONE root (`_paths.raw_data_root`): `$MACROABM_RAW_DATA` → `<repo>/raw_data/` (if it exists)
@@ -51,5 +51,5 @@ The column maps are already filled (`SFS_COLUMN_MAP` / SHS layout parser / CIS s
 ```bash
 uv run python dev/io2022/household_prototype/prepare_household_canadianization.py --real   # balance sheet + income
 uv run python dev/io2022/household_prototype/prepare_household_consumption.py --real        # consumption + saving
-uv run python dev/io2022/build_2022_datawrapper.py --canadianized --force --check-households # integrate + build
+uv run python dev/io2022/build_2022_datawrapper_10prov.py --force --canadianized-households --lfs-unemployment  # build (see docs/canada/data_build.md)
 ```
