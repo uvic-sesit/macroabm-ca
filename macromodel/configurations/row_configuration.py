@@ -10,7 +10,7 @@ class Exports(BaseModel):
 
 
 class Imports(BaseModel):
-    name: Literal["InflationRoWImportsSetter", "DefaultRoWImportsSetter"] = "InflationRoWImportsSetter"
+    name: Literal["InflationRoWImportsSetter"] = "InflationRoWImportsSetter"
     path_name: str = "imports"
     parameters: dict = {"consistency": 1.0}
 

@@ -165,10 +165,10 @@ class DesiredLabour(BaseModel):
 class GrowthEstimator(BaseModel):
     """
     The function used to estimate growth for each firm.
-    Options: ZeroGrowthEstimator, DefaultGrowthEstimator
+    Options: DefaultGrowthEstimator
     """
 
-    name: Literal["ZeroGrowthEstimator", "DefaultGrowthEstimator"] = "DefaultGrowthEstimator"
+    name: Literal["DefaultGrowthEstimator"] = "DefaultGrowthEstimator"
     path_name: str = "growth_estimator"
     parameters: dict[str, Any] = {}
 
