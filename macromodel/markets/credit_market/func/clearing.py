@@ -1388,7 +1388,7 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
             1. If minimum_fill > 0, first ensures each bucket gets its minimum share
             2. Then distributes remaining amount according to priorities and capacities
         """
-        if np.sum(capacities) == np.sum(capacities) + 1:
+        if not np.isfinite(np.sum(capacities)):
             return np.full_like(capacities, fill_amount / len(capacities))
         if np.sum(capacities) == 0:
             return np.zeros(capacities.shape)
