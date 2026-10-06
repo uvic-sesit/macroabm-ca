@@ -136,7 +136,6 @@ class GoodsMarketClearer(ABC):
         """
         # Ensure prioritisation is between 0 and 1
         self.real_country_prioritisation = max(0.0, min(1.0, real_country_prioritisation))
-        self.real_country_prioritisation = real_country_prioritisation
 
         # Priority flags
         self.prio_high_prio_buyers = prio_high_prio_buyers

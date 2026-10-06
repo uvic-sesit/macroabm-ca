@@ -51,11 +51,8 @@ class PriceSetter(ABC):
         """
         self.price_setting_noise_std = price_setting_noise_std
         self.price_setting_speed_gf = max(0.0, min(1.0, price_setting_speed_gf))
-        self.price_setting_speed_gf = price_setting_speed_gf
         self.price_setting_speed_dp = max(0.0, min(1.0, price_setting_speed_dp))
-        self.price_setting_speed_dp = price_setting_speed_dp
         self.price_setting_speed_cp = max(0.0, min(1.0, price_setting_speed_cp))
-        self.price_setting_speed_cp = price_setting_speed_cp
 
     @abstractmethod
     def compute_price(
