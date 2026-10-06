@@ -1237,6 +1237,7 @@ class Country:
         )
         self.households.ts.dicts["income_rental"][-1] = final_income_rental
         self.households.ts.dicts["total_income_rental"][-1] = [final_income_rental.sum()]
+        self.economy.ts.dicts["total_real_rent_rec"][-1] = [final_income_rental.sum()]
 
         self.households.ts.income_employee.append(
             self.households.compute_employee_income(
