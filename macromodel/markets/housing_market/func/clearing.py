@@ -39,7 +39,8 @@ class HousingMarketClearer(ABC):
         """Initialize the market clearer.
 
         Args:
-            random_assignment_shock_variance: Variance for random perturbations
+            random_assignment_shock_variance: Standard deviation (passed to
+                `np.random.normal` as `scale`) of the random perturbations
                 in matching decisions, allowing for some randomness in
                 otherwise deterministic matches.
         """

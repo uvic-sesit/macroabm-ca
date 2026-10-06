@@ -70,8 +70,8 @@ def create_economy_timeseries(
     initial_hh_rental_income: np.ndarray,
     initial_hh_consumption: float,
     initial_gov_consumption: float,
-    initial_cg_rent_received: float,  # not used
-    initial_cg_taxes_rental_income: float,  # not used
+    initial_cg_rent_received: float,
+    initial_cg_taxes_rental_income: float,
     initial_imports: np.ndarray,
     initial_imports_by_country: dict[str, np.ndarray],
     initial_exports: np.ndarray,
