@@ -50,7 +50,7 @@ class RoWImportsSetter(ABC):
         Args:
             consistency (float): Consistency parameter (must be 0 or 1)
         """
-        self.consistency = max(0.0, min(1.0, consistency))
+        self.consistency = consistency
         self.fixed_total_imports = None
 
         assert self.consistency == 0.0 or self.consistency == 1.0
