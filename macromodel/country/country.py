@@ -1240,7 +1240,10 @@ class Country:
 
         self.households.ts.income_employee.append(
             self.households.compute_employee_income(
-                individual_income=self.individuals.ts.current("employee_income"),
+                # The benefit is part of an individual's income and the deficit is charged for it,
+                # so the realised household aggregate carries it, as the expected path does.
+                individual_income=self.individuals.ts.current("employee_income")
+                + self.individuals.ts.current("income_from_unemployment_benefits"),
                 corr_households=self.individuals.states["Corresponding Household ID"],
             )
         )
