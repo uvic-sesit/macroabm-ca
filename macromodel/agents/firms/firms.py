@@ -251,9 +251,32 @@ class Firms(Agent):
             # Multipliers are [n_firms, n_industries]
             # Base coefficients are [n_firms, n_industries] after transpose
             # Element-wise multiply each firm's coefficients by their multipliers
-            return base_coefficients * multipliers
+            base_coefficients = base_coefficients * multipliers
 
-        return base_coefficients
+        return self._apply_recipe_blend(base_coefficients)
+
+    def set_recipe_blend(self, blend: Optional[dict[int, tuple[float, np.ndarray]]]) -> None:
+        """Blend firms' input recipes with an exogenous one (e.g. a programme's bill of materials).
+
+        ``blend`` maps firm index -> (share, recipe): ``share`` of the firm's output is made
+        with ``recipe`` (real input per real unit of output, one entry per good), the rest
+        with its own coefficients, so its input requirement per unit of output becomes
+        (1 - share) * own + share * recipe. Applied on top of the base matrix and the tech
+        multipliers (so on top of whatever the linkage set). None or {} clears it.
+        """
+        self._recipe_blend = blend or None
+
+    def _apply_recipe_blend(self, productivity: np.ndarray) -> np.ndarray:
+        blend = getattr(self, "_recipe_blend", None)
+        if not blend:
+            return productivity
+        out = np.array(productivity, dtype=float, copy=True)
+        with np.errstate(divide="ignore"):
+            for i, (share, recipe) in blend.items():
+                own = 1.0 / out[i]  # productivity inf (unused input) -> 0 per unit output
+                need = (1.0 - share) * own + share * np.asarray(recipe, dtype=float)
+                out[i] = np.where(need > 0.0, 1.0 / need, np.inf)
+        return out
 
     def get_effective_capital_coefficients(self) -> np.ndarray:
         """Get the effective capital input coefficients for each firm.
