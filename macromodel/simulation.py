@@ -716,6 +716,22 @@ class Simulation:
                     pd.DataFrame(np.nan_to_num(arr), columns=cols).to_hdf(
                         save_dir / file_name, key=f"{country_name}_{key}", mode="a"
                     )
+            # Household finance and government debt per step, to read who carries an
+            # investment programme's cost (owner- vs debt-financed) and any crowding out.
+            for country_name, country in self.countries.items():
+                hh, cg = country.households.ts, country.central_government.ts
+                deposits = [np.asarray(d, dtype=float) for d in hh.historic("wealth_deposits")]
+                n = min(len(deposits), len(hh.historic("total_consumption")),
+                        len(hh.historic("income")), len(cg.historic("debt")))
+                frame = pd.DataFrame({
+                    "income": [float(np.sum(x)) for x in hh.historic("income")[-n:]],
+                    "consumption": [float(np.ravel(x)[0]) for x in hh.historic("total_consumption")[-n:]],
+                    "investment": [float(np.sum(x)) for x in hh.historic("investment")[-n:]],
+                    "deposits": [float(d.sum()) for d in deposits[-n:]],
+                    "share_in_overdraft": [float(np.mean(d < 0.0)) for d in deposits[-n:]],
+                    "government_debt": [float(np.ravel(x)[0]) for x in cg.historic("debt")[-n:]],
+                })
+                frame.to_hdf(save_dir / file_name, key=f"{country_name}_household_finance", mode="a")
             # Capital purchases by the INVESTING industry -- i.e. GFCF by sector.
             # `firms_capital_bought_by_good_real` above is indexed by the good BOUGHT and
             # summed over buyers, so it cannot say which sector is doing the investing.
