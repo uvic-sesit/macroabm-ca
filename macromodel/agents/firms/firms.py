@@ -235,7 +235,7 @@ class Firms(Agent):
 
         self.emission_fractions = emission_fractions
 
-    def get_effective_intermediate_coefficients(self) -> np.ndarray:
+    def get_effective_intermediate_coefficients(self, apply_blend: bool = True) -> np.ndarray:
         """Get the effective intermediate input coefficients for each firm.
 
         Returns base coefficients adjusted by firm-specific technical multipliers.
@@ -253,7 +253,7 @@ class Firms(Agent):
             # Element-wise multiply each firm's coefficients by their multipliers
             base_coefficients = base_coefficients * multipliers
 
-        return self._apply_recipe_blend(base_coefficients)
+        return self._apply_recipe_blend(base_coefficients) if apply_blend else base_coefficients
 
     def set_recipe_blend(self, blend: Optional[dict[int, tuple[float, np.ndarray]]]) -> None:
         """Blend firms' input recipes with an exogenous one (e.g. a programme's bill of materials).
@@ -872,15 +872,25 @@ class Firms(Agent):
             estimated_inflation: Expected inflation rate
             current_good_prices (np.ndarray): Industry-level average prices
         """
-        self.ts.limiting_intermediate_inputs.append(
-            self.functions["production"].compute_limiting_intermediate_inputs_stock(
-                intermediate_inputs_productivity_matrix=self.get_effective_intermediate_coefficients(),
+        def _limit(coefficients):
+            return self.functions["production"].compute_limiting_intermediate_inputs_stock(
+                intermediate_inputs_productivity_matrix=coefficients,
                 intermediate_inputs_stock=self.ts.current("intermediate_inputs_stock"),
                 intermediate_inputs_utilisation_rate=self.intermediate_inputs_utilisation_rate,
                 goods_criticality_matrix=self.goods_criticality_matrix,
                 substitution_bundle_matrix=self.substitution_bundles,
             )
-        )
+
+        limiting = _limit(self.get_effective_intermediate_coefficients())
+        blend = getattr(self, "_recipe_blend", None)
+        if blend:
+            # A blended firm runs two lines: its own work (1 - share of output, own recipe)
+            # and the programme (share, programme recipe). A shortage of programme inputs
+            # can only hold back the programme line, never the firm's own work.
+            own_limit = _limit(self.get_effective_intermediate_coefficients(apply_blend=False))
+            for i, (share, _) in blend.items():
+                limiting[i] = max(limiting[i], (1.0 - share) * own_limit[i])
+        self.ts.limiting_intermediate_inputs.append(limiting)
         self.ts.limiting_capital_inputs.append(
             self.functions["production"].compute_limiting_capital_inputs_stock(
                 capital_inputs_productivity_matrix=self.get_effective_capital_coefficients(),
