@@ -686,6 +686,15 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
                 real_country_prioritisation=self.real_country_prioritisation,
                 row_index=row_index,
             )
+            # Optional buyer-specific origin shares: per-buyer multipliers on these
+            # price-adjusted proportions, used by the pair passes below.
+            buyer_sourcing = getattr(self, "buyer_sourcing", None)
+            if buyer_sourcing is not None:
+                buyer_sourcing.prepare(
+                    goods_market_participants=goods_market_participants,
+                    origin_tp=origin_trade_proportions,
+                    default_origin_tp=default_origin_trade_proportions,
+                )
 
             # Clear each country pair using trade proportions
             for c1 in range(n_countries):
@@ -901,6 +910,7 @@ class WaterBucketGoodsMarketClearer(GoodsMarketClearer):
             n_industries=n_industries,
             to_country=end_country,
             trade_proportions=current_origin_trade_proportions,
+            from_country=start_country,
         )
 
         # Execute water bucket clearing

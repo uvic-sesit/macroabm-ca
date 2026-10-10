@@ -57,6 +57,7 @@ import numpy as np
 from numba import njit
 
 from macromodel.agents.agent import Agent
+from macromodel.markets.goods_market.buyer_sourcing import origin_multiplier
 from macromodel.markets.goods_market.value_type import ValueType
 
 
@@ -614,6 +615,20 @@ def clear_water_bucket(
     else:
         to_country_names = [list(goods_market_participants.keys())[to_country]]
 
+    # Optional buyer-specific origin multipliers (BuyerSourcing): trade-proportion
+    # passes from a known origin only.
+    use_buyer_mult = (
+        origin_trade_proportions is not None and destin_trade_proportions is not None and from_country is not None
+    )
+
+    def _otp(transactor, g: int, prop):
+        if not use_buyer_mult:
+            return prop
+        mult = origin_multiplier(transactor, from_country)
+        if isinstance(mult, np.ndarray):
+            mult = mult[:, g] if mult.ndim == 2 else mult[g]
+        return prop * mult
+
     # Process each industry
     for g in range(n_industries):
         # Get trade proportions for current industry
@@ -685,7 +700,7 @@ def clear_water_bucket(
                         if transactor.transactor_buyer_states["Priority"] == 1 or not buy_high_prio_only:
                             # Calculate real demand considering trade proportions
                             real_prop_rem = np.minimum(
-                                origin_trade_prop * transactor.transactor_buyer_states["Initial Goods"][:, g],
+                                _otp(transactor, g, origin_trade_prop) * transactor.transactor_buyer_states["Initial Goods"][:, g],
                                 transactor.transactor_buyer_states["Remaining Goods"][:, g],
                             )
 
@@ -748,7 +763,7 @@ def clear_water_bucket(
                 transactor_real_cap = np.zeros(len(goods_market_participants[country_name]))
                 for i in range(len(goods_market_participants[country_name])):
                     rem_amount = np.minimum(
-                        origin_trade_prop
+                        _otp(goods_market_participants[country_name][i], g, origin_trade_prop)
                         * goods_market_participants[country_name][i].transactor_buyer_states["Initial Goods"][:, g],
                         goods_market_participants[country_name][i].transactor_buyer_states["Remaining Goods"][:, g],
                     ).sum()
@@ -775,7 +790,7 @@ def clear_water_bucket(
                 # Iterate over buyers
                 for i, transactor in enumerate(goods_market_participants[country_name]):
                     prop_real = np.minimum(
-                        origin_trade_prop * transactor.transactor_buyer_states["Initial Goods"][:, g],
+                        _otp(transactor, g, origin_trade_prop) * transactor.transactor_buyer_states["Initial Goods"][:, g],
                         transactor.transactor_buyer_states["Remaining Goods"][:, g],
                     )
                     if transactor.transactor_buyer_states["Value Type"] == ValueType.NOMINAL:
