@@ -39,6 +39,7 @@ import numpy as np
 from numba import njit, prange
 
 from macromodel.agents.agent import Agent
+from macromodel.markets.goods_market.buyer_sourcing import origin_multiplier
 from macromodel.markets.goods_market.value_type import ValueType
 
 
@@ -186,6 +187,7 @@ def collect_buyer_info(
     trade_proportions: Optional[np.ndarray] = None,
     exclude_row: bool = False,
     with_value_type: Optional[ValueType] = None,
+    from_country: Optional[int] = None,
 ) -> Tuple[dict[str, np.ndarray], np.ndarray, dict[str, np.ndarray], np.ndarray]:
     """Collect and aggregate buyer information across all participants.
 
@@ -224,8 +226,16 @@ def collect_buyer_info(
            Total nominal: $280,000
     """
     init_field, rem_field = "Initial Goods", "Remaining Goods"
+    # Buyer-specific origin multipliers (optional BuyerSourcing layer) apply only when
+    # this is a trade-proportion pass from a known origin.
+    use_buyer_mult = trade_proportions is not None and from_country is not None
     if trade_proportions is None:
         trade_proportions = np.ones(n_industries)
+
+    def _tp(transactor):
+        if not use_buyer_mult:
+            return trade_proportions
+        return trade_proportions * origin_multiplier(transactor, from_country)
     if to_country is None:
         country_names = list(goods_market_participants.keys())
         if exclude_row:
@@ -241,12 +251,12 @@ def collect_buyer_info(
                 if transactor.transactor_buyer_states["Priority"] == 1 or not high_prio_only:
                     if transactor.transactor_buyer_states["Value Type"] == ValueType.REAL:
                         total_real_demand[country_name] += np.minimum(
-                            trade_proportions * transactor.transactor_buyer_states[init_field],
+                            _tp(transactor) * transactor.transactor_buyer_states[init_field],
                             transactor.transactor_buyer_states[rem_field],
                         ).sum(axis=0)
                         total_nominal_demand[country_name] += (
                             np.minimum(
-                                trade_proportions * transactor.transactor_buyer_states[init_field],
+                                _tp(transactor) * transactor.transactor_buyer_states[init_field],
                                 transactor.transactor_buyer_states[rem_field],
                             ).sum(axis=0)
                             * average_price
@@ -254,7 +264,7 @@ def collect_buyer_info(
                     elif transactor.transactor_buyer_states["Value Type"] == ValueType.NOMINAL:
                         total_real_demand[country_name] += np.divide(
                             np.minimum(
-                                trade_proportions * transactor.transactor_buyer_states[init_field],
+                                _tp(transactor) * transactor.transactor_buyer_states[init_field],
                                 transactor.transactor_buyer_states[rem_field],
                             ).sum(axis=0),
                             average_price,
@@ -265,7 +275,7 @@ def collect_buyer_info(
                             where=average_price != 0,
                         )
                         total_nominal_demand[country_name] += np.minimum(
-                            trade_proportions * transactor.transactor_buyer_states[init_field],
+                            _tp(transactor) * transactor.transactor_buyer_states[init_field],
                             transactor.transactor_buyer_states[rem_field],
                         ).sum(axis=0)
 
