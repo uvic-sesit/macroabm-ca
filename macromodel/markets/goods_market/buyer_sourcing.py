@@ -10,8 +10,11 @@ import-share targets on any buyer and good (onshoring policies, import caps).
 
 It acts only in the trade-proportion stage of clearing: each quarter it turns the
 buyer's IO shares into multipliers on the market's price-adjusted proportions,
-tp_buyer[o] = tp[o] * (S_buyer[o] / S_default[o]) renormalised over origins, so the
-buyer starts at its IO split and keeps the market's price response. Demand the
+tp_buyer[o] = tp[o] * (S_buyer[o] / S_ref[o]) renormalised over origins, keeping the
+market's price response. mode="relative" (default): S_ref = the IO all-buyer average,
+so each buyer deviates from the model's own province split by its IO pattern and
+province totals stay at the model's calibration. mode="absolute": S_ref = the model's
+default split, so each buyer starts exactly at its IO shares (totals follow the IO). Demand the
 preferred origins cannot fill still clears in the unconstrained stage afterwards, as
 for every buyer, so a target without domestic capacity shows up as unmet or imported.
 
@@ -27,7 +30,10 @@ import numpy as np
 
 class BuyerSourcing:
     def __init__(self, participant_names: list[str], tables: dict[str, dict[str, np.ndarray]],
-                 row_name: str = "ROW"):
+                 row_name: str = "ROW", mode: str = "relative"):
+        if mode not in ("relative", "absolute"):
+            raise ValueError(f"Unknown buyer-sourcing mode: {mode!r}")
+        self.mode = mode
         self.names = list(participant_names)
         self.row = self.names.index(row_name)
         self.tables = tables  # destination -> {"firm_intermediate", "gfcf", "households", "government"}
@@ -35,7 +41,7 @@ class BuyerSourcing:
         self.import_share_targets: dict[tuple[str, str, Optional[int], int], float] = {}
 
     @classmethod
-    def from_npz(cls, path: str | Path, participant_names: list[str]) -> "BuyerSourcing":
+    def from_npz(cls, path: str | Path, participant_names: list[str], mode: str = "relative") -> "BuyerSourcing":
         data = np.load(path, allow_pickle=False)
         origins = [str(o) for o in data["origins"]]
         order = [origins.index(n) if n in origins else None for n in participant_names]
@@ -44,7 +50,7 @@ class BuyerSourcing:
             if f"{dest}/households" not in data:
                 continue
             t = {}
-            for key in ("firm_intermediate", "gfcf", "households", "government"):
+            for key in ("firm_intermediate", "gfcf", "households", "government", "average"):
                 src = data[f"{dest}/{key}"]
                 arr = np.full((len(participant_names),) + src.shape[1:], np.nan)
                 for i, j in enumerate(order):
@@ -52,7 +58,7 @@ class BuyerSourcing:
                         arr[i] = src[j]
                 t[key] = arr
             tables[dest] = t
-        return cls(participant_names, tables)
+        return cls(participant_names, tables, mode=mode)
 
     # ------------------------------------------------------------------ policy
     def set_import_share(self, destination: str, buyer: str, good: int, share: Optional[float],
@@ -122,15 +128,28 @@ class BuyerSourcing:
         return mult
 
     def prepare(self, goods_market_participants: dict, origin_tp: np.ndarray,
-                default_origin_tp: np.ndarray) -> None:
-        """Store each buyer's origin multipliers for this clearing (origin_tp: price-adjusted)."""
+                default_origin_tp: np.ndarray, balance_iterations: int = 3) -> None:
+        """Store each buyer's origin multipliers for this clearing (origin_tp: price-adjusted).
+
+        1. Each buyer's IO split -> its effective origin shares E = tp * multiplier.
+        2. Balance (relative mode): rescale origins so the demand-weighted average over
+           all buyers equals the market's own split tp, then renormalise each buyer
+           (a few proportional-fitting passes) -- buyers keep their relative differences,
+           province totals stay at the model's calibration.
+        3. Import-share targets are applied AFTER balancing, to the targeted buyers only,
+           so an onshoring target lowers imports instead of being offset elsewhere.
+        """
         for c2, dest in enumerate(self.names):
             t = self.tables.get(dest)
             if t is None:
                 continue
-            tp, de = origin_tp[:, c2, :], default_origin_tp[:, c2, :]
+            tp = origin_tp[:, c2, :]
+            de = default_origin_tp[:, c2, :] if self.mode == "absolute" else t["average"]
+            de = np.where(np.isfinite(de), de, 0.0)
+            entries = []  # (transactor, kind, effective shares, demand by good per row, industries)
             for transactor in goods_market_participants[dest]:
                 kind = type(transactor).__name__
+                industries = None
                 if kind == "Firms":
                     industries = np.asarray(transactor.states["Industry"])
                     ti = np.asarray(transactor.ts.current("target_intermediate_inputs"), dtype=float)
@@ -142,15 +161,44 @@ class BuyerSourcing:
                     inter_f = np.where(np.isfinite(inter), inter, gfcf)
                     gfcf_f = np.where(np.isfinite(gfcf), gfcf, inter)
                     shares = w[None] * inter_f + (1.0 - w[None]) * gfcf_f
-                    shares = self._apply_targets(shares, dest, "firms", industries)
                 elif kind == "Households":
-                    shares = self._apply_targets(t["households"], dest, "households", None)
+                    shares = t["households"]
                 elif kind == "GovernmentEntities":
-                    shares = self._apply_targets(t["government"], dest, "government", None)
+                    shares = t["government"]
                 else:
                     transactor._buyer_origin_multiplier = None
                     continue
-                transactor._buyer_origin_multiplier = self._multipliers(shares, tp, de)
+                eff = self._multipliers(shares, tp, de) * (tp[:, None, :] if shares.ndim == 3 else tp)
+                demand = np.asarray(transactor.transactor_buyer_states["Initial Goods"], dtype=float)
+                demand = demand if shares.ndim == 3 else demand.sum(axis=0)
+                entries.append([transactor, kind, eff, np.maximum(demand, 0.0), industries])
+
+            if self.mode == "relative" and entries:
+                for _ in range(balance_iterations):
+                    num = np.zeros_like(tp)
+                    den = np.zeros(tp.shape[1])
+                    for _, _, eff, d, _ in entries:
+                        if eff.ndim == 3:
+                            num += (eff * d[None]).sum(axis=1)
+                            den += d.sum(axis=0)
+                        else:
+                            num += eff * d[None]
+                            den += d
+                    with np.errstate(divide="ignore", invalid="ignore"):
+                        avg = np.where(den > 0.0, num / den, tp)
+                        kappa = np.where(avg > 0.0, tp / avg, 1.0)
+                    for e in entries:
+                        k = kappa[:, None, :] if e[2].ndim == 3 else kappa
+                        new = e[2] * k
+                        total = new.sum(axis=0, keepdims=True)
+                        e[2] = np.where(total > 0.0, new / np.where(total > 0.0, total, 1.0), e[2])
+
+            for transactor, kind, eff, _, industries in entries:
+                buyer = {"Firms": "firms", "Households": "households", "GovernmentEntities": "government"}[kind]
+                eff = self._apply_targets(eff, dest, buyer, industries)
+                tp_b = tp[:, None, :] if eff.ndim == 3 else tp
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    transactor._buyer_origin_multiplier = np.where(tp_b > 0.0, eff / tp_b, 0.0)
 
 
 def origin_multiplier(transactor, origin: Optional[int]):
