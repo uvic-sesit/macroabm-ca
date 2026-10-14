@@ -509,9 +509,14 @@ def function_parameters_dependent_initialisation(
         firm_data["Deposits"] = 0.0
     else:
         if not deposits_in_data or firm_data["Deposits"].values.sum() == 0.0:
-            firm_data["Deposits"] = np.full(
-                len(firm_data),
-                1.0 / len(firm_data) * total_firm_deposits,
+            # F-I3 (validation-2022): without firm-level deposit data, allocate the sector total in proportion to
+            # output. (Previously an equal share per firm: with one firm per industry the smallest sector held the
+            # same deposits as the largest, e.g. 5.06B for every Ontario industry.)
+            output = np.clip(firm_data["Production"].values * firm_data["Price"].values, 0.0, None)
+            firm_data["Deposits"] = (
+                output / output.sum() * total_firm_deposits
+                if output.sum() > 0
+                else np.full(len(firm_data), 1.0 / len(firm_data) * total_firm_deposits)
             )
         else:
             if deposits_in_data:

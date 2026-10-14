@@ -81,3 +81,27 @@ def test_initial_household_loan_terms_reproduce_observed_principal_payments():
     # StatCan 11-10-0065-01, 2022 mean SAAR ($M/yr) vs 36-10-0580 stocks ($M); installment = stock / maturity
     assert 729_932 / CAN_2022_CONSUMER_LOAN_MATURITY_Q * 4 == pytest.approx(60_172, rel=0.02)
     assert 2_126_996 / CAN_2022_MORTGAGE_MATURITY_Q * 4 == pytest.approx(58_695, rel=0.02)
+
+
+def test_cad_native_build_rebases_model_exchange_rate():
+    import pandas as pd
+    from macro_data.data_wrapper import rebase_cad_native_exchange_rate
+    df = pd.DataFrame({"2021": [1.25, 1.0], "2022": [1.30, 1.0]}, index=["CAN", "USA"])
+    out = rebase_cad_native_exchange_rate(df, io_rate=1.0, year=2022)
+    assert out.loc["CAN", "2022"] == pytest.approx(1.0)
+    assert out.loc["CAN", "2021"] == pytest.approx(1.25 / 1.30)
+    assert out.loc["USA", "2022"] == 1.0 and df.loc["CAN", "2022"] == 1.30  # input untouched
+    assert rebase_cad_native_exchange_rate(df, io_rate=1.30, year=2022) is df  # non-CAD-native build: no-op
+
+
+def test_firm_deposits_allocated_by_output_without_firm_data():
+    import numpy as np
+    import pandas as pd
+    from macro_data.processing.synthetic_firms.firm_tools import function_parameters_dependent_initialisation
+    fd = pd.DataFrame({"Industry": [0, 1], "Production": [10.0, 30.0], "Price": [1.0, 1.0]})
+    A = np.full((2, 2), 4.0); K = np.full((2, 2), 2.0); D = np.full((2, 2), 0.05)
+    function_parameters_dependent_initialisation(
+        fd, A, D, K, total_firm_deposits=8.0, total_firm_debt=0.0, assume_zero_initial_debt=True,
+        assume_zero_initial_deposits=False, capital_inputs_utilisation_rate=1.0,
+        initial_inventory_to_input_fraction=0.0, intermediate_inputs_utilisation_rate=1.0)
+    np.testing.assert_allclose(fd["Deposits"].values, [2.0, 6.0])
