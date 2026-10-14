@@ -66,6 +66,26 @@ from macro_data.readers.exogenous_data import ExogenousCountryData
 from macro_data.readers.io_tables.icio_reader import ICIOReader
 
 
+def rebase_cad_native_exchange_rate(exchange_rates: pd.DataFrame, io_rate: float, year: int) -> pd.DataFrame:
+    """F-X1 (validation-2022): align the model's CAN exchange rate with a CAD-native build.
+
+    The CAN-2022 build values IO flows, prices and imports in CAD at par (`ExchangeRates.from_usd_to_lcu_io` returns
+    1.0) and ROW starts at price 1. The model read the market USD->CAD rate (~1.30) from this table and applied it to
+    every goods-market transaction from the first quarter, raising the CAD price of all imports by ~30% at t=1
+    (CPI +4.9% in Q1). The CAN row is rebased so that the base-year rate is the build's numeraire (1.0); later years
+    keep their relative movement. No-op unless the build is CAD-native (io_rate == 1) and the table differs.
+    """
+    col = str(year)
+    if "CAN" not in exchange_rates.index or col not in exchange_rates.columns or io_rate != 1.0:
+        return exchange_rates
+    market_rate = exchange_rates.loc["CAN", col]
+    if pd.isna(market_rate) or market_rate in (0.0, 1.0):
+        return exchange_rates
+    out = exchange_rates.copy()
+    out.loc["CAN"] = out.loc["CAN"] / market_rate
+    return out
+
+
 @dataclass
 class DataWrapper:
     """
@@ -356,6 +376,10 @@ class DataWrapper:
         )
 
         exchange_rates = readers.exchange_rates.df
+        if year == 2022:
+            exchange_rates = rebase_cad_native_exchange_rate(
+                exchange_rates, io_rate=readers.exchange_rates.from_usd_to_lcu_io(Country("CAN"), year), year=year
+            )
         origin_trade_proportions = readers.icio[year].get_origin_trade_proportions()
         destination_trade_proportions = readers.icio[year].get_destination_trade_proportions()
 
