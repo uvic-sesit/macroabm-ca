@@ -176,8 +176,11 @@ class AccountingBattery:
         r["bank_firm_deposit_snapshot_gap"] = _cur(b.ts, "deposits_from_firms").sum() - _cur(f.ts, "deposits").sum()
         prof = _cur(b.ts, "profits")
         dE = _cur(b.ts, "equity").sum() - _prev(b.ts, "equity").sum()
-        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum())
-        named_boundary = fai + fai_pit - d_ofa + writeoffs - firm_zeroing + injection
+        losses = float(np.sum(b.states.get("loan_losses_current", 0.0)))
+        r["bank_loan_losses"] = losses
+        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses)
+        # write-offs move R only to the extent that the lending bank does not recognise the loss (A14)
+        named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing + injection
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately
         # (loan_identity_resid) so that reserves_unexplained isolates deposit-side (payment) leaks
         explained = cash_deficit + ext + cb_interest + named_boundary - loan_identity_resid
@@ -201,7 +204,7 @@ IDENTITY_COLUMNS = [
 def summarise(df: pd.DataFrame) -> pd.DataFrame:
     """National (sum over regions) residuals per quarter, with scale for relative tolerance."""
     nat = df.groupby("t").sum(numeric_only=True, min_count=1)
-    diag = [c for c in ("goods_market_gap", "bank_hh_deposit_snapshot_gap", "bank_firm_deposit_snapshot_gap", "bank_equity_unexplained")
+    diag = [c for c in ("bank_loan_losses", "goods_market_gap", "bank_hh_deposit_snapshot_gap", "bank_firm_deposit_snapshot_gap", "bank_equity_unexplained")
             if c in nat]
     out = nat[IDENTITY_COLUMNS + diag + ["named_boundary_total", "firm_wage_bill", "gov_cash_deficit", "dR_bank",
                                   "net_external_receipts"]].copy()

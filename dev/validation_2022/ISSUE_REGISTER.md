@@ -121,3 +121,40 @@ CAD per quarter.
 | N2 | owner moves: high churn of owner-occupiers through the market | mobility parameter (behaviour) |
 | N3 | provincial income distribution from one national file | data/architecture |
 | D6 (new) | goods market: buyers pay the industry average price, sellers receive own price × quantity; −0.053/−0.056B/q (0.005–0.07% of sales). This is now the entire `reserves_unexplained` | changes market-clearing payments (escalate) |
+
+---
+
+## Post-Phase-A batch (2026-10-14): goods settlement, write-offs
+
+Pickle `io2022_phaseA.pkl` rebuilt (sha `543b1c02…c3d9`; previous kept as `_v2`). Battery 2 quarters, national, $B/q.
+
+### Fixed
+
+| ID | Fix | Evidence |
+|---|---|---|
+| D6 | goods payments settled at the sellers' realised prices after clearing (`markets/goods_market/func/settlement.py`; real allocation unchanged; switch `GoodsMarketConfiguration.settle_at_seller_prices`) | pre-settlement price gap ≈0.6M USD/q, settled to 0 |
+| G1 (new) | household investment weights from the IO GFCF column had negative entries (CAN_NL B07 −0.95%, CAN_ON C24A −0.15%, …): negative purchases were executed against sellers but clipped to 0 by `Agent.record` on the buyer side (+162M/q booked by buyers, −10M/q of firm sales lost) | negative weights set to 0 and renormalised; `goods_market_gap` −0.058 → 0; real quantity gap 12.7M → 0.06 units |
+| A14 | written-off loan principal charged to the lending bank's equity (balance-sheet write-down, no profit-tax effect), for household and firm defaults (`credit_market.pending_writeoffs_by_bank`, `Banks.compute_equity(loan_losses)`) | bank losses 229.1 / 67.2; write-offs no longer move the reserve plug; no bank insolvency in 2 quarters |
+| H6 (new) | initial household loan maturities (12 / 120 periods; documented as months) gave obligated principal 4.1x (non-mortgage) and 1.2x (mortgage) StatCan 11-10-0065-01 2022; CAN-2022 terms set to 49 / 145 quarters to reproduce observed principal payments | write-offs Q1 267 → 230 (diagnostic, before A14) |
+
+Battery after the batch: every identity 0 (wage, UB, rent, house sales, household cash, loans, bank links, goods
+market); `reserves_unexplained` 0.000 / 0.000.
+
+### Write-off diagnosis (Q1, `battery/diag_household_writeoffs.py`)
+
+| Driver | Evidence | Class |
+|---|---|---|
+| t0 negative net worth | 1,365 of 19,687 agents (6.9%); file 3.5% (weighted), SFS 2023 PUMF 3.9% | data (sampling + below) |
+| underwater mortgages at t0 | prototype file: 12.7% of HMR mortgagors and 26% of other-property mortgagors owe more than the property value (excess 40.5B and 102.1B); SFS 2023 PUMF: 0.8% and 9.1%. Cause: `prepare_household_canadianization.backcast_calibrate` scales real estate (x0.85) and mortgages (x1.05) to NBSA totals with separate factors; with the prototype weights every LTV rises ~1.38x (median HMR LTV 0.41 → 0.57) | **data construction (H7, escalate)** |
+| forced amortisation | consumer-credit principal 62B/q vs 15B/q observed | data (H6, fixed) |
+| deposits below zero | 4,383 agents (22%) overdrawn after one quarter: uniform negative saving rate (−9.7%) from missing income accounts (D2) and no new household credit (D4) | specification (D2, D4) |
+| rule | default as soon as NW<0 and deposits<0; debt forgiven, assets kept | specification (D3, unchanged) |
+
+Defaults are therefore mostly *legitimate under the current rule* given a starting point that is partly a data
+artefact (H7). Not suppressed.
+
+### New escalation
+
+| ID | Issue | Options |
+|---|---|---|
+| H7 | household file: independent calibration of real estate and mortgages to NBSA totals breaks the SFS joint LTV distribution (underwater 0.8% → 12.7%) | (a) one common factor for real estate and mortgages (keeps LTV; mortgages −19% vs NBSA); (b) calibrate real estate to NBSA and scale mortgages by the same factor, then add the NBSA mortgage gap pro rata to equity-rich mortgagors; (c) keep NBSA totals and cap per-record LTV at the SFS maximum; (d) accept |

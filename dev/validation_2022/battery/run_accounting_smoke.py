@@ -45,6 +45,8 @@ provs, cfg = build_config(d, 0, quarters)
 m = Simulation.from_datawrapper(datawrapper=d, simulation_configuration=cfg)
 battery = AccountingBattery()
 m.posthooks.append(battery)
+m.posthooks.append(lambda sim, t, y, mo: print(f"t={t} goods settlement (USD):",
+                                               getattr(sim.goods_market, "states", {}).get("settlement")))
 for t in range(quarters):
     m.iterate(t)
 df = battery.frame()
