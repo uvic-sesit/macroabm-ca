@@ -95,7 +95,11 @@ from macro_data.processing.synthetic_matching.matching_firms_with_banks import (
 from macro_data.processing.synthetic_matching.matching_households_with_banks import (
     match_households_with_banks_optimal,
 )
-from macro_data.configuration.can_2022_constants import CAN_2022_HFCE_IMPUTED_RENT
+from macro_data.configuration.can_2022_constants import (
+    CAN_2022_CONSUMER_LOAN_MATURITY_Q,
+    CAN_2022_HFCE_IMPUTED_RENT,
+    CAN_2022_MORTGAGE_MATURITY_Q,
+)
 from macro_data.processing.synthetic_matching.matching_households_with_houses import (
     set_housing_df,
 )
@@ -825,13 +829,19 @@ class SyntheticCountry:
             risk_premium=risk_premium,
             **country_configuration.banks_configuration.interest_rates.model_dump(),
         )
+        hh_consumption_maturity = country_configuration.banks_configuration.consumption_exp_loan_maturity
+        mortgage_maturity = country_configuration.banks_configuration.mortgage_maturity
+        if "Validated Income" in population.household_data:
+            # CAN-2022 validated build (H6): initial loan terms from observed obligated principal payments
+            hh_consumption_maturity = CAN_2022_CONSUMER_LOAN_MATURITY_Q
+            mortgage_maturity = CAN_2022_MORTGAGE_MATURITY_Q
         credit_market = SyntheticCreditMarket.create_from_agents(
             firms=firms,
             population=population,
             banks=banks,
             firm_loan_maturity=country_configuration.banks_configuration.long_term_firm_loan_maturity,
-            hh_consumption_maturity=country_configuration.banks_configuration.consumption_exp_loan_maturity,
-            mortgage_maturity=country_configuration.banks_configuration.mortgage_maturity,
+            hh_consumption_maturity=hh_consumption_maturity,
+            mortgage_maturity=mortgage_maturity,
             zero_firm_debt=country_configuration.firms_configuration.zero_initial_debt,
         )
         population.set_debt_installments(

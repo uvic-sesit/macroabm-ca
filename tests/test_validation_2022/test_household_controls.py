@@ -73,3 +73,11 @@ def test_renter_is_never_matched_to_a_unit_it_owns():
     rented = ~houses["Is Owner-Occupied"].values
     assert not np.any(rented & (inhabitant == owner))
     assert houses.loc[1, "Corresponding Inhabitant Household ID"] == 1
+
+
+def test_initial_household_loan_terms_reproduce_observed_principal_payments():
+    from macro_data.configuration.can_2022_constants import (
+        CAN_2022_CONSUMER_LOAN_MATURITY_Q, CAN_2022_MORTGAGE_MATURITY_Q)
+    # StatCan 11-10-0065-01, 2022 mean SAAR ($M/yr) vs 36-10-0580 stocks ($M); installment = stock / maturity
+    assert 729_932 / CAN_2022_CONSUMER_LOAN_MATURITY_Q * 4 == pytest.approx(60_172, rel=0.02)
+    assert 2_126_996 / CAN_2022_MORTGAGE_MATURITY_Q * 4 == pytest.approx(58_695, rel=0.02)
