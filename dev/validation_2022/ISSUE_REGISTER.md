@@ -158,3 +158,36 @@ artefact (H7). Not suppressed.
 | ID | Issue | Options |
 |---|---|---|
 | H7 | household file: independent calibration of real estate and mortgages to NBSA totals breaks the SFS joint LTV distribution (underwater 0.8% → 12.7%) | (a) one common factor for real estate and mortgages (keeps LTV; mortgages −19% vs NBSA); (b) calibrate real estate to NBSA and scale mortgages by the same factor, then add the NBSA mortgage gap pro rata to equity-rich mortgagors; (c) keep NBSA totals and cap per-record LTV at the SFS maximum; (d) accept |
+
+---
+
+## Firm-sector audit (2026-10-14) — see `STAGE_FIRMS_AUDIT.md`
+
+Pickle rebuilt (F-X1, F-I3); battery 2 quarters: every identity 0, `reserves_unexplained` 0.
+
+### Fixed
+
+| ID | Fix | Commit |
+|---|---|---|
+| F-X1 | CAD-native build: model exchange rate rebased to the build numeraire (was market 1.30 → imports +30% in CAD at t=1; CPI +4.85% → +0.31% in Q1) | `4ecbac0` |
+| F-I3 | firm deposits allocated ∝ output (were equal per firm) | `8bc9244` |
+| F-A2 | insolvent firm's cancelled overdraft recognised as a bank loss (not a loan write-off) | this batch |
+
+### Remaining (decisions)
+
+| ID | Issue | Evidence | Class |
+|---|---|---|---|
+| F-A1 | other taxes less subsidies on production (100.5B/yr, 36-10-0221 v1.11) never charged to firms; inside VA, so inside firm GOS; missing from government revenue | firm GOS 1,336 vs GOS + GMI 1,187 (+12.5%) | accounting/data (needs D.29/D.39 by industry × province) |
+| F-D1 | provincial IO table unbalanced: row output 5,104.2 vs column inputs + VA 5,055.9 (48.3B/yr), lands in firm GOS | `icio_2022_can_provinces.csv` | data (io2022 pipeline) |
+| F-D2 | government GFCF (~101B/yr) has no purchaser: IO FCF + ΔINV 680.0 vs model firm + household investment 579.2 | | data/architecture (government audit) |
+| F-I1 | finished-goods inventories 0 at t0 (NFPC inventories 398.8B); input stock = one quarter of all inputs incl. non-storable services (56%) | | data/calibration |
+| F-I2 | firm debt 2,272B ≈ total NFPC loans incl. intercompany (2,449B) × VA ratio, vs external loans 1,282B; allocated ∝ capital, so O/P/Q (government producers) hold 657B | 36-10-0580 1.8.1.67–71 | data/coverage |
+| F-R1 | firm loan rate 0.245%/q below the policy rate 0.369%/q; deposits earn the policy rate; t0 data interest 3.3%/yr → model 0.98%/yr (−86% in Q1) | | banking audit |
+| F-S1 | capital utilisation 1.0 at t0: zero spare capacity | | calibration |
+| F-S2 | target production = last demand (growth speeds 0), no inventory target; unsold output accumulates, production follows sales down | baseline C29 −5.7% in 2 quarters | behaviour |
+| F-S3 | recordable excess demand capped by spare capital capacity (= 0): unmet demand is invisible to firms | export shock: +20% ROW demand → +3.3% sales, 0 excess demand | implementation × calibration |
+| F-S4 | prices ignore demand and costs; N(0, 0.05) quarterly noise on a single firm per industry × region (±13%) | | behaviour |
+| F-S5 | wages: firm-average real wage per worker, full CPI indexation, tightness markup 0 → within-firm dispersion lost at t=1 | wage bill −1% in Q1 | behaviour |
+| F-S6 | investment = replacement only (stock-gap fraction 0), no accelerator | | behaviour |
+| F-S7 | depreciation calibrated to t0 capital purchases (zero net investment, incl. inventory change); CFC 399 vs 459 | | calibration |
+| F-S8 | firms never borrow (credit = shortfall of deposits) and never pay out (A4): deposits +17%/q, debt amortises | | architecture |

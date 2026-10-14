@@ -28,3 +28,13 @@ Units: $M CAD current prices unless stated. "Concept" notes the SNA definition u
 Not yet retrieved (needed before confirming suspected items): Bank of Canada effective household interest
 rates for 2022 (I-11); provincial household DI (36-10-0229 or DHEA by province); 2022 government sector
 accounts (36-10-0477 / 36-10-0118) for the government audit.
+
+### Added 2026-10-14 (write-off and firm audits)
+
+| Benchmark | Table | Series | Ref. period | Concept / coverage | Value | File |
+|---|---|---|---|---|---:|---|
+| Household obligated principal payments: non-mortgage / mortgage | 11-10-0065-01 | — | 2022, mean of 4 SAAR quarters | households, NBSA debt service indicators | 60,172 / 58,695 | read from StatCan table viewer (no file download) |
+| Debt service ratio (total / mortgage / non-mortgage) | 11-10-0065-01 | — | 2022 Q1–Q4 | % of disposable income before interest | 13.81–14.62 / 7.18–7.84 / 6.63–6.80 | 〃 |
+| Income-based GDP, Canada | 36-10-0221 | 1.1 CoE / 1.4 GOS / 1.5 NOS corp. / 1.6 CFC corp. / 1.7 CFC gov+NPISH / 1.8 gross mixed / 1.10 CFC unincorp. / 1.11 TLS on production / 1.12 TLS on products / 1.14 GDP | 2022 annual | | 1,387,017 / 874,554 / 503,658 / 278,541 / 92,355 / 312,829 / 87,988 / 100,505 / 189,200 / 2,864,159 | `raw/dbn_36100221.json` |
+| Expenditure-based GDP | 36-10-0104 | 1.2.1.11 business GFCF / 1.2.1.10 GFCF / 1.2.1.18 gov GFCF / 1.2.1.19 inventories / 1.2.1.20 business inventories | 2022, mean of 4 SAAR quarters | | 556,433 / 661,124 / 101,425 / 55,687 / 54,603 | `raw/dbn_36100104.json` |
+| Balance sheet, non-financial private corporations | 36-10-0580 | 1.8.1.x (market value) | 2022-Q4 | deposits 1.8.1.16 = 873,676 (Canadian 1.8.1.17 = 683,786); loans (liab.) 1.8.1.67 = 2,448,640 (non-mortgage 1.8.1.69 = 925,316; mortgages 1.8.1.70 = 356,299; intercompany 1.8.1.71 = 1,164,071); debt securities 1.8.1.55 = 644,168; inventories 1.8.1.9 = 398,821; fixed assets 1.8.1.107 = 2,223,423; equity 1.8.1.73 = 5,427,400 | | `raw/dbn_36100580_nfc.json` |
