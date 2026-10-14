@@ -1784,8 +1784,17 @@ class Firms(Agent):
         insolvent_firms = np.where(self.states["is_insolvent"])[0]
         bad_firm_loans = credit_market.remove_loans_to_firm(insolvent_firms)
 
-        # Update deposits
+        # Update deposits. An insolvent firm's overdraft (negative deposits) is cancelled: a loss of the bank that
+        # granted it, recognised against bank equity like the loan write-offs (A14 / F-A2).
         new_firm_deposits = self.ts.current("deposits")
+        overdraft = np.where(self.states["is_insolvent"], np.maximum(0.0, -new_firm_deposits), 0.0)
+        if overdraft.any() and hasattr(credit_market, "queue_bank_losses"):
+            n_banks = credit_market.states["lt_loans"].shape[1]
+            credit_market.queue_bank_losses(
+                np.bincount(
+                    np.asarray(self.states["Corresponding Bank ID"], dtype=int), weights=overdraft, minlength=n_banks
+                )
+            )
         new_firm_deposits[self.states["is_insolvent"]] = 0.0
         self.ts.deposits.pop()
         self.ts.deposits.append(new_firm_deposits)

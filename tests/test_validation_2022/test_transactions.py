@@ -231,3 +231,23 @@ def test_firm_writeoff_is_queued_by_lending_bank():
     assert CreditMarket.remove_loans_to_firm(cm, 2) == pytest.approx(10.0)
     np.testing.assert_allclose(CreditMarket.pop_pending_writeoffs_by_bank(cm, 2), [3.0, 7.0])
     assert cm.states["cumulative_writeoffs"] == pytest.approx(10.0)
+
+
+def test_cancelled_firm_overdraft_is_a_bank_loss_but_not_a_loan_writeoff():
+    from macromodel.agents.firms.firms import Firms
+    from macromodel.markets.credit_market.credit_market import CreditMarket
+    st = np.zeros((3, 2, 3)); lt = np.zeros((3, 2, 3)); lt[0, 1, 0] = 5.0
+    cm = SimpleNamespace(states={"st_loans": st, "lt_loans": lt},
+                         ts=TimeSeries(total_outstanding_loans_granted_firms_short_term=[0.0],
+                                       total_outstanding_loans_granted_firms_long_term=[5.0]))
+    cm._record_writeoff = lambda amount, by_bank=None: CreditMarket._record_writeoff(cm, amount, by_bank)
+    cm.remove_loans_to_firm = lambda ids: CreditMarket.remove_loans_to_firm(cm, ids)
+    cm.queue_bank_losses = lambda by_bank: CreditMarket.queue_bank_losses(cm, by_bank)
+    demography = SimpleNamespace(handle_firm_insolvency=lambda **k: np.array([True, False, False]))
+    firm = SimpleNamespace(states={"is_insolvent": np.zeros(3, bool), "Corresponding Bank ID": np.array([1, 0, 0])},
+                           functions={"demography": demography},
+                           ts=TimeSeries(deposits=np.array([-2.0, 3.0, 1.0]), equity=np.array([-1.0, 4.0, 2.0])))
+    Firms.handle_insolvency(firm, credit_market=cm)
+    np.testing.assert_allclose(firm.ts.current("deposits"), [0.0, 3.0, 1.0])
+    np.testing.assert_allclose(CreditMarket.pop_pending_writeoffs_by_bank(cm, 2), [0.0, 5.0 + 2.0])
+    assert cm.states["cumulative_writeoffs"] == pytest.approx(5.0)  # loan identity unaffected by the overdraft

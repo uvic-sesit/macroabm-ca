@@ -572,6 +572,14 @@ class CreditMarket:
                 pending = np.zeros(len(by_bank))
             self.states["pending_writeoffs_by_bank"] = pending + by_bank
 
+    def queue_bank_losses(self, by_bank: np.ndarray) -> None:
+        """Queue a non-loan loss of the lending banks (e.g. a cancelled firm overdraft) for recognition against
+        bank equity; unlike `_record_writeoff` it does not enter the loan-stock write-off counter."""
+        pending = self.states.get("pending_writeoffs_by_bank")
+        if pending is None or len(pending) != len(by_bank):
+            pending = np.zeros(len(by_bank))
+        self.states["pending_writeoffs_by_bank"] = pending + np.asarray(by_bank, dtype=float)
+
     def pop_pending_writeoffs_by_bank(self, n_banks: int) -> np.ndarray:
         """Loan losses queued since the last call, by lending bank; resets the queue."""
         pending = self.states.get("pending_writeoffs_by_bank")
