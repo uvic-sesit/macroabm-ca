@@ -42,3 +42,6 @@ class GoodsMarketConfiguration(BaseModel):
     """
 
     functions: GoodsMarketFunctions = GoodsMarketFunctions()
+    # D6 (validation-2022): settle payments at the sellers' realised prices after clearing (real allocation
+    # unchanged). False reproduces the legacy behaviour (buyers pay the industry average price).
+    settle_at_seller_prices: bool = True

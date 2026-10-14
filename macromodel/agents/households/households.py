@@ -40,6 +40,19 @@ from macromodel.util.get_histogram import get_histogram
 from macromodel.util.property_mapping import map_to_enum
 
 
+def nonnegative_weights(weights: np.ndarray) -> np.ndarray:
+    """Industry weights of a purchase vector with negative entries set to zero, renormalised to sum to one.
+
+    The IO household capital-formation column has small negative entries (net sales of used assets: CAN_NL B07 -0.95%,
+    CAN_ON C24A -0.15%). As goods-market demand they become negative purchases, which the market executes against the
+    sellers but Agent.record then clips to zero on the buyer side, so buyers book more than sellers receive
+    (validation-2022, G1). Total investment is unchanged; only the composition moves (< 1%).
+    """
+    w = np.clip(np.asarray(weights, dtype=float), 0.0, None)
+    total = w.sum()
+    return w / total if total > 0 else w
+
+
 def income_weighted_saving_rate(saving_rates: np.ndarray, income: np.ndarray) -> float:
     """Income-weighted mean saving rate, sum(s_h * Y_h) / sum(Y_h) (falls back to the plain mean)."""
     saving_rates = np.asarray(saving_rates, dtype=float)
@@ -217,7 +230,7 @@ class Households(Agent):
 
         consumption_weights_by_income = synthetic_population.consumption_weights_by_income.T
 
-        investment_weights = synthetic_population.investment_weights
+        investment_weights = nonnegative_weights(synthetic_population.investment_weights)
 
         # Additional states
         states: dict[str, float | np.ndarray | list[np.ndarray] | Any] = {

@@ -22,6 +22,7 @@ import pandas as pd
 
 from macromodel.agents.agent import Agent
 from macromodel.configurations import GoodsMarketConfiguration
+from macromodel.markets.goods_market.func.settlement import settle_at_seller_prices
 from macromodel.markets.goods_market.goods_market_ts import (
     create_goods_market_timeseries,
 )
@@ -157,6 +158,8 @@ class GoodsMarket:
             "origin_trade_proportions": origin_trade_proportions.reshape((n_countries, n_countries, n_industries)),
             "destin_trade_proportions": destin_trade_proportions.reshape((n_countries, n_countries, n_industries)),
             "previous_supply_chain": None,
+            "settle_at_seller_prices": getattr(configuration, "settle_at_seller_prices", True),
+            "settlement": {},
         }
 
         # Create the corresponding time series object
@@ -206,6 +209,7 @@ class GoodsMarket:
         """
         self.ts.reset()
         self.states = deepcopy(self.initial_states)
+        self.states["settle_at_seller_prices"] = getattr(configuration, "settle_at_seller_prices", True)
         update_functions(model=configuration.functions, loc="macromodel.agents.goods_market", functions=self.functions)
 
     def prepare(self, collect_sd: bool = True) -> None:
@@ -252,6 +256,8 @@ class GoodsMarket:
             current_supply_chain=self.states["current_supply_chain"],
             row_index=self.row_index,
         )
+        if self.states.get("settle_at_seller_prices", True):
+            self.states["settlement"] = settle_at_seller_prices(self.goods_market_participants, self.n_industries)
 
     def record(self) -> None:
         """Record market outcomes.
