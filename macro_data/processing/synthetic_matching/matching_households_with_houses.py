@@ -414,6 +414,12 @@ def match_renters_to_properties(
     n_split = int(len(rent_rec) / max_matching_size) if len(rent_rec) > max_matching_size else 1
     rent_rec_split = np.array_split(rent_rec, n_split)
     rent_paid_split = np.array_split(rent_paid, n_split)
+    # A renter must not be matched to a rental unit that its own household owns (it would then live in its own
+    # dwelling while paying rent to itself; once the model recomputes "Is Owner-Occupied" that rent has no
+    # recipient). Such pairs get a prohibitive cost.
+    rented_owner = housing_market_df.loc[rented, "Corresponding Owner Household ID"].values
+    owner_split = np.array_split(rented_owner, n_split)
+    renters_ind_split = np.array_split(renters_ind, n_split)
 
     # Initialize the variables
     split_offset_rec, split_offset_paid = 0, 0
@@ -424,7 +430,12 @@ def match_renters_to_properties(
         curr_rent_rec = rent_rec_split[chunk_ind]
         curr_rent_paid = rent_paid_split[chunk_ind]
         cost = sp.spatial.distance_matrix(curr_rent_rec[:, None], curr_rent_paid[:, None])
+        own_unit = owner_split[chunk_ind][:, None] == renters_ind_split[chunk_ind][None, :]
+        if own_unit.any():
+            cost = np.where(own_unit, 1e3 * (np.abs(cost).max() + 1.0), cost)
         curr_properties, curr_renters = lsa(cost)
+        keep = ~own_unit[curr_properties, curr_renters]
+        curr_properties, curr_renters = curr_properties[keep], curr_renters[keep]
 
         # Step 4: Map the indices back to the original indices
         corr_renters_by_house_id_rel[split_offset_rec + curr_properties] = renters_ind[curr_renters + split_offset_paid]

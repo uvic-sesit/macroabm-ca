@@ -185,3 +185,18 @@ def test_unaffordable_purchase_is_not_executed():
     mkt = _market(sales); st = _hh_states()
     HousingMarket.process_housing_market_clearing(mkt, st, np.zeros(10), np.zeros(10))
     assert not mkt.states["current_sales"]["executed"].values[0]
+
+
+# ---------------------------------------------------------------- bank deposit interest = customers' payments
+def test_bank_deposit_interest_equals_customer_payments_plus_cb_interest():
+    from macromodel.agents.banks.banks import Banks
+    ts = TimeSeries(deposits=np.array([50.0, -10.0]), deposits_from_firms=np.array([0.0, 0.0]),
+                    deposits_from_households=np.array([0.0, 0.0]))
+    bank = SimpleNamespace(ts=ts)
+    # bank 0: one customer overdrawn (pays 3), one with deposits (receives 1) -> nets to zero balance at bank level
+    out = Banks.compute_interest_received_on_deposits(
+        bank, central_bank_policy_rate=0.01,
+        firm_interest_paid_on_deposits=np.array([3.0, -1.0]), firm_corresponding_bank=np.array([0, 0]),
+        household_interest_paid_on_deposits=np.array([0.5]), households_corresponding_bank=np.array([1]),
+    )
+    np.testing.assert_allclose(out, [0.01 * 50 + 2.0, -0.01 * 10 + 0.5])

@@ -68,8 +68,8 @@ class TestHouseholdProbabilityOfBuying:
         """
         np.random.seed(42)  # For reproducibility
 
-        # Single household that is renting (status = 0)
-        household_residence_tenure_status = np.array([0])
+        # Single household that is renting (model tenure code 3; validation-2022 fixed the 0/1 convention)
+        household_residence_tenure_status = np.array([3])
         household_income = np.array([50000.0])  # Moderate income
         household_financial_wealth = np.array([10000.0])  # Some savings
 
@@ -147,8 +147,8 @@ class TestHouseholdProbabilityOfBuying:
         np.random.seed(123)
 
         n_households = 10
-        # Mix of renters (0) and people in social housing (-1)
-        household_residence_tenure_status = np.array([-1, 0, 0, 0, -1, 0, 0, -1, 0, 0])
+        # Mix of renters (3) and people in social housing (-1)
+        household_residence_tenure_status = np.array([-1, 3, 3, 3, -1, 3, 3, -1, 3, 3])
 
         # Varying incomes
         household_income = np.linspace(20000, 100000, n_households)

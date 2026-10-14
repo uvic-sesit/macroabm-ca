@@ -1351,6 +1351,10 @@ class Country:
         self.banks.ts.interest_received_on_deposits.append(
             self.banks.compute_interest_received_on_deposits(
                 central_bank_policy_rate=self.central_bank.ts.current("policy_rate"),
+                firm_interest_paid_on_deposits=self.firms.ts.current("interest_paid_on_deposits"),
+                firm_corresponding_bank=self.firms.states["Corresponding Bank ID"],
+                household_interest_paid_on_deposits=self.households.ts.current("interest_paid_on_deposits"),
+                households_corresponding_bank=self.households.states["Corresponding Bank ID"],
             )
         )
         self.banks.ts.profits.append(self.banks.compute_profits())

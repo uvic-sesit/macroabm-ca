@@ -70,3 +70,54 @@ been made.
 | F3 | `firms_configuration.py:388-410` | `depreciation_rates` default 0 (inventory) vs capital depreciation matrix | S |
 | G1 | `government_entities/func/consumption.py:133-218` | G follows a log-AR forecast of own history, price-indexed (prior baseline G +26%) | C (code) |
 | G2 | `social_benefits.py:188` | UB ratchet | C |
+
+---
+
+## Phase A status (2026-10-14, `feature/validation-2022`, pickle `dev/pkl_files/io2022_phaseA.pkl`)
+
+Verification: `tests/test_validation_2022` (16 tests) and the accounting battery
+(`battery/run_accounting_smoke.py`, shipped-default config, seed 0, 2 quarters), against the pre-correction
+reference (tag `validation-2022-precorrection`, branch-rebuilt pickle). Battery residuals are national, nominal
+CAD per quarter.
+
+### Fixed
+
+| ID | Fix | Evidence after fix |
+|---|---|---|
+| A1 | VAT debited from household deposits (`update_wealth(tau_vat)`) | HH cash identity 0 |
+| A2 | households receive cpi·Σw; PIT/SSC levied on the gross base | wage counterparty 44.1/48.6B → 0 |
+| A3 | UB credited to household income (no cpi/inflation factor); deficit books UB actually paid | UB counterparty 3.1/3.9B → 0 |
+| A8 | sales executed only if feasible; seller credited; buyer debited for executed sales only | house-sales residual 9.3/4.9B → 0 |
+| A9/I-13 | provincial IO path flagged `housing_services_in_household_io`; rent no longer added again in GDP | GDP double count removed (−218B/yr) |
+| A10 | firm deposits debited for purchases (cash), not for inputs used | firm cash identity = − deposit zeroing only |
+| A16 (new) | `wealth.py`: deposit use netted against OFA use incorrectly; spending beyond deposits went unrecorded | HH cash identity 1.9/28.6B → 0 |
+| A17 (new) | bank deposit interest computed on bank-level net balances, agents pay on individual balances | bank interest = customers' payments + CB interest; Q2 reserve residual −0.19 → −0.06B |
+| H5 (new) | build matched some renters to rental units their own household owns (10 households nationally); rent then paid to nobody once the OO flag is recomputed | rent counterparty 3.85M/q → 0 (pickle rebuilt) |
+| I-1 | household counts from CHS 2022 (provinces) + Census 2021 (territories) | 15.50M (+0.3%) |
+| I-3 | Canadian effective PIT 0.1736 (36-10-0224) | PIT on gross base |
+| I-6 | t0 wages renormalised to firm wage bills | static Q1 labour-income jump −22% → 0.001% |
+| I-7 | income-weighted average saving rate | static Q1 consumption jump −8.5% → 0.001% |
+| I-9 | credit lines/cards kept as non-mortgage loans | consumer credit 743B |
+| I-12 | tenure codes; provincial owner-rate stratification | owners 65.5% |
+| H1 (new) | `get_histogram`/`fillna(-1)` bug set every property inhabitant/owner to −1 at t0: no renting ever occurred in prior 2022 runs | occupancy restored |
+| H2 (new) | property-demand rule used tenure codes 0/1; renters = 3, owners = 1,2,4 | unit test |
+| H3 (new) | matching: buyers matched above WTP; self-purchase; infeasible pairs | unit test |
+| H4 (new) | listings and vacancy (−1) logic; "newly up for rent" mask | unit test |
+| D1 (new) | French property counts zeroed SFS other-property values (dwellings −12.9%) | dwellings 0.0% vs 36-10-0580 |
+| D2 (new) | other-property mortgages (653B) missing from the loan book | loan identity −652.7B → 0 |
+| D3 (new) | rental-income rescale summed over social renters → NaN; `remove_outliers` dropped valid households | rebuild completes |
+| B1 | accounting battery with ΔR decomposition and explicit write-off counter | `battery/accounting.py` |
+
+### Remaining (escalated; decisions needed)
+
+| ID | Issue | Why not fixed here |
+|---|---|---|
+| I-8 / A9 | paid rent: 81.5B sits inside household purchases of sector L; no corporate landlords; ≈10% of households sent to social housing; Canadian rent levels give household landlords ≈10% gross yields | accounting-boundary decision (sector L vs housing module) |
+| S-H3 / A4 | no mixed income (225B), dividends or corporate transfers → HH income 1,335B vs DI 1,502B; calibrated s = −9.8% | new income flows = architecture |
+| A14 / N1 | insolvency rule (NW<0 and deposits<0) writes off 268B (Q1) and 43B (Q2); previously hidden by A16 | behavioural rule |
+| A4, A7, A11, A12 | FA income without payer; OFA without issuer; unpaid interest on public debt; no ROW financial account | named boundary terms in the battery; architecture |
+| S-H6 | credit screens 0.05 | calibration of behaviour |
+| I-10, I-11 | FA return, bank rates | data, after boundary decisions |
+| N2 | owner moves: high churn of owner-occupiers through the market | mobility parameter (behaviour) |
+| N3 | provincial income distribution from one national file | data/architecture |
+| D6 (new) | goods market: buyers pay the industry average price, sellers receive own price × quantity; −0.053/−0.056B/q (0.005–0.07% of sales). This is now the entire `reserves_unexplained` | changes market-clearing payments (escalate) |

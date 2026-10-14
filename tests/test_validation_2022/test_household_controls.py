@@ -45,3 +45,31 @@ def test_tenure_weights_without_target_is_legacy():
 def test_tenure_weights_reject_degenerate_target():
     with pytest.raises(ValueError):
         tenure_stratified_weights(_toy(), 1.0)
+
+
+def test_renter_is_never_matched_to_a_unit_it_owns():
+    from types import SimpleNamespace
+    import numpy as np
+    import pandas as pd
+    from macro_data.processing.synthetic_matching.matching_households_with_houses import match_renters_to_properties
+
+    # hh 0 and hh 1 rent; hh 2 owns both rental units. hh 0 also owns rental unit 1, whose rent is the
+    # closest to what hh 0 pays (so the unconstrained matching would put hh 0 in its own unit).
+    hh = pd.DataFrame({
+        "Tenure Status of the Main Residence": [3, 3, 1],
+        "Rent Paid": [10.0, 50.0, 0.0],
+        "Rental Income from Real Estate": [0.0, 0.0, 1.0],
+        "Corresponding Additionally Owned Houses ID": [[1], [], [0]],
+    })
+    houses = pd.DataFrame({
+        "House ID": [0, 1, 2], "Is Owner-Occupied": [False, False, True],
+        "Corresponding Owner Household ID": [2, 0, 2], "Corresponding Inhabitant Household ID": [np.nan, np.nan, 2.0],
+        "Rent": [48.0, 11.0, 0.0],
+    })
+    pop = SimpleNamespace(household_data=hh)
+    match_renters_to_properties(pop, houses, rental_income_taxes=0.0)
+    inhabitant = houses["Corresponding Inhabitant Household ID"].values
+    owner = houses["Corresponding Owner Household ID"].values
+    rented = ~houses["Is Owner-Occupied"].values
+    assert not np.any(rented & (inhabitant == owner))
+    assert houses.loc[1, "Corresponding Inhabitant Household ID"] == 1

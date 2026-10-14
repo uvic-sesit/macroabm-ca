@@ -138,6 +138,16 @@ class AccountingBattery:
             if m is not None:
                 ext -= np.asarray(m[-1], float).sum()
         r.update(net_external_receipts=ext)
+        # goods market: what domestic firms receive minus what all buyers pay, net of cross-border flows
+        # (sold - exports) - (hh + firm + gov purchases - imports); must be 0
+        exp_tot = sum(np.asarray(e.ts.dicts["exports_before_taxes_to_" + str(o)][-1], float).sum()
+                      for o in list(sim.countries.keys()) + ["ROW"]
+                      if str(o) != str(name) and ("exports_before_taxes_to_" + str(o)) in e.ts.dicts)
+        imp_tot = sum(np.asarray(e.ts.dicts["imports_from_" + str(o)][-1], float).sum()
+                      for o in list(sim.countries.keys()) + ["ROW"]
+                      if str(o) != str(name) and ("imports_from_" + str(o)) in e.ts.dicts)
+        G_all = _cur(ge.ts, "nominal_amount_spent_in_lcu").sum()
+        r["goods_market_gap"] = (sold - exp_tot) - (spent + bought + G_all - imp_tot)
 
         # ---------- bank reserve residual and its decomposition
         # R from its defining identity on both dates (banks.compute_deposits), so that the t0 data value of the
@@ -160,6 +170,13 @@ class AccountingBattery:
         injection = _cur(g.ts, "bank_equity_injection", [0.0])[0]
         firm_zeroing = -(dD_f - implied_f)
         dR = R.sum() - R_prev.sum()
+        # internal links of the reserve identity: the banks' deposit snapshot vs the agents' own balances, and
+        # the change in bank equity vs after-tax profits (+ injections)
+        r["bank_hh_deposit_snapshot_gap"] = _cur(b.ts, "deposits_from_households").sum() - _cur(h.ts, "wealth_deposits").sum()
+        r["bank_firm_deposit_snapshot_gap"] = _cur(b.ts, "deposits_from_firms").sum() - _cur(f.ts, "deposits").sum()
+        prof = _cur(b.ts, "profits")
+        dE = _cur(b.ts, "equity").sum() - _prev(b.ts, "equity").sum()
+        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum())
         named_boundary = fai + fai_pit - d_ofa + writeoffs - firm_zeroing + injection
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately
         # (loan_identity_resid) so that reserves_unexplained isolates deposit-side (payment) leaks
@@ -184,6 +201,8 @@ IDENTITY_COLUMNS = [
 def summarise(df: pd.DataFrame) -> pd.DataFrame:
     """National (sum over regions) residuals per quarter, with scale for relative tolerance."""
     nat = df.groupby("t").sum(numeric_only=True, min_count=1)
-    out = nat[IDENTITY_COLUMNS + ["named_boundary_total", "firm_wage_bill", "gov_cash_deficit", "dR_bank",
+    diag = [c for c in ("goods_market_gap", "bank_hh_deposit_snapshot_gap", "bank_firm_deposit_snapshot_gap", "bank_equity_unexplained")
+            if c in nat]
+    out = nat[IDENTITY_COLUMNS + diag + ["named_boundary_total", "firm_wage_bill", "gov_cash_deficit", "dR_bank",
                                   "net_external_receipts"]].copy()
     return out

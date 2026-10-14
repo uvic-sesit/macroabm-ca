@@ -16,7 +16,7 @@ The banks operate by:
 - Tracking market shares
 """
 
-from typing import Any
+from typing import Optional, Any
 
 import h5py
 import numpy as np
@@ -324,7 +324,14 @@ class Banks(Agent):
             [self.ts.current("overdraft_rate_on_household_deposits").mean()]
         )
 
-    def compute_interest_received_on_deposits(self, central_bank_policy_rate: float) -> np.ndarray:
+    def compute_interest_received_on_deposits(
+        self,
+        central_bank_policy_rate: float,
+        firm_interest_paid_on_deposits: Optional[np.ndarray] = None,
+        firm_corresponding_bank: Optional[np.ndarray] = None,
+        household_interest_paid_on_deposits: Optional[np.ndarray] = None,
+        households_corresponding_bank: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Calculate net interest received on deposits.
 
         Computes interest considering:
@@ -339,6 +346,25 @@ class Banks(Agent):
         Returns:
             np.ndarray: Net interest received by bank
         """
+        if firm_interest_paid_on_deposits is not None and household_interest_paid_on_deposits is not None:
+            # A-bank-int: firms and households pay (receive) deposit and overdraft interest on their individual
+            # balances; the bank books exactly those payments, plus CB interest on its reserve position. Netting
+            # deposits at bank level first (below) understates overdraft interest whenever some customers are
+            # overdrawn while others hold deposits, which leaves an unmatched flow in the reserve residual.
+            n = len(self.ts.current("deposits"))
+            customers = np.bincount(
+                np.asarray(firm_corresponding_bank, dtype=int), weights=firm_interest_paid_on_deposits, minlength=n
+            ) + np.bincount(
+                np.asarray(households_corresponding_bank, dtype=int),
+                weights=household_interest_paid_on_deposits,
+                minlength=n,
+            )
+            reserves = self.ts.current("deposits")
+            return (
+                central_bank_policy_rate * np.maximum(0, reserves)
+                - central_bank_policy_rate * np.maximum(0, -reserves)
+                + customers
+            )
         return (
             central_bank_policy_rate * np.maximum(0, self.ts.current("deposits"))
             + self.ts.current("overdraft_rate_on_firm_deposits")
