@@ -85,9 +85,9 @@ for k in ["SR_mean", "SR_incw", "owner_share", "renter_share", "social_housing_s
     tot[k] = np.nan
 tot["owner_share_hhw"] = float((df.owner_share * df.n_hh).sum() / df.n_hh.sum())
 tot["SR_incw"] = float((df.SR_incw * df.Income).sum() / df.Income.sum())
-df.to_csv(OUT / "hh_t0_pickle_by_region.csv")
-tot.to_csv(OUT / "hh_t0_pickle_national.csv")
-json.dump(meta, open(OUT / "hh_t0_pickle_meta.json", "w"), indent=1, default=str)
+df.to_csv(OUT / f"hh_t0_pickle_by_region_{TAG}.csv")
+tot.to_csv(OUT / f"hh_t0_pickle_national_{TAG}.csv")
+json.dump(meta, open(OUT / f"hh_t0_pickle_meta_{TAG}.json", "w"), indent=1, default=str)
 pd.set_option("display.width", 250, "display.max_rows", 200)
 print(tot.round(3).to_string())
 print(df[["n_hh", "Income", "Consumption_basic", "SR_incw", "owner_share", "Deposits", "Debt"]].round(3))

@@ -373,25 +373,23 @@ class AutomaticHousingMarketClearer(HousingMarketClearer):
         property_open_ind = np.where(housing_data[status_field])[0]
         property_prices = housing_data.loc[property_open_ind, price_field].values
 
-        # Create a cost matrix
-        cost = sp.spatial.distance_matrix(
-            max_willing_to_pay[households_with_demand][:, None],
-            (
-                (
-                    1
-                    + np.random.normal(
-                        0.0,
-                        self.random_assignment_shock_variance,
-                        property_prices.shape[0],
-                    )
-                )
-                * property_prices
-            )[:, None],
-        )
-        cost[cost < 0] = np.inf
+        # Cost = slack between willingness to pay and the (shocked) asking price. A match is feasible only
+        # if the household is willing to pay the price and does not already own the property. (Previously
+        # an absolute distance was used, so the intended "cost < 0 -> infeasible" test never fired and
+        # households could be matched above their willingness to pay or to their own property.)
+        shocked_prices = (
+            1 + np.random.normal(0.0, self.random_assignment_shock_variance, property_prices.shape[0])
+        ) * property_prices
+        cost = max_willing_to_pay[households_with_demand][:, None] - shocked_prices[None, :]
+        owners = housing_data.loc[property_open_ind, "Corresponding Owner Household ID"].values
+        infeasible = (cost < 0) | (households_with_demand[:, None] == owners[None, :])
+        big = 1e3 * (np.nanmax(np.abs(cost)) + 1.0) if cost.size else 1.0
+        cost = np.where(infeasible, big, cost)
 
-        # Find an optimal assignment and record the outcome
+        # Find an optimal assignment, drop infeasible pairs, and record the outcome
         rel_households, rel_properties = lsa(cost)
+        feasible = ~infeasible[rel_households, rel_properties]
+        rel_households, rel_properties = rel_households[feasible], rel_properties[feasible]
         abs_households, abs_properties = (
             households_with_demand[rel_households],
             property_open_ind[rel_properties],

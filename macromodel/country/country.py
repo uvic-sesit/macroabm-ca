@@ -203,6 +203,7 @@ class Country:
         self.assume_zero_noise = assume_zero_noise
 
         self.running_multiple_countries = running_multiple_countries
+        self.housing_services_in_household_io = False
 
         self.configuration = configuration
 
@@ -400,7 +401,7 @@ class Country:
             scale=scale,
         )
 
-        return cls(
+        instance = cls(
             country_name=country_name,
             scale=scale,
             individuals=individuals,
@@ -426,6 +427,12 @@ class Country:
             emission_factors_lcu_ch4=emission_factors_lcu_ch4,
             emitting_indices_ch4=emitting_indices_ch4,
         )
+        # Housing services (paid + imputed rent) already inside IO household consumption of sector L
+        # (CAN provincial-IO path) -> do not add housing-market rents to GDP a second time (A9).
+        instance.housing_services_in_household_io = bool(
+            getattr(synthetic_country, "housing_services_in_household_io", False)
+        )
+        return instance
 
     def reset(self, configuration: CountryConfiguration) -> None:
         """Reset the country economy to its initial state.
@@ -822,9 +829,10 @@ class Country:
             estimated_growth=self.economy.ts.current("estimated_growth")[0],
             estimated_inflation=self.economy.ts.current("estimated_ppi_inflation")[0],
         )
+        # Mortgage demand comes from matched PURCHASES ("Sell" rows); previously the rental matches were passed.
         self.households.compute_target_credit(
             current_sales=self.housing_market.states["current_sales"].loc[
-                self.housing_market.states["current_sales"]["sales_types"] == "Rental"
+                self.housing_market.states["current_sales"]["sales_types"] == "Sell"
             ],
         )
         self.banks.set_interest_rates(central_bank_policy_rate=self.central_bank.ts.current("policy_rate")[0])
@@ -1245,13 +1253,25 @@ class Country:
         self.households.ts.dicts["income_rental"][-1] = final_income_rental
         self.households.ts.dicts["total_income_rental"][-1] = [final_income_rental.sum()]
 
+        # Individual employee_income is the REAL net wage; firms pay cpi * Theta * sum(w) (Firms.update_total_wages_paid),
+        # so the nominal net wage received by households is cpi * w (A2).
         self.households.ts.income_employee.append(
             self.households.compute_employee_income(
-                individual_income=self.individuals.ts.current("employee_income"),
+                individual_income=self.economy.ts.current("cpi")[0] * self.individuals.ts.current("employee_income"),
                 corr_households=self.individuals.states["Corresponding Household ID"],
             )
         )
         self.households.ts.total_income_employee.append([self.households.ts.current("income_employee").sum()])
+        # Unemployment benefits paid to unemployed members are household income (A3)
+        self.households.ts.income_unemployment_benefits.append(
+            self.households.compute_employee_income(
+                individual_income=self.individuals.ts.current("income_from_unemployment_benefits"),
+                corr_households=self.individuals.states["Corresponding Household ID"],
+            )
+        )
+        self.households.ts.total_income_unemployment_benefits.append(
+            [self.households.ts.current("income_unemployment_benefits").sum()]
+        )
         self.households.ts.income_social_transfers.append(
             self.households.compute_social_transfer_income(
                 total_other_social_transfers=self.central_government.ts.current("total_other_benefits")[0],
@@ -1305,6 +1325,7 @@ class Country:
         self.households.update_wealth(
             housing_data=self.housing_market.states["properties"],
             tau_cf=self.central_government.states["Capital Formation Tax"],
+            tau_vat=self.central_government.states["Value-added Tax"],
         )
         self.households.ts.wealth_histogram.append(get_histogram(self.households.ts.current("wealth"), self.scale))
         self.households.ts.net_wealth.append(self.households.compute_net_wealth())
@@ -1384,6 +1405,7 @@ class Country:
             taxes_less_subsidies_rates=self.central_government.states["Taxes Less Subsidies Rates"],
             current_household_new_real_wealth=self.households.ts.current("investment"),
             current_total_exports=self.economy.ts.current("exports_before_taxes").sum(),
+            cpi=self.economy.ts.current("cpi")[0],
         )
 
         # General government fields
@@ -1404,6 +1426,7 @@ class Country:
                 ),
                 government_interest_rates=self.central_bank.ts.current("policy_rate")[0],
                 current_itc_refunds=self.central_government.ts.current("itc_refunds")[0],
+                total_unemployment_benefits_paid=self.households.ts.current("income_unemployment_benefits").sum(),
             )
         )
         self.central_government.ts.debt.append(self.central_government.compute_debt())
@@ -1423,8 +1446,10 @@ class Country:
             ),
             taxes_on_products=self.central_government.ts.current("taxes_on_products")[0],
             taxes_on_production=self.central_government.ts.current("taxes_production")[0],
-            rent_paid=self.economy.ts.current("total_real_rent_paid")[0],
-            rent_imputed=self.economy.ts.current("total_imp_rent_paid")[0],
+            rent_paid=0.0 if self.housing_services_in_household_io else self.economy.ts.current("total_real_rent_paid")[0],
+            rent_imputed=(
+                0.0 if self.housing_services_in_household_io else self.economy.ts.current("total_imp_rent_paid")[0]
+            ),
             hh_consumption=self.households.ts.current("total_consumption")[0],
             gov_consumption=self.government_entities.ts.current("total_consumption")[0],
             change_in_inventories=self.firms.ts.current("total_inventory_change").sum()
@@ -1437,7 +1462,9 @@ class Country:
             imports=self.economy.ts.current("imports").sum(),
             operating_surplus=self.firms.ts.current("gross_operating_surplus_mixed_income").sum(),
             wages=self.firms.ts.current("total_wage").sum(),
-            rent_received=self.economy.ts.current("total_real_rent_rec")[0]
+            rent_received=0.0
+            if self.housing_services_in_household_io
+            else self.economy.ts.current("total_real_rent_rec")[0]
             + self.central_government.ts.current("taxes_rental_income")[0],
             central_government_rent_received=self.central_government.ts.current("total_rent_received")[0],
             running_multiple_countries=self.running_multiple_countries,

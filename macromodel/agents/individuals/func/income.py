@@ -200,7 +200,9 @@ class DefaultIncomeSetter(IncomeSetter):
             * (1 - tau_firm)
             * np.maximum(0.0, expected_bank_profits[corr_invested_banks[bank_inv_ind]])
         )
-        return (1 + expected_inflation) * cpi * individual_social_benefits + income
+        # Unemployment benefits are a nominal per-person amount already set for this quarter
+        # (CentralGovernment.update_benefits); no cpi/inflation factor (matches the deficit booking).
+        return individual_social_benefits + income
 
     def compute_income(
         self,
@@ -274,4 +276,4 @@ class DefaultIncomeSetter(IncomeSetter):
             * np.maximum(0.0, bank_profits[corr_invested_banks[bank_inv_ind].astype(int)])
         )
 
-        return cpi * individual_social_benefits + income
+        return individual_social_benefits + income

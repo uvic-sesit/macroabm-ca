@@ -331,11 +331,13 @@ class DefaultWealthSetter(WealthSetter):
         Returns:
             Tuple[np.ndarray, np.ndarray]: Used deposits and other assets
         """
-        used_up_wealth_in_other_financial_assets = np.minimum(current_wealth_in_other_financial_assets, used_up_wealth)
-        used_up_wealth_in_deposits = np.minimum(
-            current_wealth_in_deposits,
-            used_up_wealth - used_up_wealth_in_other_financial_assets,
+        used_up_wealth_in_other_financial_assets = np.minimum(
+            np.maximum(0.0, current_wealth_in_other_financial_assets), used_up_wealth
         )
+        # A16: the remainder is paid from deposits in full (overdraft if needed, charged at the overdraft rate).
+        # Previously it was capped at the current deposit balance, so purchases beyond liquid assets were never
+        # paid (and a negative balance even increased deposits).
+        used_up_wealth_in_deposits = used_up_wealth - used_up_wealth_in_other_financial_assets
         return (
             used_up_wealth_in_deposits,
             used_up_wealth_in_other_financial_assets,

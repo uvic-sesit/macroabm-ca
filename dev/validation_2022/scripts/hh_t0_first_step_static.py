@@ -8,7 +8,7 @@ Labour jump = firm-implied net wage bill - t0 household labour income (wage rese
 import pandas as pd
 O = "dev/validation_2022/outputs/"
 out = []
-for tag in ["canonical", "branch"]:
+for tag in ["canonical", "branch", "phaseA"]:
     m = pd.read_csv(O + f"hh_t0_model_by_region_{tag}.csv", index_col=0)
     p = pd.read_csv(O + f"hh_t0_pickle_by_region_{tag}.csv", index_col=0)
     y1 = m.firm_net_wage_implied + m.ind_ub + m.hh_income_social + m.hh_income_rental + m.hh_income_fa

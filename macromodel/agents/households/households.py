@@ -40,6 +40,16 @@ from macromodel.util.get_histogram import get_histogram
 from macromodel.util.property_mapping import map_to_enum
 
 
+def income_weighted_saving_rate(saving_rates: np.ndarray, income: np.ndarray) -> float:
+    """Income-weighted mean saving rate, sum(s_h * Y_h) / sum(Y_h) (falls back to the plain mean)."""
+    saving_rates = np.asarray(saving_rates, dtype=float)
+    income = np.asarray(income, dtype=float)
+    total = income.sum()
+    if not np.isfinite(total) or total == 0.0:
+        return float(np.mean(saving_rates))
+    return float((saving_rates * income).sum() / total)
+
+
 class Households(Agent):
     """Economic agent representing household sector behavior.
 
@@ -214,7 +224,12 @@ class Households(Agent):
             "saving_rates_model": synthetic_population.saving_rates_model,
             "social_transfers_model": synthetic_population.social_transfers_model,
             "wealth_distribution_model": synthetic_population.wealth_distribution_model,
-            "average_saving_rate": synthetic_population.household_data["Saving Rate"].mean(),
+            # I-7: the uniform rate used by AverageSavingRatesSetter must reproduce t0 aggregate consumption,
+            # C = (1 - s) Y / (1 + vat), i.e. the INCOME-WEIGHTED mean of household rates (was unweighted).
+            "average_saving_rate": income_weighted_saving_rate(
+                synthetic_population.household_data["Saving Rate"].values,
+                synthetic_population.household_data["Income"].values,
+            ),
             "coefficient_fa_income": synthetic_population.coefficient_fa_income,
             "investment_rate": synthetic_population.household_data["Investment Rate"].values,
         }
@@ -579,6 +594,7 @@ class Households(Agent):
         """
         return (
             self.ts.current("income_employee")
+            + self.ts.current("income_unemployment_benefits")
             + self.ts.current("income_social_transfers")
             + self.ts.current("income_rental")
             + self.ts.current("income_financial_assets")
@@ -786,7 +802,10 @@ class Households(Agent):
         self.ts.max_rent_willing_to_pay.append(max_rent_willing_to_pay)
 
         # Set price of properties of households that are hoping to move
-        ind_mhr_temp_sale = housing_data["Corresponding Owner Household ID"].isin(households_hoping_to_move)
+        ind_mhr_temp_sale = housing_data["Corresponding Owner Household ID"].isin(households_hoping_to_move) & (
+            (housing_data["Corresponding Inhabitant Household ID"] == housing_data["Corresponding Owner Household ID"])
+            | (housing_data["Corresponding Inhabitant Household ID"] == -1)
+        )
         housing_data.loc[np.logical_not(ind_mhr_temp_sale), "Sale Price"] = np.nan
         ind_still_on_sale = housing_data["Temporarily for Sale"].copy()
         housing_data["Temporarily for Sale"] = False
@@ -809,10 +828,15 @@ class Households(Agent):
             ],
         )
 
-        # Set what's up for rent
-        prev_up_for_rent = housing_data["Up for Rent"].values
-        now_up_for_rent = np.where(np.isnan(housing_data["Corresponding Inhabitant Household ID"].values))[0]
-        newly_up_for_rent = [ind for ind in now_up_for_rent if ind not in prev_up_for_rent]
+        # Set what's up for rent: vacant dwellings (inhabitant id -1) that are not listed for sale.
+        # (Previously vacancy was tested with isnan on an integer column, and "newly" compared row
+        # indices with the boolean flags of the previous period.)
+        prev_up_for_rent = housing_data["Up for Rent"].fillna(False).astype(bool).values
+        now_up_for_rent_mask = (housing_data["Corresponding Inhabitant Household ID"].values == -1) & ~housing_data[
+            "Temporarily for Sale"
+        ].astype(bool).values
+        now_up_for_rent = np.where(now_up_for_rent_mask)[0]
+        newly_up_for_rent = np.where(now_up_for_rent_mask & ~prev_up_for_rent)[0]
         housing_data["Up for Rent"] = False
         housing_data.loc[now_up_for_rent, "Up for Rent"] = True
         housing_data["Newly on the Rental Market"] = False
@@ -893,11 +917,18 @@ class Households(Agent):
         self.ts.rent.append(rent_by_household)
         self.ts.rent_imputed.append(imputed_rent_by_household)
 
-        # Calculate the price paid for property
+        # Price paid by buyers and proceeds received by sellers, for EXECUTED sales only (A8).
         price_paid_for_property = np.zeros(self.ts.current("n_households"))
+        property_sale_proceeds = np.zeros(self.ts.current("n_households"))
         if len(current_sales) > 0:
-            price_paid_for_property[current_sales["buyer_id"].values] = current_sales["price_or_rent"].values
+            done = current_sales["executed"].values if "executed" in current_sales else np.ones(len(current_sales), bool)
+            executed_sales = current_sales.loc[done]
+            np.add.at(price_paid_for_property, executed_sales["buyer_id"].values.astype(int), executed_sales["price_or_rent"].values)
+            sellers = executed_sales["seller_id"].values.astype(int)
+            valid = sellers >= 0
+            np.add.at(property_sale_proceeds, sellers[valid], executed_sales["price_or_rent"].values[valid])
         self.ts.price_paid_for_property.append(price_paid_for_property)
+        self.ts.property_sale_proceeds.append(property_sale_proceeds)
 
     def compute_rent(
         self,
@@ -1221,7 +1252,7 @@ class Households(Agent):
         self.ts.total_investment_before_vat.append([self.ts.current("investment").sum()])
         self.ts.industry_investment.append(self.ts.current("investment").sum(axis=0))
 
-    def update_wealth(self, housing_data: pd.DataFrame, tau_cf: float) -> None:
+    def update_wealth(self, housing_data: pd.DataFrame, tau_cf: float, tau_vat: float = 0.0) -> None:
         """Update household wealth positions.
 
         Updates:
@@ -1300,6 +1331,10 @@ class Households(Agent):
         )
         self.ts.total_wealth_other_financial_assets.append([self.ts.current("wealth_other_financial_assets").sum()])
 
+        # Value-added tax on realised consumption is paid by the household to the government
+        # (booked as revenue in CentralGovernment.compute_taxes); C is recorded at basic prices.
+        self.ts.vat_paid.append(tau_vat * self.ts.current("consumption"))
+
         # Update deposits
         self.ts.wealth_deposits.append(
             self.compute_wealth_in_deposits(
@@ -1307,6 +1342,8 @@ class Households(Agent):
                 used_up_wealth_in_deposits=used_up_wealth_in_deposits,
                 tau_cf=tau_cf,
             )
+            - self.ts.current("vat_paid")
+            + self.ts.current("property_sale_proceeds")
         )
         self.ts.total_wealth_deposits.append([self.ts.current("wealth_deposits").sum()])
 

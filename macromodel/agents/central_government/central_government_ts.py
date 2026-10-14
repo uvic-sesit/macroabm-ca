@@ -58,6 +58,8 @@ def create_central_government_timeseries(
         taxes_rental_income=[data["Rental Income Taxes"].values[0]],
         taxes_employee_si=[data["Employee SI Tax"].values[0]],
         taxes_employer_si=[data["Employer SI Tax"].values[0]],
+        gross_wages=[np.nan],
+        unemployment_benefits_paid=[data["Total Unemployment Benefits"].values[0]],
         taxes_on_products=[data["Taxes on Products"].values[0]],
         itc_refunds=[0.0],
         total_rent_received=[data["Total Social Housing Rent"].values[0]],

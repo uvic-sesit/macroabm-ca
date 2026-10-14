@@ -1,0 +1,14 @@
+region,households,owner_rate,count_source,owner_source
+CAN_NL,228100,0.749671,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_PE,71100,0.663854,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_NS,432200,0.677695,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_NB,349100,0.717846,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_QC,3763300,0.602238,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_ON,5836100,0.663543,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_MB,523600,0.671505,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_SK,457900,0.718716,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_AB,1644000,0.715328,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_BC,2149600,0.628815,CHS 2022 (46-10-0083) number of households,CHS 2022 (46-10-0083) owner/total
+CAN_YT,17181,0.644063,Census 2021 (98-10-0001) private dwellings occupied by usual residents,Census 2021 (98-10-0232) owner/total
+CAN_NT,15207,0.535174,Census 2021 (98-10-0001) private dwellings occupied by usual residents,Census 2021 (98-10-0232) owner/total
+CAN_NU,9926,0.191940,Census 2021 (98-10-0001) private dwellings occupied by usual residents,Census 2021 (98-10-0232) owner/total

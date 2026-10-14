@@ -257,6 +257,7 @@ class CentralGovernment(Agent):
         current_household_new_real_wealth: np.ndarray,
         taxes_less_subsidies_rates: np.ndarray,
         current_total_exports: float,
+        cpi: float = 1.0,
     ) -> None:
         """Calculate all tax revenues for the current period.
 
@@ -305,24 +306,32 @@ class CentralGovernment(Agent):
         # Taxes on exports
         self.ts.taxes_exports.append([self.states["Export Tax"] * current_total_exports])
 
-        # Total wages of employed individuals
-        tot_wages_employed_ind = np.sum([current_ind_employee_income[current_ind_activity == ActivityStatus.EMPLOYED]])
+        # Labour taxes on the GROSS nominal wage (A2). Individual employee income is the real wage net of
+        # employee SSC and PIT; firms pay cpi * (1 + tau_er) / ((1 - tau_ee)(1 - tau_inc)) * sum(w). With
+        # G = cpi * sum(w) / ((1 - tau_ee)(1 - tau_inc)) the firm wage bill splits exactly into
+        # net wage + PIT + employee SSC + employer SSC.
+        tau_inc = self.states["Income Tax"]
+        tau_ee = self.states["Employee Social Insurance Tax"]
+        tau_er = self.states["Employer Social Insurance Tax"]
+        net_real_wages_employed = np.sum([current_ind_employee_income[current_ind_activity == ActivityStatus.EMPLOYED]])
+        gross_wages = cpi * net_real_wages_employed / ((1 - tau_ee) * (1 - tau_inc))
+        self.ts.gross_wages.append([gross_wages])
 
         # Taxes on income
         self.ts.taxes_income.append(
             [
-                self.states["Income Tax"] * (1 - self.states["Employee Social Insurance Tax"]) * tot_wages_employed_ind
-                + self.states["Income Tax"] * current_total_rent_paid
-                + self.states["Income Tax"] * current_income_financial_assets.sum(),
+                tau_inc * (1 - tau_ee) * gross_wages
+                + tau_inc * current_total_rent_paid
+                + tau_inc * current_income_financial_assets.sum(),
             ]
         )
-        self.ts.taxes_rental_income.append([self.states["Income Tax"] * current_total_rent_paid])
+        self.ts.taxes_rental_income.append([tau_inc * current_total_rent_paid])
 
         # Taxes on employer social insurance
-        self.ts.taxes_employer_si.append([self.states["Employer Social Insurance Tax"] * tot_wages_employed_ind])
+        self.ts.taxes_employer_si.append([tau_er * gross_wages])
 
         # Taxes on employee social insurance
-        self.ts.taxes_employee_si.append([self.states["Employee Social Insurance Tax"] * tot_wages_employed_ind])
+        self.ts.taxes_employee_si.append([tau_ee * gross_wages])
 
     def compute_taxes_on_products(self) -> float:
         """Calculate total taxes on products and production.
@@ -398,6 +407,7 @@ class CentralGovernment(Agent):
         current_government_nominal_amount_spent: np.ndarray,
         government_interest_rates: float,
         current_itc_refunds: float = 0.0,
+        total_unemployment_benefits_paid: float | None = None,
     ) -> np.ndarray:
         """Calculate the government deficit.
 
@@ -419,10 +429,15 @@ class CentralGovernment(Agent):
         Returns:
             np.ndarray: Government deficit (positive = deficit)
         """
-        total_unemployment_benefits = (
-            np.sum(current_ind_activity == ActivityStatus.UNEMPLOYED)
-            * self.ts.current("unemployment_benefits_by_individual")[0]
-        )
+        if total_unemployment_benefits_paid is not None:
+            # amount actually credited to households this quarter (A3)
+            total_unemployment_benefits = total_unemployment_benefits_paid
+        else:
+            total_unemployment_benefits = (
+                np.sum(current_ind_activity == ActivityStatus.UNEMPLOYED)
+                * self.ts.current("unemployment_benefits_by_individual")[0]
+            )
+        self.ts.unemployment_benefits_paid.append([total_unemployment_benefits])
         total_household_social_transfers = np.sum(current_household_social_transfers)
         all_benefits = total_unemployment_benefits + total_household_social_transfers
         interest_payments = government_interest_rates * self.ts.current("debt")[0]

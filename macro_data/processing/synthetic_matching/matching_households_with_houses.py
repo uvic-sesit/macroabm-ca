@@ -135,7 +135,11 @@ def set_housing_df(
     invalid_values = housing_df["Value"] < 60 * housing_df["Rent"]
     housing_df.loc[invalid_values, "Value"] = np.nan
 
-    housing_df = remove_outliers(housing_df, cols=["Rent", "Value"], quantile=0.2, use_logpdf=False)
+    if "Validated Income" not in synthetic_population.household_data:
+        # Legacy HFCS path: trim the 20% lowest-density (Rent, Value) observations before imputation.
+        # Skipped for the validated Canadian file: its dwelling values are calibrated to 36-10-0580, and trimming
+        # then re-imputing a fifth of them lowered the dwelling stock by ~8% (Phase A, I-15).
+        housing_df = remove_outliers(housing_df, cols=["Rent", "Value"], quantile=0.2, use_logpdf=False)
 
     housing_df = apply_iterative_imputer(housing_df, ["Rent", "Value"])
 
@@ -324,9 +328,13 @@ def housing_info_from_population(rental_income_taxes: float, synthetic_populatio
         set_social_housing_renters(num_other_properties_owned, num_renters, synthetic_population)
     # Rescale total rent received to match rent paid minus taxes
     ind_curr_btl = np.flatnonzero(synthetic_population.household_data["Rental Income from Real Estate"] > 0.0)
+    # Landlords' (net) rental income must equal the rent paid by PRIVATE renters (tenure 3) net of PIT. Renters
+    # moved to social housing above (tenure -1) pay the social-housing rent to the government, not to landlords;
+    # summing over all households previously over-stated private rents whenever renters exceed rental dwellings.
+    private_renters = synthetic_population.household_data["Tenure Status of the Main Residence"] == 3
     rescale_variable = (
         (1 - rental_income_taxes)
-        * synthetic_population.household_data["Rent Paid"].sum()
+        * synthetic_population.household_data.loc[private_renters, "Rent Paid"].sum()
         / synthetic_population.household_data.loc[ind_curr_btl, "Rental Income from Real Estate"].sum()
     )
     synthetic_population.household_data.loc[ind_curr_btl, "Rental Income from Real Estate"] *= rescale_variable

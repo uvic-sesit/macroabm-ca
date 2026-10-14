@@ -84,6 +84,12 @@ def build_canadianized_households_df(csv_path: Path, hfcs_households_df: pd.Data
               "Consumption of Consumer Goods/Services as a Share of Income"]
     for c in direct:
         out[c] = df[c].values
+    # Tenure semantics of the validated file: code 1 = owner (all owners; carries every main-residence value and
+    # mortgage, weighted share = CHS 2022 65.41%). Codes 2 and 4 are retained French-skeleton codes whose SFS donors
+    # come from the non-owner cell (zero main-residence value and mortgage). The model treats 1, 2 and 4 as
+    # owner-occupiers, so map 2 and 4 to renter (3) to keep the validated tenure and balance-sheet controls.
+    tenure = pd.to_numeric(out["Tenure Status of the Main Residence"], errors="coerce")
+    out["Tenure Status of the Main Residence"] = np.where(tenure == 1, 1, 3)
     # --- financial-asset components: SFS aggregate -> Mutual Funds; rest 0 (downstream only sums them) ---
     out["Mutual Funds"] = df["Wealth in Financial Assets"].values
     for c in FINANCIAL_COMPONENTS_ZERO:
@@ -126,6 +132,14 @@ def build_canadianized_households_df(csv_path: Path, hfcs_households_df: pd.Data
         out["Number of Properties other than Household Main Residence"] = (other_prop > 0).astype(int)
     out["Number of Properties other than Household Main Residence"] = (
         out["Number of Properties other than Household Main Residence"].fillna(0)
+    )
+    # Make the (French-carried) property count consistent with the validated Canadian secondary-property value:
+    # the build zeroes "Value of other Properties" whenever the count is 0 (hfcs_household_tools.fix_property_values),
+    # which discarded ~1.0T of SFS-calibrated secondary-property value. Keep the carried count where both agree,
+    # use 1 where SFS has value but the carried count is 0, and 0 where SFS has no value.
+    n_other = out["Number of Properties other than Household Main Residence"].astype(float).values
+    out["Number of Properties other than Household Main Residence"] = np.where(
+        other_prop > 0, np.maximum(n_other, 1.0), 0.0
     )
     out["Rent Paid"] = pd.to_numeric(out.get("Rent Paid", 0.0), errors="coerce").fillna(0.0)
     # Match the reader convention (HFCSReader.read_csv sets "ID" as the index): sampling links individuals

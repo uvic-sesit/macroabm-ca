@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 from scipy.special import expit
 
+OWNER_TENURE_CODES = (1, 2, 4)
+
 
 class HouseholdDemandForProperty(ABC):
     """Abstract base class for household property demand behavior.
@@ -257,13 +259,16 @@ class DefaultHouseholdDemandForProperty(HouseholdDemandForProperty):
                 maximum rent willing to pay, households hoping to move
         """
         # Indices
+        # Tenure codes (HFCS hb0300, as used throughout the model): 1 owner outright, 2 owner with mortgage,
+        # 3 renter, 4 free use (owner-occupied dwelling), -1 social housing. (Previously renters were
+        # tested as 0 and owners as 1 only.)
         ind_in_social_housing = household_residence_tenure_status == -1
-        ind_renting = np.array(household_residence_tenure_status == 0)
+        ind_renting = np.array(household_residence_tenure_status == 3)
         ind_renting_not_staying = np.logical_and(
             ind_renting,
             np.random.random(ind_renting.shape[0]) > self.probability_stay_in_rented_property,
         )
-        ind_owning = np.array(household_residence_tenure_status == 1)
+        ind_owning = np.isin(household_residence_tenure_status, OWNER_TENURE_CODES)
         ind_owning_not_staying = np.logical_and(
             ind_owning,
             np.random.random(ind_owning.shape[0]) > self.probability_stay_in_owned_property,
@@ -312,10 +317,12 @@ class DefaultHouseholdDemandForProperty(HouseholdDemandForProperty):
             * household_income[ind_deciding_to_rent] ** self.maximum_rent_income_exponent
         )
 
+        # Return the IDs of owners hoping to move (previously the boolean mask was returned and then used
+        # with Series.isin, which matched only household ids 0 and 1).
         return (
             max_price_willing_to_pay,
             max_rent_willing_to_pay,
-            ind_owning_not_staying,
+            np.where(ind_owning_not_staying)[0],
         )
 
     def compute_initial_sale_price(

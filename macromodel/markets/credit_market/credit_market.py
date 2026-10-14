@@ -552,7 +552,12 @@ class CreditMarket:
         total_amount = self.states["st_loans"][0][:, firm_id].sum() + self.states["lt_loans"][0][:, firm_id].sum()
         self.states["st_loans"][:, :, firm_id] = 0.0
         self.states["lt_loans"][:, :, firm_id] = 0.0
+        self._record_writeoff(total_amount)
         return total_amount
+
+    def _record_writeoff(self, amount: float) -> None:
+        """Cumulative principal written off (loans removed without repayment); read by the accounting battery."""
+        self.states["cumulative_writeoffs"] = self.states.get("cumulative_writeoffs", 0.0) + float(amount)
 
     def remove_loans_to_households(self, household_id: int | np.ndarray) -> Tuple[float, float]:
         """Remove all loans associated with specified household(s).
@@ -569,6 +574,7 @@ class CreditMarket:
         mort_amount = self.states["mort_loans"][0][:, household_id].sum()
         self.states["cons_loans"][:, :, household_id] = 0.0
         self.states["mort_loans"][:, :, household_id] = 0.0
+        self._record_writeoff(cons_amount + mort_amount)
         return cons_amount, mort_amount
 
     def remove_loans_by_bank(self, bank_id: int | np.ndarray) -> None:
@@ -579,6 +585,9 @@ class CreditMarket:
         Args:
             bank_id (int | np.ndarray): ID(s) of bank(s) to remove loans for
         """
+        self._record_writeoff(
+            sum(self.states[k][0][bank_id].sum() for k in ["st_loans", "lt_loans", "cons_loans", "mort_loans"])
+        )
         self.states["st_loans"][:, bank_id] = 0.0
         self.states["lt_loans"][:, bank_id] = 0.0
         self.states["cons_loans"][:, bank_id] = 0.0

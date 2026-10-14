@@ -45,7 +45,7 @@ B = {  # benchmark, source id, concept note
  "Households": (15_455_000, "46-10-0083 CHS 2022, Canada (provinces only), number of households"),
 }
 rows = []
-for tag in ["branch", "canonical"]:
+for tag in ["branch", "canonical", "phaseA"]:
     p = pd.read_csv(O + f"hh_t0_pickle_national_{tag}.csv", index_col=0).iloc[:, 0]
     m = pd.read_csv(O + f"hh_t0_model_national_{tag}.csv", index_col=0).iloc[:, 0]
     k = B["Households"][0] / p["n_hh"]

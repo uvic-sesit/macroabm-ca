@@ -188,6 +188,8 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         yearly_factor: float = 4.0,
         unemployment_rate_override: float | None = None,
         participation_rate_override: float | None = None,
+        n_households_override: float | None = None,
+        owner_rate_override: float | None = None,
     ) -> "SyntheticHFCSPopulation":
         """
         Creates a synthetic population from data readers.
@@ -216,7 +218,12 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             cls: The synthetic population object.
         """
 
-        n_households = int(readers.eurostat.number_of_households(country_name, year) * population_ratio / scale)
+        if n_households_override is not None:
+            # CAN-2022: observed regional household count (CHS 2022 / Census 2021), not the proxy
+            # country's household density applied to population and split by value-added share.
+            n_households = int(round(n_households_override / scale))
+        else:
+            n_households = int(readers.eurostat.number_of_households(country_name, year) * population_ratio / scale)
         hfcs_individuals_data = readers.hfcs[country_name].individuals_df
         hfcs_households_data = readers.hfcs[country_name].households_df
 
@@ -227,7 +234,11 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             output_shares = None
 
         household_data, individual_data = sample_households(
-            hfcs_households_data, hfcs_individuals_data, n_households, output_shares=output_shares
+            hfcs_households_data,
+            hfcs_individuals_data,
+            n_households,
+            output_shares=output_shares,
+            owner_rate_target=owner_rate_override,
         )
 
         # Base-quarter labour rates. The labour-stats series (WB/IMF/OECD) can end before the
@@ -387,6 +398,8 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         self,
         total_social_transfers: float,
         independents: Optional[list[str]] = None,
+        firm_total_wages: Optional[pd.Series] = None,
+        labour_taxrate: Optional[float] = None,
     ) -> None:
         """
         Computes the household income based on the given total social transfers.
@@ -409,6 +422,11 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         self.set_household_employee_income()
         self.set_household_income_from_financial_assets()
         self.reconcile_labour_income()  # Option B: match validated Canadian household income (CAN-2022 only)
+        if firm_total_wages is not None and labour_taxrate is not None and "Validated Income" in self.household_data:
+            # I-6: the Option-B reconciliation rescales members after they were matched to firms, which breaks
+            # the firm-level wage-bill identity; restore it (keeping the reconciled relative wages) so the t0
+            # wage distribution is consistent with the wage rule applied from t=1.
+            self.renormalise_labour_income_to_firms(firm_total_wages, labour_taxrate)
         self.set_household_income()
 
     def set_household_other_real_assets_wealth(self) -> None:
@@ -441,6 +459,16 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
 
     def set_household_deposits(self) -> None:
         self.household_data.loc[self.household_data["Wealth in Deposits"].isna(), "Wealth in Deposits"] = 0.0
+        if "Validated Income" in self.household_data:
+            # I-9 (CAN-2022): credit-line and credit-card balances are household consumer debt (SFS-calibrated
+            # to 36-10-0580 consumer credit). Fold them into the single non-mortgage loan field the credit
+            # market initialises from, instead of discarding them.
+            other = self.household_data["Outstanding Balance of other Non-Mortgage Loans"].fillna(0.0)
+            self.household_data["Outstanding Balance of other Non-Mortgage Loans"] = (
+                other
+                + self.household_data["Outstanding Balance of Credit Line"].fillna(0.0)
+                + self.household_data["Outstanding Balance of Credit Card Debt"].fillna(0.0)
+            )
         self.household_data.loc[:, "Outstanding Balance of Credit Line"] = 0.0
         self.household_data.loc[:, "Outstanding Balance of Credit Card Debt"] = 0.0
         self.household_data.loc[:, "Wealth in Deposits"] *= self.scale
@@ -616,6 +644,36 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
         ind["Employee Income"] = ind_emp
         hh["Employee Income"] = emp_hh
 
+    def renormalise_labour_income_to_firms(self, firm_total_wages: pd.Series, labour_taxrate: float) -> None:
+        """Rescale employed individuals' net wages so that, firm by firm, they sum to the firm's net wage bill
+        (labour_taxrate x Total Wages, as in matching_individuals_with_firms); set the employee income of
+        non-employed individuals to zero; split household labour income (wages) from unemployment benefits.
+        """
+        ind = self.individual_data
+        employed = (ind["Activity Status"] == 1).values
+        firm_id = ind["Corresponding Firm ID"].values.astype(float)
+        wages = np.nan_to_num(ind["Employee Income"].values.astype(float), nan=0.0)
+        wages[~employed] = 0.0
+        valid = employed & ~np.isnan(firm_id)
+        fids = firm_id[valid].astype(int)
+        target = labour_taxrate * np.nan_to_num(np.asarray(firm_total_wages, dtype=float), nan=0.0)
+        current = np.bincount(fids, weights=wages[valid], minlength=len(target))
+        factor = np.divide(target, current, out=np.ones_like(target), where=current > 0)
+        wages[valid] = wages[valid] * factor[fids]
+        ind["Employee Income"] = wages
+        ub = np.nan_to_num(ind["Income from Unemployment Benefits"].values.astype(float), nan=0.0)
+        ind["Income"] = wages + ub
+        corr = self.household_data["Corresponding Individuals ID"].values
+        pos = {idx: p for p, idx in enumerate(ind.index)}
+        hh_wages = np.zeros(len(corr))
+        hh_ub = np.zeros(len(corr))
+        for i, members in enumerate(corr):
+            rows = [pos[m] for m in members]
+            hh_wages[i] = wages[rows].sum()
+            hh_ub[i] = ub[rows].sum()
+        self.household_data["Employee Income"] = hh_wages
+        self.household_data["Unemployment Benefits"] = hh_ub
+
     def set_household_social_transfers(
         self, total_social_transfers: float, independents: Optional[list[str]] = None
     ) -> None:
@@ -697,6 +755,9 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             + self.household_data["Rental Income from Real Estate"]
             + self.household_data["Income from Financial Assets"]
         )
+        if "Unemployment Benefits" in self.household_data:
+            # wages and UB held separately (CAN-2022 path); legacy path keeps UB inside "Employee Income"
+            self.household_data["Income"] += self.household_data["Unemployment Benefits"]
 
     @property
     def investment_weights(self) -> np.ndarray:
@@ -870,8 +931,12 @@ class SyntheticHFCSPopulation(SyntheticPopulation):
             )
             diff = iot_hh_consumption.sum() - current_hh_consumption.sum()
             inc_sr = (1.0 / (1 + vat) * np.outer(cons_weights, sr * income).T).sum()
-            factor = 1.0 - diff / inc_sr
-            self.household_data["Saving Rate"] = factor * sr
+            if inc_sr > 0:
+                factor = 1.0 - diff / inc_sr
+                self.household_data["Saving Rate"] = factor * sr
+            # else: every household would need a non-positive saving rate to reach the IO consumption total
+            # (aggregate income below consumption); keep the uniformly rescaled rates from the first step
+            # instead of dividing by zero (which produced NaN saving rates).
 
         self.household_data["Consumption"] = (
             1 / (1 + vat) * (1 - self.household_data["Saving Rate"]) * self.household_data["Income"]
@@ -977,11 +1042,35 @@ def split_array(array_to_split: np.ndarray) -> list[list[int]]:
     return result
 
 
+OWNER_TENURE_CODES = (1, 2, 4)  # owner outright, owner with mortgage, free use (owner-occupied dwelling)
+
+
+def tenure_stratified_weights(households: pd.DataFrame, owner_rate_target: Optional[float]) -> pd.Series:
+    """Normalised sampling weights, post-stratified on the owner/renter margin.
+
+    With ``owner_rate_target`` (regional homeownership, e.g. CHS 2022) the survey weights of owner
+    households (tenure codes 1, 2, 4 -- the codes the model treats as owner-occupied) are scaled to sum
+    to the target share and renters (code 3) to the remainder; within-tenure structure is preserved.
+    Without a target the plain normalised survey weights are returned (legacy behaviour).
+    """
+    w = households["Weight"].astype(float)
+    if owner_rate_target is None:
+        return w / w.sum()
+    own = households["Tenure Status of the Main Residence"].isin(OWNER_TENURE_CODES)
+    if not (0.0 < owner_rate_target < 1.0) or w[own].sum() == 0 or w[~own].sum() == 0:
+        raise ValueError(f"Cannot post-stratify tenure to owner rate {owner_rate_target}")
+    out = w.copy()
+    out[own] = w[own] / w[own].sum() * owner_rate_target
+    out[~own] = w[~own] / w[~own].sum() * (1.0 - owner_rate_target)
+    return out / out.sum()
+
+
 def sample_households(
     hfcs_households_data: pd.DataFrame,
     hfcs_individuals_data: pd.DataFrame,
     n_households: int,
     output_shares: Optional[dict[str, pd.Series]] = None,
+    owner_rate_target: Optional[float] = None,
 ) -> (pd.DataFrame, pd.DataFrame):
     """
     This function samples a specified number of households from the given HFCS households data,
@@ -1006,7 +1095,7 @@ def sample_households(
     4. Resets the indices of the returned DataFrames for consistency.
     """
     # Step 1: Sample households with replacement
-    weights = hfcs_households_data["Weight"] / hfcs_households_data["Weight"].sum()
+    weights = tenure_stratified_weights(hfcs_households_data, owner_rate_target)
     sampled_household_indices = np.random.choice(hfcs_households_data.index, n_households, p=weights, replace=True)
 
     # Create a list of DataFrames for each sampled household with a new unique ID

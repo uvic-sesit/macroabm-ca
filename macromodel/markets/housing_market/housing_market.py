@@ -161,13 +161,14 @@ class HousingMarket:
         # property_data["Corresponding Inhabitant Household ID"].loc[
         #     :, np.isnan(property_data["Corresponding Inhabitant Household ID"])
         # ] = -1
-        property_data["Corresponding Inhabitant Household ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
-        property_data["House ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
-        property_data["Is Owner-Occupied"] = macromodel.util.get_histogram.fillna(-1).astype(int)
+        # Missing ids -> -1 (vacant / unknown). NB: the previous code called fillna on the util MODULE
+        # (macromodel.util.get_histogram.fillna(-1)), which evaluates to the scalar -1 and overwrote every
+        # property's inhabitant, house id and owner-occupancy flag with -1.
+        for column in ["Corresponding Inhabitant Household ID", "House ID", "Is Owner-Occupied"]:
+            property_data[column] = property_data[column].fillna(-1).astype(int)
         property_data["Corresponding Owner Household ID"] = property_data["Corresponding Owner Household ID"].astype(
             int
         )
-        property_data["Corresponding Inhabitant Household ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
 
         ts = create_housing_market_timeseries(
             data=property_data,
@@ -249,10 +250,13 @@ class HousingMarket:
         # Recording the states of all homes
         states = data.copy()
         states["Corresponding Inhabitant Household ID"][np.isnan(states["Corresponding Inhabitant Household ID"])] = -1
-        states["House ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
-        states["Is Owner-Occupied"] = macromodel.util.get_histogram.fillna(-1).astype(int)
-        states["Corresponding Owner Household ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
-        states["Corresponding Inhabitant Household ID"] = macromodel.util.get_histogram.fillna(-1).astype(int)
+        for column in [
+            "House ID",
+            "Is Owner-Occupied",
+            "Corresponding Owner Household ID",
+            "Corresponding Inhabitant Household ID",
+        ]:
+            states[column] = states[column].fillna(-1).astype(int)
 
         # Create the corresponding time series object
         ts = create_housing_market_timeseries(
@@ -448,71 +452,68 @@ class HousingMarket:
             This method ensures all market clearing outcomes are properly
             reflected in the system state.
         """
+        sales = self.states["current_sales"]
+        props = self.states["properties"]
+        inhabited = household_states["Corresponding Inhabited House ID"]
+        if len(sales) == 0:
+            sales["executed"] = np.zeros(0, dtype=bool)
+        is_rent = (sales["sales_types"] == "Rental").values
+        is_sell = (sales["sales_types"] == "Sell").values
+        unknown = ~(is_rent | is_sell)
+        if unknown.any():
+            raise ValueError("Unknown housing market sales type", sales.loc[unknown, "sales_types"].unique())
+        buyers = sales["buyer_id"].values.astype(int)
+        sellers = sales["seller_id"].values.astype(int)
+        prop_ids = sales["property_id"].values.astype(int)
+        prices = sales["price_or_rent"].values.astype(float)
+
+        # A sale is executable if the buyer can pay (mortgage granted or enough financial wealth) and is not
+        # the seller. A seller who lives in the dwelling being sold must obtain another dwelling in the same
+        # round (an executed purchase or a rental match); otherwise the sale does not execute (no double
+        # occupancy). Iterate to a fixed point because cancelling one sale can cancel the buyer's own sale.
+        affordable = (household_received_mortgages[buyers] > 0) | (household_financial_wealth[buyers] >= prices)
+        executed = is_rent | (is_sell & affordable & (buyers != sellers))
+        seller_lives_there = np.array(
+            [s_ >= 0 and inhabited[s_] == p_ for s_, p_ in zip(sellers, prop_ids)], dtype=bool
+        )
+        for _ in range(len(sales) + 1):
+            movers = set(buyers[executed])
+            new_executed = executed & ~(is_sell & seller_lives_there & ~np.isin(sellers, list(movers)))
+            if np.array_equal(new_executed, executed):
+                break
+            executed = new_executed
+        sales["executed"] = executed
+
+        # Vacate previous residences first (only if still occupied by the mover), then move in.
+        for k in np.where(executed)[0]:
+            prev = inhabited[buyers[k]]
+            if prev != -1 and props.at[prev, "Corresponding Inhabitant Household ID"] == buyers[k]:
+                props.at[prev, "Corresponding Inhabitant Household ID"] = -1
         total_number_of_bought_houses = 0
         total_number_of_newly_rented_houses = 0
-        for index, sale in self.states["current_sales"].iterrows():
-            buyer_id, seller_id, property_id = (
-                int(sale["buyer_id"]),
-                int(sale["seller_id"]),
-                int(sale["property_id"]),
-            )
-            prev_property_id = household_states["Corresponding Inhabited House ID"][buyer_id]
-            if sale["sales_types"] == "Rental":
-                self.states["properties"].loc[property_id, "Corresponding Inhabitant Household ID"] = buyer_id
-                if prev_property_id != -1:
-                    self.states["properties"].loc[
-                        prev_property_id,
-                        "Corresponding Inhabitant Household ID",
-                    ] = -1
-                household_states["Corresponding Inhabited House ID"][buyer_id] = property_id
+        for k in np.where(executed)[0]:
+            buyer_id, seller_id, property_id = buyers[k], sellers[k], prop_ids[k]
+            props.at[property_id, "Corresponding Inhabitant Household ID"] = buyer_id
+            inhabited[buyer_id] = property_id
+            if is_rent[k]:
                 household_states["Tenure Status of the Main Residence"][buyer_id] = 3
-                household_states["corr_renters"][seller_id].append(buyer_id)
+                if seller_id >= 0:
+                    household_states["corr_renters"][seller_id].append(buyer_id)
                 total_number_of_newly_rented_houses += 1
-            elif sale["sales_types"] == "Sell":
-                if (
-                    household_received_mortgages[buyer_id] > 0
-                    or household_financial_wealth[buyer_id] >= sale["price_or_rent"]
-                ):
-                    # Corresponding property owners
-                    self.states["properties"].loc[property_id, "Corresponding Owner Household ID"] = buyer_id
-                    household_states["Corresponding Property Owner"][buyer_id] = buyer_id
-                    # household_states["corr_additionally_owned_properties"][buyer_id].append(property_id)
-                    # household_states["corr_additionally_owned_properties"][seller_id].remove(property_id)
-
-                    # Corresponding inhabitant households
-                    self.states["properties"].loc[property_id, "Corresponding Inhabitant Household ID"] = buyer_id
-                    if prev_property_id != -1:
-                        self.states["properties"].loc[
-                            prev_property_id,
-                            "Corresponding Inhabitant Household ID",
-                        ] = -1
-
-                    # Corresponding inhabited house ID
-                    household_states["Corresponding Inhabited House ID"][buyer_id] = property_id
-
-                    # Tenure status
-                    household_states["Tenure Status of the Main Residence"][buyer_id] = 1
-
-                    # Corresponding renter
-                    if buyer_id in household_states["corr_renters"][seller_id]:
-                        household_states["corr_renters"][seller_id].remove(buyer_id)
-
-                    # Price
-                    self.states["properties"].loc[property_id, "Value"] = sale["price_or_rent"]
-
-                    # Count
-                    total_number_of_bought_houses += 1
             else:
-                raise ValueError("Unknown housing market sales type", sale["sales_types"])
-
-            # General stuff
-            if (
-                self.states["properties"].at[property_id, "Corresponding Owner Household ID"]
-                == self.states["properties"].at[property_id, "Corresponding Inhabitant Household ID"]
-            ):
-                self.states["properties"].at[property_id, "Is Owner-Occupied"] = 1
-            else:
-                self.states["properties"].at[property_id, "Is Owner-Occupied"] = 0
+                props.at[property_id, "Corresponding Owner Household ID"] = buyer_id
+                household_states["Corresponding Property Owner"][buyer_id] = buyer_id
+                household_states["Tenure Status of the Main Residence"][buyer_id] = (
+                    2 if household_received_mortgages[buyer_id] > 0 else 1
+                )
+                if seller_id >= 0 and buyer_id in household_states["corr_renters"][seller_id]:
+                    household_states["corr_renters"][seller_id].remove(buyer_id)
+                props.at[property_id, "Value"] = prices[k]
+                total_number_of_bought_houses += 1
+        props["Is Owner-Occupied"] = (
+            (props["Corresponding Owner Household ID"].values == props["Corresponding Inhabitant Household ID"].values)
+            & (props["Corresponding Inhabitant Household ID"].values != -1)
+        ).astype(int)
 
         # Update aggregates
         self.ts.total_number_of_houses_rented.append(

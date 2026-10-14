@@ -111,6 +111,14 @@ def create_households_timeseries(
         income_employee=data["Employee Income"].values,
         total_income_employee=[data["Employee Income"].values.sum()],
         expected_income_employee=data["Employee Income"].values,
+        income_unemployment_benefits=(
+            data["Unemployment Benefits"].values if "Unemployment Benefits" in data else np.zeros(len(data))
+        ),
+        total_income_unemployment_benefits=[
+            data["Unemployment Benefits"].values.sum() if "Unemployment Benefits" in data else 0.0
+        ],
+        vat_paid=np.full(len(data), np.nan),
+        property_sale_proceeds=np.zeros(len(data)),
         income_social_transfers=data["Regular Social Transfers"].values,
         total_income_social_transfers=[data["Regular Social Transfers"].values.sum()],
         expected_income_social_transfers=data["Regular Social Transfers"].values,

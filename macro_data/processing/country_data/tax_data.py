@@ -11,6 +11,19 @@ from macro_data.configuration.countries import Country
 from macro_data.readers import DataReaders
 
 
+# I-3: Canadian average effective personal income tax rate, 2022 (StatCan 36-10-0224, households):
+#   PIT (v1.23) / [CoE (v1.1) + net mixed income (v1.2) + property income received (v1.7)
+#                  + transfers from general government (v1.14) - social contributions (v1.25)]
+#   = 348,148 / (1,378,529 + 224,841 + 246,588 + 286,670 - 131,280) = 348,148 / 2,005,348 = 0.17361.
+# Replaces the hard-coded 0.09 "OECD average" fallback of OECDEconData.read_tau_income for CAN-2022 builds.
+CAN_2022_EFFECTIVE_PIT_RATE = 348_148 / 2_005_348
+
+
+def _is_canada(country) -> bool:
+    parent = getattr(country, "parent_country", country)
+    return getattr(parent, "value", str(parent)) == "CAN"
+
+
 @dataclass
 class TaxData:
     """Container for various tax rates and financial metrics for a specific country.
@@ -53,13 +66,16 @@ class TaxData:
             TaxData: Instance containing tax rates and financial metrics for the specified
                     country and year.
         """
+        income_tax = readers.oecd_econ.read_tau_income(country, year)
+        if _is_canada(country) and year == 2022:
+            income_tax = CAN_2022_EFFECTIVE_PIT_RATE
         return cls(
             value_added_tax=readers.world_bank.get_tau_vat(country, year),
             export_tax=readers.get_export_taxes(country, year),
             employer_social_insurance_tax=readers.oecd_econ.read_tau_sif(country, year),
             employee_social_insurance_tax=readers.oecd_econ.read_tau_siw(country, year),
             profit_tax=readers.oecd_econ.read_tau_firm(country, year),
-            income_tax=readers.oecd_econ.read_tau_income(country, year),
+            income_tax=income_tax,
             risk_premium=readers.eurostat.firm_risk_premium(country, year),
             capital_formation_tax=readers.eurostat.taxrate_on_capital_formation(country, year),
         )

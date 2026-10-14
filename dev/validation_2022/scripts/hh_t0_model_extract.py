@@ -94,11 +94,11 @@ for r in provs:
     row["gov_vat_formula"] = st["Value-added Tax"] * cur(h.ts, "consumption").sum() * A
     rows.append(row)
 df = pd.DataFrame(rows).set_index("region")
-df.to_csv(OUT / "hh_t0_model_by_region.csv")
+df.to_csv(OUT / f"hh_t0_model_by_region_{TAG}.csv")
 nat = df.select_dtypes("number").sum()
 for k in [c for c in df.columns if c.startswith(("tau_", "cpi0", "sr_", "coef", "inv_rate", "policy", "hh_dep_rate", "mort_rate", "cons_rate", "ub_per"))]:
     nat[k] = df[k].mean()
-nat.to_csv(OUT / "hh_t0_model_national.csv")
+nat.to_csv(OUT / f"hh_t0_model_national_{TAG}.csv")
 pd.set_option("display.max_rows", 200)
 print(nat.round(4).to_string())
 print(df[["n_hh", "hh_income", "ind_w_net_employed", "firm_net_wage_implied", "hh_deposits", "sr_rule_incw"]].round(2))

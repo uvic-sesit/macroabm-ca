@@ -511,6 +511,10 @@ class DataReaders:
                         icio[simulation_year].imputed_rents[large_country] * renorm_output[region]
                     )
                 del icio[simulation_year].imputed_rents[large_country]
+            # In the provincial path the IO household final-demand column for sector L is NOT reduced by
+            # imputed rent (unlike the ICIO path, icio_reader.py agg_from_csv): it contains paid + imputed rent
+            # (2022: L = 312.7B vs HFCE paid 81.5B + imputed 235.9B). Record this so GDP is not double counted.
+            icio[simulation_year].housing_services_in_household_io = True
 
             # country_names = all_countries
         else:
@@ -1085,6 +1089,27 @@ def _load_can_2022_provincial_labour(
     return out
 
 
+CAN_2022_HOUSEHOLD_CONTROLS_FILE = Path(__file__).parent / "population_data" / "can_2022_household_controls.csv"
+
+
+def _load_can_2022_household_controls(path: Path = CAN_2022_HOUSEHOLD_CONTROLS_FILE) -> dict[str, dict[str, float]]:
+    """Load observed 2022 household counts and homeownership rates by province/territory.
+
+    Provinces: Canadian Housing Survey 2022 (46-10-0083, number of households and owner share).
+    Territories (not covered by the CHS): Census 2021 private dwellings occupied by usual residents
+    (98-10-0001) and owner share (98-10-0232). Returns {region_code: {"households": ., "owner_rate": .}}.
+    Used only to size and tenure-stratify the t0 synthetic household sample (replaces the French
+    household density x value-added-share allocation). Absent file -> empty dict (legacy behaviour).
+    """
+    if not Path(path).exists():
+        return {}
+    df = pd.read_csv(path)
+    return {
+        str(row["region"]): {"households": float(row["households"]), "owner_rate": float(row["owner_rate"])}
+        for _, row in df.iterrows()
+    }
+
+
 def inject_can_provincial_socioeconomic_2022(
     sea_reader: WIODSEAReader,
     regions_dict: dict[Country, list[Region]],
@@ -1188,6 +1213,10 @@ def inject_can_provincial_socioeconomic_2022(
     # above) to set each region's t0 activity split to its own observed condition, replacing the single
     # national IMF/WB base rate. t0 initialisation only -- no forward path.
     sea_reader.can_2022_provincial_labour = _load_can_2022_provincial_labour(raw_data_path=raw_data_path)
+
+    # Observed household counts + homeownership by province/territory (CHS 2022; Census 2021 territories).
+    # Consumed in synthetic_country to size and tenure-stratify each region's t0 household sample.
+    sea_reader.can_2022_household_controls = _load_can_2022_household_controls()
 
 
 def prune_icio_dict(icio_dict: dict[int, Any], prune_date: date):

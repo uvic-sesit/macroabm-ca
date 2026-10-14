@@ -288,7 +288,13 @@ class MortgageLoans(LoanData):
         Returns:
             MortgageLoans: Container with preprocessed loan data
         """
-        household_mortgage_debt = household_data["Outstanding Balance of HMR Mortgages"].values
+        # All household mortgage debt (main residence + other properties) is a loan on the banks' books; the
+        # household and bank balance sheets already include both (SyntheticBanks.initialise_deposits_and_loans),
+        # so omitting the second term left ~0.65T of mortgage debt without loans (dropped at t=1).
+        household_mortgage_debt = (
+            household_data["Outstanding Balance of HMR Mortgages"].fillna(0.0).values
+            + household_data["Outstanding Balance of Mortgages on other Properties"].fillna(0.0).values
+        )
         households_corresponding_bank = household_data["Corresponding Bank ID"].values
 
         principal = np.zeros((bank_data.shape[0], household_mortgage_debt.shape[0]))

@@ -95,6 +95,7 @@ from macro_data.processing.synthetic_matching.matching_firms_with_banks import (
 from macro_data.processing.synthetic_matching.matching_households_with_banks import (
     match_households_with_banks_optimal,
 )
+from macro_data.configuration.can_2022_constants import CAN_2022_HFCE_IMPUTED_RENT
 from macro_data.processing.synthetic_matching.matching_households_with_houses import (
     set_housing_df,
 )
@@ -244,6 +245,8 @@ class SyntheticCountry:
         # CAN-2022: this region's observed t0 unemployment/participation (StatCan 14-10-0327), keyed
         # by region like the employment shares below. None for any other build (legacy base rate).
         _lfs_2022 = getattr(readers.wiod_sea, "can_2022_provincial_labour", {}).get(str(country)) if year == 2022 else None
+        # CAN-2022: observed household count + homeownership (CHS 2022 / Census 2021 territories); None otherwise.
+        _hh_2022 = getattr(readers.wiod_sea, "can_2022_household_controls", {}).get(str(country)) if year == 2022 else None
         population: SyntheticHFCSPopulation = SyntheticHFCSPopulation.from_readers(
             readers=readers,
             country_name=country,
@@ -257,6 +260,8 @@ class SyntheticCountry:
             exogenous_data=exogenous_country_data,
             unemployment_rate_override=_lfs_2022["u"] if _lfs_2022 else None,
             participation_rate_override=_lfs_2022["p"] if _lfs_2022 else None,
+            n_households_override=_hh_2022["households"] if _hh_2022 else None,
+            owner_rate_override=_hh_2022["owner_rate"] if _hh_2022 else None,
         )
 
         # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
@@ -303,6 +308,12 @@ class SyntheticCountry:
         tax_data = TaxData.from_readers(readers, country, year)
 
         total_imputed_rent = readers.icio[year].imputed_rents[country]
+        _hh_controls = getattr(readers.wiod_sea, "can_2022_household_controls", {}) if year == 2022 else {}
+        if str(country) in _hh_controls:
+            # CAN-2022: Canadian HFCE imputed rent (36-10-0124) allocated by owner households (CHS 2022 /
+            # Census 2021), quarterly; replaces the ICIO proxy-fraction estimate allocated by output share.
+            owners = {k: v["households"] * v["owner_rate"] for k, v in _hh_controls.items()}
+            total_imputed_rent = CAN_2022_HFCE_IMPUTED_RENT / 4.0 * owners[str(country)] / sum(owners.values())
 
         dividend_payout_ratio = readers.eurostat.dividend_payout_ratio(country=country, year=year)
         long_term_interest_rate = readers.oecd_econ.read_long_term_interest_rates(country=country, year=year)
@@ -370,7 +381,7 @@ class SyntheticCountry:
         else:
             emission_factors_ch4 = None
 
-        return cls(
+        instance = cls(
             population=population,
             firms=firms,
             credit_market=credit_market,
@@ -399,6 +410,12 @@ class SyntheticCountry:
                 SectorExoPrices.from_reader(readers.exo_prices) if readers.exo_prices is not None else None
             ),
         )
+        # True when the IO household consumption of sector L already contains housing services
+        # (paid + imputed rent), as in the CAN provincial-IO path (default_readers).
+        instance.housing_services_in_household_io = bool(
+            getattr(readers.icio[year], "housing_services_in_household_io", False)
+        )
+        return instance
 
     @classmethod
     def proxied_synthetic_country(
@@ -474,6 +491,8 @@ class SyntheticCountry:
         # CAN-2022: observed t0 unemployment/participation for the PROXIED region (keyed by `country`,
         # the real region, not the proxy). None for any other build (legacy base rate).
         _lfs_2022 = getattr(readers.wiod_sea, "can_2022_provincial_labour", {}).get(str(country)) if year == 2022 else None
+        # CAN-2022: observed household count + homeownership (CHS 2022 / Census 2021 territories); None otherwise.
+        _hh_2022 = getattr(readers.wiod_sea, "can_2022_household_controls", {}).get(str(country)) if year == 2022 else None
         population: SyntheticHFCSPopulation = SyntheticHFCSPopulation.from_readers(
             readers=readers,
             country_name=proxy_country,
@@ -490,6 +509,8 @@ class SyntheticCountry:
             exogenous_data=exogenous_country_data,
             unemployment_rate_override=_lfs_2022["u"] if _lfs_2022 else None,
             participation_rate_override=_lfs_2022["p"] if _lfs_2022 else None,
+            n_households_override=_hh_2022["households"] if _hh_2022 else None,
+            owner_rate_override=_hh_2022["owner_rate"] if _hh_2022 else None,
         )
 
         # Wire the validated StatCan 36-10-0489 province x OECD-50 employment structure (if present)
@@ -538,6 +559,12 @@ class SyntheticCountry:
         tax_data = TaxData.from_readers(readers, country, year)
 
         total_imputed_rent = readers.icio[year].imputed_rents[country]
+        _hh_controls = getattr(readers.wiod_sea, "can_2022_household_controls", {}) if year == 2022 else {}
+        if str(country) in _hh_controls:
+            # CAN-2022: Canadian HFCE imputed rent (36-10-0124) allocated by owner households (CHS 2022 /
+            # Census 2021), quarterly; replaces the ICIO proxy-fraction estimate allocated by output share.
+            owners = {k: v["households"] * v["owner_rate"] for k, v in _hh_controls.items()}
+            total_imputed_rent = CAN_2022_HFCE_IMPUTED_RENT / 4.0 * owners[str(country)] / sum(owners.values())
 
         dividend_payout_ratio = readers.eurostat.dividend_payout_ratio(country=country, year=year)
         long_term_interest_rate = readers.oecd_econ.read_long_term_interest_rates(country=country, year=year)
@@ -605,7 +632,7 @@ class SyntheticCountry:
         else:
             emission_factors_ch4 = None
 
-        return cls(
+        instance = cls(
             population=population,
             firms=firms,
             credit_market=credit_market,
@@ -634,6 +661,12 @@ class SyntheticCountry:
                 SectorExoPrices.from_reader(readers.exo_prices) if readers.exo_prices is not None else None
             ),
         )
+        # True when the IO household consumption of sector L already contains housing services
+        # (paid + imputed rent), as in the CAN provincial-IO path (default_readers).
+        instance.housing_services_in_household_io = bool(
+            getattr(readers.icio[year], "housing_services_in_household_io", False)
+        )
+        return instance
 
     @classmethod
     def set_wealth_and_credit(
@@ -887,9 +920,12 @@ class SyntheticCountry:
         """
         population.set_wealth_distribution_function(independents=independents)
 
+        labour_taxrate = (1 - tax_data.employee_social_insurance_tax) * (1 - tax_data.income_tax)
         population.compute_household_income(
             total_social_transfers=central_government.central_gov_data["Other Social Benefits"].values[0],
             independents=independents,
+            firm_total_wages=firms.firm_data["Total Wages"],
+            labour_taxrate=labour_taxrate,
         )
         population.set_household_saving_rates(independents=independents)
 

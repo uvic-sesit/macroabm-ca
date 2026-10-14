@@ -1722,12 +1722,14 @@ class Firms(Agent):
         Returns:
             np.ndarray: Updated deposit balances for each firm
         """
+        # Cash basis (A10): firms pay for the intermediate and capital goods they BUY this quarter
+        # (nominal amount spent in the goods market). Input use and capital consumption are accrual
+        # costs that enter profits, not cash flows.
         return (
             self.ts.current("deposits")
             + self.ts.current("nominal_amount_sold_in_lcu")
             - self.ts.current("total_wage")
-            - self.ts.current("used_intermediate_inputs_costs")
-            - self.ts.current("used_capital_inputs_costs")
+            - self.ts.current("nominal_amount_spent_in_lcu").sum(axis=1)
             - self.ts.current("taxes_paid_on_production")
             - self.ts.current("corporate_taxes_paid")
             - self.ts.current("interest_paid")
