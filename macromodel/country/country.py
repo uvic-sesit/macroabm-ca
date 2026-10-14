@@ -1372,9 +1372,13 @@ class Country:
         self.banks.ts.market_share.append(self.banks.compute_market_share())
         self.banks.ts.market_share_histogram.append(get_histogram(self.banks.ts.current("market_share"), None))
 
+        # Loans written off this period (firm and household insolvency) are charged to the lending banks' equity
+        loan_losses = self.credit_market.pop_pending_writeoffs_by_bank(len(self.banks.ts.current("equity")))
+        self.banks.states["loan_losses_current"] = loan_losses
         self.banks.ts.equity.append(
             self.banks.compute_equity(
                 profit_taxes=self.central_government.states["Profit Tax"],
+                loan_losses=loan_losses,
             )
         )
         self.banks.ts.equity_histogram.append(get_histogram(self.banks.ts.current("equity"), self.scale))

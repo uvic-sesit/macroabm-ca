@@ -476,7 +476,7 @@ class Banks(Agent):
         else:
             return np.full(self.ts.current("n_banks"), 1.0 / self.ts.current("n_banks"))
 
-    def compute_equity(self, profit_taxes: float) -> np.ndarray:
+    def compute_equity(self, profit_taxes: float, loan_losses: Optional[np.ndarray] = None) -> np.ndarray:
         """Calculate bank equity.
 
         Considers:
@@ -490,11 +490,16 @@ class Banks(Agent):
         Returns:
             np.ndarray: Equity by bank
         """
-        return (
+        equity = (
             self.ts.current("equity")
             + self.ts.current("profits")
             - profit_taxes * np.maximum(0.0, self.ts.current("profits"))
         )
+        if loan_losses is not None:
+            # A14: principal of loans written off this period is a loss to the lending bank's equity (a balance-sheet
+            # write-down, not an expense in profits; no profit-tax effect)
+            equity = equity - loan_losses
+        return equity
 
     def compute_liability(self) -> np.ndarray:
         """Calculate total bank liabilities.

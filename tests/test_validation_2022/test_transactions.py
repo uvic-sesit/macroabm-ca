@@ -200,3 +200,34 @@ def test_bank_deposit_interest_equals_customer_payments_plus_cb_interest():
         household_interest_paid_on_deposits=np.array([0.5]), households_corresponding_bank=np.array([1]),
     )
     np.testing.assert_allclose(out, [0.01 * 50 + 2.0, -0.01 * 10 + 0.5])
+
+
+# ---------------------------------------------------------------- A14: write-offs are losses of the lending bank
+def test_household_writeoff_is_queued_by_lending_bank_and_charged_to_equity():
+    from macromodel.agents.banks.banks import Banks
+    from macromodel.markets.credit_market.credit_market import CreditMarket
+    # loans arrays: (fields, banks, borrowers); field 0 = principal
+    cons = np.zeros((3, 2, 3)); mort = np.zeros((3, 2, 3))
+    cons[0, 0, 1] = 10.0; mort[0, 1, 1] = 100.0; mort[0, 1, 2] = 50.0
+    cm = SimpleNamespace(states={"cons_loans": cons, "mort_loans": mort})
+    cm._record_writeoff = lambda amount, by_bank=None: CreditMarket._record_writeoff(cm, amount, by_bank)
+    c, m_ = CreditMarket.remove_loans_to_households(cm, np.array([1]))
+    assert (c, m_) == (10.0, 100.0)
+    assert mort[0, 1, 2] == 50.0  # other borrowers untouched
+    losses = CreditMarket.pop_pending_writeoffs_by_bank(cm, 2)
+    np.testing.assert_allclose(losses, [10.0, 100.0])
+    np.testing.assert_allclose(CreditMarket.pop_pending_writeoffs_by_bank(cm, 2), [0.0, 0.0])  # queue reset
+    bank = SimpleNamespace(ts=TimeSeries(equity=np.array([500.0, 500.0]), profits=np.array([20.0, -5.0])))
+    eq = Banks.compute_equity(bank, profit_taxes=0.25, loan_losses=losses)
+    np.testing.assert_allclose(eq, [500 + 20 - 5 - 10, 500 - 5 - 100])
+
+
+def test_firm_writeoff_is_queued_by_lending_bank():
+    from macromodel.markets.credit_market.credit_market import CreditMarket
+    st = np.zeros((3, 2, 4)); lt = np.zeros((3, 2, 4))
+    st[0, 0, 2] = 3.0; lt[0, 1, 2] = 7.0; lt[0, 1, 3] = 9.0
+    cm = SimpleNamespace(states={"st_loans": st, "lt_loans": lt})
+    cm._record_writeoff = lambda amount, by_bank=None: CreditMarket._record_writeoff(cm, amount, by_bank)
+    assert CreditMarket.remove_loans_to_firm(cm, 2) == pytest.approx(10.0)
+    np.testing.assert_allclose(CreditMarket.pop_pending_writeoffs_by_bank(cm, 2), [3.0, 7.0])
+    assert cm.states["cumulative_writeoffs"] == pytest.approx(10.0)

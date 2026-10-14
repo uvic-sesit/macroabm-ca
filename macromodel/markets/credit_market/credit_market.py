@@ -549,15 +549,34 @@ class CreditMarket:
         Returns:
             float: Total amount of loans written off
         """
-        total_amount = self.states["st_loans"][0][:, firm_id].sum() + self.states["lt_loans"][0][:, firm_id].sum()
+        by_bank = np.atleast_2d(self.states["st_loans"][0][:, firm_id]).reshape(self.states["st_loans"].shape[1], -1).sum(
+            axis=1
+        ) + np.atleast_2d(self.states["lt_loans"][0][:, firm_id]).reshape(self.states["lt_loans"].shape[1], -1).sum(axis=1)
+        total_amount = by_bank.sum()
         self.states["st_loans"][:, :, firm_id] = 0.0
         self.states["lt_loans"][:, :, firm_id] = 0.0
-        self._record_writeoff(total_amount)
+        self._record_writeoff(total_amount, by_bank=by_bank)
         return total_amount
 
-    def _record_writeoff(self, amount: float) -> None:
-        """Cumulative principal written off (loans removed without repayment); read by the accounting battery."""
+    def _record_writeoff(self, amount: float, by_bank: np.ndarray | None = None) -> None:
+        """Record principal written off (loans removed without repayment).
+
+        `cumulative_writeoffs` is read by the accounting battery. When the lending banks are known (`by_bank`), the
+        loss is also queued in `pending_writeoffs_by_bank`; the banks recognise it against equity in the same period
+        (A14: previously the loans disappeared from bank assets with no loss, and the reserve plug absorbed it).
+        """
         self.states["cumulative_writeoffs"] = self.states.get("cumulative_writeoffs", 0.0) + float(amount)
+        if by_bank is not None:
+            pending = self.states.get("pending_writeoffs_by_bank")
+            if pending is None or len(pending) != len(by_bank):
+                pending = np.zeros(len(by_bank))
+            self.states["pending_writeoffs_by_bank"] = pending + by_bank
+
+    def pop_pending_writeoffs_by_bank(self, n_banks: int) -> np.ndarray:
+        """Loan losses queued since the last call, by lending bank; resets the queue."""
+        pending = self.states.get("pending_writeoffs_by_bank")
+        self.states["pending_writeoffs_by_bank"] = np.zeros(n_banks)
+        return np.zeros(n_banks) if pending is None else pending
 
     def remove_loans_to_households(self, household_id: int | np.ndarray) -> Tuple[float, float]:
         """Remove all loans associated with specified household(s).
@@ -570,11 +589,13 @@ class CreditMarket:
         Returns:
             Tuple[float, float]: Total consumer loans and mortgages written off
         """
-        cons_amount = self.states["cons_loans"][0][:, household_id].sum()
-        mort_amount = self.states["mort_loans"][0][:, household_id].sum()
+        n_banks = self.states["cons_loans"].shape[1]
+        cons_by_bank = np.asarray(self.states["cons_loans"][0][:, household_id]).reshape(n_banks, -1).sum(axis=1)
+        mort_by_bank = np.asarray(self.states["mort_loans"][0][:, household_id]).reshape(n_banks, -1).sum(axis=1)
+        cons_amount, mort_amount = cons_by_bank.sum(), mort_by_bank.sum()
         self.states["cons_loans"][:, :, household_id] = 0.0
         self.states["mort_loans"][:, :, household_id] = 0.0
-        self._record_writeoff(cons_amount + mort_amount)
+        self._record_writeoff(cons_amount + mort_amount, by_bank=cons_by_bank + mort_by_bank)
         return cons_amount, mort_amount
 
     def remove_loans_by_bank(self, bank_id: int | np.ndarray) -> None:
