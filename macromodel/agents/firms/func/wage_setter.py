@@ -96,11 +96,9 @@ class FirmWageSetter(ABC):
         """Set employee incomes considering all relevant factors.
 
         Determines wages based on:
-        - Individual labor inputs and productivity
+        - Labor productivity
         - Market conditions and tightness
         - Tax rates and social insurance
-        - New vs. existing employee status
-        - Production constraints and targets
 
         Args:
             corresponding_firm (np.ndarray): Firm ID for each employee
@@ -189,7 +187,9 @@ class WorkEffortFirmWageSetter(FirmWageSetter):
     This class implements a wage-setting strategy that:
     1. Adjusts wages based on labor market tightness
     2. Considers productivity changes
-    3. Ensures wages exceed unemployment benefits
+    3. Pays every employee of a firm the same firm-level wage; the unemployment-benefit
+       floor applies to offered wages (get_offered_wage_given_labour_inputs_function),
+       not to employee income
     4. Accounts for tax implications
 
     The approach aims to:
@@ -269,7 +269,9 @@ class WorkEffortFirmWageSetter(FirmWageSetter):
         2. Market tightness markup
         3. TFP multiplier (technological productivity)
         4. Tax implications for gross/net conversion
-        5. Different treatment for new vs. existing employees
+
+        Every employee of a firm receives the same firm-level wage: new and existing
+        employees are not distinguished, and no unemployment-benefit floor is applied.
 
         Args:
             [same as parent class]
