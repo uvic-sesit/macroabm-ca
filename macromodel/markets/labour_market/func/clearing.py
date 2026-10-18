@@ -1135,7 +1135,15 @@ def hiring(
     for _ in range(len(extra_employees)):
         new_hires.append(List.empty_list(int64))
 
-    for firm_id in range(len(extra_employees)):
+    # Firms are visited in index order, which hands the whole shortfall to the
+    # highest-numbered firms whenever demand exceeds the pool. Draw an order in that case
+    # only, so a run where the pool never binds takes no extra draw and is unchanged.
+    firm_order = np.arange(len(extra_employees))
+    n_available = np.count_nonzero(np.logical_and(individuals_corresponding_firm == -1, current_ind_ea))
+    if np.maximum(extra_employees, 0.0).sum() > n_available:
+        firm_order = np.random.permutation(len(extra_employees))
+
+    for firm_id in firm_order:
         if extra_employees[firm_id] > 0:
             ind_unemployed = np.where(np.logical_and(individuals_corresponding_firm == -1, current_ind_ea))[0]
             n_hiring = int(min(extra_employees[firm_id], len(ind_unemployed)))
