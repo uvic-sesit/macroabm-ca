@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from macromodel.util.clamps import clamp_towards as _clamp_towards
+
 
 class LabourProductivitySetter(ABC):
     """Abstract base class for determining labor productivity adjustments.
@@ -133,15 +135,18 @@ class WorkEffortLabourProductivitySetter(LabourProductivitySetter):
             np.ndarray: Productivity adjustment factors, where 1.0 represents
                 no change and values > 1.0 represent productivity increases
         """
-        current_target_production = np.minimum(
+        # NOTE: uses the same inf-safe clamp as DefaultDesiredLabourSetter. The naive form
+        # `target + w*(limit - target)` evaluates 0.0 * inf -> NaN for a firm with no binding
+        # constraint (limit = inf) once the weight is 0.0, and np.minimum propagates it.
+        current_target_production = _clamp_towards(
             current_target_production,
-            current_target_production
-            + self.consider_intermediate_inputs * (current_limiting_intermediate_inputs - current_target_production),
+            current_limiting_intermediate_inputs,
+            self.consider_intermediate_inputs,
         )
-        current_target_production = np.minimum(
+        current_target_production = _clamp_towards(
             current_target_production,
-            current_target_production
-            + self.consider_capital_inputs * (current_limiting_capital_inputs - current_target_production),
+            current_limiting_capital_inputs,
+            self.consider_capital_inputs,
         )
         # A firm with no employees, or a zero industry productivity, has no labour capacity to
         # measure the target against; leave its work effort unchanged rather than dividing by zero.
