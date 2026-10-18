@@ -374,24 +374,35 @@ class AutomaticHousingMarketClearer(HousingMarketClearer):
         property_prices = housing_data.loc[property_open_ind, price_field].values
 
         # Create a cost matrix
-        cost = sp.spatial.distance_matrix(
-            max_willing_to_pay[households_with_demand][:, None],
-            (
-                (
-                    1
-                    + np.random.normal(
-                        0.0,
-                        self.random_assignment_shock_variance,
-                        property_prices.shape[0],
-                    )
-                )
-                * property_prices
-            )[:, None],
+        assignment_shock = 1 + np.random.normal(
+            0.0,
+            self.random_assignment_shock_variance,
+            property_prices.shape[0],
         )
+        listed_prices = property_prices * assignment_shock
+        max_willing = max_willing_to_pay[households_with_demand]
+        cost = sp.spatial.distance_matrix(max_willing[:, None], listed_prices[:, None])
         cost[cost < 0] = np.inf
+
+        # The cost is the distance from the household's stated maximum to the listed price, so a
+        # listing it cannot afford is exactly as close as an affordable one the same distance
+        # below, and may be assigned. Charge every unaffordable pair a finite penalty larger than
+        # the whole matrix: the affordable part of any assignment contributes at most that sum, so
+        # an assignment with fewer unaffordable pairs costs strictly less, and the solver
+        # minimises their number before it minimises distance. An infinite cost cannot be used
+        # instead, because a household that can afford nothing leaves an all-infinite row and
+        # linear_sum_assignment requires a feasible assignment across every row.
+        unaffordable = listed_prices[None, :] > max_willing[:, None]
+        cost[unaffordable] = float(cost.sum()) + 1.0
 
         # Find an optimal assignment and record the outcome
         rel_households, rel_properties = lsa(cost)
+
+        # The penalty discourages unaffordable pairs but the number of listings is finite, so some
+        # may survive. Drop them rather than record a match the household cannot pay for; the
+        # properties left unassigned stay open.
+        affordable = ~unaffordable[rel_households, rel_properties]
+        rel_households, rel_properties = rel_households[affordable], rel_properties[affordable]
         abs_households, abs_properties = (
             households_with_demand[rel_households],
             property_open_ind[rel_properties],
