@@ -38,7 +38,6 @@ class DemandEstimator(ABC):
         """
         self.sectoral_growth_adjustment_speed = sectoral_growth_adjustment_speed
         self.firm_growth_adjustment_speed = max(0.0, min(1.0, firm_growth_adjustment_speed))
-        self.firm_growth_adjustment_speed = firm_growth_adjustment_speed
         # alpha: adaptive-expectations adjustment speed. 1.0 = no smoothing = the
         # historical rule exactly. See compute_estimated_demand.
         self.demand_smoothing = demand_smoothing

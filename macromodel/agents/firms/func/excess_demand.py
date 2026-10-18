@@ -44,11 +44,8 @@ class ExcessDemandSetter(ABC):
                 constraints (clipped to [0,1])
         """
         self.consider_intermediate_inputs = max(0.0, min(1.0, consider_intermediate_inputs))
-        self.consider_intermediate_inputs = consider_intermediate_inputs
         self.consider_capital_inputs = max(0.0, min(1.0, consider_capital_inputs))
-        self.consider_capital_inputs = consider_capital_inputs
         self.consider_labour_inputs = max(0.0, min(1.0, consider_labour_inputs))
-        self.consider_labour_inputs = consider_labour_inputs
 
     @abstractmethod
     def set_maximum_excess_demand(
