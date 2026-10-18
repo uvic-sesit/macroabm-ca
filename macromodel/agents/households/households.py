@@ -761,7 +761,8 @@ class Households(Agent):
             observed_fraction_rent_value (np.ndarray): Rent/value ratios
             expected_hpi_growth (float): Expected house price growth
             assumed_mortgage_maturity (int): Mortgage term length
-            rental_income_taxes (float): Tax rate on rental income
+            rental_income_taxes (float): Tax rate on rental income, forwarded to the property
+                function, which does not read it.
         """
         if len(housing_data) == 0:
             return
