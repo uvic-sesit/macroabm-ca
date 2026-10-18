@@ -364,7 +364,12 @@ class Firms(Agent):
             configuration (FirmsConfiguration): New model configuration
         """
         self.gen_reset()
-        update_functions(model=configuration.functions, loc="macromodel.agents.firms", functions=self.functions)
+        update_functions(
+            model=configuration.functions,
+            loc="macromodel.agents.firms",
+            functions=self.functions,
+            force_reset=["demand_estimator"],
+        )
 
         current_inv = (
             self.ts.current("production")
