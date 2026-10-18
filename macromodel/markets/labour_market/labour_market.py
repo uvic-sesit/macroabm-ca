@@ -248,12 +248,16 @@ class LabourMarket:
             [num_newly_randomly_fired + num_newly_randomly_quit + num_newly_fired]
         )
 
-        # Number of employed individuals by sector
+        # Number of employed individuals by sector, counted by the industry of the employing
+        # firm, which hiring and firing keep current; Employment Industry records the
+        # industry an individual started in and is not rewritten on a move.
+        corresponding_firm = individuals.states["Corresponding Firm ID"]
+        employer_industry = np.where(corresponding_firm >= 0, firms.states["Industry"][corresponding_firm], -1)
         num_employed = np.zeros(self.n_industries)
         for g in range(self.n_industries):
             num_employed[g] = np.sum(
                 np.logical_and(
-                    individuals.states["Employment Industry"] == g,
+                    employer_industry == g,
                     individuals.states["Activity Status"] == ActivityStatus.EMPLOYED,
                 )
             )
