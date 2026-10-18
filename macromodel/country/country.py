@@ -1126,8 +1126,10 @@ class Country:
 
         # C3. EMISSIONS AND INVENTORY
         if self.add_emissions:
+            # The consumer multiplies real input quantities, so the factor carries the
+            # base-period price and no current-price term.
             readjusted_factors = (
-                self.emission_factors_lcu / self.economy.ts.current("good_prices")[self.emitting_indices]
+                self.emission_factors_lcu * self.economy.ts.initial("good_prices")[self.emitting_indices]
             )
             readjusted_factors_ch4 = (
                 self.emission_factors_lcu_ch4 / self.economy.ts.current("good_prices")[self.emitting_indices_ch4]
@@ -1273,8 +1275,12 @@ class Country:
         # F1. HOUSEHOLD WEALTH AND CONSUMPTION
         # Update household financial positions
         if self.add_emissions:
+            # The consumers multiply nominal expenditure, which already carries the current
+            # price, so that term stays and deflates the expenditure to base-period prices.
             readjusted_factors = (
-                self.emission_factors_lcu / self.economy.ts.current("good_prices")[self.emitting_indices]
+                self.emission_factors_lcu
+                * self.economy.ts.initial("good_prices")[self.emitting_indices]
+                / self.economy.ts.current("good_prices")[self.emitting_indices]
             )
             readjusted_factors_ch4 = (
                 self.emission_factors_lcu_ch4 / self.economy.ts.current("good_prices")[self.emitting_indices_ch4]
