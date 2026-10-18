@@ -1,5 +1,7 @@
 import pytest
 
+from macro_data.configuration.region import Region
+
 
 class TestWorldBankReader:
     def test__unemployment_rates(self, readers):
@@ -14,6 +16,14 @@ class TestWorldBankReader:
 
     def test__get_tau_vat(self, readers):
         assert readers.world_bank.get_tau_vat("GBR", 2014) == pytest.approx(13.2e-2, abs=0.01)
+
+    def test__get_tau_vat_canada_is_a_rate(self, readers):
+        # Without an entry in forced_vat Canada falls through to GC.TAX.GSRV.VA.ZS, which is
+        # taxes on goods and services as a share of value added, not a rate.
+        assert readers.world_bank.get_tau_vat("CAN", 2014) == 0.05
+
+    def test__get_tau_vat_a_canadian_region_takes_the_country_rate(self, readers):
+        assert readers.world_bank.get_tau_vat(Region.from_code("CAN_BC"), 2014) == 0.05
 
     def test__get_tau_exp(self, readers):
         assert readers.world_bank.get_lcu_exports("GBR", 2014) == pytest.approx(0, abs=0.01)

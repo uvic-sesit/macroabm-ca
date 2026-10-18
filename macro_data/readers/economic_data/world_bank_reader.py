@@ -63,6 +63,8 @@ forced_vat = {
     "CRI": 0.0,
     "KOR": 0.0,
     "KHM": 0.0,
+    # Federal goods and services tax; provincial sales taxes are not in this country-keyed table.
+    "CAN": 0.05,
 }
 
 

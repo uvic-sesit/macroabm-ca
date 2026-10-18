@@ -756,10 +756,19 @@ class EuroStatReader:
         df = self.data["iot_tables"]
         taxes_df = df[(df["induse"] == "P5") & (df["prod_na"] == "D21X31")]
 
-        capform = self.find_value(capform_df, country, str(year))
-        taxes = self.find_value(taxes_df, country, str(year))
+        if (capform_df["geo"] == country).any() and (taxes_df["geo"] == country).any():
+            capform = self.find_value(capform_df, country, str(year))
+            taxes = self.find_value(taxes_df, country, str(year))
+            return taxes / capform
 
-        return taxes / capform
+        # A country absent from either table would otherwise take find_value's cross-country
+        # mean for each side, which divides one currency-mixed mean by another and by a
+        # different country count. Form each ratio inside one country instead, then take the
+        # median across the countries reporting both tables that year.
+        year_taxes = taxes_df.loc[taxes_df["TIME_PERIOD"] == int(year)].groupby("geo")["OBS_VALUE"].first()
+        year_capform = capform_df.loc[capform_df["TIME_PERIOD"] == int(year)].groupby("geo")["OBS_VALUE"].first()
+
+        return (year_taxes / year_capform).dropna().median()
 
     def get_perc_sectoral_growth(self, country: Country) -> pd.DataFrame:
         """
