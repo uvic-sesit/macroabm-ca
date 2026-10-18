@@ -410,8 +410,8 @@ class HousingMarket:
         if len(current_rentals) == 0:
             return self.ts.current("observed_fraction_rent_value")
         return self._perform_linear_regression(
-            current_rentals["price_or_rent"].values,
             current_rentals["property_value"].values,
+            current_rentals["price_or_rent"].values,
         )
 
     def process_housing_market_clearing(
