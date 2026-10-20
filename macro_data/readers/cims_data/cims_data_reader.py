@@ -42,6 +42,13 @@ class CIMSDataReader:
         """
         return self._read_matrix("energy_intensity", itr, year, region)
 
+    def get_energy_intensity_index(self, itr: str, year: int, region: str) -> pd.Series | None:
+        """CIMS energy per unit of activity vs the anchor year, per row (None if not written)."""
+        path = self._path("energy_intensity_index", itr, year, region)
+        if not Path(path).exists():
+            return None
+        return pd.read_csv(path, index_col=0).iloc[:, 0]
+
     def get_capital_intensity(self, itr: str, year: int, region: str) -> pd.DataFrame:
         """Return the processed capital-intensity matrix (investment per unit output)."""
         return self._read_matrix("capital_intensity", itr, year, region)

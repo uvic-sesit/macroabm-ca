@@ -701,6 +701,8 @@ class Households(Agent):
         max_step: float = 2.0,
         increments: dict[int, float] | None = None,
         energy_indices: list[int] | None = None,
+        basis: str = "realised",
+        order_margin: float = 0.1,
     ) -> None:
         """Pin households' REAL consumption of a good to an external quantity path.
 
@@ -735,6 +737,16 @@ class Households(Agent):
                 WHOLE energy set the caller's denominator covers, not merely the goods
                 being anchored, or the increment changes meaning between the two sides.
                 Required for *increments*, ignored otherwise.
+            basis: which last-period quantity the correction is measured on.
+                ``"realised"`` (default) uses what households RECEIVED, min(spent, target).
+                Under supply rationing the received quantity stays short whatever the
+                weight, so the step stays above 1 every call and compounds the stored
+                multiplier without limit, crowding the other goods out of the budget.
+                ``"bounded"`` corrects on the realised basis but caps the step so the
+                ORDERED quantity cannot exceed ``desired * (1 + order_margin)``: small
+                rationing is still compensated (orders a few percent above the path),
+                but a good that is not available cannot inflate the weight beyond it.
+            order_margin: the ``"bounded"`` cap on ordered over desired quantity.
         """
         if not (targets or increments) or not prices:
             return
@@ -777,6 +789,21 @@ class Households(Agent):
             q = float(nominal[j]) / price
             return q if np.isfinite(q) and q > 0.0 else None
 
+        ordered_nominal = None
+        if basis == "bounded":
+            try:
+                t = np.asarray(self.ts.current("target_consumption"), dtype=float)
+                ordered_nominal = (t.sum(axis=0) if t.ndim > 1 else t).ravel()
+            except Exception:  # noqa: BLE001
+                ordered_nominal = None
+
+        def _ordered(j: int) -> float | None:
+            price = float(prices.get(j, 0.0))
+            if ordered_nominal is None or j >= ordered_nominal.size or price <= 0.0:
+                return None
+            q = float(ordered_nominal[j]) / price
+            return q if np.isfinite(q) and q > 0.0 else None
+
         # Anchors first, so the energy total is captured on the same call as the
         # per-good anchors it is the sum of -- and BEFORE any correction lands, or the
         # increment would be scaled by a denominator this method had already moved.
@@ -817,6 +844,12 @@ class Households(Agent):
             # `realised` already embeds the multiplier in force last period, so the ratio
             # is the ADDITIONAL factor needed and compounds onto the stored one.
             step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            if basis == "bounded":
+                # Orders scale with the weight, so ordered * step is next period's order.
+                ordered = _ordered(j)
+                if ordered is not None:
+                    cap = desired * (1.0 + max(order_margin, 0.0)) / ordered
+                    step = float(max(min(step, cap), 1.0 / max_step))
             mult = float(self._energy_quantity_multiplier.get(j, 1.0)) * step
             mult = float(min(max(mult, 1e-3), 1e3))
             self._energy_quantity_multiplier[j] = mult

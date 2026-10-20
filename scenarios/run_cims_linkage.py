@@ -300,6 +300,13 @@ _HOUSEHOLD_PROXY_ROW = "L"
 # their flat index to export-mode instead of a production pin.
 _PRODUCTION_TARGET_EXCLUDED = {"D", "C19", "F", "G", "L", "O", "P", "Q"}
 
+# Energy producers whose purchases of their own output are fuel use in the per-unit target.
+_SELF_FUEL_CODES = {"B05", "B06", "C19"}
+# (buyer, good) purchases that are feedstock, not fuel: refineries' crude oil from B06.
+_FEEDSTOCK_PAIRS = {("C19", "B06")}
+# Minimum anchor-year share of generation for a fuel's COPPER ratio to be applied.
+_GENMIX_MIN_SHARE = 0.05
+
 
 def _quantity_anchor_spec(base_q, now_q, base_total: float, floor: float):
     """Choose how one (row, fuel) pair is anchored: growth index, level increment, neither.
@@ -388,7 +395,13 @@ def build_link_prehook(
     capacity_factor_from_cer: bool = False,
     electricity_own_use: bool = False,
     household_energy_quantities: bool = False,
+    household_energy_anchor_basis: str = "realised",
+    household_energy_order_margin: float = 0.1,
     firm_energy_quantities: bool = False,
+    firm_energy_multiplier_cap: float | None = None,
+    firm_energy_target_mode: str = "quantity",
+    firm_energy_fuel_prices: dict | None = None,
+    firm_energy_generation_mix: dict | None = None,
     quantity_anchor_floor: float = 0.0,
     quantity_anchor_conserve_total: bool = False,
     row_electricity_split: dict | None = None,
@@ -847,6 +860,8 @@ def build_link_prehook(
                         px,
                         increments=hh_increments or None,
                         energy_indices=energy_indices,
+                        basis=household_energy_anchor_basis,
+                        order_margin=household_energy_order_margin,
                     )
                     logger.info(
                         "household quantity anchor: region=%s year=%s targets=%s "
@@ -1037,6 +1052,90 @@ def build_link_prehook(
                 # and the current milestone cancels out of the ratio.  A time-varying
                 # rate would not, and would have to be carried into the target.
                 rq_anchor_f = reader.get_requested_quantities(itr, anchor_year, demand_region)
+                _qty_rows = [] if firm_energy_target_mode == "intensity" else list(rq.index)
+                if firm_energy_target_mode == "intensity":
+                    # Per-unit-of-output targets (Firms.anchor_energy_intensity): the
+                    # source sets each row's FUEL MIX change, as value shares at the
+                    # province's anchor-year $/GJ; energy per unit of output is the
+                    # model's IO base times the source's energy-intensity index. No
+                    # growth ratios, rescale or increments.
+                    px = (firm_energy_fuel_prices or {}).get(province, {})
+                    shifts: dict[tuple[int, int], float] = {}
+                    for i_code in rq.index:
+                        if (i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries
+                                or i_code not in rq_anchor_f.index):
+                            continue
+                        # Energy producers' use of their OWN output is fuel too (oil & gas
+                        # producers' own gas, refineries' own refined fuels, coal own use);
+                        # electricity's self-input is transmission/own use, handled elsewhere.
+                        fuels = [j for j in energy_codes if j in industries
+                                 and (j != i_code or j in _SELF_FUEL_CODES)
+                                 and (i_code, j) not in _FEEDSTOCK_PAIRS
+                                 and j in rq.columns and j in rq_anchor_f.columns]
+                        def _w(frame):
+                            v = {j: max(0.0, float(np.nan_to_num(frame.loc[i_code, j])))
+                                 * float(px.get(j, 1.0)) for j in fuels}
+                            t = sum(v.values())
+                            return {j: x / t for j, x in v.items()} if t > 0.0 else None
+                        w_now, w_0 = _w(rq), _w(rq_anchor_f)
+                        if w_now is None or w_0 is None:
+                            continue
+                        ii = industries.index(i_code)
+                        for j in fuels:
+                            shifts[(ii, industries.index(j))] = w_now[j] - w_0[j]
+                    _eii = (reader.get_energy_intensity_index(itr, year, demand_region)
+                            if hasattr(reader, "get_energy_intensity_index") else None)
+                    e_index = ({industries.index(c): float(v) for c, v in _eii.items()
+                                if c in industries and np.isfinite(v) and v > 0.0}
+                               if _eii is not None else None)
+                    # Electricity sector: coal and gas per unit of output follow COPPER's
+                    # generation mix (fuel share of generation vs the anchor year), so the
+                    # coal phase-out and the falling gas share reach the sector's purchases.
+                    ratios: dict[tuple[int, int], float] = {}
+                    gm = (firm_energy_generation_mix or {}).get(province, {})
+                    if "D" in industries and gm:
+                        g_now, g_0 = gm.get(int(year), {}), gm.get(int(anchor_year), {})
+                        for j_code in ("B05", "B06"):
+                            if j_code not in industries or not g_now:
+                                continue
+                            s0, s1 = float(g_0.get(j_code, 0.0)), float(g_now.get(j_code, 0.0))
+                            if s0 >= _GENMIX_MIN_SHARE:
+                                ratios[(industries.index("D"), industries.index(j_code))] = s1 / s0
+                            elif s0 > 0.0:
+                                # A ratio on a tiny base (QC/ON gas ~1% of 2022 generation) sent
+                                # the sector's gas per unit of output to the cap and broke QC in
+                                # the reference: left to the recipe.
+                                continue
+                            elif s1 <= 0.0:
+                                # COPPER has none of this fuel at the anchor or now (e.g. AB coal,
+                                # retired before 2022 in COPPER but in the IO-2022 recipe): zero.
+                                ratios[(industries.index("D"), industries.index(j_code))] = 0.0
+                    summary = country.firms.anchor_energy_intensity(
+                        shifts, energy_indices, max_multiplier=firm_energy_multiplier_cap,
+                        energy_index=e_index,
+                        include_self={industries.index(c) for c in _SELF_FUEL_CODES if c in industries},
+                        pair_ratio=ratios or None,
+                        exclude_pairs={(industries.index(a), industries.index(b))
+                                       for a, b in _FEEDSTOCK_PAIRS if a in industries and b in industries})
+                    if ratios:
+                        logger.info("firm intensity anchor: province=%s year=%s electricity fuel ratios "
+                                    "(COPPER generation share vs anchor): %s", province, year,
+                                    {industries[j]: round(v, 3) for (_i, j), v in ratios.items()})
+                    if e_index:
+                        _vals = [e_index[k] for k in {_i for (_i, _j) in shifts} if k in e_index]
+                        if _vals:
+                            logger.info("firm intensity anchor: province=%s year=%s CIMS energy-intensity "
+                                        "index median=%.3f min=%.3f max=%.3f", province, year,
+                                        float(np.median(_vals)), float(np.min(_vals)), float(np.max(_vals)))
+                    d_idx = industries.index("D") if "D" in industries else None
+                    d_shifts = [v for (_i, _j), v in shifts.items() if _j == d_idx]
+                    logger.info(
+                        "firm intensity anchor: province=%s year=%s rows=%d pairs written=%s "
+                        "capped=%s | electricity share shift (value) median=%.3f max=%.3f",
+                        province, year, len({_i for (_i, _j) in shifts}), summary.get("pairs"),
+                        summary.get("capped"),
+                        float(np.median(d_shifts)) if d_shifts else float("nan"),
+                        float(np.max(d_shifts)) if d_shifts else float("nan"))
                 firm_targets: dict[tuple[int, int], float] = {}
                 firm_increments: dict[tuple[int, int], float] = {}
                 # EVERY row rq carries, not just `comparable_codes`.  That restriction
@@ -1048,7 +1147,7 @@ def build_link_prehook(
                 # left the other two thirds to grow with whatever the model did --
                 # which is why the anchored pairs hit 96-98% of target while provincial
                 # demand still ran -31% to +126% against CER.
-                for i_code in rq.index:
+                for i_code in _qty_rows:
                     if i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries:
                         continue
                     if i_code not in rq_anchor_f.index:
@@ -1110,6 +1209,7 @@ def build_link_prehook(
                         increments=firm_increments or None,
                         energy_indices=energy_indices,
                         conserve_total=conserve,
+                        max_multiplier=firm_energy_multiplier_cap,
                     )
                     by_fuel: dict[str, list[float]] = {}
                     for (_i, _j), _v in firm_targets.items():
@@ -1128,7 +1228,7 @@ def build_link_prehook(
                         {k: round(float(np.median(v)), 5)
                          for k, v in sorted(inc_by_fuel.items())},
                     )
-                else:
+                elif firm_energy_target_mode != "intensity":
                     logger.warning(
                         "firm_energy_quantities is ENABLED but no (industry, energy) "
                         "target could be built for itr=%s year=%s region=%s -- the "
