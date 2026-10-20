@@ -1,4 +1,4 @@
-"""Unit tests for ``Firms.anchor_energy_intensity``.
+"""Unit tests for ``Firms.anchor_energy_intensity`` and the programme recipe blend.
 
 Light fakes, as in ``test_quantity_anchor``: the methods read two time series and
 rewrite the base productivity matrix.
@@ -95,3 +95,11 @@ def test_max_multiplier_caps_the_coefficient_change():
     assert _mult(firms, 0, 1) == pytest.approx(3.0)  # 6x asked
     assert summary["capped"] == 1
 
+
+def test_recipe_blend_mixes_input_requirements_per_unit_of_output():
+    firms = types.SimpleNamespace(_recipe_blend={0: (0.25, np.array([0.0, 1.0]))})
+    productivity = np.array([[2.0, np.inf], [4.0, 4.0]])  # firm 0 needs 0.5 of good 0
+    out = Firms._apply_recipe_blend(firms, productivity)
+    # 0.75 * own + 0.25 * recipe: good 0 0.375, good 1 0.25 per unit of output.
+    assert out[0] == pytest.approx([1.0 / 0.375, 4.0])
+    assert np.array_equal(out[1], productivity[1])

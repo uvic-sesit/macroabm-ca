@@ -235,7 +235,7 @@ class Firms(Agent):
 
         self.emission_fractions = emission_fractions
 
-    def get_effective_intermediate_coefficients(self) -> np.ndarray:
+    def get_effective_intermediate_coefficients(self, apply_blend: bool = True) -> np.ndarray:
         """Get the effective intermediate input coefficients for each firm.
 
         Returns base coefficients adjusted by firm-specific technical multipliers.
@@ -251,9 +251,32 @@ class Firms(Agent):
             # Multipliers are [n_firms, n_industries]
             # Base coefficients are [n_firms, n_industries] after transpose
             # Element-wise multiply each firm's coefficients by their multipliers
-            return base_coefficients * multipliers
+            base_coefficients = base_coefficients * multipliers
 
-        return base_coefficients
+        return self._apply_recipe_blend(base_coefficients) if apply_blend else base_coefficients
+
+    def set_recipe_blend(self, blend: Optional[dict[int, tuple[float, np.ndarray]]]) -> None:
+        """Blend firms' input recipes with an exogenous one (e.g. a programme's bill of materials).
+
+        ``blend`` maps firm index -> (share, recipe): ``share`` of the firm's output is made
+        with ``recipe`` (real input per real unit of output, one entry per good), the rest
+        with its own coefficients, so its input requirement per unit of output becomes
+        (1 - share) * own + share * recipe. Applied on top of the base matrix and the tech
+        multipliers (so on top of whatever the linkage set). None or {} clears it.
+        """
+        self._recipe_blend = blend or None
+
+    def _apply_recipe_blend(self, productivity: np.ndarray) -> np.ndarray:
+        blend = getattr(self, "_recipe_blend", None)
+        if not blend:
+            return productivity
+        out = np.array(productivity, dtype=float, copy=True)
+        with np.errstate(divide="ignore"):
+            for i, (share, recipe) in blend.items():
+                own = 1.0 / out[i]  # productivity inf (unused input) -> 0 per unit output
+                need = (1.0 - share) * own + share * np.asarray(recipe, dtype=float)
+                out[i] = np.where(need > 0.0, 1.0 / need, np.inf)
+        return out
 
     def get_effective_capital_coefficients(self) -> np.ndarray:
         """Get the effective capital input coefficients for each firm.
@@ -849,15 +872,25 @@ class Firms(Agent):
             estimated_inflation: Expected inflation rate
             current_good_prices (np.ndarray): Industry-level average prices
         """
-        self.ts.limiting_intermediate_inputs.append(
-            self.functions["production"].compute_limiting_intermediate_inputs_stock(
-                intermediate_inputs_productivity_matrix=self.get_effective_intermediate_coefficients(),
+        def _limit(coefficients):
+            return self.functions["production"].compute_limiting_intermediate_inputs_stock(
+                intermediate_inputs_productivity_matrix=coefficients,
                 intermediate_inputs_stock=self.ts.current("intermediate_inputs_stock"),
                 intermediate_inputs_utilisation_rate=self.intermediate_inputs_utilisation_rate,
                 goods_criticality_matrix=self.goods_criticality_matrix,
                 substitution_bundle_matrix=self.substitution_bundles,
             )
-        )
+
+        limiting = _limit(self.get_effective_intermediate_coefficients())
+        blend = getattr(self, "_recipe_blend", None)
+        if blend:
+            # A blended firm runs two lines: its own work (1 - share of output, own recipe)
+            # and the programme (share, programme recipe). A shortage of programme inputs
+            # can only hold back the programme line, never the firm's own work.
+            own_limit = _limit(self.get_effective_intermediate_coefficients(apply_blend=False))
+            for i, (share, _) in blend.items():
+                limiting[i] = max(limiting[i], (1.0 - share) * own_limit[i])
+        self.ts.limiting_intermediate_inputs.append(limiting)
         self.ts.limiting_capital_inputs.append(
             self.functions["production"].compute_limiting_capital_inputs_stock(
                 capital_inputs_productivity_matrix=self.get_effective_capital_coefficients(),
@@ -1789,8 +1822,11 @@ class Firms(Agent):
                 )
             )
 
-        # Setting total real amount of goods to buy
-        self.set_goods_to_buy(self.ts.current("target_intermediate_inputs") + self.ts.current("target_capital_inputs"))
+        # Setting total real amount of goods to buy (+ any exogenous programme orders the
+        # firms pay for themselves, see set_exogenous_capital_orders)
+        exo = getattr(self, "_exo_capital_orders", None)
+        base_buy = self.ts.current("target_intermediate_inputs") + self.ts.current("target_capital_inputs")
+        self.set_goods_to_buy(base_buy if exo is None else base_buy + exo)
 
     def prepare_selling_goods(self) -> None:
         """Prepare firms' selling plans for goods market.
@@ -1835,6 +1871,16 @@ class Firms(Agent):
         )
         self.prepare_selling_goods()
 
+    def set_exogenous_capital_orders(self, orders_real) -> None:
+        """Exogenous programme orders (real units, firms x goods) the firms pay for themselves.
+
+        Added to this quarter's purchases and paid like any purchase (deposits, overdraft).
+        What arrives is kept OUT of productive capital and intermediate stocks -- a building
+        retrofit replaces equipment, it does not expand capacity -- but counted in GFCF.
+        ``None`` clears it.
+        """
+        self._exo_capital_orders = None if orders_real is None else np.asarray(orders_real, dtype=float)
+
     def distribute_bought_goods(self) -> None:
         """Distribute purchased goods between intermediate and capital inputs.
 
@@ -1843,13 +1889,22 @@ class Firms(Agent):
         - Desired investment
         - Actual quantities bought
         """
+        buy_real = self.ts.current("real_amount_bought")
+        exo = getattr(self, "_exo_capital_orders", None)
+        self._exo_received = None
+        if exo is not None:
+            wanted = (self.ts.current("target_intermediate_inputs")
+                      + self.ts.current("target_capital_inputs") + exo)
+            share = np.divide(exo, wanted, out=np.zeros_like(exo), where=wanted > 0)
+            self._exo_received = buy_real * share
+            buy_real = buy_real - self._exo_received
         (
             new_intermediate_inputs,
             new_capital_inputs,
         ) = self.functions["bought_goods_distributor"].distribute_bought_goods(
             desired_intermediate_inputs=self.ts.current("target_intermediate_inputs"),
             desired_investment=self.ts.current("target_capital_inputs"),
-            buy_real=self.ts.current("real_amount_bought"),
+            buy_real=buy_real,
         )
         self.ts.real_amount_bought_as_intermediate_inputs.append(new_intermediate_inputs)
         self.ts.real_amount_bought_as_capital_goods.append(new_capital_inputs)
@@ -1879,7 +1934,11 @@ class Firms(Agent):
         _emt = (
             np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
         )
-        return (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
+        gfcf = (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
+        exo = getattr(self, "_exo_received", None)
+        if exo is not None:
+            gfcf = gfcf + (exo * (current_good_prices + _emt)).sum(axis=0)
+        return gfcf
 
     def update_total_newly_bought_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> None:
         """Update costs of newly purchased inputs.

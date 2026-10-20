@@ -1354,11 +1354,37 @@ class Households(Agent):
         - Target investment
         - Exchange rates
         """
-        self.set_goods_to_buy(
-            1.0
-            / self.exchange_rate_usd_to_lcu
-            * (self.ts.current("target_consumption") + self.ts.current("target_investment"))
+        to_buy = self.ts.current("target_consumption") + self.ts.current("target_investment")
+        extra = self._exogenous_investment_by_household()
+        if extra is not None:
+            to_buy = to_buy + extra
+        self.set_goods_to_buy(1.0 / self.exchange_rate_usd_to_lcu * to_buy)
+
+    def set_exogenous_investment_orders(self, orders_lcu) -> None:
+        """Add exogenous investment purchases (nominal LCU per good, all households).
+
+        Used by linkage hooks for owner-financed investment programmes (e.g. heat pumps):
+        the orders are bought like household investment and paid out of income and
+        financial wealth through the usual wealth update, but they are not written into
+        ``target_investment``, so the household investment rule is unaffected.  The
+        total is shared across households in proportion to their property value (main
+        residence + other properties).  ``None`` clears it.
+        """
+        self._exogenous_investment_orders_lcu = (
+            None if orders_lcu is None else np.asarray(orders_lcu, dtype=float)
         )
+
+    def _exogenous_investment_by_household(self) -> Optional[np.ndarray]:
+        orders = getattr(self, "_exogenous_investment_orders_lcu", None)
+        if orders is None:
+            return None
+        weight = np.asarray(self.ts.current("wealth_main_residence"), dtype=float) + np.asarray(
+            self.ts.current("wealth_other_properties"), dtype=float
+        )
+        weight = np.where(np.isfinite(weight) & (weight > 0.0), weight, 0.0)
+        if weight.sum() <= 0.0:
+            weight = np.ones_like(weight)
+        return np.outer(weight / weight.sum(), orders)
 
     def prepare_selling_goods(self) -> None:
         """Prepare goods sale decisions.
