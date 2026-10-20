@@ -233,6 +233,8 @@ def apply_candidate_growth_baseline(
     capital_target_fraction: Optional[float] = None,
     capital_rolling_reference: Optional[bool] = None,
     labour_index_base_year: Optional[int] = None,
+    unmet_demand_weight: Optional[float] = None,
+    demand_smoothing: Optional[float] = None,
 ):
     """Apply the candidate growth baseline (opt-in overrides) to one CountryConfiguration.
 
@@ -263,6 +265,11 @@ def apply_candidate_growth_baseline(
     fc = country_config.firms.functions
     fc.demand_estimator.parameters.update(p["demand_estimator"])
     fc.demand_for_goods.parameters.update(p["demand_for_goods"])
+    # Sensitivity overrides for the demand-response mechanisms (rho, alpha).
+    if demand_smoothing is not None:
+        fc.demand_estimator.parameters["demand_smoothing"] = float(demand_smoothing)
+    if unmet_demand_weight is not None:
+        fc.demand_for_goods.parameters["unmet_demand_weight"] = float(unmet_demand_weight)
     fc.excess_demand.parameters.update(p["excess_demand"])
     fc.target_production.parameters.update(p["target_production"])
     # The preset activates the capital-accumulation rule (fraction 0.1, rolling reference),

@@ -55,3 +55,10 @@ class TestApplyPreset:
             CountryConfiguration.n_industry_default(n_industries=43),
             labour_force_index=[1.0, 1.01, 1.02])
         assert c.individuals.functions.demography.parameters["labour_force_index"] == [1.0, 1.01, 1.02]
+
+    def test_rho_alpha_overrides(self):
+        c = apply_candidate_growth_baseline(
+            CountryConfiguration.n_industry_default(n_industries=43),
+            unmet_demand_weight=1.0, demand_smoothing=0.6)
+        assert c.firms.functions.demand_for_goods.parameters["unmet_demand_weight"] == 1.0
+        assert c.firms.functions.demand_estimator.parameters["demand_smoothing"] == 0.6

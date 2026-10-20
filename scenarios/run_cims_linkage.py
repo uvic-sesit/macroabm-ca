@@ -1425,6 +1425,8 @@ def build_simulation(
     labour_force_cap: dict[str, float] | None = None,
     capital_target_fraction: float | None = None,
     capital_rolling_reference: bool | None = None,
+    unmet_demand_weight: float | None = None,
+    demand_smoothing: float | None = None,
     household_demand_growth: float | None = None,
     household_demand_from_labour_force: bool = False,
     exogenous_energy_prices: bool = False,
@@ -1464,6 +1466,8 @@ def build_simulation(
                 capital_target_fraction=capital_target_fraction,
                 capital_rolling_reference=capital_rolling_reference,
                 labour_index_base_year=labour_index_base_year,
+                unmet_demand_weight=unmet_demand_weight,
+                demand_smoothing=demand_smoothing,
             )
     if exogenous_energy_prices:
         # CER supplies price trajectories for the energy bundle; pin those industries'
