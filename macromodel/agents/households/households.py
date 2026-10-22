@@ -701,6 +701,8 @@ class Households(Agent):
         max_step: float = 2.0,
         increments: dict[int, float] | None = None,
         energy_indices: list[int] | None = None,
+        basis: str = "realised",
+        order_margin: float = 0.1,
     ) -> None:
         """Pin households' REAL consumption of a good to an external quantity path.
 
@@ -735,6 +737,16 @@ class Households(Agent):
                 WHOLE energy set the caller's denominator covers, not merely the goods
                 being anchored, or the increment changes meaning between the two sides.
                 Required for *increments*, ignored otherwise.
+            basis: which last-period quantity the correction is measured on.
+                ``"realised"`` (default) uses what households RECEIVED, min(spent, target).
+                Under supply rationing the received quantity stays short whatever the
+                weight, so the step stays above 1 every call and compounds the stored
+                multiplier without limit, crowding the other goods out of the budget.
+                ``"bounded"`` corrects on the realised basis but caps the step so the
+                ORDERED quantity cannot exceed ``desired * (1 + order_margin)``: small
+                rationing is still compensated (orders a few percent above the path),
+                but a good that is not available cannot inflate the weight beyond it.
+            order_margin: the ``"bounded"`` cap on ordered over desired quantity.
         """
         if not (targets or increments) or not prices:
             return
@@ -777,6 +789,21 @@ class Households(Agent):
             q = float(nominal[j]) / price
             return q if np.isfinite(q) and q > 0.0 else None
 
+        ordered_nominal = None
+        if basis == "bounded":
+            try:
+                t = np.asarray(self.ts.current("target_consumption"), dtype=float)
+                ordered_nominal = (t.sum(axis=0) if t.ndim > 1 else t).ravel()
+            except Exception:  # noqa: BLE001
+                ordered_nominal = None
+
+        def _ordered(j: int) -> float | None:
+            price = float(prices.get(j, 0.0))
+            if ordered_nominal is None or j >= ordered_nominal.size or price <= 0.0:
+                return None
+            q = float(ordered_nominal[j]) / price
+            return q if np.isfinite(q) and q > 0.0 else None
+
         # Anchors first, so the energy total is captured on the same call as the
         # per-good anchors it is the sum of -- and BEFORE any correction lands, or the
         # increment would be scaled by a denominator this method had already moved.
@@ -817,6 +844,12 @@ class Households(Agent):
             # `realised` already embeds the multiplier in force last period, so the ratio
             # is the ADDITIONAL factor needed and compounds onto the stored one.
             step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            if basis == "bounded":
+                # Orders scale with the weight, so ordered * step is next period's order.
+                ordered = _ordered(j)
+                if ordered is not None:
+                    cap = desired * (1.0 + max(order_margin, 0.0)) / ordered
+                    step = float(max(min(step, cap), 1.0 / max_step))
             mult = float(self._energy_quantity_multiplier.get(j, 1.0)) * step
             mult = float(min(max(mult, 1e-3), 1e3))
             self._energy_quantity_multiplier[j] = mult
@@ -1321,11 +1354,37 @@ class Households(Agent):
         - Target investment
         - Exchange rates
         """
-        self.set_goods_to_buy(
-            1.0
-            / self.exchange_rate_usd_to_lcu
-            * (self.ts.current("target_consumption") + self.ts.current("target_investment"))
+        to_buy = self.ts.current("target_consumption") + self.ts.current("target_investment")
+        extra = self._exogenous_investment_by_household()
+        if extra is not None:
+            to_buy = to_buy + extra
+        self.set_goods_to_buy(1.0 / self.exchange_rate_usd_to_lcu * to_buy)
+
+    def set_exogenous_investment_orders(self, orders_lcu) -> None:
+        """Add exogenous investment purchases (nominal LCU per good, all households).
+
+        Used by linkage hooks for owner-financed investment programmes (e.g. heat pumps):
+        the orders are bought like household investment and paid out of income and
+        financial wealth through the usual wealth update, but they are not written into
+        ``target_investment``, so the household investment rule is unaffected.  The
+        total is shared across households in proportion to their property value (main
+        residence + other properties).  ``None`` clears it.
+        """
+        self._exogenous_investment_orders_lcu = (
+            None if orders_lcu is None else np.asarray(orders_lcu, dtype=float)
         )
+
+    def _exogenous_investment_by_household(self) -> Optional[np.ndarray]:
+        orders = getattr(self, "_exogenous_investment_orders_lcu", None)
+        if orders is None:
+            return None
+        weight = np.asarray(self.ts.current("wealth_main_residence"), dtype=float) + np.asarray(
+            self.ts.current("wealth_other_properties"), dtype=float
+        )
+        weight = np.where(np.isfinite(weight) & (weight > 0.0), weight, 0.0)
+        if weight.sum() <= 0.0:
+            weight = np.ones_like(weight)
+        return np.outer(weight / weight.sum(), orders)
 
     def prepare_selling_goods(self) -> None:
         """Prepare goods sale decisions.

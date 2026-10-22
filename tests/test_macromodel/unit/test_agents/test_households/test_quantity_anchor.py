@@ -76,3 +76,34 @@ def test_no_targets_and_no_increments_is_a_no_op():
     before = hh.consumption_weights.copy()
     Households.anchor_energy_quantities(hh, {}, PRICES, 2.0)
     assert np.array_equal(hh.consumption_weights, before)
+
+
+def _fake_households_ordering(realised_nominal, ordered_nominal):
+    series = {
+        "industry_consumption": np.asarray(realised_nominal, dtype=float),
+        "target_consumption": np.asarray(ordered_nominal, dtype=float),
+    }
+    return types.SimpleNamespace(
+        ts=types.SimpleNamespace(current=lambda key: series[key]),
+        consumption_weights=np.array([0.5, 0.2, 0.3]),
+        consumption_weights_by_income=np.ones((2, 3)),
+    )
+
+
+def test_bounded_basis_caps_orders_at_the_margin_over_the_path():
+    # Rationed: households already ORDER 2.0 of electricity (the path, 2x the 1.0
+    # anchor) but RECEIVE 1.0.  The realised basis doubles the weight again; the bounded
+    # basis lets orders rise only to 1.1x the path.
+    hh = _fake_households_ordering((0.0, 2.0, 18.0), (0.0, 4.0, 18.0))
+    Households.anchor_energy_quantities(hh, {1: 2.0}, PRICES, 10.0)
+    assert hh._energy_quantity_multiplier[1] == pytest.approx(2.0)
+    hh = _fake_households_ordering((0.0, 2.0, 18.0), (0.0, 4.0, 18.0))
+    Households.anchor_energy_quantities(hh, {1: 2.0}, PRICES, 10.0, basis="bounded", order_margin=0.1)
+    assert hh._energy_quantity_multiplier[1] == pytest.approx(1.1)
+
+
+def test_bounded_basis_matches_realised_without_rationing():
+    hh = _fake_households_ordering((0.0, 2.0, 18.0), (0.0, 2.0, 18.0))
+    Households.anchor_energy_quantities(hh, {1: 2.0}, PRICES, 10.0, basis="bounded", order_margin=0.1)
+    # Orders 1.0 -> cap 2.2x, above the 2x the realised basis asks for: no bite.
+    assert hh._energy_quantity_multiplier[1] == pytest.approx(2.0)

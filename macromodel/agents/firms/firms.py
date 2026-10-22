@@ -235,7 +235,7 @@ class Firms(Agent):
 
         self.emission_fractions = emission_fractions
 
-    def get_effective_intermediate_coefficients(self) -> np.ndarray:
+    def get_effective_intermediate_coefficients(self, apply_blend: bool = True) -> np.ndarray:
         """Get the effective intermediate input coefficients for each firm.
 
         Returns base coefficients adjusted by firm-specific technical multipliers.
@@ -251,9 +251,32 @@ class Firms(Agent):
             # Multipliers are [n_firms, n_industries]
             # Base coefficients are [n_firms, n_industries] after transpose
             # Element-wise multiply each firm's coefficients by their multipliers
-            return base_coefficients * multipliers
+            base_coefficients = base_coefficients * multipliers
 
-        return base_coefficients
+        return self._apply_recipe_blend(base_coefficients) if apply_blend else base_coefficients
+
+    def set_recipe_blend(self, blend: Optional[dict[int, tuple[float, np.ndarray]]]) -> None:
+        """Blend firms' input recipes with an exogenous one (e.g. a programme's bill of materials).
+
+        ``blend`` maps firm index -> (share, recipe): ``share`` of the firm's output is made
+        with ``recipe`` (real input per real unit of output, one entry per good), the rest
+        with its own coefficients, so its input requirement per unit of output becomes
+        (1 - share) * own + share * recipe. Applied on top of the base matrix and the tech
+        multipliers (so on top of whatever the linkage set). None or {} clears it.
+        """
+        self._recipe_blend = blend or None
+
+    def _apply_recipe_blend(self, productivity: np.ndarray) -> np.ndarray:
+        blend = getattr(self, "_recipe_blend", None)
+        if not blend:
+            return productivity
+        out = np.array(productivity, dtype=float, copy=True)
+        with np.errstate(divide="ignore"):
+            for i, (share, recipe) in blend.items():
+                own = 1.0 / out[i]  # productivity inf (unused input) -> 0 per unit output
+                need = (1.0 - share) * own + share * np.asarray(recipe, dtype=float)
+                out[i] = np.where(need > 0.0, 1.0 / need, np.inf)
+        return out
 
     def get_effective_capital_coefficients(self) -> np.ndarray:
         """Get the effective capital input coefficients for each firm.
@@ -849,15 +872,25 @@ class Firms(Agent):
             estimated_inflation: Expected inflation rate
             current_good_prices (np.ndarray): Industry-level average prices
         """
-        self.ts.limiting_intermediate_inputs.append(
-            self.functions["production"].compute_limiting_intermediate_inputs_stock(
-                intermediate_inputs_productivity_matrix=self.get_effective_intermediate_coefficients(),
+        def _limit(coefficients):
+            return self.functions["production"].compute_limiting_intermediate_inputs_stock(
+                intermediate_inputs_productivity_matrix=coefficients,
                 intermediate_inputs_stock=self.ts.current("intermediate_inputs_stock"),
                 intermediate_inputs_utilisation_rate=self.intermediate_inputs_utilisation_rate,
                 goods_criticality_matrix=self.goods_criticality_matrix,
                 substitution_bundle_matrix=self.substitution_bundles,
             )
-        )
+
+        limiting = _limit(self.get_effective_intermediate_coefficients())
+        blend = getattr(self, "_recipe_blend", None)
+        if blend:
+            # A blended firm runs two lines: its own work (1 - share of output, own recipe)
+            # and the programme (share, programme recipe). A shortage of programme inputs
+            # can only hold back the programme line, never the firm's own work.
+            own_limit = _limit(self.get_effective_intermediate_coefficients(apply_blend=False))
+            for i, (share, _) in blend.items():
+                limiting[i] = max(limiting[i], (1.0 - share) * own_limit[i])
+        self.ts.limiting_intermediate_inputs.append(limiting)
         self.ts.limiting_capital_inputs.append(
             self.functions["production"].compute_limiting_capital_inputs_stock(
                 capital_inputs_productivity_matrix=self.get_effective_capital_coefficients(),
@@ -1789,8 +1822,11 @@ class Firms(Agent):
                 )
             )
 
-        # Setting total real amount of goods to buy
-        self.set_goods_to_buy(self.ts.current("target_intermediate_inputs") + self.ts.current("target_capital_inputs"))
+        # Setting total real amount of goods to buy (+ any exogenous programme orders the
+        # firms pay for themselves, see set_exogenous_capital_orders)
+        exo = getattr(self, "_exo_capital_orders", None)
+        base_buy = self.ts.current("target_intermediate_inputs") + self.ts.current("target_capital_inputs")
+        self.set_goods_to_buy(base_buy if exo is None else base_buy + exo)
 
     def prepare_selling_goods(self) -> None:
         """Prepare firms' selling plans for goods market.
@@ -1835,6 +1871,16 @@ class Firms(Agent):
         )
         self.prepare_selling_goods()
 
+    def set_exogenous_capital_orders(self, orders_real) -> None:
+        """Exogenous programme orders (real units, firms x goods) the firms pay for themselves.
+
+        Added to this quarter's purchases and paid like any purchase (deposits, overdraft).
+        What arrives is kept OUT of productive capital and intermediate stocks -- a building
+        retrofit replaces equipment, it does not expand capacity -- but counted in GFCF.
+        ``None`` clears it.
+        """
+        self._exo_capital_orders = None if orders_real is None else np.asarray(orders_real, dtype=float)
+
     def distribute_bought_goods(self) -> None:
         """Distribute purchased goods between intermediate and capital inputs.
 
@@ -1843,13 +1889,22 @@ class Firms(Agent):
         - Desired investment
         - Actual quantities bought
         """
+        buy_real = self.ts.current("real_amount_bought")
+        exo = getattr(self, "_exo_capital_orders", None)
+        self._exo_received = None
+        if exo is not None:
+            wanted = (self.ts.current("target_intermediate_inputs")
+                      + self.ts.current("target_capital_inputs") + exo)
+            share = np.divide(exo, wanted, out=np.zeros_like(exo), where=wanted > 0)
+            self._exo_received = buy_real * share
+            buy_real = buy_real - self._exo_received
         (
             new_intermediate_inputs,
             new_capital_inputs,
         ) = self.functions["bought_goods_distributor"].distribute_bought_goods(
             desired_intermediate_inputs=self.ts.current("target_intermediate_inputs"),
             desired_investment=self.ts.current("target_capital_inputs"),
-            buy_real=self.ts.current("real_amount_bought"),
+            buy_real=buy_real,
         )
         self.ts.real_amount_bought_as_intermediate_inputs.append(new_intermediate_inputs)
         self.ts.real_amount_bought_as_capital_goods.append(new_capital_inputs)
@@ -1879,7 +1934,11 @@ class Firms(Agent):
         _emt = (
             np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
         )
-        return (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
+        gfcf = (self.ts.current("real_amount_bought_as_capital_goods") * (current_good_prices + _emt)).sum(axis=0)
+        exo = getattr(self, "_exo_received", None)
+        if exo is not None:
+            gfcf = gfcf + (exo * (current_good_prices + _emt)).sum(axis=0)
+        return gfcf
 
     def update_total_newly_bought_costs(self, current_good_prices: np.ndarray, extra_marginal_taxes: Optional[np.ndarray] = None) -> None:
         """Update costs of newly purchased inputs.
@@ -2824,6 +2883,146 @@ class Firms(Agent):
                 reset_multipliers=reset_multipliers,
             )
 
+    def anchor_energy_intensity(
+        self,
+        share_shifts: dict[tuple[int, int], float],
+        energy_indices: list[int],
+        *,
+        max_step: float = 2.0,
+        max_multiplier: float | None = None,
+        energy_index: dict[int, float] | None = None,
+        include_self: set[int] | None = None,
+        pair_ratio: dict[tuple[int, int], float] | None = None,
+        exclude_pairs: set[tuple[int, int]] | None = None,
+    ) -> dict[str, float]:
+        """Pin each industry's energy use PER UNIT OF ITS OWN OUTPUT, fuel mix from the source.
+
+        Alternative to :meth:`anchor_energy_quantities`, which pins absolute QUANTITIES
+        (anchor x source growth ratio).  That design blows up on tiny source bases (ratios
+        in the hundreds), needs a province-total rescale that then starves every other
+        industry, and -- because a quantity is held while output moves -- raises the
+        coefficient whenever output falls.  Here the target is an intensity:
+
+            target(i, j) = output_i(t) x E_i / Y_i x v_ij(t)
+            v_ij(t) = renormalised max(0, v_ij(anchor) + share_shifts[(i, j)])
+
+        E_i / Y_i is industry i's energy purchases per unit of output at the anchor (the
+        model's IO base, held fixed); v_ij is fuel j's share of that energy bundle; the
+        shift is the source's change in i's fuel mix (value shares at anchor-year prices,
+        computed by the caller).  Shares are bounded by construction, so there is no
+        tiny-base guard, no rescale, and no output feedback.  Closed loop as before: the
+        correction compares last period's purchases with the target at last period's
+        output and compounds a stored multiplier on the coefficient (``link`` rebuilds the
+        matrix each milestone), bounded by *max_step* per call and *max_multiplier*.
+
+        ``energy_index`` ({industry: index}): the source's energy use per unit of its own
+        ACTIVITY relative to the anchor (efficiency), applied to E_i / Y_i; clipped to
+        [0.2, 3]. Missing / non-finite -> 1 (energy per output held at the base).
+
+        ``include_self`` (industry indices): energy industries whose purchases of their OWN
+        output count as fuel use and are anchored with the rest (e.g. oil & gas producers'
+        own gas). The default exclusion of the self-input exists because a sequential model
+        cannot bootstrap a self-input from zero; these rows already buy it in the base.
+
+        ``pair_ratio`` ({(industry, fuel): ratio}): explicit per-unit ratio vs the anchor for
+        pairs set from another source than the fuel-mix shift -- the electricity sector's
+        coal and gas per unit of output from COPPER's generation mix. target = output x
+        (anchor purchase per unit of output) x ratio; a ratio of 0 walks the coefficient
+        down by 1/max_step per call (coal phase-out). Rows only in *pair_ratio* touch only
+        those pairs.
+
+        ``exclude_pairs`` ({(industry, good)}): purchases that are FEEDSTOCK, not fuel
+        (refineries' crude oil from B06), kept out of the energy bundle and left to ``link``.
+
+        Returns a small summary for logging.
+        """
+        try:
+            bought = np.asarray(self.ts.current("real_amount_bought_as_intermediate_inputs"), dtype=float)
+            output = np.asarray(self.ts.current("production"), dtype=float).ravel()
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return {}
+        if bought.ndim != 2 or bought.size == 0:
+            return {}
+        excluded = {(int(i), int(j)) for (i, j) in (exclude_pairs or set())}
+        base_matrix = self.base_intermediate_inputs_productivity_matrix
+        industry_idx = np.asarray(self.states["Industry"])
+        multipliers = self.states.get("intermediate_tech_multipliers")
+        energy = [int(k) for k in energy_indices if int(k) < bought.shape[1]]
+        if not hasattr(self, "_intensity_anchor"):
+            self._intensity_anchor: dict[int, tuple[float, dict[int, float]]] = {}
+        if not hasattr(self, "_firm_intensity_multiplier"):
+            self._firm_intensity_multiplier: dict[tuple[int, int], float] = {}
+        if not hasattr(self, "_linkage_owned_pairs"):
+            self._linkage_owned_pairs: dict[str, set[tuple[int, int]]] = {}
+
+        # Only industries the caller covers (every source row, zero shift included, plus the
+        # rows of *pair_ratio*); the rest keep whatever ``link`` wrote.
+        self_rows = {int(i) for i in (include_self or set())}
+        ratios = {(int(i), int(j)): float(v) for (i, j), v in (pair_ratio or {}).items()}
+        shift_rows = {int(i) for (i, _j) in share_shifts}
+        rows = sorted(shift_rows | {i for (i, _j) in ratios})
+        n_written = n_capped = 0
+
+        def write(i: int, k: int, firms_i, desired: float) -> None:
+            nonlocal n_written, n_capped
+            realised = float(np.nansum(bought[firms_i, k]))
+            if realised <= 0.0:
+                return  # zero purchases cannot be multiplied into a quantity
+            if not np.isfinite(desired) or desired <= 0.0:
+                desired = realised / max_step  # walk a zero target down
+            step = float(min(max(desired / realised, 1.0 / max_step), max_step))
+            mult = float(self._firm_intensity_multiplier.get((i, k), 1.0)) * step
+            mult = float(min(max(mult, 1e-3), 1e3))
+            if max_multiplier is not None and max_multiplier > 0.0 and mult > max_multiplier:
+                mult = float(max_multiplier)
+                n_capped += 1
+            self._firm_intensity_multiplier[(i, k)] = mult
+            current = float(base_matrix[k, i])
+            if not np.isfinite(current) or current <= 0.0:
+                return
+            base_matrix[k, i] = current / mult
+            self._linkage_owned_pairs.setdefault("intermediate_tech_multipliers", set()).add((i, k))
+            if multipliers is not None:
+                multipliers[firms_i, k] = 1.0
+            n_written += 1
+
+        for i in rows:
+            firms_i = np.where(industry_idx == i)[0]
+            if firms_i.size == 0:
+                continue
+            fuels = [k for k in energy if (k != i or i in self_rows) and (i, k) not in excluded]
+            out_i = float(np.nansum(output[firms_i]))
+            if i not in self._intensity_anchor:
+                tot = sum(float(np.nansum(bought[firms_i, k])) for k in fuels)
+                if out_i <= 0.0 or tot <= 0.0:
+                    continue
+                self._intensity_anchor[i] = (
+                    tot / out_i,
+                    {k: float(np.nansum(bought[firms_i, k])) / tot for k in fuels},
+                )
+            e0, v0 = self._intensity_anchor[i]
+            if out_i <= 0.0:
+                continue
+            row_ratio_fuels = {k for (ii, k) in ratios if ii == i}
+            for k in row_ratio_fuels:
+                write(i, k, firms_i, out_i * e0 * v0.get(k, 0.0) * ratios[(i, k)])
+            if i not in shift_rows:
+                continue
+            e_per_y = e0
+            ei = float((energy_index or {}).get(i, 1.0))
+            if np.isfinite(ei) and ei > 0.0:
+                e_per_y = e0 * min(max(ei, 0.2), 3.0)
+            mix_fuels = [k for k in fuels if k not in row_ratio_fuels]
+            v = {k: max(0.0, v0.get(k, 0.0) + float(share_shifts.get((i, k), 0.0))) for k in mix_fuels}
+            s_v = sum(v.values())
+            if s_v <= 0.0:
+                continue
+            # The mix-shift fuels share what the ratio-set fuels do not take of the anchor bundle.
+            share_left = max(0.0, 1.0 - sum(v0.get(k, 0.0) for k in row_ratio_fuels))
+            for k in mix_fuels:
+                write(i, k, firms_i, out_i * e_per_y * share_left * v[k] / s_v)
+        return {"pairs": n_written, "capped": n_capped}
+
     def anchor_energy_quantities(
         self,
         targets: dict[tuple[int, int], float],
@@ -2832,6 +3031,7 @@ class Firms(Agent):
         energy_indices: list[int] | None = None,
         max_step: float = 2.0,
         conserve_total: dict[int, float] | None = None,
+        max_multiplier: float | None = None,
     ) -> None:
         """Pin firms' REAL intermediate purchases of a good to an external quantity path.
 
@@ -2874,6 +3074,8 @@ class Firms(Agent):
                 anchored TOTAL grows at the source's total rate, keeping the source's
                 composition but not its arithmetic.  ``None`` (default) leaves every
                 index exactly as passed -- bit-identical to the un-normalised channel.
+            max_multiplier: optional cap on the stored per-pair coefficient multiplier
+                (``None`` = uncapped, the original behaviour).
 
         **Why conserve_total exists.**  An index is a RATIO applied to the MODEL's
         base, and the model's base composition is not the source's.  Where a pair the
@@ -3040,6 +3242,13 @@ class Firms(Agent):
             step = float(min(max(desired / realised, 1.0 / max_step), max_step))
             mult = float(self._firm_quantity_multiplier.get((i, j), 1.0)) * step
             mult = float(min(max(mult, 1e-3), 1e3))
+            if max_multiplier is not None and np.isfinite(max_multiplier) and max_multiplier > 0.0:
+                # Cap on how far the anchor may raise this pair's input coefficient over
+                # the IO base.  The anchor pins a QUANTITY, so when the buyer's output
+                # falls the coefficient rises to hold it; on a tiny external base (SK
+                # agriculture electricity, ~400x in Net-zero) that took electricity from
+                # 0.8% to 22% of the buyer's output value.
+                mult = float(min(mult, max_multiplier))
             self._firm_quantity_multiplier[(i, j)] = mult
             # The matrix holds PRODUCTIVITY, the reciprocal of the input coefficient, so
             # buying more per unit of output means dividing it.

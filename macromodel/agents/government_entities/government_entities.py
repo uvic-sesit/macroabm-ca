@@ -206,13 +206,22 @@ class GovernmentEntities(Agent):
             assume_zero_noise (bool): Whether to assume deterministic
                 consumption paths
         """
+        # Exogenous add-on orders (set_exogenous_orders) are recorded as ordinary spending
+        # for the accounts, but kept out of the history the baseline spending rule
+        # forecasts from, so the add-on does not feed back into baseline spending.
+        historic_spent = np.array(self.ts.historic("total_consumption"), dtype=float).flatten()
+        extra_history = np.asarray(getattr(self, "_exogenous_order_history", []), dtype=float)
+        if extra_history.size:
+            n = min(extra_history.size, historic_spent.size)
+            historic_spent = historic_spent.copy()
+            historic_spent[-n:] -= extra_history[-n:]
         if exogenous_gov_consumption_before is None:
-            historic_total_consumption = np.array(self.ts.historic("total_consumption")).flatten() / historic_ppi
+            historic_total_consumption = historic_spent / historic_ppi
         else:
             historic_total_consumption = np.concatenate(
                 (
                     exogenous_gov_consumption_before[-forecasting_window:],
-                    np.array(self.ts.historic("total_consumption")).flatten() / historic_ppi,
+                    historic_spent / historic_ppi,
                 )
             )
         if assume_zero_growth:
@@ -238,9 +247,11 @@ class GovernmentEntities(Agent):
         self.ts.desired_consumption_in_usd.append(
             1.0 / self.exchange_rate_usd_to_lcu * self.ts.current("desired_consumption_in_lcu")
         )
-        single_entity_consumption = self.ts.current("desired_consumption_in_usd") / self.ts.current(
-            "n_government_entities"
-        )
+        desired_usd = self.ts.current("desired_consumption_in_usd")
+        extra_lcu = getattr(self, "_exogenous_orders_lcu", None)
+        if extra_lcu is not None:
+            desired_usd = desired_usd + np.asarray(extra_lcu, dtype=float) / self.exchange_rate_usd_to_lcu
+        single_entity_consumption = desired_usd / self.ts.current("n_government_entities")
         all_entity_consumption = np.tile(
             single_entity_consumption,
             (self.ts.current("n_government_entities"), 1),
@@ -339,6 +350,28 @@ class GovernmentEntities(Agent):
                     np.sum(self.ts.current("consumption_in_lcu")[emitting_indices] * readjusted_factors[_p])
                 )
         self.ts.total_consumption.append([self.ts.current("consumption_in_lcu").sum()])
+        # Book the add-on share of what was actually spent (orders may be rationed),
+        # pro rata to its share of the quarter's desired purchases, for the history
+        # correction in prepare_buying_goods.
+        extra_lcu = getattr(self, "_exogenous_orders_lcu", None)
+        extra_spent = 0.0
+        if extra_lcu is not None:
+            extra_total = float(np.sum(extra_lcu))
+            desired_total = float(np.sum(self.ts.current("desired_consumption_in_lcu"))) + extra_total
+            if desired_total > 0.0:
+                extra_spent = extra_total / desired_total * float(self.ts.current("consumption_in_lcu").sum())
+        if not hasattr(self, "_exogenous_order_history"):
+            self._exogenous_order_history = []
+        self._exogenous_order_history.append(extra_spent)
+
+    def set_exogenous_orders(self, orders_lcu) -> None:
+        """Add exogenous purchases (nominal LCU per good) on top of this quarter's spending.
+
+        Used by linkage hooks to inject investment programmes as direct demand for the
+        supplying industries. Debt-financed like all government spending; excluded from
+        the baseline spending rule's forecasting history. ``None`` clears it.
+        """
+        self._exogenous_orders_lcu = None if orders_lcu is None else np.asarray(orders_lcu, dtype=float)
 
     def save_to_h5(self, group: h5py.Group):
         """Save government entities data to HDF5.

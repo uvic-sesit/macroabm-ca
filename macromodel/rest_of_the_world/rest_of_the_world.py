@@ -166,15 +166,34 @@ class RestOfTheWorld(Agent):
         self._import_limit_mode = mode
         self._import_limited_industries = sorted({int(i) for i in (industry_indices or [])})
 
+    def set_import_supply_reduction(self, reduction_lcu_by_good) -> None:
+        """Withdraw a nominal amount (LCU per good) from ROW's supply this step.
+
+        Used to cap the import share of an injected order stream: the hook passes the
+        part of those orders that would otherwise be imported above the cap, so domestic
+        producers have to supply it. The goods market's additional-ROW backstop is left
+        on, so part of the gap can still be refilled at its markup. ``None`` clears it.
+        """
+        self._import_supply_reduction_lcu = (
+            None if reduction_lcu_by_good is None else np.asarray(reduction_lcu_by_good, dtype=float)
+        )
+
     def _apply_import_limits(self, aggregate_country_production_index: float) -> None:
         """Clamp the current desired real exports of import-limited industries in place.
 
-        No-op unless :meth:`set_import_limits` has been called.  The cap grows with
-        ``aggregate_country_production_index`` so it constrains the *share*, not the level.
+        No-op unless :meth:`set_import_limits` or :meth:`set_import_supply_reduction` has
+        been called.  The cap grows with ``aggregate_country_production_index`` so it
+        constrains the *share*, not the level.
         """
-        if not self._import_limited_industries:
+        reduction = getattr(self, "_import_supply_reduction_lcu", None)
+        if not self._import_limited_industries and reduction is None:
             return
         current = np.array(self.ts.current("desired_exports_real"), dtype=float)
+        if reduction is not None:
+            # Nominal LCU -> real at ROW's latest offered price (before this step's update).
+            price = np.asarray(self.ts.current("price_in_lcu"), dtype=float)
+            real = np.divide(reduction, price, out=np.zeros_like(reduction), where=price > 0)
+            current = np.maximum(current - real, 0.0)
         initial = np.array(self.ts.initial("desired_exports_real"), dtype=float)
         if getattr(self, "_import_limit_mode", "share") == "level":
             # Base-year VOLUME: no scaling with the economy.
