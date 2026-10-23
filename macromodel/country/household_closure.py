@@ -49,6 +49,38 @@ def put(agent, key, value):
     agent.ts.dicts[key][-1] = np.asarray(value, float).copy()
 
 
+def cap_household_goods_budget(country):
+    """Zero-unobserved-capacity proxy approved for the main D diagnostic arm.
+
+    Use cash already available before clearing, including committed new loans
+    and house-sale receipts. Do not spend forecast wages, unfunded income,
+    other financial assets, or a proxy made from underwriting headroom.
+    Reserve senior payments first; scale every good and investment by one
+    household factor, including consumption VAT and capital-formation tax.
+    """
+    h, g = country.households, country.central_government
+    C = h.ts.current('target_consumption').copy()
+    I = h.ts.current('target_investment').copy()
+    vat = g.states['Value-added Tax']
+    cf = g.states['Capital Formation Tax']
+    cash = (h.ts.current('wealth_deposits') + h.ts.current('received_consumption_loans')
+            + h.ts.current('received_mortgages') + h.ts.current('property_sale_proceeds'))
+    senior = (h.ts.current('debt_installments') + h.ts.current('rent')
+              + h.ts.current('interest_paid') + h.ts.current('price_paid_for_property'))
+    if not np.all(np.isfinite(cash)) or not np.all(np.isfinite(senior)):
+        raise ValueError('Household cash budget requires finite settled cash and senior payments')
+    resources = cash - senior
+    planned = (1 + vat) * C.sum(axis=1) + (1 + cf) * I.sum(axis=1)
+    factor = np.minimum(1., np.divide(np.maximum(0., resources), planned,
+                                     out=np.ones_like(planned), where=planned > 0))
+    h.states['overdraft_unused_capacity'] = np.zeros_like(planned)
+    h.states['overdraft_constrained'] = factor < 1 - 1e-12
+    h.states['overdraft_consumption_cut'] = (1 + vat) * C.sum(axis=1) * (1 - factor)
+    h.states['overdraft_senior_shortfall_before_receipts'] = np.maximum(0., -resources)
+    put(h, 'target_consumption', C * factor[:, None])
+    put(h, 'target_investment', I * factor[:, None])
+
+
 class HouseholdClosure:
     def __init__(self, country, config, national_income_share):
         self.c, self.cfg = country, config
@@ -162,6 +194,7 @@ def install_household_closures(countries):
     for c in countries.values():
         cfg = c.configuration.household_closure
         c.households.states["closure_deposit_only_saving"] = cfg.deposit_only_saving
+        c.households.states['overdraft_limit_enabled'] = cfg.overdraft_limit_enabled
         if cfg.distress_enabled:
             from macromodel.agents.households.func.insolvency import PersistentDistressHouseholdInsolvencyHandler
             c.households.functions["insolvency"] = PersistentDistressHouseholdInsolvencyHandler(cfg.distress_periods,cfg.collateral_haircut)

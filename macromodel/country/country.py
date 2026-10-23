@@ -961,6 +961,9 @@ class Country:
         if self.configuration.household_closure.rent_offset_enabled:
             from macromodel.country.household_closure import offset_private_rent
             offset_private_rent(self)
+        if self.configuration.household_closure.overdraft_limit_enabled:
+            from macromodel.country.household_closure import cap_household_goods_budget
+            cap_household_goods_budget(self)
         self.firms.prepare_goods_market_clearing(
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
             previous_good_prices=self.economy.ts.current("good_prices"),

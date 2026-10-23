@@ -1369,6 +1369,11 @@ class Households(Agent):
         )
         self.ts.total_wealth_deposits.append([self.ts.current("wealth_deposits").sum()])
 
+        if self.states.get('overdraft_limit_enabled', False):
+            # Record before the insolvency handler can erase an overdraft.
+            # The purchase cap does not itself declare a default.
+            self.states['payment_distress'] = np.maximum(0., -self.ts.current('wealth_deposits'))
+
         # Compute total financial assets
         self.ts.wealth_financial_assets.append(
             self.ts.current("wealth_other_financial_assets") + self.ts.current("wealth_deposits")
