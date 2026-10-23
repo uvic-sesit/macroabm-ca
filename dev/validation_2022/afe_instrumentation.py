@@ -4,6 +4,15 @@ import pandas as pd
 from closure_diagnostics import cur
 
 
+def household_cash_flows(h, vat):
+    income=cur(h,'income')-cur(h,'interest_paid')
+    consumption=(1+vat)*cur(h,'consumption')+cur(h,'rent')
+    expected=float(cur(h,'total_consumption').sum()+cur(h,'rent').sum())
+    if not np.isclose(consumption.sum(),expected,rtol=1e-12,atol=1e-3):
+        raise AssertionError('Household consumption does not reconcile to regional total')
+    return income,consumption
+
+
 class AssetDiagnosis:
     def __init__(self, sim, diag):
         self.rows=[]
@@ -15,8 +24,7 @@ class AssetDiagnosis:
             bins=np.select([nonpension<=1e-8,nonpension<=10000,nonpension<=100000],
                            ['zero','0-10k','10-100k'],default='100k+')
             def capture(*args, c=c, h=h, initial=initial, bins=bins, **kwargs):
-                income=cur(h,'income')-cur(h,'interest_paid')
-                consumption=cur(h,'total_consumption')+cur(h,'rent')
+                income,consumption=household_cash_flows(h,c.central_government.states['Value-added Tax'])
                 saving=income-consumption
                 frame=pd.DataFrame(dict(decile=initial['decile'],asset_bin=bins,
                     households=np.full(len(income),c.scale), constrained=h.states['overdraft_constrained']*c.scale,
