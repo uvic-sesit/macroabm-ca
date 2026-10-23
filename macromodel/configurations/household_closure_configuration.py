@@ -31,3 +31,9 @@ class HouseholdClosureConfiguration(BaseModel):
     corporate_transfers: float = Field(default=121_500e6, ge=0)
     # StatCan 36-10-0482, 2022, Dividends (v80013659), CAD.
     dividends_by_region: dict[str, float] = {'CAN_NL': 363000000.0, 'CAN_PE': 194000000.0, 'CAN_NS': 1748000000.0, 'CAN_NB': 1033000000.0, 'CAN_QC': 14371000000.0, 'CAN_ON': 35090000000.0, 'CAN_MB': 1825000000.0, 'CAN_SK': 3246000000.0, 'CAN_AB': 16072000000.0, 'CAN_BC': 17949000000.0, 'CAN_YT': 98000000.0, 'CAN_NT': 52000000.0, 'CAN_NU': 11000000.0}
+
+    @classmethod
+    def cashflow_candidate(cls, distress=False):
+        """Reviewed D-timing/D1 arms; all wider housing behavior stays off."""
+        return cls(credit_enabled=True, income_enabled=True, recalibrate_saving_with_d2=True,
+                   overdraft_limit_enabled=True, rent_offset_enabled=True, distress_enabled=distress)
