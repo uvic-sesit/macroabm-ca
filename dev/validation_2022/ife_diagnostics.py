@@ -33,6 +33,9 @@ def run(args):
     for c in configs.values():
         c.household_closure = HouseholdClosureConfiguration.cashflow_candidate()
         c.household_closure.financial_asset_drawdown = True
+        if args.arm == 'iv-ACDpAI':
+            c.household_closure.investment_benchmark_enabled = True
+            c.household_closure.consumption_before_investment = True
     sim = Simulation.from_datawrapper(data, SimulationConfiguration(country_configurations=configs,
                                                                    t_max=args.quarters, seed=args.seed))
     out = args.output / f'{args.arm}_q{args.quarters}_s{args.seed}'
@@ -50,6 +53,8 @@ def run(args):
         dict(old_propensity=c.households.states['average_saving_rate'],
              new_propensity=c.households.states['average_saving_rate']))) for n, c in sim.countries.items()]
     pd.DataFrame(calibration).to_csv(out / 'saving_calibration.csv', index=False)
+    pd.DataFrame([dict(region=str(n),**c.households.states.get('investment_calibration',{}))
+                  for n,c in sim.countries.items()]).to_csv(out/'investment_calibration.csv',index=False)
     rows, events = [], []
     for t in range(args.quarters):
         diag.t = t + 1
@@ -80,6 +85,9 @@ def run(args):
                 senior_shortfall=np.asarray(h.states.get('payment_distress_before_goods',0.)).sum(),
                 saving_redirect=np.asarray(h.states.get('senior_cash_redirected_from_saving',0.)).sum(),
                 asset_liquidation=np.asarray(h.states['ofa_liquidation_without_issuer']).sum(),
+                investment=cur(h,'total_investment').sum(),
+                investment_cut=np.asarray(h.states.get('overdraft_investment_cut',0.)).sum(),
+                consumption_constrained_households=(np.asarray(h.states['overdraft_consumption_cut'])>1e-5).sum()*c.scale,
                 available_nonpension_assets=np.asarray(h.states['budget_available_nonpension_assets']).sum(),
                 firm_loan_losses=firm_debt, overdraft_losses=firm_od, bank_losses=losses,
                 recapitalisation=np.asarray(b.states.get('recapitalisation_current', 0.)).sum(),
@@ -114,11 +122,12 @@ def run(args):
     lending.groupby(['region', 'quarter'])[['value', 'loss', 'to_overdrawn']].sum().to_csv(out/'new_lending.csv')
     sources = list((ROOT/'macromodel').rglob('*.py')) + [Path(__file__), Path(__file__).with_name('closure_diagnostics.py'),
                                                                   Path(__file__).parent/'battery/accounting.py', Path(__file__).with_name('afe_instrumentation.py'),
-                                                                  Path(__file__).with_name('afe_gate.py'),Path(__file__).with_name('ife_ledger.py')]
+                                                                  Path(__file__).with_name('afe_gate.py'),Path(__file__).with_name('ife_ledger.py'),Path(__file__).with_name('ife_gates.py')]
     initial_target = sum(c.households.states['saving_calibration']['target'] for c in sim.countries.values())
     q1 = pd.DataFrame(rows).query('quarter==1').consumption.sum()
     meta = dict(arm=args.arm, seed=args.seed, quarters=args.quarters,
         **consumption_gate(q1, initial_target),
+        initial_quarterly_investment_target=242393e6/4,
         head=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         pickle=str(args.pickle), pickle_sha256=hashlib.sha256(args.pickle.read_bytes()).hexdigest(),
         max_accounting_error=err,
@@ -131,7 +140,7 @@ def run(args):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--arm', required=True, choices=['iv-ACDpA'])
+    ap.add_argument('--arm', required=True, choices=['iv-ACDpA','iv-ACDpAI'])
     ap.add_argument('--quarters', type=int, default=12)
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--pickle', type=Path, default=ROOT/'dev/pkl_files/io2022_household_agreed_bankcap.pkl')

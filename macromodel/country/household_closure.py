@@ -130,12 +130,24 @@ def cap_household_goods_budget(country, net_receipts=None):
         resources = resources + available
     factor = np.minimum(1., np.divide(np.maximum(0., resources), planned,
                                      out=np.ones_like(planned), where=planned > 0))
+    consumption_factor = factor
+    investment_factor = factor
+    if h.states.get('consumption_before_investment', False):
+        # Priority, not a propensity or target fit: preserve consumption before
+        # allocating any residual resource to discretionary capital purchases.
+        C_cash = (1 + vat) * C.sum(axis=1)
+        I_cash = (1 + cf) * I.sum(axis=1)
+        consumption_factor = np.minimum(1., np.divide(np.maximum(0., resources), C_cash,
+            out=np.ones_like(C_cash), where=C_cash > 0))
+        investment_factor = np.minimum(1., np.divide(np.maximum(0., resources - C_cash), I_cash,
+            out=np.ones_like(I_cash), where=I_cash > 0))
     h.states['overdraft_unused_capacity'] = np.zeros_like(planned)
     h.states['overdraft_constrained'] = factor < 1 - 1e-12
-    h.states['overdraft_consumption_cut'] = (1 + vat) * C.sum(axis=1) * (1 - factor)
+    h.states['overdraft_consumption_cut'] = (1 + vat) * C.sum(axis=1) * (1 - consumption_factor)
+    h.states['overdraft_investment_cut'] = (1 + cf) * I.sum(axis=1) * (1 - investment_factor)
     h.states['payment_distress_before_goods'] = np.maximum(0., -resources)
-    put(h, 'target_consumption', C * factor[:, None])
-    put(h, 'target_investment', I * factor[:, None])
+    put(h, 'target_consumption', C * consumption_factor[:, None])
+    put(h, 'target_investment', I * investment_factor[:, None])
 
 
 class HouseholdClosure:
@@ -266,6 +278,7 @@ def install_household_closures(countries):
         c.households.states["closure_deposit_only_saving"] = cfg.deposit_only_saving
         c.households.states['overdraft_limit_enabled'] = cfg.overdraft_limit_enabled
         c.households.states['financial_asset_drawdown'] = cfg.financial_asset_drawdown
+        c.households.states['consumption_before_investment'] = cfg.consumption_before_investment
         if cfg.distress_enabled:
             from macromodel.agents.households.func.insolvency import PersistentDistressHouseholdInsolvencyHandler
             c.households.functions["insolvency"] = PersistentDistressHouseholdInsolvencyHandler(cfg.distress_periods,cfg.collateral_haircut)
