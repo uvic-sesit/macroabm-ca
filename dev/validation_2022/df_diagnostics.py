@@ -16,6 +16,15 @@ from macromodel.simulation import Simulation
 from macromodel.configurations.household_closure_configuration import HouseholdClosureConfiguration
 
 
+def consumption_gate(consumption, target):
+    consumption, target = float(consumption), float(target)
+    if not np.isfinite(consumption) or not np.isfinite(target) or target <= 0:
+        raise ValueError('Consumption gate requires finite consumption and a positive target')
+    return dict(initial_quarterly_C_target=target, Q1_cash_consumption=consumption,
+                Q1_consumption_shortfall=max(0.,1-consumption/target),
+                household_gate_passed=bool(consumption >= .95*target))
+
+
 def run(args):
     warnings.filterwarnings('ignore')
     data = DataWrapper.init_from_pickle(args.pickle)
@@ -99,9 +108,7 @@ def run(args):
     initial_target = sum(c.households.states['saving_calibration']['target'] for c in sim.countries.values())
     q1 = pd.DataFrame(rows).query('quarter==1').consumption.sum()
     meta = dict(arm=args.arm, seed=args.seed, quarters=args.quarters,
-        initial_quarterly_C_target=initial_target, Q1_cash_consumption=q1,
-        Q1_consumption_shortfall=max(0., 1-q1/initial_target),
-        household_gate_passed=q1 >= .95 * initial_target,
+        **consumption_gate(q1, initial_target),
         head=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         pickle=str(args.pickle), pickle_sha256=hashlib.sha256(args.pickle.read_bytes()).hexdigest(),
         max_accounting_error=err,
