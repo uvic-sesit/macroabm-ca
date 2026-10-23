@@ -1033,7 +1033,9 @@ class Households(Agent):
         # Mortgages
         target_house_price = np.zeros(self.ts.current("n_households"))
         if len(current_sales) > 0:
-            target_house_price[current_sales["buyer_id"].values] = current_sales["price_or_rent"].values
+            purchases = current_sales.loc[current_sales["sales_types"] == "Sell"]
+            target_house_price[purchases["buyer_id"].values.astype(int)] = purchases["price_or_rent"].values
+        self.states["target_property_value"] = target_house_price.copy()
         self.ts.target_mortgage.append(
             self.functions["target_credit"].compute_target_mortgage(
                 target_house_price=target_house_price,

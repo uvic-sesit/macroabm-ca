@@ -12,6 +12,7 @@ from .firms_configuration import FirmsConfiguration
 from .government_entities_configuration import GovernmentEntitiesConfiguration
 from .households_configuration import HouseholdsConfiguration
 from .housing_market_configuration import HousingMarketConfiguration
+from .household_closure_configuration import HouseholdClosureConfiguration
 from .individuals_configuration import IndividualsConfiguration
 from .labour_market_configuration import LabourMarketConfiguration
 
@@ -33,6 +34,8 @@ class CountryConfiguration(BaseModel):
     labour_market: LabourMarketConfiguration = LabourMarketConfiguration()
     housing_market: HousingMarketConfiguration = HousingMarketConfiguration()
     credit_market: CreditMarketConfiguration = CreditMarketConfiguration()
+
+    household_closure: HouseholdClosureConfiguration = HouseholdClosureConfiguration()
 
     forecasting_window: int = 60
     assume_zero_growth: bool = False

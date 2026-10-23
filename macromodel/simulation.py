@@ -215,6 +215,9 @@ class Simulation:
             else None
         )
 
+        from macromodel.country.household_closure import install_household_closures
+        install_household_closures(countries)
+
         return cls(
             countries=countries,
             rest_of_the_world=rest_of_the_world,
@@ -249,6 +252,9 @@ class Simulation:
 
         for country in self.countries.values():
             country.reset(configuration.country_configurations[country.country_name])
+
+        from macromodel.country.household_closure import install_household_closures
+        install_household_closures(self.countries)
 
         self.configuration = deepcopy(configuration)
 

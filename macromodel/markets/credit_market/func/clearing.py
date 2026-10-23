@@ -40,6 +40,13 @@ from macromodel.agents.households.households import Households
 from macromodel.markets.credit_market.types_of_loans import LoanTypes
 
 
+def mortgage_principal_capacity(payment, rate, periods):
+    """Present value of an affordable periodic payment, including zero-rate loans."""
+    if periods <= 0 or rate < 0:
+        raise ValueError("Mortgage maturity must be positive and rate nonnegative")
+    return payment * (periods if rate == 0 else -np.expm1(-periods * np.log1p(rate)) / rate)
+
+
 class CreditMarketClearer(ABC):
     """Abstract base class for credit market clearing mechanisms.
 
@@ -280,8 +287,7 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                 out=np.zeros(max_car.shape),
                 where=current_sum != 0.0,
             )
-            # Convert normalised category weights to currency budgets (not dollar fractions).
-            scale *= max_car
+            scale *= max_car  # fractions become monetary budgets, rather than sub-dollar limits
             max_supply_based_on_preferences_firms *= scale
             max_supply_based_on_preferences_hh_cons *= scale
             max_supply_based_on_preferences_mortgages *= scale
@@ -579,6 +585,7 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                 # Loan to income
                 loan_to_income_restrictions = (
                     banks.parameters.household_consumption_loans_loan_to_income_ratio
+                    * banks.parameters.household_income_periods_per_year
                     * 0.5
                     * (households.ts.prev("income")[household_id] + households.ts.current("income")[household_id])
                     - households.ts.current("debt")[household_id]
@@ -701,6 +708,7 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                 # Loan to income
                 loan_to_income_restrictions = (
                     banks.parameters.mortgage_loan_to_income_ratio
+                    * banks.parameters.household_income_periods_per_year
                     * 0.5
                     * (households.ts.prev("income")[household_id] + households.ts.current("income")[household_id])
                     - households.ts.current("debt")[household_id]
@@ -713,14 +721,25 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                     / (1 - banks.parameters.mortgage_loan_to_value_ratio)
                     * households.ts.current("wealth_financial_assets")[household_id]
                 )
+                if banks.parameters.mortgage_use_property_collateral:
+                    loan_to_value_restrictions = (
+                        banks.parameters.mortgage_loan_to_value_ratio
+                        * households.states["target_property_value"][household_id]
+                    )
 
                 # Debt service to income
-                debt_service_to_income_restrictions = (
-                    banks.parameters.mortgage_debt_service_to_income_ratio
-                    * households.ts.current("income")[household_id]
-                    * (1 - (1 + banks_ir[bank_id]) ** (-banks.parameters.mortgage_maturity))
-                    / banks_ir[bank_id]
-                )
+                service_budget = (banks.parameters.mortgage_debt_service_to_income_ratio
+                                  * max(0, households.ts.current("income")[household_id]))
+                if banks.parameters.mortgage_use_property_collateral:
+                    service_budget -= max(0, households.states["credit_existing_service"][household_id])
+                    service_budget -= new_credit_by_household[household_id] * (
+                        1 / max(1, banks.parameters.household_consumption_loan_maturity)
+                        + banks.ts.current("interest_rates_on_household_consumption_loans")[bank_id])
+                debt_service_to_income_restrictions = mortgage_principal_capacity(
+                    max(0, service_budget), banks_ir[bank_id], banks.parameters.mortgage_maturity)
+                if banks.parameters.mortgage_use_property_collateral:
+                    debt_service_to_income_restrictions = max(0, service_budget) / (
+                        1 / banks.parameters.mortgage_maturity + banks_ir[bank_id])
 
                 # Combine
                 value_granted = max(
@@ -1023,7 +1042,6 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
                 out=np.zeros(max_car.shape),
                 where=current_sum != 0.0,
             )
-            # Convert normalised category weights to currency budgets (not dollar fractions).
             scale *= max_car
             max_supply_based_on_preferences_firms *= scale
             max_supply_based_on_preferences_hh_cons *= scale
@@ -1058,7 +1076,7 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
         )
         new_credit_by_bank += new_lt_loans[0].sum(axis=1)
 
-        # Each category has its own budget; CAR still limits total new lending.
+        # Household loans
         max_supply_based_on_preferences_hh_cons = max_supply_based_on_preferences_hh_cons + new_credit_by_bank
         new_cons_loans = self.clear_loans(
             banks=banks,
@@ -1191,6 +1209,7 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
         elif loan_type == LoanTypes.HOUSEHOLD_CONSUMPTION_LOAN:
             loan_to_income_restrictions = (
                 banks.parameters.household_consumption_loans_loan_to_income_ratio
+                * banks.parameters.household_income_periods_per_year
                 * 0.5
                 * (
                     households.ts.prev("income")[agents_with_demand]
@@ -1203,6 +1222,7 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
         elif loan_type == LoanTypes.MORTGAGE:
             loan_to_income_restrictions = (
                 banks.parameters.mortgage_loan_to_income_ratio
+                * banks.parameters.household_income_periods_per_year
                 * 0.5
                 * (
                     households.ts.prev("income")[agents_with_demand]
@@ -1218,6 +1238,21 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
             )
 
             credit_restrictions = np.minimum(loan_to_income_restrictions, loan_to_value_restrictions)
+            if banks.parameters.mortgage_use_property_collateral:
+                collateral_limit = (banks.parameters.mortgage_loan_to_value_ratio
+                                    * households.states["target_property_value"][agents_with_demand])
+                existing_service = np.maximum(0, households.states["credit_existing_service"][agents_with_demand])
+                new_cons_service = new_credit_by_household[agents_with_demand] * (
+                    1 / max(1, banks.parameters.household_consumption_loan_maturity)
+                    + np.max(banks.ts.current("interest_rates_on_household_consumption_loans")))
+                service_budget = np.maximum(0, banks.parameters.mortgage_debt_service_to_income_ratio
+                                            * households.ts.current("income")[agents_with_demand]
+                                            - existing_service - new_cons_service)
+                # Loan book repays straight-line principal, not annuities. Use
+                # its FIRST (largest) payment, at the highest offered bank rate.
+                service_limit = service_budget / (1 / loan_maturity + np.max(banks_ir))
+                credit_restrictions = np.minimum(loan_to_income_restrictions,
+                                                np.minimum(collateral_limit, service_limit))
         else:
             raise ValueError("Unknown loan type", loan_type)
         capacities = np.maximum(
@@ -1277,8 +1312,11 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
             loan_matrix = np.outer(supply_weights, received_loans_by_debtors)
             for bank_idx in range(len(supply_weights)):
                 new_loans[0, bank_idx, agents_with_demand] = loan_matrix[bank_idx, :]
-        new_loans[1, :, agents_with_demand] = banks_ir[:, np.newaxis] * new_loans[0, :, agents_with_demand]
-        new_loans[2, :, agents_with_demand] = 1.0 / loan_maturity * new_loans[0, :, agents_with_demand]
+        if loan_type == LoanTypes.MORTGAGE and banks.parameters.mortgage_use_property_collateral:
+            incomplete = new_loans[0].sum(axis=0) < target_credit * (1 - 1e-10)
+            new_loans[0, :, incomplete] = 0.0  # no mortgage proceeds without a fully funded purchase
+        new_loans[1] = banks_ir[:, None] * new_loans[0]
+        new_loans[2] = new_loans[0] / loan_maturity
 
         return new_loans
 

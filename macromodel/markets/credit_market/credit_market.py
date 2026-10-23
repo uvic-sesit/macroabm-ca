@@ -308,6 +308,9 @@ class CreditMarket:
             current_npl_mortgages=current_npl_mortgages,
         )
 
+        if banks.parameters.mortgage_use_property_collateral:
+            self.states["mortgage_book_before_commitments"] = self.states["mort_loans"].copy()
+            self.states["mortgage_commitments"] = new_mort_loans.copy()
         # Record the new loans
         self.states["st_loans"] += new_st_loans
         self.states["lt_loans"] += new_lt_loans
@@ -537,6 +540,31 @@ class CreditMarket:
             + self.states["cons_loans"][1].sum(axis=1)
             + self.states["mort_loans"][1].sum(axis=1)
         )
+
+    def cancel_unexecuted_mortgages(self, households, banks):
+        """Cancel new commitments for failed property sales before disbursement.
+
+        Original mortgages survive. This is a cancelled origination, not a
+        repayment or credit loss, and creates no household deposit receipt.
+        """
+        commitments = self.states.get("mortgage_commitments")
+        if commitments is None:
+            return
+        failed = households.ts.current("price_paid_for_property") <= 0
+        commitments[:, :, failed] = 0.0
+        self.states["mort_loans"][:, :, failed] = self.states["mortgage_book_before_commitments"][:, :, failed]
+        households.ts.dicts["received_mortgages"][-1] = commitments[0].sum(axis=0)
+        granted = commitments[0].sum()
+        households.ts.dicts["total_received_mortgages"][-1] = np.array([granted])
+        self.ts.dicts["total_newly_loans_granted_mortgages"][-1] = np.array([granted])
+        totals = sum(self.states[key][0].sum(axis=1) for key in ("st_loans", "lt_loans", "cons_loans", "mort_loans"))
+        for series, keys in (("new_loans_fraction_firms", ("st_loans", "lt_loans")),
+                             ("new_loans_fraction_hh_cons", ("cons_loans",)),
+                             ("new_loans_fraction_mortgages", ("mort_loans",))):
+            amount = sum(self.states[key][0].sum(axis=1) for key in keys)
+            banks.ts.dicts[series][-1] = np.divide(amount, totals, out=np.zeros_like(totals), where=totals > 0)
+        self.states.pop("mortgage_commitments")
+        self.states.pop("mortgage_book_before_commitments")
 
     def remove_loans_to_firm(self, firm_id: int | np.ndarray) -> float:
         """Remove all loans associated with specified firm(s).

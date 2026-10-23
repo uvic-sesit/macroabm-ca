@@ -739,6 +739,10 @@ class Country:
         )
         self.households.ts.expected_income.append(self.households.compute_expected_income())
 
+        if self.configuration.household_closure.credit_enabled:
+            from macromodel.country.household_closure import prepare_household_credit
+            prepare_household_credit(self)
+
         # Household target consumption
         # Note: For CES substitution, we track additional taxes (like carbon tax) similar to firms
         # Currently no additional taxes are implemented, so both initial and current are zero
@@ -879,6 +883,8 @@ class Country:
                 "unemployment_benefits_by_individual"
             )[0],
         )
+        if self.configuration.household_closure.credit_enabled:
+            self.credit_market.cancel_unexecuted_mortgages(self.households, self.banks)
 
     def process_credit_market_clearing(self) -> None:
         """Process credit market outcomes.
