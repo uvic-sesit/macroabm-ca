@@ -1,0 +1,51 @@
+{
+  "retrieved_utc": "2026-10-23",
+  "access": "Primary-source figures checked through web extraction. Full publisher PDF download returned HTTP 403; provenance hashes the selected-figure snapshot, not the inaccessible original PDF.",
+  "benchmarks": [
+    {
+      "source": "RBC Annual Report 2023",
+      "url": "https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2023_e.pdf",
+      "reference": "fiscal years ended 31 October 2022 and 2023",
+      "table": "Allowance for credit losses, retail rows, printed page 178 (PDF page index 178)",
+      "vector": "not applicable",
+      "unit": "CAD million, net write-offs",
+      "data": {
+        "2022": {
+          "residential_mortgages": 24,
+          "personal": 248,
+          "credit_cards": 332
+        },
+        "2023": {
+          "residential_mortgages": 17,
+          "personal": 404,
+          "credit_cards": 460
+        }
+      },
+      "scope": "RBC consolidated retail, includes international exposures; not a Canada-wide household aggregate"
+    },
+    {
+      "source": "TransUnion Canada Q4 2024 CIIR",
+      "url": "https://www.transunion.ca/content/dam/transunion/ca/business/collateral/report/q4-24-ciir-report.pdf",
+      "reference": "Q4 2024, copyright 2025",
+      "table": "Mortgage Loan Summary, page 13; definitions page 17",
+      "vector": "not applicable",
+      "data": {
+        "mortgage_account_delinquency_60plus_percent": 0.25,
+        "mortgage_balance_delinquency_60plus_percent": 0.23
+      },
+      "scope": "TransUnion Canadian credit-file coverage; delinquency stock, not charge-off flow; no numeric utilisation rate adopted"
+    },
+    {
+      "source": "Office of the Superintendent of Bankruptcy Annual 2024",
+      "url": "https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/statistics-and-research/insolvency-statistics/annual-reports/annual-2024",
+      "reference": "calendar 2023 and 2024; page modified 2026-10-01",
+      "table": "BIA Insolvencies, opening paragraphs",
+      "vector": "not applicable",
+      "data": {
+        "business_insolvencies_2023": 4810,
+        "business_insolvencies_2024": 6188
+      },
+      "scope": "Actual business filings; not comparable one-for-one with model industry-region composite agents"
+    }
+  ]
+}

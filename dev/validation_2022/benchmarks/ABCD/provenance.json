@@ -1,0 +1,7 @@
+{
+  "artifact": "order_benchmarks_snapshot.json",
+  "sha256": "e9c0f715c8498d72b370f1f53671479a12550c0491da1cec2c716f9eb16d05d4",
+  "source_type": "Selected-figure snapshot verified through primary-source web extraction; not a full-source PDF hash",
+  "retrieved_utc": "2026-10-23",
+  "numeric_use": "Orders-of-magnitude comparisons only; no model parameter fitted"
+}

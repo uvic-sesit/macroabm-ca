@@ -1,6 +1,10 @@
 # Household closure corrections — 22 October 2026
 
-> **Current review status:** D3 and Phase B are on hold. The four requested
+> **Latest:** [A–D implementation and remeasurement](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
+> D3 and Phase B remain on hold. A new bank-capital pickle has a separate name;
+> the accepted inputs below remain unchanged.
+>
+> **Previous review status:** D3 and Phase B are on hold. The four requested
 > diagnostics, mechanical fixes and revised iv/v write-offs are in
 > [HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md](HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md).
 > The earlier recommendation below to retain D3 based only on loss totals is

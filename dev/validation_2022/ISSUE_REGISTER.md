@@ -1,5 +1,8 @@
 # MacroABM-CA validation — single issue register
 
+Latest household review: [A–D implementation and remeasurement](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
+The dated updates below supersede the original issue descriptions where marked.
+
 Branch `feature/validation-2022` @ `ab87ee2`. Created 2026-10-13. Statuses: **C** confirmed (code read and,
 where marked, quantified on the t0 state) · **S** suspected (code read only; needs a Stage-4 test).
 Priority: P1 (blocks attribution of dynamics) · P2 (material bias) · P3 (document/limitation).
@@ -266,3 +269,33 @@ the same known NaN. `run_pre_D3_tests.py` enforces one sampler worker in future
 suites without skipping tests. All household diagnostic simulations were serial.
 No original-repository, ITC/user-cost or input-pickle modifications; no push,
 Phase B or C_dp_005.
+
+## Household A–D review — 23 October 2026
+
+This update supersedes the pending capital/facility decisions in the pre-D3
+review above. Full tables, provenance, seeds and proposals are in
+[HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
+
+| Issue / decision | Implemented correction and evidence | Status / next decision |
+|---|---|---|
+| B-C3 / A: capital | f8e9854 replaces Canadian 2022 asset-F5 equity with 456.221B liability-side NBSA book capital, allocated jointly by initial loans. New `io2022_household_agreed_bankcap.pkl`; all initial E/(L+R) ratios 11.85–17.47% exceed the 5% trigger. Four focused regressions pass. | Corrected candidate input. Accepted old pickles unchanged. Loan/creditor boundary still subject to F. |
+| B-C4 / B: resolution | c977e16 preserves loan/deposit contracts in a same-agent bridge bank, records government support in deficit/debt and bank equity/reserves, and adds a recapitalisation counterparty identity. Six focused tests pass. Both original failing D1 seeds pass with old input (errors 6.79e-14 and 5.23e-14); new-input D1 seeds also pass. | Mechanical accounting corrected. Support targets model minima plus an explicit 1-point buffer; these are not Canadian CET1/RWA ratios. |
+| H-C1 / C: propensity | c2c0120 includes funded expected D2 receipts, removes the unfunded financial-income proxy from that base, and preserves the income-weighted constant-propensity calibration. Weighted national propensity -9.726% → -0.439%; initial goods C target 1,511.382B/year. Six focused tests pass. | D2-off calibration unchanged; Q1 cash saving -4.52% remains below the D.8-free SNA comparison (-0.60%). Cash rent/IO housing and other account boundaries remain. |
+| H-C2 / D: overdraft | 788f84f adds an opt-in proportional goods-budget cap, reserves senior payments first, and records payment distress. User-selected proxy: zero unused capacity. Thirteen focused tests pass. Uses settled cash at goods clearing; no D4 headroom. | Strict diagnostic bound, not a validated Canadian facility. Q12 saving about 30–32% and severe consumption rationing prevent economic acceptance. |
+| D sensitivity | Quick primary-source search did not establish defensible separate card and general-LOC utilisation rates. TransUnion warns balances/limits can misstate utilisation; HELOC-only data do not identify all LOCs. | Omitted as explicitly authorized; no inferred utilisation rates or D4 substitute implemented. |
+| H-C3 / E: defaults and collateral | Old-rule ACD household cancellation 133–136B over 12 quarters; v-ACD 54–55B, across seeds 0–2. D3 still lacks a collateral sale/recovery cash path. | D3 stays on hold. E's payment ledger, workout/foreclosure and uncovered-principal recovery specification is proposal only. |
+| F-I2 / F: firm claims | 2,271.807B initial model firm debt includes an illustrative 1,080.006B intercompany component under the NBSA loan-instrument bridge. Public administration/education/health hold 657.208B. Firm trigger includes current-price noncash assets. | F remains proposal only: separate creditor instruments and public producers, and distinguish revaluation from payment failure. External loans are not identifiable as bank-only from borrower instrument totals. |
+
+Seed-0 twelve-quarter household write-offs / bank losses (CAD B): iv-A
+452.964 / 761.100; iv-AC 384.235 / 799.086; iv-ACD 133.439 / 429.784;
+v-ACD 54.098 / 349.014. Firm loan plus overdraft losses account for about
+69–80% of ACD bank losses and 83–85% of v-ACD losses across seeds. Recapitalisation
+is reported separately, not netted against losses. Low losses under the strict
+cash cap are not sufficient evidence of a plausible closure.
+
+All requested two-quarter, twelve-quarter and seed accounting runs pass 1e-8.
+Full `tests/` suite through `run_pre_D3_tests.py`: **398 passed, 30 known NaN
+failures, zero additional failures/errors**; the failed test identities match
+the prior suite exactly. Sampler worker count was one, and simulations were
+serial. No push, original-repository/ITC/user-cost edits, or protected-pickle
+changes. D3, Phase B and the C_dp_005 port remain on hold. Stop for review.
