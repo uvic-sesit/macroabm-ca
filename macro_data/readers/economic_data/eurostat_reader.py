@@ -531,7 +531,7 @@ class EuroStatReader:
             values = df[str(candidate)].values
             if len(values) > 0 and values[0] not in missing_markers and str(values[0]).strip() not in {"", ":"}:
                 try:
-                    return float(values[0]) * 1e6
+                    return float(values[0]) * 1e6 * ratio
                 except (TypeError, ValueError):
                     continue
 
@@ -540,7 +540,7 @@ class EuroStatReader:
             return np.nan
         proxy_equity = self.get_total_bank_equity(proxy_country, year)
         if country in self.total_output and proxy_country in self.total_output:
-            return self.total_output[country] / self.total_output[proxy_country] * proxy_equity
+            return self.total_output[country] / self.total_output[proxy_country] * proxy_equity * ratio
         return proxy_equity * ratio
 
     def cb_debt_ratios(self, country: Country, year: int) -> float:
