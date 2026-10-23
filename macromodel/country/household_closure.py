@@ -159,6 +159,10 @@ class HouseholdClosure:
 def install_household_closures(countries):
     for c in countries.values():
         cfg = c.configuration.household_closure
+        c.households.states["closure_deposit_only_saving"] = cfg.deposit_only_saving
+        if cfg.distress_enabled:
+            from macromodel.agents.households.func.insolvency import PersistentDistressHouseholdInsolvencyHandler
+            c.households.functions["insolvency"] = PersistentDistressHouseholdInsolvencyHandler(cfg.distress_periods,cfg.collateral_haircut)
         if not cfg.credit_enabled:
             continue
         c.banks.parameters = deepcopy(c.banks.parameters)

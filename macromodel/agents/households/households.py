@@ -1322,6 +1322,10 @@ class Households(Agent):
             ts=self.ts,
         )
 
+        if self.states.get("closure_deposit_only_saving", False):
+            new_wealth_in_deposits = new_wealth
+            new_wealth_in_other_financial_assets = np.zeros_like(new_wealth)
+
         # Used-up financial wealth
         used_up_wealth = -np.minimum(
             0.0,

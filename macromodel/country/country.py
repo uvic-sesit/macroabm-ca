@@ -463,6 +463,9 @@ class Country:
 
         self.exogenous.reset()
 
+        # Agent states/functions have just reset. Never retain an income closure
+        # from a previous configuration when the next run disables D2.
+        self.household_closure = None
         self.configuration = deepcopy(configuration)
 
     def initialisation_phase(self, exchange_rate_usd_to_lcu: float) -> None:
@@ -1347,10 +1350,12 @@ class Country:
         self.households.ts.net_wealth.append(self.households.compute_net_wealth())
 
         # F2. HOUSEHOLD INSOLVENCY
+        writeoffs_before_households = self.credit_market.states.get("cumulative_writeoffs", 0.)
         household_insolvency_rate, npl_hh_cons_loans, npl_mortgages = self.households.handle_insolvency(
             banks=self.banks,
             credit_market=self.credit_market,
         )
+        self.credit_market.states["household_writeoffs_current"] = self.credit_market.states.get("cumulative_writeoffs",0.)-writeoffs_before_households
         self.economy.ts.household_insolvency_rate.append([household_insolvency_rate])
         self.economy.ts.npl_hh_cons_loans.append([npl_hh_cons_loans])
         self.economy.ts.npl_mortgages.append([npl_mortgages])
