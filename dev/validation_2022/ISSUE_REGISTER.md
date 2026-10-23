@@ -59,7 +59,7 @@ been made.
 | S-H4 | portfolio φ on normalised levels | E/A | scale-dependent shares; A7 | ratio-based rule or all-deposit | P2 |
 | S-H5 | housing: constant prices/rents; tenure codes 0/1 vs 1–4; transactions | E/A | renters never move; owners churn; real rents fall | consistent codes; indexation | P2 |
 | S-H6 | credit screens LTI/LTV/DSTI = 0.05 | E (calibration) | household credit shut; forced deleveraging | Canadian B-20-type limits | P2 |
-| S-H7 | household investment into "other real assets" at 5%/q | A | residential investment does not build dwellings | link to the dwelling stock | P3 |
+| S-H7 | household investment into "other real assets"; 5%/q is depreciation, not the investment propensity | A | residential investment does not build dwellings | link to the dwelling stock | P3 |
 | S-H8 | equal transfers; UB ratchet | A / E | incidence lost; UB cannot fall | fitted shares; symmetric rule | P2 |
 | S-H9 | no mixed income | E | see S-H3 | withdrawal flow | P2 |
 | S-H10 | one national file for all provinces | A | provincial behaviour = residuals | provincial controls | P3 |
@@ -350,3 +350,35 @@ resolution events, min capital ratios and industry losses. Decile/asset and
 cross-panel data plus the cash-saving-to-financial-stock bridge are in
 outputs/AFE/. Options in the report are proposals only; no benchmark or gate
 was redefined to improve results. Full suite: **416 passed, the same 30 known NaN failures, zero additional failures/errors** (446 cases). Sampler worker count was one. Failed test identities are checked against the accepted DF suite; final audit, JUnit and logs are retained in outputs/AFE/.
+
+
+## Household investment / revised F?E gates ? 23 October 2026
+
+Latest: [CLOSURE_IFE_2026-10-23.md](CLOSURE_IFE_2026-10-23.md).
+**Step 1 complete; Gate 1 fails on all three seeds. F and E did not start.**
+Saving and constrained-share trends are diagnostics here, not this gate's
+criterion. The heterogeneous buffer-stock rule, Phase B and C_dp_005 stay deferred.
+
+| Issue / step | Commit, test evidence and measurement | Status |
+|---|---|---|
+| S-H7 description / ledger | de244bc read-only individual cash ledger, 1 regression passes. Seed-0 Q12 paid investment is directly 50.700811B including CF tax, confirming the bridge. Old rates are 13.64?25.33% of expected income, region-specific; 5%/q is depreciation. | Correct the earlier issue description. All quarterly individual/group flows close; micro ledgers local, aggregate panels traceable. |
+| Initial GFCF level | f1e7b60; 3 focused checks pass. StatCan 36-10-0112 v62305994, 2022 mean SAAR 242.393B/year = 60.59825B/quarter. Common rate multiplier 0.95537 approximately, initial desired level exactly matched; existing relative propensities/industry mix remain. | Source, vector, date and full upstream/local hashes in benchmarks/IFE/provenance.json. Realized flows are not used for calibration. |
+| Discretionary investment | b75d4a7; 12 focused priority/budget/asset/calibration checks plus gate regression pass. Under D, investment is cut before consumption, including VAT/CF-tax cash costs. | Opt-in candidate only; zero unused credit capacity and asset drawdown retained. No new numeric behavioral parameter. |
+| Gate 1 | Q1 realized I seeds 0/1/2 = 50.916/49.775/49.383B, 15.98/17.86/18.51% below benchmark. All six candidate 2Q/12Q runs pass 1e-8, maximum error 1.19e-14. | FAIL: stop before F/E. Do not inflate desired investment to reverse affordability cuts. |
+| Saving / constraints | Q12 saving 3.49/4.18/5.53%, improved from A's 9.74?9.96%; constrained share still rises to about 50%. It includes households cutting investment only; consumption-specific series also reported. | Reported, not gating at step 1. Need for a buffer-stock rule is not established independently of capital-project allocation/funding and remaining firm feedback. |
+| Dwelling-stock half of S-H7 | Proposal splits new construction, renovations, transfer costs and business capital, with builder costs, WIP, finance, ownership/property IDs and distinct structure/land/depreciation. | Proposal only: generic other-real-assets stock and 5% depreciation remain. Full asset-category concept mapping unresolved. |
+| F/E loss behavior | Legacy debt/default retained; 12Q HH cancellations about 234B and bank losses 567?586B. | No new firm-debt pickle or new default/recovery parameter; losses/recaps not accepted as plausible. Phase B not ready. |
+
+The household GFCF target includes unincorporated enterprises and residential
+capital; private consumer durables remain consumption in SNA. The retained IO
+capital basket is an aggregate proxy and cannot identify new dwellings versus
+renovations, productive vehicles versus personal durables, or each service's
+capital use. No consumer-durable reclassification is introduced to fit the
+benchmark. The numerical gate fails regardless of that unresolved detail.
+
+Per-quarter household ledgers, cash uses/funding, I/C cuts, liquidation, C/DI,
+saving, GDP, household/firm/bank losses and support are under outputs/IFE/.
+The seed-0 ledger replay uses de244bc; corrected pairs use b75d4a7. Initial
+source snapshots and accepted input hashes are audited; original repository,
+ITC/user-cost files and accepted pickles are unchanged. Nothing pushed.
+Full tests/ through run_pre_D3_tests.py: **421 passed, the same 30 known NaN failures, zero additional failures/errors** (451 cases). Sampler worker count was one; failed identities are checked against AFE. Final audit, exact source/input hashes, raw-ledger hash inventory, JUnit and logs are retained under outputs/IFE/.
