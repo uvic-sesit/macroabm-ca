@@ -326,3 +326,27 @@ match the prior suite, and the sampler used one worker. Evidence is in the linke
 report and `outputs/DF/full_test_execution.json`.
 No protected pickle, original-repository or ITC/user-cost file was modified;
 no push, E implementation, Phase B or C_dp_005 port. Stop for staged review.
+
+
+## A/F/E gated asset-budget follow-up ? 23 October 2026
+
+Latest report: [CLOSURE_AFE_2026-10-23.md](CLOSURE_AFE_2026-10-23.md).
+Accepted D timing and narrow D1 are retained. The step-1 asset drawdown is
+implemented, but **both economic gate conditions fail on every seed**. Under
+the explicit ordered gates, F and E did not start. D3, Phase B and C_dp_005
+remain on hold. No new firm-debt pickle was built.
+
+| Issue / step | Commit and evidence | Status / next decision |
+|---|---|---|
+| D: existing liquid assets | 393bff8 adds opt-in cash-first non-pension OFA drawdown before proportional C/I cuts, zero unused credit capacity. Existing OFA usage books one exact stock transfer, named OFA without issuer. Pension scale/components audited. 16 focused checks pass. | Mechanical resource extension measured; off by default. No parameter or consumption refit. |
+| Household group diagnostic | f140ae2 fixes regional total consumption being broadcast to each household, and tests individual-to-regional reconciliation. Nine focused checks pass. Initial measurements superseded; all six final runs repeated. | Source/input hashes, funded D2 declarations and paired-run replay checks pass. Superseded local outputs excluded from conclusions. |
+| Step-1 gate | Seed 0/1/2 constrained share Q4 ? Q12: 33.36 ? 50.01%, 33.81 ? 50.44%, 33.18 ? 50.25%. Q12 cash saving 9.74/9.79/9.96%, benchmark -0.602%; gaps 10.34/10.39/10.56 points. All six accounting runs pass 1e-8, maximum 8.67e-15. | FAIL: do not proceed to F or E. Asset drawdown improves levels but leaves upward drift. |
+| Saving/constraint diagnosis | Initial non-pension OFA ?10k households are 45.24% of population and about 74% of Q12 constraints, with 60?65% of cash saving. Deciles 6?10 contribute 80?84% of saving; higher-income/low-asset intersection contributes 44?45%. Large assets remain concentrated elsewhere. | Review C versus discretionary investment priority and heterogeneous spending rules; no such behavior implemented. Cash saving excludes principal/capital purchases and is not financial-asset accumulation. |
+| Legacy losses | 12Q HH write-offs 219.21?222.97B; bank losses 525.42?664.84B; recapitalisation 376.51?494.30B. Legacy firm/default boundary remains. | No plausibility acceptance; F/E not tested because gate fails. Phase B not ready. |
+
+Quarterly constraints/cuts, liquidation, the net OFA boundary, consumption, DI,
+saving and GDP are retained for all seeds, along with household/firm losses,
+resolution events, min capital ratios and industry losses. Decile/asset and
+cross-panel data plus the cash-saving-to-financial-stock bridge are in
+outputs/AFE/. Options in the report are proposals only; no benchmark or gate
+was redefined to improve results. Full suite: **416 passed, the same 30 known NaN failures, zero additional failures/errors** (446 cases). Sampler worker count was one. Failed test identities are checked against the accepted DF suite; final audit, JUnit and logs are retained in outputs/AFE/.
