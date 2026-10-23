@@ -28,8 +28,12 @@ def offset_private_rent(country, industry=41):
 
 def prepare_household_credit(country):
     cm = country.credit_market
-    country.households.states["credit_existing_service"] = sum(
-        cm.states[k][1:].sum(axis=(0, 1)) for k in ("cons_loans", "mort_loans"))
+    h, b = country.households, country.banks
+    scheduled = sum((cm.states[k][1] + np.minimum(cm.states[k][0],cm.states[k][2])).sum(axis=0)
+                    for k in ("cons_loans", "mort_loans"))
+    overdraft = np.maximum(0., -h.ts.current("wealth_deposits"))
+    overdraft_interest = overdraft * b.ts.current("overdraft_rate_on_household_deposits")[h.states["Corresponding Bank ID"]]
+    h.states["credit_existing_service"] = scheduled + overdraft_interest
 
 
 def shares(x):
@@ -104,9 +108,7 @@ class HouseholdClosure:
     def expected_income(self):
         self.plan_payments()
         h = self.c.households
-        cm = self.c.credit_market
-        h.states["credit_existing_service"] = sum(
-            cm.states[k][1:].sum(axis=(0, 1)) for k in ("cons_loans", "mort_loans"))
+        prepare_household_credit(self.c)
         # The default wage is already after tax. Do not tax it a second time.
         put(h, "expected_income_financial_assets", np.zeros_like(self.planned_mixed))
         put(h, "expected_income", h.compute_expected_income()

@@ -589,8 +589,18 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                     * 0.5
                     * (households.ts.prev("income")[household_id] + households.ts.current("income")[household_id])
                     - households.ts.current("debt")[household_id]
+                    - (max(0., -households.ts.current("wealth_deposits")[household_id])
+                       if banks.parameters.mortgage_use_property_collateral else 0.)
                     - new_credit_by_household[household_id]
                 )
+
+                if banks.parameters.mortgage_use_property_collateral:
+                    existing = max(0., households.states["credit_existing_service"][household_id])
+                    cost = 1 / banks.parameters.household_consumption_loan_maturity + np.max(banks_ir)
+                    service_budget = (banks.parameters.mortgage_debt_service_to_income_ratio
+                                      * max(0., households.ts.current("income")[household_id])
+                                      - existing - new_credit_by_household[household_id] * cost)
+                    loan_to_income_restrictions = min(loan_to_income_restrictions, max(0., service_budget)/cost)
 
                 # Combine
                 value_granted = max(
@@ -712,6 +722,8 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                     * 0.5
                     * (households.ts.prev("income")[household_id] + households.ts.current("income")[household_id])
                     - households.ts.current("debt")[household_id]
+                    - (max(0., -households.ts.current("wealth_deposits")[household_id])
+                       if banks.parameters.mortgage_use_property_collateral else 0.)
                     - new_credit_by_household[household_id]
                 )
 
@@ -1216,9 +1228,18 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
                     + households.ts.current("income")[agents_with_demand]
                 )
                 - households.ts.current("debt")[agents_with_demand]
+                - (np.maximum(0., -households.ts.current("wealth_deposits")[agents_with_demand])
+                   if banks.parameters.mortgage_use_property_collateral else 0.)
                 - new_credit_by_household[agents_with_demand]
             )
             credit_restrictions = loan_to_income_restrictions
+            if banks.parameters.mortgage_use_property_collateral:
+                cost = 1 / loan_maturity + np.max(banks_ir)
+                budget = (banks.parameters.mortgage_debt_service_to_income_ratio
+                          * np.maximum(0., households.ts.current("income")[agents_with_demand])
+                          - np.maximum(0., households.states["credit_existing_service"][agents_with_demand])
+                          - new_credit_by_household[agents_with_demand] * cost)
+                credit_restrictions = np.minimum(credit_restrictions, np.maximum(0.,budget)/cost)
         elif loan_type == LoanTypes.MORTGAGE:
             loan_to_income_restrictions = (
                 banks.parameters.mortgage_loan_to_income_ratio
@@ -1229,6 +1250,8 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
                     + households.ts.current("income")[agents_with_demand]
                 )
                 - households.ts.current("debt")[agents_with_demand]
+                - (np.maximum(0., -households.ts.current("wealth_deposits")[agents_with_demand])
+                   if banks.parameters.mortgage_use_property_collateral else 0.)
                 - new_credit_by_household[agents_with_demand]
             )
             loan_to_value_restrictions = (
