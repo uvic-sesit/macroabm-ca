@@ -512,6 +512,12 @@ class EuroStatReader:
             country = country.parent_country
         if isinstance(country, str):
             country = Country(country)
+        if country == Country('CAN') and year == 2022:
+            # Liability-side NBSA book equity in CAD, not asset-side F5 holdings.
+            # Regional VA allocation here is provisional; DataWrapper replaces it
+            # with the joint final-loan allocation after building all regions.
+            from macro_data.processing.synthetic_banks.canadian_book_capital import CANADIAN_BANK_BOOK_EQUITY_2022
+            return CANADIAN_BANK_BOOK_EQUITY_2022 * ratio
         if isinstance(proxy_country, str):
             proxy_country = Country(proxy_country)
         df = self.data["financial_balance_sheets"]

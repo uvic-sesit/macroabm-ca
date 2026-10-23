@@ -355,6 +355,10 @@ class DataWrapper:
                     ),
                 )
 
+        if year == 2022 and any(n == Country('CAN') or str(n).startswith('CAN_') for n in synthetic_countries):
+            from macro_data.processing.synthetic_banks.canadian_book_capital import allocate_canadian_book_capital
+            allocate_canadian_book_capital(synthetic_countries)
+
         row_exports_growth = calibration_data[("ROW", "Exports (Growth)")]
         row_imports_growth = calibration_data[("ROW", "Imports (Growth)")]
 
