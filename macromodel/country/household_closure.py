@@ -183,3 +183,33 @@ def install_household_closures(countries):
     for c in enabled:
         weight = np.maximum(0,c.households.ts.current("income")).sum()/national_income
         c.household_closure = HouseholdClosure(c,c.configuration.household_closure,weight)
+    recalibrate_d2_saving(enabled)
+
+
+def recalibrate_d2_saving(countries):
+    """Keep the existing income-weighted constant-propensity calibration.
+
+    C=(1-s)Y at purchasers' prices; replace the income base by initial income
+    without the unfunded financial-income proxy plus funded expected D2 flows.
+    Preserve regional consumption shares; use the specified national benchmark.
+    No fit to simulated outcomes, new income redistribution or new saving rule.
+    """
+    enabled = [c for c in countries if c.configuration.household_closure.recalibrate_saving_with_d2]
+    if not enabled:
+        return
+    total_c = sum(c.households.ts.current('total_consumption')[0] for c in countries)
+    for c in enabled:
+        h, closure = c.households, c.household_closure
+        cfg = c.configuration.household_closure
+        initial_c = h.ts.current('total_consumption')[0]
+        new_income = (h.ts.initial('income') - h.ts.initial('income_financial_assets')
+                      + closure.planned_mixed + closure.planned_dividends + closure.planned_transfers)
+        if not np.all(np.isfinite(new_income)) or new_income.sum() <= 0:
+            raise ValueError('D2 saving calibration requires finite positive aggregate income')
+        target = cfg.initial_annual_consumption_benchmark / cfg.periods_per_year * initial_c / total_c
+        old = h.states['average_saving_rate']
+        new = 1 - target / new_income.sum()
+        h.states['saving_calibration'] = dict(old_propensity=old, new_propensity=new,
+                                            old_income=float(h.ts.initial('income').sum()),
+                                            d2_income=float(new_income.sum()), target=float(target))
+        h.states['average_saving_rate'] = new

@@ -23,6 +23,9 @@ class HouseholdClosureConfiguration(BaseModel):
     new_mortgage_maturity: int = Field(default=145, ge=1)
 
     income_enabled: bool = False
+    recalibrate_saving_with_d2: bool = True
+    # StatCan 36-10-0112 v62305982, 2022 annual mean of quarterly SAAR.
+    initial_annual_consumption_benchmark: float = Field(default=1_511_382e6, gt=0)
     nonrental_mixed_income: float = Field(default=97_274e6, ge=0)
     corporate_transfers: float = Field(default=121_500e6, ge=0)
     # StatCan 36-10-0482, 2022, Dividends (v80013659), CAD.
