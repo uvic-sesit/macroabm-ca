@@ -93,6 +93,17 @@ class DefaultHouseholdInsolvencyHandler(HouseholdInsolvencyHandler):
         )[0]
         bad_hh_cons_loans, bad_mortgages = credit_market.remove_loans_to_households(insolvent_households)
 
+        # The old trigger is unchanged. Recognise its liability cancellation in
+        # household records now, before next quarter's credit/income decisions.
+        cons = credit_market.states["cons_loans"][0].sum(axis=0)
+        mort = credit_market.states["mort_loans"][0].sum(axis=0)
+        for key, value in (("consumption_loan_debt", cons), ("mortgage_debt", mort),
+                           ("debt", cons + mort),
+                           ("net_wealth", households.ts.current("wealth") - cons - mort)):
+            households.ts.dicts[key][-1] = value.copy()
+        for key, value in (("total_consumption_loan_debt", cons), ("total_mortgage_debt", mort)):
+            households.ts.dicts[key][-1] = np.array([value.sum()])
+
         # Calculate NPL ratios
         total_cons_loans = credit_market.ts.current("total_outstanding_loans_granted_households_consumption")[0]
         if total_cons_loans == 0.0:

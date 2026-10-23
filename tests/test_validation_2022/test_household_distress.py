@@ -51,3 +51,19 @@ def test_other_recoverable_assets_cover_an_underwater_mortgage_deficiency():
     assert cm.states["mort_loans"][0].sum() == 150
 
 
+
+
+def test_old_rule_refreshes_household_liabilities_after_writing_off_loan_book():
+    from macromodel.agents.households.func.insolvency import DefaultHouseholdInsolvencyHandler
+    h,cm=distress_fixture()
+    h.ts.dicts["n_households"] = [1]
+    h.ts.dicts["wealth_deposits"][-1]=np.array([-10.])
+    cm.ts=TimeSeries(total_outstanding_loans_granted_households_consumption=[0.],total_outstanding_loans_granted_mortgages=[150.])
+    cm.remove_loans_to_households=lambda ids:CreditMarket.remove_loans_to_households(cm,ids)
+    rate,_,_=DefaultHouseholdInsolvencyHandler().handle_insolvency(h,None,cm)
+    assert rate==1.
+    assert cm.states["mort_loans"][0].sum()==0.
+    assert h.ts.current("debt")[0]==0.
+    assert h.ts.current("mortgage_debt")[0]==0.
+    assert h.ts.current("total_mortgage_debt")[0]==0.
+    assert h.ts.current("net_wealth")[0]==h.ts.current("wealth")[0]
