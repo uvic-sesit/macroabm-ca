@@ -16,3 +16,9 @@ class HouseholdClosureConfiguration(BaseModel):
     # debt / quarterly principal flow, not legal contract maturities.
     new_consumer_loan_maturity: int = Field(default=49, ge=1)
     new_mortgage_maturity: int = Field(default=145, ge=1)
+
+    income_enabled: bool = False
+    nonrental_mixed_income: float = Field(default=97_274e6, ge=0)
+    corporate_transfers: float = Field(default=121_500e6, ge=0)
+    # StatCan 36-10-0482, 2022, Dividends (v80013659), CAD.
+    dividends_by_region: dict[str, float] = {'CAN_NL': 363000000.0, 'CAN_PE': 194000000.0, 'CAN_NS': 1748000000.0, 'CAN_NB': 1033000000.0, 'CAN_QC': 14371000000.0, 'CAN_ON': 35090000000.0, 'CAN_MB': 1825000000.0, 'CAN_SK': 3246000000.0, 'CAN_AB': 16072000000.0, 'CAN_BC': 17949000000.0, 'CAN_YT': 98000000.0, 'CAN_NT': 52000000.0, 'CAN_NU': 11000000.0}

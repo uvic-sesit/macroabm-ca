@@ -743,6 +743,9 @@ class Country:
             from macromodel.country.household_closure import prepare_household_credit
             prepare_household_credit(self)
 
+        if getattr(self, "household_closure", None) is not None:
+            self.household_closure.expected_income()
+
         # Household target consumption
         # Note: For CES substitution, we track additional taxes (like carbon tax) similar to firms
         # Currently no additional taxes are implemented, so both initial and current are zero
@@ -1220,6 +1223,8 @@ class Country:
             self.firms.compute_gross_operating_surplus_mixed_income()
         )
         self.firms.ts.deposits.append(self.firms.compute_deposits())
+        if getattr(self, "household_closure", None) is not None:
+            self.household_closure.firm_payments()
         self.firms.ts.equity.append(
             self.firms.compute_equity(
                 current_good_prices=self.economy.ts.current("good_prices"),
@@ -1292,6 +1297,8 @@ class Country:
             [self.households.ts.current("income_financial_assets").sum()]
         )
         self.households.ts.income.append(self.households.compute_income())
+        if getattr(self, "household_closure", None) is not None:
+            self.household_closure.realised_income()
         self.households.ts.income_histogram.append(get_histogram(self.households.ts.current("income"), self.scale))
 
         # E3. HOUSEHOLD METRICS
@@ -1387,6 +1394,9 @@ class Country:
                 loan_losses=loan_losses,
             )
         )
+        if getattr(self, "household_closure", None) is not None:
+            self.household_closure.bank_payments()
+
         self.banks.ts.equity_histogram.append(get_histogram(self.banks.ts.current("equity"), self.scale))
 
         self.banks.ts.liability.append(self.banks.compute_liability())
@@ -1421,6 +1431,9 @@ class Country:
             current_total_exports=self.economy.ts.current("exports_before_taxes").sum(),
             cpi=self.economy.ts.current("cpi")[0],
         )
+
+        if getattr(self, "household_closure", None) is not None:
+            self.household_closure.distribution_taxes()
 
         # General government fields
         self.central_government.ts.taxes_on_products.append([self.central_government.compute_taxes_on_products()])

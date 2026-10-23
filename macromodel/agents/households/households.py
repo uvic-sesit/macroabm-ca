@@ -234,6 +234,9 @@ class Households(Agent):
 
         # Additional states
         states: dict[str, float | np.ndarray | list[np.ndarray] | Any] = {
+            "self_employment_business_value": synthetic_population.household_data["Value of Self-Employment Businesses"].values.copy(),
+            "distribution_equity_value": (synthetic_population.household_data["Wealth in Financial Assets"] + synthetic_population.household_data["Value of Self-Employment Businesses"]).values.copy(),
+            "distribution_pension_value": synthetic_population.household_data["Voluntary Pension"].values.copy(),
             "saving_rates_model": synthetic_population.saving_rates_model,
             "social_transfers_model": synthetic_population.social_transfers_model,
             "wealth_distribution_model": synthetic_population.wealth_distribution_model,

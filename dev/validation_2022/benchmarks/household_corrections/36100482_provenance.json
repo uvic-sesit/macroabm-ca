@@ -1,0 +1,7 @@
+{
+  "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100482-eng.zip",
+  "retrieved": "2026-10-23",
+  "zip_sha256": "fb609e2a264a590db7fa978109d79b87b764f2577c87e7bf4ca5eb9dfdb6fcf7",
+  "csv_sha256": "0fafaabbb657af47ca86d77d32009b32a96c50e33c4048931ee1ea3e951ff9cc",
+  "selection": "all 2022 rows, unchanged units"
+}

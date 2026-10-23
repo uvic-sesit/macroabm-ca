@@ -1,0 +1,286 @@
+REF_DATE,GEO,DGUID,Estimates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022,Canada,2016A000011124,Property income received,Dollars,81,millions,6,v80013648,1.1,246588.0,,,,0
+2022,Canada,2016A000011124,Total interest,Dollars,81,millions,6,v80013649,1.2,116961.0,,,,0
+2022,Canada,2016A000011124,Interest - deposits,Dollars,81,millions,6,v80013650,1.3,17779.0,,,,0
+2022,Canada,2016A000011124,Interest - other,Dollars,81,millions,6,v80013651,1.4,11364.0,,,,0
+2022,Canada,2016A000011124,Bonds,Dollars,81,millions,6,v80013652,1.5,10537.0,,,,0
+2022,Canada,2016A000011124,Mortgages,Dollars,81,millions,6,v80013653,1.6,426.0,,,,0
+2022,Canada,2016A000011124,Treasury bills,Dollars,81,millions,6,v80013654,1.7,401.0,,,,0
+2022,Canada,2016A000011124,Life insurance,Dollars,81,millions,6,v80013655,1.8,11244.0,,,,0
+2022,Canada,2016A000011124,Pension plans,Dollars,81,millions,6,v80013656,1.9,54870.0,,,,0
+2022,Canada,2016A000011124,Property income on unfunded pension liability,Dollars,81,millions,6,v101304963,1.19,2261.0,,,,0
+2022,Canada,2016A000011124,Implicit income - deposits,Dollars,81,millions,6,v80013657,1.1,14590.0,,,,0
+2022,Canada,2016A000011124,Implicit income - insurance,Dollars,81,millions,6,v80013658,1.11,4853.0,,,,0
+2022,Canada,2016A000011124,Dividends,Dollars,81,millions,6,v80013659,1.12,92052.0,,,,0
+2022,Canada,2016A000011124,Miscellaneous investment income,Dollars,81,millions,6,v80013660,1.13,3181.0,,,,0
+2022,Canada,2016A000011124,Foreign investment income,Dollars,81,millions,6,v80013661,1.14,34394.0,,,,0
+2022,Canada,2016A000011124,Property income paid,Dollars,81,millions,6,v80013662,1.15,84211.0,,,,0
+2022,Canada,2016A000011124,Interest - consumer credit,Dollars,81,millions,6,v80013663,1.16,24543.0,,,,0
+2022,Canada,2016A000011124,Interest - mortgages,Dollars,81,millions,6,v80013664,1.17,52330.0,,,,0
+2022,Canada,2016A000011124,Interest - unincorporated businesses,Dollars,81,millions,6,v80013665,1.18,7338.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Property income received,Dollars,81,millions,6,v80013666,2.1,1804.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Total interest,Dollars,81,millions,6,v80013667,2.2,1238.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Interest - deposits,Dollars,81,millions,6,v80013668,2.3,123.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Interest - other,Dollars,81,millions,6,v80013669,2.4,47.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Bonds,Dollars,81,millions,6,v80013670,2.5,43.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Mortgages,Dollars,81,millions,6,v80013671,2.6,2.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Treasury bills,Dollars,81,millions,6,v80013672,2.7,2.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Life insurance,Dollars,81,millions,6,v80013673,2.8,152.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Pension plans,Dollars,81,millions,6,v80013674,2.9,693.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Property income on unfunded pension liability,Dollars,81,millions,6,v101304964,2.19,31.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Implicit income - deposits,Dollars,81,millions,6,v80013675,2.1,119.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Implicit income - insurance,Dollars,81,millions,6,v80013676,2.11,73.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Dividends,Dollars,81,millions,6,v80013677,2.12,363.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Miscellaneous investment income,Dollars,81,millions,6,v80013678,2.13,36.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Foreign investment income,Dollars,81,millions,6,v80013679,2.14,167.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Property income paid,Dollars,81,millions,6,v80013680,2.15,710.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Interest - consumer credit,Dollars,81,millions,6,v80013681,2.16,294.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Interest - mortgages,Dollars,81,millions,6,v80013682,2.17,383.0,,,,0
+2022,Newfoundland and Labrador,2016A000210,Interest - unincorporated businesses,Dollars,81,millions,6,v80013683,2.18,33.0,,,,0
+2022,Prince Edward Island,2016A000211,Property income received,Dollars,81,millions,6,v80013684,3.1,631.0,,,,0
+2022,Prince Edward Island,2016A000211,Total interest,Dollars,81,millions,6,v80013685,3.2,392.0,,,,0
+2022,Prince Edward Island,2016A000211,Interest - deposits,Dollars,81,millions,6,v80013686,3.3,49.0,,,,0
+2022,Prince Edward Island,2016A000211,Interest - other,Dollars,81,millions,6,v80013687,3.4,23.0,,,,0
+2022,Prince Edward Island,2016A000211,Bonds,Dollars,81,millions,6,v80013688,3.5,21.0,,,,0
+2022,Prince Edward Island,2016A000211,Mortgages,Dollars,81,millions,6,v80013689,3.6,0.0,,,,0
+2022,Prince Edward Island,2016A000211,Treasury bills,Dollars,81,millions,6,v80013690,3.7,2.0,,,,0
+2022,Prince Edward Island,2016A000211,Life insurance,Dollars,81,millions,6,v80013691,3.8,40.0,,,,0
+2022,Prince Edward Island,2016A000211,Pension plans,Dollars,81,millions,6,v80013692,3.9,215.0,,,,0
+2022,Prince Edward Island,2016A000211,Property income on unfunded pension liability,Dollars,81,millions,6,v101304965,3.19,6.0,,,,0
+2022,Prince Edward Island,2016A000211,Implicit income - deposits,Dollars,81,millions,6,v80013693,3.1,36.0,,,,0
+2022,Prince Edward Island,2016A000211,Implicit income - insurance,Dollars,81,millions,6,v80013694,3.11,23.0,,,,0
+2022,Prince Edward Island,2016A000211,Dividends,Dollars,81,millions,6,v80013695,3.12,194.0,,,,0
+2022,Prince Edward Island,2016A000211,Miscellaneous investment income,Dollars,81,millions,6,v80013696,3.13,4.0,,,,0
+2022,Prince Edward Island,2016A000211,Foreign investment income,Dollars,81,millions,6,v80013697,3.14,42.0,,,,0
+2022,Prince Edward Island,2016A000211,Property income paid,Dollars,81,millions,6,v80013698,3.15,219.0,,,,0
+2022,Prince Edward Island,2016A000211,Interest - consumer credit,Dollars,81,millions,6,v80013699,3.16,79.0,,,,0
+2022,Prince Edward Island,2016A000211,Interest - mortgages,Dollars,81,millions,6,v80013700,3.17,111.0,,,,0
+2022,Prince Edward Island,2016A000211,Interest - unincorporated businesses,Dollars,81,millions,6,v80013701,3.18,29.0,,,,0
+2022,Nova Scotia,2016A000212,Property income received,Dollars,81,millions,6,v80013702,4.1,5271.0,,,,0
+2022,Nova Scotia,2016A000212,Total interest,Dollars,81,millions,6,v80013703,4.2,2620.0,,,,0
+2022,Nova Scotia,2016A000212,Interest - deposits,Dollars,81,millions,6,v80013704,4.3,206.0,,,,0
+2022,Nova Scotia,2016A000212,Interest - other,Dollars,81,millions,6,v80013705,4.4,130.0,,,,0
+2022,Nova Scotia,2016A000212,Bonds,Dollars,81,millions,6,v80013706,4.5,122.0,,,,0
+2022,Nova Scotia,2016A000212,Mortgages,Dollars,81,millions,6,v80013707,4.6,6.0,,,,0
+2022,Nova Scotia,2016A000212,Treasury bills,Dollars,81,millions,6,v80013708,4.7,2.0,,,,0
+2022,Nova Scotia,2016A000212,Life insurance,Dollars,81,millions,6,v80013709,4.8,265.0,,,,0
+2022,Nova Scotia,2016A000212,Pension plans,Dollars,81,millions,6,v80013710,4.9,1620.0,,,,0
+2022,Nova Scotia,2016A000212,Property income on unfunded pension liability,Dollars,81,millions,6,v101304966,4.19,51.0,,,,0
+2022,Nova Scotia,2016A000212,Implicit income - deposits,Dollars,81,millions,6,v80013711,4.1,212.0,,,,0
+2022,Nova Scotia,2016A000212,Implicit income - insurance,Dollars,81,millions,6,v80013712,4.11,136.0,,,,0
+2022,Nova Scotia,2016A000212,Dividends,Dollars,81,millions,6,v80013713,4.12,1748.0,,,,0
+2022,Nova Scotia,2016A000212,Miscellaneous investment income,Dollars,81,millions,6,v80013714,4.13,44.0,,,,0
+2022,Nova Scotia,2016A000212,Foreign investment income,Dollars,81,millions,6,v80013715,4.14,860.0,,,,0
+2022,Nova Scotia,2016A000212,Property income paid,Dollars,81,millions,6,v80013716,4.15,1413.0,,,,0
+2022,Nova Scotia,2016A000212,Interest - consumer credit,Dollars,81,millions,6,v80013717,4.16,546.0,,,,0
+2022,Nova Scotia,2016A000212,Interest - mortgages,Dollars,81,millions,6,v80013718,4.17,789.0,,,,0
+2022,Nova Scotia,2016A000212,Interest - unincorporated businesses,Dollars,81,millions,6,v80013719,4.18,78.0,,,,0
+2022,New Brunswick,2016A000213,Property income received,Dollars,81,millions,6,v80013720,5.1,3226.0,,,,0
+2022,New Brunswick,2016A000213,Total interest,Dollars,81,millions,6,v80013721,5.2,1878.0,,,,0
+2022,New Brunswick,2016A000213,Interest - deposits,Dollars,81,millions,6,v80013722,5.3,201.0,,,,0
+2022,New Brunswick,2016A000213,Interest - other,Dollars,81,millions,6,v80013723,5.4,83.0,,,,0
+2022,New Brunswick,2016A000213,Bonds,Dollars,81,millions,6,v80013724,5.5,75.0,,,,0
+2022,New Brunswick,2016A000213,Mortgages,Dollars,81,millions,6,v80013725,5.6,6.0,,,,0
+2022,New Brunswick,2016A000213,Treasury bills,Dollars,81,millions,6,v80013726,5.7,2.0,,,,0
+2022,New Brunswick,2016A000213,Life insurance,Dollars,81,millions,6,v80013727,5.8,229.0,,,,0
+2022,New Brunswick,2016A000213,Pension plans,Dollars,81,millions,6,v80013728,5.9,1056.0,,,,0
+2022,New Brunswick,2016A000213,Property income on unfunded pension liability,Dollars,81,millions,6,v101304967,5.19,47.0,,,,0
+2022,New Brunswick,2016A000213,Implicit income - deposits,Dollars,81,millions,6,v80013729,5.1,147.0,,,,0
+2022,New Brunswick,2016A000213,Implicit income - insurance,Dollars,81,millions,6,v80013730,5.11,115.0,,,,0
+2022,New Brunswick,2016A000213,Dividends,Dollars,81,millions,6,v80013731,5.12,1033.0,,,,0
+2022,New Brunswick,2016A000213,Miscellaneous investment income,Dollars,81,millions,6,v80013732,5.13,20.0,,,,0
+2022,New Brunswick,2016A000213,Foreign investment income,Dollars,81,millions,6,v80013733,5.14,296.0,,,,0
+2022,New Brunswick,2016A000213,Property income paid,Dollars,81,millions,6,v80013734,5.15,937.0,,,,0
+2022,New Brunswick,2016A000213,Interest - consumer credit,Dollars,81,millions,6,v80013735,5.16,392.0,,,,0
+2022,New Brunswick,2016A000213,Interest - mortgages,Dollars,81,millions,6,v80013736,5.17,504.0,,,,0
+2022,New Brunswick,2016A000213,Interest - unincorporated businesses,Dollars,81,millions,6,v80013737,5.18,41.0,,,,0
+2022,Quebec,2016A000224,Property income received,Dollars,81,millions,6,v80013738,6.1,50690.0,,,,0
+2022,Quebec,2016A000224,Total interest,Dollars,81,millions,6,v80013739,6.2,31241.0,,,,0
+2022,Quebec,2016A000224,Interest - deposits,Dollars,81,millions,6,v80013740,6.3,3544.0,,,,0
+2022,Quebec,2016A000224,Interest - other,Dollars,81,millions,6,v80013741,6.4,1919.0,,,,0
+2022,Quebec,2016A000224,Bonds,Dollars,81,millions,6,v80013742,6.5,1784.0,,,,0
+2022,Quebec,2016A000224,Mortgages,Dollars,81,millions,6,v80013743,6.6,46.0,,,,0
+2022,Quebec,2016A000224,Treasury bills,Dollars,81,millions,6,v80013744,6.7,89.0,,,,0
+2022,Quebec,2016A000224,Life insurance,Dollars,81,millions,6,v80013745,6.8,2273.0,,,,0
+2022,Quebec,2016A000224,Pension plans,Dollars,81,millions,6,v80013746,6.9,19352.0,,,,0
+2022,Quebec,2016A000224,Property income on unfunded pension liability,Dollars,81,millions,6,v101304968,6.19,599.0,,,,0
+2022,Quebec,2016A000224,Implicit income - deposits,Dollars,81,millions,6,v80013747,6.1,2514.0,,,,0
+2022,Quebec,2016A000224,Implicit income - insurance,Dollars,81,millions,6,v80013748,6.11,1040.0,,,,0
+2022,Quebec,2016A000224,Dividends,Dollars,81,millions,6,v80013749,6.12,14371.0,,,,0
+2022,Quebec,2016A000224,Miscellaneous investment income,Dollars,81,millions,6,v80013750,6.13,277.0,,,,0
+2022,Quebec,2016A000224,Foreign investment income,Dollars,81,millions,6,v80013751,6.14,4801.0,,,,0
+2022,Quebec,2016A000224,Property income paid,Dollars,81,millions,6,v80013752,6.15,13685.0,,,,0
+2022,Quebec,2016A000224,Interest - consumer credit,Dollars,81,millions,6,v80013753,6.16,4641.0,,,,0
+2022,Quebec,2016A000224,Interest - mortgages,Dollars,81,millions,6,v80013754,6.17,7686.0,,,,0
+2022,Quebec,2016A000224,Interest - unincorporated businesses,Dollars,81,millions,6,v80013755,6.18,1358.0,,,,0
+2022,Ontario,2016A000235,Property income received,Dollars,81,millions,6,v80013756,7.1,99218.0,,,,0
+2022,Ontario,2016A000235,Total interest,Dollars,81,millions,6,v80013757,7.2,45242.0,,,,0
+2022,Ontario,2016A000235,Interest - deposits,Dollars,81,millions,6,v80013758,7.3,7812.0,,,,0
+2022,Ontario,2016A000235,Interest - other,Dollars,81,millions,6,v80013759,7.4,4908.0,,,,0
+2022,Ontario,2016A000235,Bonds,Dollars,81,millions,6,v80013760,7.5,4496.0,,,,0
+2022,Ontario,2016A000235,Mortgages,Dollars,81,millions,6,v80013761,7.6,245.0,,,,0
+2022,Ontario,2016A000235,Treasury bills,Dollars,81,millions,6,v80013762,7.7,167.0,,,,0
+2022,Ontario,2016A000235,Life insurance,Dollars,81,millions,6,v80013763,7.8,4772.0,,,,0
+2022,Ontario,2016A000235,Pension plans,Dollars,81,millions,6,v80013764,7.9,18008.0,,,,0
+2022,Ontario,2016A000235,Property income on unfunded pension liability,Dollars,81,millions,6,v101304969,7.19,889.0,,,,0
+2022,Ontario,2016A000235,Implicit income - deposits,Dollars,81,millions,6,v80013765,7.1,6959.0,,,,0
+2022,Ontario,2016A000235,Implicit income - insurance,Dollars,81,millions,6,v80013766,7.11,1894.0,,,,0
+2022,Ontario,2016A000235,Dividends,Dollars,81,millions,6,v80013767,7.12,35090.0,,,,0
+2022,Ontario,2016A000235,Miscellaneous investment income,Dollars,81,millions,6,v80013768,7.13,501.0,,,,0
+2022,Ontario,2016A000235,Foreign investment income,Dollars,81,millions,6,v80013769,7.14,18385.0,,,,0
+2022,Ontario,2016A000235,Property income paid,Dollars,81,millions,6,v80013770,7.15,39700.0,,,,0
+2022,Ontario,2016A000235,Interest - consumer credit,Dollars,81,millions,6,v80013771,7.16,10957.0,,,,0
+2022,Ontario,2016A000235,Interest - mortgages,Dollars,81,millions,6,v80013772,7.17,25554.0,,,,0
+2022,Ontario,2016A000235,Interest - unincorporated businesses,Dollars,81,millions,6,v80013773,7.18,3189.0,,,,0
+2022,Manitoba,2016A000246,Property income received,Dollars,81,millions,6,v80013774,8.1,6625.0,,,,0
+2022,Manitoba,2016A000246,Total interest,Dollars,81,millions,6,v80013775,8.2,3907.0,,,,0
+2022,Manitoba,2016A000246,Interest - deposits,Dollars,81,millions,6,v80013776,8.3,749.0,,,,0
+2022,Manitoba,2016A000246,Interest - other,Dollars,81,millions,6,v80013777,8.4,279.0,,,,0
+2022,Manitoba,2016A000246,Bonds,Dollars,81,millions,6,v80013778,8.5,258.0,,,,0
+2022,Manitoba,2016A000246,Mortgages,Dollars,81,millions,6,v80013779,8.6,8.0,,,,0
+2022,Manitoba,2016A000246,Treasury bills,Dollars,81,millions,6,v80013780,8.7,13.0,,,,0
+2022,Manitoba,2016A000246,Life insurance,Dollars,81,millions,6,v80013781,8.8,434.0,,,,0
+2022,Manitoba,2016A000246,Pension plans,Dollars,81,millions,6,v80013782,8.9,1733.0,,,,0
+2022,Manitoba,2016A000246,Property income on unfunded pension liability,Dollars,81,millions,6,v101304970,8.19,78.0,,,,0
+2022,Manitoba,2016A000246,Implicit income - deposits,Dollars,81,millions,6,v80013783,8.1,458.0,,,,0
+2022,Manitoba,2016A000246,Implicit income - insurance,Dollars,81,millions,6,v80013784,8.11,176.0,,,,0
+2022,Manitoba,2016A000246,Dividends,Dollars,81,millions,6,v80013785,8.12,1825.0,,,,0
+2022,Manitoba,2016A000246,Miscellaneous investment income,Dollars,81,millions,6,v80013786,8.13,246.0,,,,0
+2022,Manitoba,2016A000246,Foreign investment income,Dollars,81,millions,6,v80013787,8.14,647.0,,,,0
+2022,Manitoba,2016A000246,Property income paid,Dollars,81,millions,6,v80013788,8.15,1868.0,,,,0
+2022,Manitoba,2016A000246,Interest - consumer credit,Dollars,81,millions,6,v80013789,8.16,543.0,,,,0
+2022,Manitoba,2016A000246,Interest - mortgages,Dollars,81,millions,6,v80013790,8.17,1095.0,,,,0
+2022,Manitoba,2016A000246,Interest - unincorporated businesses,Dollars,81,millions,6,v80013791,8.18,230.0,,,,0
+2022,Saskatchewan,2016A000247,Property income received,Dollars,81,millions,6,v80013792,9.1,7894.0,,,,0
+2022,Saskatchewan,2016A000247,Total interest,Dollars,81,millions,6,v80013793,9.2,3276.0,,,,0
+2022,Saskatchewan,2016A000247,Interest - deposits,Dollars,81,millions,6,v80013794,9.3,564.0,,,,0
+2022,Saskatchewan,2016A000247,Interest - other,Dollars,81,millions,6,v80013795,9.4,254.0,,,,0
+2022,Saskatchewan,2016A000247,Bonds,Dollars,81,millions,6,v80013796,9.5,235.0,,,,0
+2022,Saskatchewan,2016A000247,Mortgages,Dollars,81,millions,6,v80013797,9.6,6.0,,,,0
+2022,Saskatchewan,2016A000247,Treasury bills,Dollars,81,millions,6,v80013798,9.7,13.0,,,,0
+2022,Saskatchewan,2016A000247,Life insurance,Dollars,81,millions,6,v80013799,9.8,324.0,,,,0
+2022,Saskatchewan,2016A000247,Pension plans,Dollars,81,millions,6,v80013800,9.9,1533.0,,,,0
+2022,Saskatchewan,2016A000247,Property income on unfunded pension liability,Dollars,81,millions,6,v101304971,9.19,68.0,,,,0
+2022,Saskatchewan,2016A000247,Implicit income - deposits,Dollars,81,millions,6,v80013801,9.1,376.0,,,,0
+2022,Saskatchewan,2016A000247,Implicit income - insurance,Dollars,81,millions,6,v80013802,9.11,157.0,,,,0
+2022,Saskatchewan,2016A000247,Dividends,Dollars,81,millions,6,v80013803,9.12,3246.0,,,,0
+2022,Saskatchewan,2016A000247,Miscellaneous investment income,Dollars,81,millions,6,v80013804,9.13,983.0,,,,0
+2022,Saskatchewan,2016A000247,Foreign investment income,Dollars,81,millions,6,v80013805,9.14,389.0,,,,0
+2022,Saskatchewan,2016A000247,Property income paid,Dollars,81,millions,6,v80013806,9.15,1815.0,,,,0
+2022,Saskatchewan,2016A000247,Interest - consumer credit,Dollars,81,millions,6,v80013807,9.16,575.0,,,,0
+2022,Saskatchewan,2016A000247,Interest - mortgages,Dollars,81,millions,6,v80013808,9.17,954.0,,,,0
+2022,Saskatchewan,2016A000247,Interest - unincorporated businesses,Dollars,81,millions,6,v80013809,9.18,286.0,,,,0
+2022,Alberta,2016A000248,Property income received,Dollars,81,millions,6,v80013810,10.1,31918.0,,,,0
+2022,Alberta,2016A000248,Total interest,Dollars,81,millions,6,v80013811,10.2,11481.0,,,,0
+2022,Alberta,2016A000248,Interest - deposits,Dollars,81,millions,6,v80013812,10.3,1643.0,,,,0
+2022,Alberta,2016A000248,Interest - other,Dollars,81,millions,6,v80013813,10.4,1358.0,,,,0
+2022,Alberta,2016A000248,Bonds,Dollars,81,millions,6,v80013814,10.5,1282.0,,,,0
+2022,Alberta,2016A000248,Mortgages,Dollars,81,millions,6,v80013815,10.6,30.0,,,,0
+2022,Alberta,2016A000248,Treasury bills,Dollars,81,millions,6,v80013816,10.7,46.0,,,,0
+2022,Alberta,2016A000248,Life insurance,Dollars,81,millions,6,v80013817,10.8,1308.0,,,,0
+2022,Alberta,2016A000248,Pension plans,Dollars,81,millions,6,v80013818,10.9,4780.0,,,,0
+2022,Alberta,2016A000248,Property income on unfunded pension liability,Dollars,81,millions,6,v101304972,10.19,247.0,,,,0
+2022,Alberta,2016A000248,Implicit income - deposits,Dollars,81,millions,6,v80013819,10.1,1570.0,,,,0
+2022,Alberta,2016A000248,Implicit income - insurance,Dollars,81,millions,6,v80013820,10.11,575.0,,,,0
+2022,Alberta,2016A000248,Dividends,Dollars,81,millions,6,v80013821,10.12,16072.0,,,,0
+2022,Alberta,2016A000248,Miscellaneous investment income,Dollars,81,millions,6,v80013822,10.13,918.0,,,,0
+2022,Alberta,2016A000248,Foreign investment income,Dollars,81,millions,6,v80013823,10.14,3448.0,,,,0
+2022,Alberta,2016A000248,Property income paid,Dollars,81,millions,6,v80013824,10.15,9084.0,,,,0
+2022,Alberta,2016A000248,Interest - consumer credit,Dollars,81,millions,6,v80013825,10.16,3048.0,,,,0
+2022,Alberta,2016A000248,Interest - mortgages,Dollars,81,millions,6,v80013826,10.17,5290.0,,,,0
+2022,Alberta,2016A000248,Interest - unincorporated businesses,Dollars,81,millions,6,v80013827,10.18,746.0,,,,0
+2022,British Columbia,2016A000259,Property income received,Dollars,81,millions,6,v80013828,11.1,38720.0,,,,0
+2022,British Columbia,2016A000259,Total interest,Dollars,81,millions,6,v80013829,11.2,15316.0,,,,0
+2022,British Columbia,2016A000259,Interest - deposits,Dollars,81,millions,6,v80013830,11.3,2869.0,,,,0
+2022,British Columbia,2016A000259,Interest - other,Dollars,81,millions,6,v80013831,11.4,2351.0,,,,0
+2022,British Columbia,2016A000259,Bonds,Dollars,81,millions,6,v80013832,11.5,2209.0,,,,0
+2022,British Columbia,2016A000259,Mortgages,Dollars,81,millions,6,v80013833,11.6,77.0,,,,0
+2022,British Columbia,2016A000259,Treasury bills,Dollars,81,millions,6,v80013834,11.7,65.0,,,,0
+2022,British Columbia,2016A000259,Life insurance,Dollars,81,millions,6,v80013835,11.8,1425.0,,,,0
+2022,British Columbia,2016A000259,Pension plans,Dollars,81,millions,6,v80013836,11.9,5603.0,,,,0
+2022,British Columbia,2016A000259,Property income on unfunded pension liability,Dollars,81,millions,6,v101304973,11.19,231.0,,,,0
+2022,British Columbia,2016A000259,Implicit income - deposits,Dollars,81,millions,6,v80013837,11.1,2182.0,,,,0
+2022,British Columbia,2016A000259,Implicit income - insurance,Dollars,81,millions,6,v80013838,11.11,655.0,,,,0
+2022,British Columbia,2016A000259,Dividends,Dollars,81,millions,6,v80013839,11.12,17949.0,,,,0
+2022,British Columbia,2016A000259,Miscellaneous investment income,Dollars,81,millions,6,v80013840,11.13,140.0,,,,0
+2022,British Columbia,2016A000259,Foreign investment income,Dollars,81,millions,6,v80013841,11.14,5316.0,,,,0
+2022,British Columbia,2016A000259,Property income paid,Dollars,81,millions,6,v80013842,11.15,14603.0,,,,0
+2022,British Columbia,2016A000259,Interest - consumer credit,Dollars,81,millions,6,v80013843,11.16,3425.0,,,,0
+2022,British Columbia,2016A000259,Interest - mortgages,Dollars,81,millions,6,v80013844,11.17,9838.0,,,,0
+2022,British Columbia,2016A000259,Interest - unincorporated businesses,Dollars,81,millions,6,v80013845,11.18,1340.0,,,,0
+2022,Yukon,2016A000260,Property income received,Dollars,81,millions,6,v80013846,12.1,254.0,,,,0
+2022,Yukon,2016A000260,Total interest,Dollars,81,millions,6,v80013847,12.2,129.0,,,,0
+2022,Yukon,2016A000260,Interest - deposits,Dollars,81,millions,6,v80013848,12.3,9.0,,,,0
+2022,Yukon,2016A000260,Interest - other,Dollars,81,millions,6,v80013849,12.4,7.0,,,,0
+2022,Yukon,2016A000260,Bonds,Dollars,81,millions,6,v80013850,12.5,7.0,,,,0
+2022,Yukon,2016A000260,Mortgages,Dollars,81,millions,6,v80013851,12.6,0.0,,,,0
+2022,Yukon,2016A000260,Treasury bills,Dollars,81,millions,6,v80013852,12.7,0.0,,,,0
+2022,Yukon,2016A000260,Life insurance,Dollars,81,millions,6,v80013853,12.8,8.0,,,,0
+2022,Yukon,2016A000260,Pension plans,Dollars,81,millions,6,v80013854,12.9,89.0,,,,0
+2022,Yukon,2016A000260,Property income on unfunded pension liability,Dollars,81,millions,6,v101304974,12.19,4.0,,,,0
+2022,Yukon,2016A000260,Implicit income - deposits,Dollars,81,millions,6,v80013855,12.1,8.0,,,,0
+2022,Yukon,2016A000260,Implicit income - insurance,Dollars,81,millions,6,v80013856,12.11,4.0,,,,0
+2022,Yukon,2016A000260,Dividends,Dollars,81,millions,6,v80013857,12.12,98.0,,,,0
+2022,Yukon,2016A000260,Miscellaneous investment income,Dollars,81,millions,6,v80013858,12.13,4.0,,,,0
+2022,Yukon,2016A000260,Foreign investment income,Dollars,81,millions,6,v80013859,12.14,22.0,,,,0
+2022,Yukon,2016A000260,Property income paid,Dollars,81,millions,6,v80013860,12.15,90.0,,,,0
+2022,Yukon,2016A000260,Interest - consumer credit,Dollars,81,millions,6,v80013861,12.16,20.0,,,,0
+2022,Yukon,2016A000260,Interest - mortgages,Dollars,81,millions,6,v80013862,12.17,65.0,,,,0
+2022,Yukon,2016A000260,Interest - unincorporated businesses,Dollars,81,millions,6,v80013863,12.18,5.0,,,,0
+2022,Northwest Territories including Nunavut,,Property income received,Dollars,81,millions,6,v80013864,13.1,,..,,t,0
+2022,Northwest Territories including Nunavut,,Total interest,Dollars,81,millions,6,v80013865,13.2,,..,,t,0
+2022,Northwest Territories including Nunavut,,Interest - deposits,Dollars,81,millions,6,v80013866,13.3,,..,,t,0
+2022,Northwest Territories including Nunavut,,Interest - other,Dollars,81,millions,6,v80013867,13.4,,..,,t,0
+2022,Northwest Territories including Nunavut,,Bonds,Dollars,81,millions,6,v80013868,13.5,,..,,t,0
+2022,Northwest Territories including Nunavut,,Mortgages,Dollars,81,millions,6,v80013869,13.6,,..,,t,0
+2022,Northwest Territories including Nunavut,,Treasury bills,Dollars,81,millions,6,v80013870,13.7,,..,,t,0
+2022,Northwest Territories including Nunavut,,Life insurance,Dollars,81,millions,6,v80013871,13.8,,..,,t,0
+2022,Northwest Territories including Nunavut,,Pension plans,Dollars,81,millions,6,v80013872,13.9,,..,,t,0
+2022,Northwest Territories including Nunavut,,Property income on unfunded pension liability,Dollars,81,millions,6,v101304975,13.19,,..,,t,0
+2022,Northwest Territories including Nunavut,,Implicit income - deposits,Dollars,81,millions,6,v80013873,13.1,,..,,t,0
+2022,Northwest Territories including Nunavut,,Implicit income - insurance,Dollars,81,millions,6,v80013874,13.11,,..,,t,0
+2022,Northwest Territories including Nunavut,,Dividends,Dollars,81,millions,6,v80013875,13.12,,..,,t,0
+2022,Northwest Territories including Nunavut,,Miscellaneous investment income,Dollars,81,millions,6,v80013876,13.13,,..,,t,0
+2022,Northwest Territories including Nunavut,,Foreign investment income,Dollars,81,millions,6,v80013877,13.14,,..,,t,0
+2022,Northwest Territories including Nunavut,,Property income paid,Dollars,81,millions,6,v80013878,13.15,,..,,t,0
+2022,Northwest Territories including Nunavut,,Interest - consumer credit,Dollars,81,millions,6,v80013879,13.16,,..,,t,0
+2022,Northwest Territories including Nunavut,,Interest - mortgages,Dollars,81,millions,6,v80013880,13.17,,..,,t,0
+2022,Northwest Territories including Nunavut,,Interest - unincorporated businesses,Dollars,81,millions,6,v80013881,13.18,,..,,t,0
+2022,Northwest Territories,2016A000261,Property income received,Dollars,81,millions,6,v80013882,14.1,236.0,,,,0
+2022,Northwest Territories,2016A000261,Total interest,Dollars,81,millions,6,v80013883,14.2,160.0,,,,0
+2022,Northwest Territories,2016A000261,Interest - deposits,Dollars,81,millions,6,v80013884,14.3,8.0,,,,0
+2022,Northwest Territories,2016A000261,Interest - other,Dollars,81,millions,6,v80013885,14.4,4.0,,,,0
+2022,Northwest Territories,2016A000261,Bonds,Dollars,81,millions,6,v80013886,14.5,4.0,,,,0
+2022,Northwest Territories,2016A000261,Mortgages,Dollars,81,millions,6,v80013887,14.6,0.0,,,,0
+2022,Northwest Territories,2016A000261,Treasury bills,Dollars,81,millions,6,v80013888,14.7,0.0,,,,0
+2022,Northwest Territories,2016A000261,Life insurance,Dollars,81,millions,6,v80013889,14.8,12.0,,,,0
+2022,Northwest Territories,2016A000261,Pension plans,Dollars,81,millions,6,v80013890,14.9,118.0,,,,0
+2022,Northwest Territories,2016A000261,Property income on unfunded pension liability,Dollars,81,millions,6,v101304976,14.19,6.0,,,,0
+2022,Northwest Territories,2016A000261,Implicit income - deposits,Dollars,81,millions,6,v80013891,14.1,8.0,,,,0
+2022,Northwest Territories,2016A000261,Implicit income - insurance,Dollars,81,millions,6,v80013892,14.11,4.0,,,,0
+2022,Northwest Territories,2016A000261,Dividends,Dollars,81,millions,6,v80013893,14.12,52.0,,,,0
+2022,Northwest Territories,2016A000261,Miscellaneous investment income,Dollars,81,millions,6,v80013894,14.13,4.0,,,,0
+2022,Northwest Territories,2016A000261,Foreign investment income,Dollars,81,millions,6,v80013895,14.14,19.0,,,,0
+2022,Northwest Territories,2016A000261,Property income paid,Dollars,81,millions,6,v80013896,14.15,72.0,,,,0
+2022,Northwest Territories,2016A000261,Interest - consumer credit,Dollars,81,millions,6,v80013897,14.16,19.0,,,,0
+2022,Northwest Territories,2016A000261,Interest - mortgages,Dollars,81,millions,6,v80013898,14.17,51.0,,,,0
+2022,Northwest Territories,2016A000261,Interest - unincorporated businesses,Dollars,81,millions,6,v80013899,14.18,2.0,,,,0
+2022,Nunavut,2016A000262,Property income received,Dollars,81,millions,6,v80013900,15.1,100.0,,,,0
+2022,Nunavut,2016A000262,Total interest,Dollars,81,millions,6,v80013901,15.2,82.0,,,,0
+2022,Nunavut,2016A000262,Interest - deposits,Dollars,81,millions,6,v80013902,15.3,2.0,,,,0
+2022,Nunavut,2016A000262,Interest - other,Dollars,81,millions,6,v80013903,15.4,1.0,,,,0
+2022,Nunavut,2016A000262,Bonds,Dollars,81,millions,6,v80013904,15.5,1.0,,,,0
+2022,Nunavut,2016A000262,Mortgages,Dollars,81,millions,6,v80013905,15.6,0.0,,,,0
+2022,Nunavut,2016A000262,Treasury bills,Dollars,81,millions,6,v80013906,15.7,0.0,,,,0
+2022,Nunavut,2016A000262,Life insurance,Dollars,81,millions,6,v80013907,15.8,2.0,,,,0
+2022,Nunavut,2016A000262,Pension plans,Dollars,81,millions,6,v80013908,15.9,70.0,,,,0
+2022,Nunavut,2016A000262,Property income on unfunded pension liability,Dollars,81,millions,6,v101304977,15.19,4.0,,,,0
+2022,Nunavut,2016A000262,Implicit income - deposits,Dollars,81,millions,6,v80013909,15.1,2.0,,,,0
+2022,Nunavut,2016A000262,Implicit income - insurance,Dollars,81,millions,6,v80013910,15.11,1.0,,,,0
+2022,Nunavut,2016A000262,Dividends,Dollars,81,millions,6,v80013911,15.12,11.0,,,,0
+2022,Nunavut,2016A000262,Miscellaneous investment income,Dollars,81,millions,6,v80013912,15.13,4.0,,,,0
+2022,Nunavut,2016A000262,Foreign investment income,Dollars,81,millions,6,v80013913,15.14,3.0,,,,0
+2022,Nunavut,2016A000262,Property income paid,Dollars,81,millions,6,v80013914,15.15,15.0,,,,0
+2022,Nunavut,2016A000262,Interest - consumer credit,Dollars,81,millions,6,v80013915,15.16,4.0,,,,0
+2022,Nunavut,2016A000262,Interest - mortgages,Dollars,81,millions,6,v80013916,15.17,10.0,,,,0
+2022,Nunavut,2016A000262,Interest - unincorporated businesses,Dollars,81,millions,6,v80013917,15.18,1.0,,,,0

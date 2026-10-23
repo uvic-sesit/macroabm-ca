@@ -92,6 +92,17 @@ class AccountingBattery:
         inst_f = _cur(f.ts, "debt_installments").sum()
         dD_f = _cur(f.ts, "deposits").sum() - _prev(f.ts, "deposits").sum()
         implied_f = sold - wb - bought - tprod - tcorp - int_f + itc + credit - inst_f
+        distributions = _cur(f.ts, "household_distributions", [0.0]).sum()
+        bank_dividends = _cur(b.ts, "household_dividends", [0.0]).sum()
+        implied_f -= distributions
+        hh_distributions = sum(_cur(h.ts, k, [0.0]).sum() for k in
+                               ("income_mixed", "income_dividends", "income_corporate_transfers"))
+        distribution_tax = _cur(g.ts, "taxes_household_distributions", [0.0]).sum()
+        r["household_distribution_counterparty_resid"] = distributions + bank_dividends - hh_distributions - distribution_tax
+        r["imputed_housing_pair_resid"] = (_cur(h.ts, "income_imputed_housing", [0.0]).sum()
+                                            - _cur(h.ts, "consumption_imputed_housing", [0.0]).sum())
+        r.update(firm_distributions=distributions, bank_dividends=bank_dividends,
+                 hh_distributions=hh_distributions, distribution_tax=distribution_tax)
         r.update(firm_wage_bill=wb, firm_sales=sold, firm_purchases=bought, firm_dDeposits=dD_f,
                  firm_cash_identity_resid=dD_f - implied_f)  # = - deposits zeroed at insolvency
 
@@ -178,7 +189,7 @@ class AccountingBattery:
         dE = _cur(b.ts, "equity").sum() - _prev(b.ts, "equity").sum()
         losses = float(np.sum(b.states.get("loan_losses_current", 0.0)))
         r["bank_loan_losses"] = losses
-        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses)
+        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses - bank_dividends)
         # write-offs move R only to the extent that the lending bank does not recognise the loss (A14)
         named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing + injection
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately
@@ -198,6 +209,7 @@ IDENTITY_COLUMNS = [
     "loan_identity_resid",
     "hh_cash_identity_resid", "wage_counterparty_resid", "rent_counterparty_resid", "house_sales_resid",
     "ub_counterparty_resid", "reserves_unexplained",
+    "household_distribution_counterparty_resid", "imputed_housing_pair_resid",
 ]
 
 
