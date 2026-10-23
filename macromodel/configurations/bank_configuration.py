@@ -34,6 +34,8 @@ class BankParameters(BaseModel):
     """
 
     capital_adequacy_ratio: float = Field(ge=0, le=1, default=0.08)
+    # Model policy buffer, not an estimated Canadian risk-weighted ratio.
+    resolution_capital_buffer: float = Field(ge=0, lt=1, default=0.01)
     firm_loans_debt_to_equity_ratio: float = Field(ge=0, le=1, default=0.03)
     firm_loans_return_on_equity_ratio: float = Field(ge=0, le=1, default=0.05)
     firm_loans_return_on_assets_ratio: float = Field(ge=0, le=1, default=0.05)

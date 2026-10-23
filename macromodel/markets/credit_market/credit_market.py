@@ -635,20 +635,13 @@ class CreditMarket:
         return cons_amount, mort_amount
 
     def remove_loans_by_bank(self, bank_id: int | np.ndarray) -> None:
-        """Remove all loans associated with specified bank(s).
+        """Legacy resolution entry point: transfer contracts to the bridge bank.
 
-        Used when banks fail or exit the market.
-
-        Args:
-            bank_id (int | np.ndarray): ID(s) of bank(s) to remove loans for
+        The successor retains the agent ID, so transfer requires no book change.
+        A bank failure never forgives a borrower or records a loan write-off.
+        Ordinary borrower failures use the separate by-borrower loss methods.
         """
-        self._record_writeoff(
-            sum(self.states[k][0][bank_id].sum() for k in ["st_loans", "lt_loans", "cons_loans", "mort_loans"])
-        )
-        self.states["st_loans"][:, bank_id] = 0.0
-        self.states["lt_loans"][:, bank_id] = 0.0
-        self.states["cons_loans"][:, bank_id] = 0.0
-        self.states["mort_loans"][:, bank_id] = 0.0
+        return None
 
     def save_to_h5(self, group: h5py.Group):
         """Save credit market state to HDF5 file.

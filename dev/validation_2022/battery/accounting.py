@@ -134,7 +134,8 @@ class AccountingBattery:
         G = _cur(ge.ts, "nominal_amount_spent_in_lcu").sum()
         rev = _cur(g.ts, "revenue")[0]
         itc_gov = _cur(g.ts, "itc_refunds", [0.0])[0]
-        cash_deficit = ub_paid + tr + G + itc_gov - rev
+        injection = _cur(g.ts, "bank_equity_injection", [0.0])[0]
+        cash_deficit = ub_paid + tr + G + itc_gov + injection - rev
         r.update(gov_G=G, gov_revenue=rev, gov_cash_deficit=cash_deficit, gov_deficit_booked=_cur(g.ts, "deficit")[0])
 
         # ---------- external receipts (ROW and other provinces)
@@ -189,9 +190,12 @@ class AccountingBattery:
         dE = _cur(b.ts, "equity").sum() - _prev(b.ts, "equity").sum()
         losses = float(np.sum(b.states.get("loan_losses_current", 0.0)))
         r["bank_loan_losses"] = losses
-        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses - bank_dividends)
+        bank_recap = float(np.sum(b.states.get('recapitalisation_current', 0.)))
+        r['bank_recapitalisation'] = bank_recap
+        r['bank_recapitalisation_counterparty_resid'] = injection - bank_recap
+        r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses - bank_dividends + bank_recap)
         # write-offs move R only to the extent that the lending bank does not recognise the loss (A14)
-        named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing + injection
+        named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately
         # (loan_identity_resid) so that reserves_unexplained isolates deposit-side (payment) leaks
         explained = cash_deficit + ext + cb_interest + named_boundary - loan_identity_resid
@@ -206,6 +210,7 @@ class AccountingBattery:
 
 
 IDENTITY_COLUMNS = [
+    "bank_recapitalisation_counterparty_resid",
     "loan_identity_resid",
     "hh_cash_identity_resid", "wage_counterparty_resid", "rent_counterparty_resid", "house_sales_resid",
     "ub_counterparty_resid", "reserves_unexplained",

@@ -550,30 +550,50 @@ class Banks(Agent):
         Returns:
             float: Total losses from insolvency
         """
-        equity_injection, average_equity = self.functions["demography"].handle_bank_insolvency(
+        self.functions["demography"].handle_bank_insolvency(
             current_bank_equity=self.ts.current("equity"),
             current_bank_loans=self.ts.current("total_outstanding_loans"),
             current_bank_deposits=self.ts.current("deposits"),
             is_insolvent=self.states["is_insolvent"],
         )
 
-        # Remove loans
-        for bank_id in np.where(self.states["is_insolvent"])[0]:
+        equity = self.ts.current("equity").copy()
+        loans = self.ts.current("total_outstanding_loans")
+        customer_deposits = self.ts.current("deposits_from_firms") + self.ts.current("deposits_from_households")
+        buffer = self.parameters.resolution_capital_buffer
+        minimum = getattr(self.functions['demography'], 'solvency_ratio', 0.) + buffer
+        if minimum >= 1:
+            raise ValueError('Resolution threshold plus buffer must be below one')
+        # R = D + E - L, so E/(L+R) = E/(D+E). Solve for the
+        # *post-transfer* E rather than using the pre-transfer denominator.
+        target = np.maximum((self.parameters.capital_adequacy_ratio + buffer) * loans,
+                            minimum / (1 - minimum) * np.maximum(0., customer_deposits))
+        recap = np.zeros_like(equity)
+        counts = self.states.setdefault('resolution_count', np.zeros(len(equity), dtype=int))
+        events = self.states.setdefault('resolution_events', [])
+        losses = np.asarray(self.states.get('loan_losses_current', np.zeros_like(equity)))
+        previous = np.asarray(self.ts.dicts['equity'][-2] if len(self.ts.dicts['equity']) > 1 else equity)
+        for bank_id in np.flatnonzero(self.states['is_insolvent']):
+            # Losses have already been charged through compute_equity, before
+            # any fiscal support. Negative equity is a hole recap must cover;
+            # resetting it to zero first would invent an unbooked gain.
+            before = float(equity[bank_id])
+            recap[bank_id] = max(0., target[bank_id] - before)
+            equity[bank_id] += recap[bank_id]
+            counts[bank_id] += 1
             credit_market.remove_loans_by_bank(bank_id)
-
-        # Update deposits
-        new_firm_deposits = self.ts.current("deposits")
-        new_firm_deposits[self.states["is_insolvent"]] = 0.0
-        self.ts.deposits.pop()
-        self.ts.deposits.append(new_firm_deposits)
-
-        # Update equity
-        new_firm_equity = self.ts.current("equity")
-        new_firm_equity[self.states["is_insolvent"]] = average_equity
-        self.ts.equity.pop()
-        self.ts.equity.append(new_firm_equity)
-
-        return equity_injection
+            events.append(dict(bank=int(bank_id), quarter=len(self.ts.dicts['equity']) - 1,
+                               resolution_count=int(counts[bank_id]), equity_before=before,
+                               losses_absorbed_by_equity=float(min(max(0., previous[bank_id]), losses[bank_id])),
+                               uncovered_loss=max(0., -before), recapitalisation=float(recap[bank_id]),
+                               equity_after=float(equity[bank_id])))
+        self.states['recapitalisation_current'] = recap
+        self.ts.dicts['equity'][-1] = equity
+        # Refresh all affected stocks in the resolution quarter. Customer
+        # deposits, loans, interest and installment contracts never change.
+        self.ts.dicts['deposits'][-1] = self.compute_deposits()
+        self.ts.dicts['liability'][-1] = self.compute_liability()
+        return float(recap.sum())
 
     def compute_insolvency_rate(self) -> float:
         """Calculate bank insolvency rate.

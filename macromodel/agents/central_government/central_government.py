@@ -446,6 +446,7 @@ class CentralGovernment(Agent):
                 all_benefits
                 + np.sum(current_government_nominal_amount_spent)
                 + current_itc_refunds
+                  + self.ts.current("bank_equity_injection")[0]
                 + interest_payments
                 - self.ts.current("revenue")[0]
             ]
