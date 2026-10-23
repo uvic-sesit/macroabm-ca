@@ -53,6 +53,41 @@ def test_distribution_income_is_funded_and_tax_is_withheld_exactly_once():
     assert g.ts.current("taxes_corporate_income")[0] == pytest.approx(f.ts.current("corporate_taxes_paid").sum())
 
 
+def test_pre_goods_distribution_is_funded_when_declared_and_settled_once_later():
+    c, closure = closure_fixture()
+    declared = closure.firm_requests.copy()
+    assert np.all(declared.sum(axis=0) <= c.firms.ts.current('deposits'))
+    opening = c.firms.ts.current('deposits').copy()
+    closure.commit_before_goods()
+    closure.commit_before_goods()
+    np.testing.assert_array_equal(c.firms.ts.current('deposits'), opening)
+    # Subsequent operations can consume cash, but cannot revoke an already
+    # cash-funded household receipt used in this quarter's purchase budget.
+    c.firms.ts.dicts['deposits'][-1] = np.array([-1., 0.])
+    closure.firm_payments()
+    np.testing.assert_array_equal(closure.actual_firm_payments, declared)
+    np.testing.assert_allclose(c.firms.ts.current('deposits'),
+        np.array([-1.,0.]) - declared.sum(axis=0) + closure.corporate_tax_rebate)
+
+
+def test_known_receipts_use_current_net_wages_benefits_rent_and_declared_d2():
+    from macromodel.country.household_closure import known_household_receipts
+    c, closure = closure_fixture()
+    c.household_closure = closure
+    c.economy.ts.dicts['cpi'][-1] = np.array([1.25])
+    c.individuals.ts = TimeSeries(employee_income=np.array([40.,40.]),
+                                  income_from_unemployment_benefits=np.array([5.,0.]))
+    c.individuals.states['Corresponding Household ID'] = np.array([0,1])
+    c.central_government.ts.dicts['total_other_benefits'] = [np.array([6.])]
+    c.households.compute_employee_income = lambda values, ids: np.bincount(ids, weights=values, minlength=2)
+    c.households.compute_social_transfer_income = lambda total,cpi: np.full(2,total*cpi/2)
+    c.households.compute_rental_income = lambda properties,tax: np.array([0.,2.])
+    c.housing_market = NS(states={'properties':None})
+    result = known_household_receipts(c)
+    expected = np.array([58.75,55.75]) + closure.planned_mixed + closure.planned_dividends + closure.planned_transfers
+    np.testing.assert_allclose(result, expected)
+
+
 def test_payouts_cannot_create_payer_overdraft():
     c, closure = closure_fixture()
     c.firms.ts.dicts["deposits"][-1] = np.array([0., 0.1])

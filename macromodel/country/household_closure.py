@@ -49,12 +49,50 @@ def put(agent, key, value):
     agent.ts.dicts[key][-1] = np.asarray(value, float).copy()
 
 
-def cap_household_goods_budget(country):
+def known_household_receipts(country):
+    """Current net receipts, using settled labour/housing and declared D2 cash.
+
+    Keep stock histories untouched: these are settlement memos, credited once
+    by the normal end-quarter wealth update. D2 distributions are irrevocably
+    declared from the existing opening-cash cap before goods clearing.
+    """
+    h, g, ind = country.households, country.central_government, country.individuals
+    cpi = country.economy.ts.current('cpi')[0]
+    # Nominal payroll/transfer declarations precede the purchase-dependent CPI.
+    # Use this same index for the firm's wage debit and government withholding.
+    h.states['budget_settlement_cpi'] = float(cpi)
+    wages = h.compute_employee_income(cpi * ind.ts.current('employee_income'),
+                                      ind.states['Corresponding Household ID'])
+    benefits = h.compute_employee_income(ind.ts.current('income_from_unemployment_benefits'),
+                                         ind.states['Corresponding Household ID'])
+    transfers = h.compute_social_transfer_income(g.ts.current('total_other_benefits')[0], cpi)
+    rent = h.compute_rental_income(country.housing_market.states['properties'], g.states['Income Tax'])
+    closure = getattr(country, 'household_closure', None)
+    if closure is not None:
+        closure.commit_before_goods()
+        distributions = closure.planned_mixed + closure.planned_dividends + closure.planned_transfers
+        financial = np.zeros_like(wages)
+    else:
+        distributions = np.zeros_like(wages)
+        financial = h.compute_income_from_financial_assets()
+    components = dict(wages=wages, benefits=benefits, transfers=transfers,
+                      rental=rent, distributions=distributions, financial=financial)
+    h.states['budget_receipt_components'] = {k: np.asarray(v, float).copy() for k,v in components.items()}
+    return sum(components.values())
+
+
+def reserve_senior_cash(deposits, other_assets, projected_cash):
+    """Do not invest cash already reserved for taxes and contractual payments."""
+    redirect = np.minimum(np.maximum(0., other_assets), np.maximum(0., -projected_cash))
+    return deposits + redirect, other_assets - redirect, redirect
+
+
+def cap_household_goods_budget(country, net_receipts=None):
     """Zero-unobserved-capacity proxy approved for the main D diagnostic arm.
 
-    Use cash already available before clearing, including committed new loans
-    and house-sale receipts. Do not spend forecast wages, unfunded income,
-    other financial assets, or a proxy made from underwriting headroom.
+    Include current net wages, transfers, rent and funded declared D2 receipts,
+    plus committed new loans and executed house-sale receipts. Do not use
+    underwriting headroom or an additional credit-capacity parameter.
     Reserve senior payments first; scale every good and investment by one
     household factor, including consumption VAT and capital-formation tax.
     """
@@ -63,8 +101,11 @@ def cap_household_goods_budget(country):
     I = h.ts.current('target_investment').copy()
     vat = g.states['Value-added Tax']
     cf = g.states['Capital Formation Tax']
+    if net_receipts is None:
+        net_receipts = known_household_receipts(country)
+    h.states['budget_net_receipts'] = np.asarray(net_receipts, float).copy()
     cash = (h.ts.current('wealth_deposits') + h.ts.current('received_consumption_loans')
-            + h.ts.current('received_mortgages') + h.ts.current('property_sale_proceeds'))
+            + h.ts.current('received_mortgages') + h.ts.current('property_sale_proceeds') + net_receipts)
     senior = (h.ts.current('debt_installments') + h.ts.current('rent')
               + h.ts.current('interest_paid') + h.ts.current('price_paid_for_property'))
     if not np.all(np.isfinite(cash)) or not np.all(np.isfinite(senior)):
@@ -76,7 +117,7 @@ def cap_household_goods_budget(country):
     h.states['overdraft_unused_capacity'] = np.zeros_like(planned)
     h.states['overdraft_constrained'] = factor < 1 - 1e-12
     h.states['overdraft_consumption_cut'] = (1 + vat) * C.sum(axis=1) * (1 - factor)
-    h.states['overdraft_senior_shortfall_before_receipts'] = np.maximum(0., -resources)
+    h.states['payment_distress_before_goods'] = np.maximum(0., -resources)
     put(h, 'target_consumption', C * factor[:, None])
     put(h, 'target_investment', I * factor[:, None])
 
@@ -112,6 +153,7 @@ class HouseholdClosure:
         self.plan_payments()
 
     def plan_payments(self):
+        self.committed_firm_payments = None
         c, cfg = self.c, self.cfg
         h, f, b, g = c.households, c.firms, c.banks, c.central_government
         tax = g.states["Income Tax"]
@@ -146,12 +188,24 @@ class HouseholdClosure:
         put(h, "expected_income", h.compute_expected_income()
             + self.planned_mixed + self.planned_dividends + self.planned_transfers)
 
+    def commit_before_goods(self):
+        """Declare cash-funded D2 payments at the earlier settlement date.
+
+        firm_requests already respects each payer's opening positive cash.
+        Do not re-clip this irrevocable payment against cash after goods; that
+        would budget a receipt that could disappear later in the same quarter.
+        Book its cash debit, taxes and HH credit once through firm_payments and
+        realised_income. Later operating deficits remain firm obligations.
+        """
+        self.committed_firm_payments = self.firm_requests.copy()
+
     def firm_payments(self):
         f = self.c.firms
         requested = self.firm_requests.sum(axis=0)
         available = np.maximum(0, f.ts.current("deposits"))
         factor = np.minimum(1, np.divide(available, requested, out=np.ones_like(requested), where=requested > 0))
-        self.actual_firm_payments = self.firm_requests * factor
+        self.actual_firm_payments = (self.firm_requests * factor if self.committed_firm_payments is None
+                                    else self.committed_firm_payments.copy())
         f.ts.household_distribution_requests.append(self.requested_firm_payments.copy())
         paid = self.actual_firm_payments.sum(axis=0)
         # The mixed-income portion belongs to unincorporated owners, rather

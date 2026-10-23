@@ -1148,13 +1148,16 @@ class Country:
         )
 
         # C2. WAGES AND LABOR
+        payroll_cpi = (self.households.states['budget_settlement_cpi']
+                       if self.configuration.household_closure.overdraft_limit_enabled
+                       else self.economy.ts.current('cpi')[0])
         self.firms.update_total_wages_paid(
             corresponding_firm=self.individuals.states["Corresponding Firm ID"],
             individual_wages=self.individuals.ts.current("employee_income"),
             income_taxes=self.central_government.states["Income Tax"],
             employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
             employer_social_insurance_tax=self.central_government.states["Employer Social Insurance Tax"],
-            cpi=self.economy.ts.current("cpi")[0],
+            cpi=payroll_cpi,
         )
 
         # C3. EMISSIONS AND INVENTORY
@@ -1257,7 +1260,7 @@ class Country:
             self.individuals.compute_income(
                 firm_profits=self.firms.ts.current("profits"),
                 bank_profits=self.banks.ts.current("profits"),
-                cpi=self.economy.ts.current("cpi")[0],
+                cpi=payroll_cpi,
                 income_taxes=self.central_government.states["Income Tax"],
                 tau_firm=self.central_government.states["Profit Tax"],
             )
@@ -1277,7 +1280,7 @@ class Country:
         # so the nominal net wage received by households is cpi * w (A2).
         self.households.ts.income_employee.append(
             self.households.compute_employee_income(
-                individual_income=self.economy.ts.current("cpi")[0] * self.individuals.ts.current("employee_income"),
+                individual_income=payroll_cpi * self.individuals.ts.current("employee_income"),
                 corr_households=self.individuals.states["Corresponding Household ID"],
             )
         )
@@ -1295,7 +1298,7 @@ class Country:
         self.households.ts.income_social_transfers.append(
             self.households.compute_social_transfer_income(
                 total_other_social_transfers=self.central_government.ts.current("total_other_benefits")[0],
-                cpi=self.economy.ts.current("cpi")[0],
+                cpi=payroll_cpi,
             )
         )
         self.households.ts.total_income_social_transfers.append(
@@ -1440,7 +1443,7 @@ class Country:
             taxes_less_subsidies_rates=self.central_government.states["Taxes Less Subsidies Rates"],
             current_household_new_real_wealth=self.households.ts.current("investment"),
             current_total_exports=self.economy.ts.current("exports_before_taxes").sum(),
-            cpi=self.economy.ts.current("cpi")[0],
+            cpi=payroll_cpi,
         )
 
         if getattr(self, "household_closure", None) is not None:

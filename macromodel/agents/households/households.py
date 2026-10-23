@@ -1344,6 +1344,15 @@ class Households(Agent):
             current_wealth_in_other_financial_assets=self.ts.current("wealth_other_financial_assets"),
         )
 
+        if self.states.get('overdraft_limit_enabled', False):
+            from macromodel.country.household_closure import reserve_senior_cash
+            projected_cash = (self.compute_wealth_in_deposits(
+                new_wealth_in_deposits, used_up_wealth_in_deposits, tau_cf)
+                - tau_vat * self.ts.current('consumption') + self.ts.current('property_sale_proceeds'))
+            new_wealth_in_deposits, new_wealth_in_other_financial_assets, redirect = reserve_senior_cash(
+                new_wealth_in_deposits, new_wealth_in_other_financial_assets, projected_cash)
+            self.states['senior_cash_redirected_from_saving'] = redirect
+
         # Update other financial assets
         self.ts.wealth_other_financial_assets.append(
             self.compute_wealth_of_other_financial_assets(
