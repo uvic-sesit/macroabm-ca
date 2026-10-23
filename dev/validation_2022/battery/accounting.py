@@ -196,6 +196,8 @@ class AccountingBattery:
         r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses - bank_dividends + bank_recap)
         # write-offs move R only to the extent that the lending bank does not recognise the loss (A14)
         named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing
+        r['ofa_without_issuer'] = -d_ofa
+        r['ofa_liquidation_without_issuer'] = float(np.sum(h.states.get('ofa_liquidation_without_issuer', 0.)))
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately
         # (loan_identity_resid) so that reserves_unexplained isolates deposit-side (payment) leaks
         explained = cash_deficit + ext + cb_interest + named_boundary - loan_identity_resid

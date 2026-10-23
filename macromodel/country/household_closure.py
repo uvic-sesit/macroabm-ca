@@ -87,6 +87,17 @@ def reserve_senior_cash(deposits, other_assets, projected_cash):
     return deposits + redirect, other_assets - redirect, redirect
 
 
+def liquidatable_household_assets(h):
+    """Existing OFA excluding the pension component, in model stock units."""
+    return np.maximum(0., h.ts.current('wealth_other_financial_assets')
+                      - np.maximum(0., h.states['protected_pension_assets']))
+
+
+def needed_asset_liquidation(cash_after_payments, available):
+    """Cash first; liquidate only existing non-pension assets needed to settle."""
+    return np.minimum(np.maximum(0., -cash_after_payments), np.maximum(0., available))
+
+
 def cap_household_goods_budget(country, net_receipts=None):
     """Zero-unobserved-capacity proxy approved for the main D diagnostic arm.
 
@@ -112,6 +123,11 @@ def cap_household_goods_budget(country, net_receipts=None):
         raise ValueError('Household cash budget requires finite settled cash and senior payments')
     resources = cash - senior
     planned = (1 + vat) * C.sum(axis=1) + (1 + cf) * I.sum(axis=1)
+    if h.states.get('financial_asset_drawdown', False):
+        available = liquidatable_household_assets(h)
+        h.states['budget_available_nonpension_assets'] = available.copy()
+        h.states['budget_planned_asset_liquidation'] = needed_asset_liquidation(resources - planned, available)
+        resources = resources + available
     factor = np.minimum(1., np.divide(np.maximum(0., resources), planned,
                                      out=np.ones_like(planned), where=planned > 0))
     h.states['overdraft_unused_capacity'] = np.zeros_like(planned)
@@ -249,6 +265,7 @@ def install_household_closures(countries):
         cfg = c.configuration.household_closure
         c.households.states["closure_deposit_only_saving"] = cfg.deposit_only_saving
         c.households.states['overdraft_limit_enabled'] = cfg.overdraft_limit_enabled
+        c.households.states['financial_asset_drawdown'] = cfg.financial_asset_drawdown
         if cfg.distress_enabled:
             from macromodel.agents.households.func.insolvency import PersistentDistressHouseholdInsolvencyHandler
             c.households.functions["insolvency"] = PersistentDistressHouseholdInsolvencyHandler(cfg.distress_periods,cfg.collateral_haircut)

@@ -237,6 +237,9 @@ class Households(Agent):
             "self_employment_business_value": synthetic_population.household_data["Value of Self-Employment Businesses"].values.copy(),
             "distribution_equity_value": (synthetic_population.household_data["Wealth in Financial Assets"] + synthetic_population.household_data["Value of Self-Employment Businesses"]).values.copy(),
             "distribution_pension_value": synthetic_population.household_data["Voluntary Pension"].values.copy(),
+            # Components remain per-record CAD; the aggregate OFA stock was
+            # multiplied by population scale in set_household_other_financial_assets.
+            "protected_pension_assets": synthetic_population.household_data["Voluntary Pension"].values.copy() * scale,
             "saving_rates_model": synthetic_population.saving_rates_model,
             "social_transfers_model": synthetic_population.social_transfers_model,
             "wealth_distribution_model": synthetic_population.wealth_distribution_model,
@@ -1344,6 +1347,12 @@ class Households(Agent):
             current_wealth_in_other_financial_assets=self.ts.current("wealth_other_financial_assets"),
         )
 
+        if self.states.get('financial_asset_drawdown', False):
+            # Candidate uses deposits/receipts before OFA. Defer liquidation
+            # until actual spending (including senior payments/taxes) is known.
+            used_up_wealth_in_deposits = used_up_wealth.copy()
+            used_up_wealth_in_other_financial_assets = np.zeros_like(used_up_wealth)
+
         if self.states.get('overdraft_limit_enabled', False):
             from macromodel.country.household_closure import reserve_senior_cash
             projected_cash = (self.compute_wealth_in_deposits(
@@ -1352,6 +1361,18 @@ class Households(Agent):
             new_wealth_in_deposits, new_wealth_in_other_financial_assets, redirect = reserve_senior_cash(
                 new_wealth_in_deposits, new_wealth_in_other_financial_assets, projected_cash)
             self.states['senior_cash_redirected_from_saving'] = redirect
+
+        if self.states.get('financial_asset_drawdown', False):
+            from macromodel.country.household_closure import liquidatable_household_assets, needed_asset_liquidation
+            projected_cash = (self.compute_wealth_in_deposits(
+                new_wealth_in_deposits, used_up_wealth_in_deposits, tau_cf)
+                - tau_vat * self.ts.current('consumption') + self.ts.current('property_sale_proceeds'))
+            liquidation = needed_asset_liquidation(projected_cash, liquidatable_household_assets(self))
+            # Existing OFA usage path: one decrease in OFA, equal increase in
+            # deposit resources. Negative deposit usage covers senior payments.
+            used_up_wealth_in_other_financial_assets = liquidation
+            used_up_wealth_in_deposits -= liquidation
+            self.states['ofa_liquidation_without_issuer'] = liquidation
 
         # Update other financial assets
         self.ts.wealth_other_financial_assets.append(

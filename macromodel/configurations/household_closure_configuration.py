@@ -6,6 +6,7 @@ class HouseholdClosureConfiguration(BaseModel):
     distress_enabled: bool = False
     deposit_only_saving: bool = False
     overdraft_limit_enabled: bool = False
+    financial_asset_drawdown: bool = False
     distress_periods: int = Field(default=3, ge=1)
     collateral_haircut: float = Field(default=.20, ge=0, lt=1)
     rent_offset_enabled: bool = False
