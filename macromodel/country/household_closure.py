@@ -288,6 +288,50 @@ def install_household_closures(countries):
         weight = np.maximum(0,c.households.ts.current("income")).sum()/national_income
         c.household_closure = HouseholdClosure(c,c.configuration.household_closure,weight)
     recalibrate_d2_saving(enabled)
+    recalibrate_household_investment(enabled)
+
+
+def recalibrate_household_investment(countries):
+    """Match initial desired household GFCF, not rationed simulation outcomes.
+
+    Preserve the existing income base, relative propensities and IO basket.
+    Include declared D2 income in the initial expected-income base, as the
+    investment function does on the first iteration. Change only a common
+    propensity multiplier; future spending remains income-driven.
+    """
+    selected = [c for c in countries if c.configuration.household_closure.investment_benchmark_enabled]
+    if not selected:
+        return
+    bases = []
+    for c in selected:
+        h, closure = c.households, c.household_closure
+        base = (h.ts.initial('income') - h.ts.initial('income_financial_assets')
+                + closure.planned_mixed + closure.planned_dividends + closure.planned_transfers)
+        bases.append(base)
+    old_total = sum((c.households.states['investment_rate'] * base).sum()
+                    for c, base in zip(selected, bases))
+    targets = {c.configuration.household_closure.initial_annual_investment_benchmark
+               / c.configuration.household_closure.periods_per_year for c in selected}
+    if len(targets) != 1 or old_total <= 0 or not np.isfinite(old_total):
+        raise ValueError('Investment calibration needs one positive national benchmark and finite initial demand')
+    target = targets.pop()
+    factor = target / old_total
+    for c, base in zip(selected, bases):
+        h = c.households
+        old_rates = np.asarray(h.states['investment_rate']).copy()
+        h.states['investment_rate'] = old_rates * factor
+        cf = c.central_government.states['Capital Formation Tax']
+        initial = np.outer(h.states['investment_rate'] * base, h.investment_weights) / (1 + cf)
+        h.states['investment_calibration'] = dict(multiplier=float(factor),
+            old_desired=float((old_rates * base).sum()), target=float(initial.sum() * (1 + cf)),
+            old_initial=float(h.ts.current('total_investment')[0]),
+            income_base=float(base.sum()), old_rate=float(np.average(old_rates, weights=base)),
+            new_rate=float(np.average(h.states['investment_rate'], weights=base)))
+        for key in ('investment', 'target_investment'):
+            put(h, key, initial)
+        put(h, 'total_investment', [initial.sum() * (1 + cf)])
+        put(h, 'total_investment_before_vat', [initial.sum()])
+        put(h, 'industry_investment', initial.sum(axis=0))
 
 
 def recalibrate_d2_saving(countries):

@@ -7,6 +7,9 @@ class HouseholdClosureConfiguration(BaseModel):
     deposit_only_saving: bool = False
     overdraft_limit_enabled: bool = False
     financial_asset_drawdown: bool = False
+    investment_benchmark_enabled: bool = False
+    # StatCan 36-10-0112 v62305994, 2022 mean SAAR, purchasers' prices.
+    initial_annual_investment_benchmark: float = Field(default=242_393e6, gt=0)
     distress_periods: int = Field(default=3, ge=1)
     collateral_haircut: float = Field(default=.20, ge=0, lt=1)
     rent_offset_enabled: bool = False

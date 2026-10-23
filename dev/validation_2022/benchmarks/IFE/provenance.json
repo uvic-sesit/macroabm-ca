@@ -1,0 +1,34 @@
+{
+  "table": "36-10-0112",
+  "vector": "v62305994",
+  "estimate": "Fixed capital",
+  "sector": "Households including unincorporated enterprises",
+  "source_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610011201",
+  "original_source": {
+    "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100112-eng.zip",
+    "retrieved": "2026-10-23",
+    "zip_sha256": "b577daa453e1527602f55000d301624143bdaf3dba87bfbd458f44d6ab797d1e",
+    "csv_sha256": "5cfe7a3c5a9cd3610faa2d7fd19b591b1cfed01750d0c493568f0c1f25cc7d97",
+    "selection": "all rows for 2022, without changing units/seasonal treatment"
+  },
+  "local_2022_extract_sha256": "b83ad39b9608aadb67083b008ec3ff0d744aa93b358b994403205119b1164b83",
+  "selected_sha256": "c579dbedd2fe33449d43eab7d565b552fab61b17d0a9ac08e6c2e9448b46584c",
+  "accessed_utc": "2026-10-23T21:21:59.267151+00:00",
+  "selection": "2022 quarterly SAAR current CAD millions; annual mean, quarterly target = mean / 4",
+  "annual_CAD": 242393000000.0,
+  "quarterly_CAD": 60598250000.0,
+  "independent_check_unadjusted_annual_CAD": 242393000000.0,
+  "concept_sources": [
+    {
+      "url": "https://www150.statcan.gc.ca/n1/pub/13-017-x/2008001/themes/ch09/5213371-eng.htm",
+      "sections": "9.7-9.12 and footnote 1",
+      "finding": "Produced fixed assets for future production; household consumer durables excluded. Household sector includes unincorporated enterprises."
+    },
+    {
+      "url": "https://www150.statcan.gc.ca/n1/pub/13-017-x/2008001/themes/ch09/5213372-eng.htm",
+      "sections": "9.15-9.28",
+      "finding": "Residential GFCF covers new construction, renovations and ownership-transfer costs, excluding land and ordinary repair/maintenance."
+    }
+  ],
+  "concept_source_access": "Read through web tool; these selected findings are a checked snapshot, not a claim to full-HTML content hashes"
+}

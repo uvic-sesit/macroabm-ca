@@ -1,0 +1,5 @@
+REF_DATE,GEO,DGUID,Seasonal adjustment,Estimates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,269468.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,240876.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,225284.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,233944.0,,,,0
