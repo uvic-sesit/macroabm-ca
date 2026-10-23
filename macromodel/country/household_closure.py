@@ -3,6 +3,29 @@ from copy import deepcopy
 import numpy as np
 
 
+def offset_private_rent(country, industry=41):
+    """Remove only renters' duplicated L purchases, on the cash/VAT boundary.
+
+    A household's residual L demand cannot be negative. Report rent exceeding
+    that demand; do not shift the offset to other households or industries.
+    """
+    h = country.households
+    properties = country.housing_market.states["properties"]
+    rent = np.zeros(h.ts.current("n_households"))
+    rented = properties[(properties["Is Owner-Occupied"] == 0)
+                        & (properties["Corresponding Inhabitant Household ID"] >= 0)
+                        & (properties["Corresponding Owner Household ID"] >= 0)]
+    np.add.at(rent, rented["Corresponding Inhabitant Household ID"].to_numpy(int), rented["Rent"].to_numpy(float))
+    rent = np.minimum(rent, h.ts.current("rent"))
+    vat = country.central_government.states["Value-added Tax"]
+    target = h.ts.current("target_consumption").copy()
+    offset = np.minimum(np.maximum(0,target[:,industry]), rent/(1+vat))
+    target[:,industry] -= offset
+    h.ts.dicts["target_consumption"][-1] = target
+    h.states["rent_L_offset_cash"] = offset*(1+vat)
+    h.states["rent_L_unoffset_cash"] = rent-offset*(1+vat)
+
+
 def prepare_household_credit(country):
     cm = country.credit_market
     country.households.states["credit_existing_service"] = sum(

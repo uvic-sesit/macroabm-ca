@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class HouseholdClosureConfiguration(BaseModel):
+    rent_offset_enabled: bool = False
     credit_enabled: bool = False
     periods_per_year: int = Field(default=4, ge=1)
     consumer_total_debt_to_annual_income: float = Field(default=4.5, ge=0)

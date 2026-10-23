@@ -955,6 +955,9 @@ class Country:
         Updates production plans, consumption demands, and prices before
         market clearing.
         """
+        if self.configuration.household_closure.rent_offset_enabled:
+            from macromodel.country.household_closure import offset_private_rent
+            offset_private_rent(self)
         self.firms.prepare_goods_market_clearing(
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
             previous_good_prices=self.economy.ts.current("good_prices"),
