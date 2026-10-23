@@ -158,6 +158,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--real", action="store_true")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--recipient", type=Path, default=RECIPIENT_CSV)
+    ap.add_argument("--output-dir", type=Path, default=HERE)
     args = ap.parse_args()
 
     ctrl = json.loads(CONTROLS.read_text())
@@ -165,7 +167,7 @@ def main() -> None:
     di_control_m = 1502342.0          # DHEA 36-10-0587 disposable income 2022 ($M)
     net_saving_control_m = 31545.0    # DHEA net saving 2022 ($M) (HFCE-based; incl. pension-entitlement adj.)
 
-    rec = pd.read_csv(RECIPIENT_CSV)
+    rec = pd.read_csv(args.recipient)
     rec["age_band6"] = hfcs_age_to_band6(rec["age_5yr"].values)
     don = load_shs_donor()
 
@@ -195,13 +197,14 @@ def main() -> None:
     rec_out["Amount spent on Consumption of Goods and Services"] = cons
     rec_out["Consumption of Consumer Goods/Services as a Share of Income"] = np.where(inc > 0, cons / inc, np.nan)
     rec_out["Saving"] = saving
-    out_csv = HERE / "prototype_household_consumption.csv"
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    out_csv = args.output_dir / "prototype_household_consumption.csv"
     rec_out.to_csv(out_csv, index=False)
 
     report = validate(rec, don, donr, assign, levels, cons_donor, cons, saving, inc, w,
                       dict(hfce=hfce_macro_control_m, di=di_control_m, net_saving=net_saving_control_m,
                            factor=factor, agg_raw_m=agg_raw_m, shs_apc=shs_apc, target_cons_m=target_cons_m))
-    (HERE / "validation_report_consumption.json").write_text(json.dumps(report, indent=2, default=float))
+    (args.output_dir / "validation_report_consumption.json").write_text(json.dumps(report, indent=2, default=float))
     print(json.dumps(report, indent=2, default=float))
     print(f"\nwrote {out_csv.name} + validation_report_consumption.json")
 

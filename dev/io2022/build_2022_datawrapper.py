@@ -159,8 +159,12 @@ if __name__ == "__main__":
     ap.add_argument("--build-only", action="store_true")
     ap.add_argument("--force", action="store_true", help="rebuild pickle even if it exists")
     ap.add_argument("--canadianized", action="store_true", help="use the validated Canadian household file")
+    ap.add_argument("--household-csv", type=Path, help="candidate household file; implies --canadianized")
     ap.add_argument("--check-households", action="store_true", help="print per-province household diagnostics")
     args = ap.parse_args()
+    if args.household_csv is not None:
+        CANADIANIZED_HH_CSV = args.household_csv.resolve(strict=True)
+        args.canadianized = True
 
     build_pickle(pkl_path=args.pickle, scale=args.scale, force=args.force,
                  canadianized_households=args.canadianized)

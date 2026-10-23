@@ -302,15 +302,121 @@ def calibrate_tenure(df: pd.DataFrame, target_owner_rate: float | None) -> pd.Da
     return out
 
 
-def backcast_calibrate(df: pd.DataFrame, targets: dict) -> pd.DataFrame:
+def joint_mortgage_weights(df: pd.DataFrame, targets: dict) -> pd.DataFrame:
+    """Entropy-calibrate weights, preserving each donor's property/debt vector.
+
+    Match aggregate real estate and mortgages jointly while holding household
+    count, tenure, mortgagor prevalence and underwater prevalence fixed. Failure
+    to satisfy controls is explicit; never fall back to independent scaling.
+    """
+    from scipy.optimize import least_squares
+
+    props = ["Value of the Main Residence", "Value of other Properties"]
+    debts = ["Outstanding Balance of HMR Mortgages", "Outstanding Balance of Mortgages on other Properties"]
+    groups = targets.get("groups", {}).values()
+    def target_for(fields):
+        found = [g["target"] for g in groups if set(g["fields"]) == set(fields) and g.get("target") is not None]
+        if len(found) != 1:
+            raise ValueError(f"Need one joint calibration control for {fields}")
+        return found[0] * 1e6
+    weight = df["Weight"].to_numpy(float)
+    total = weight.sum()
+    p = df[props].to_numpy(float)
+    d = df[debts].to_numpy(float)
+    own = df["tenure_bin"].to_numpy(float)
+    fields = [np.ones(len(df)), own]
+    desired = [1.0, weight @ own / total]
+    for value, control in ((p.sum(axis=1), target_for(props)), (d.sum(axis=1), target_for(debts))):
+        unit = control / total
+        fields.append(value / unit)
+        desired.append(1.0)
+    for i in range(2):
+        for indicator in (d[:, i] > 0, (d[:, i] > p[:, i]) & (d[:, i] > 0)):
+            fields.append(indicator.astype(float))
+            desired.append(weight @ indicator / total)
+    matrix = np.stack(fields, axis=1)
+    desired = np.array(desired)
+    def adjusted(lam):
+        return weight * np.exp(np.clip(matrix @ lam, -40, 40))
+    def residual(lam):
+        return matrix.T @ adjusted(lam) / total - desired
+    def jac(lam):
+        return matrix.T @ (adjusted(lam)[:, None] * matrix) / total
+    solution = least_squares(residual, np.zeros(matrix.shape[1]), jac=jac,
+                             ftol=1e-13, xtol=1e-13, gtol=1e-13, max_nfev=1000)
+    if not solution.success or np.max(np.abs(residual(solution.x))) > 1e-8:
+        raise ValueError(f"Infeasible joint mortgage controls: {solution.message}; residual={residual(solution.x)}")
+    out = df.copy()
+    out["Weight"] = adjusted(solution.x)
+    out.attrs["joint_mortgage_calibration"] = {
+        "max_control_error": float(np.max(np.abs(residual(solution.x)))),
+        "min_weight_multiplier": float((out.Weight / weight).min()),
+        "max_weight_multiplier": float((out.Weight / weight).max()),
+        "effective_sample_size": float(out.Weight.sum() ** 2 / (out.Weight ** 2).sum()),
+        "method": "entropy weights; per-record LTVs, tenure and underwater/mortgagor shares preserved",
+    }
+    return out
+
+
+def calibrate_mortgages_pro_rata(df, targets):
+    """Fixed weights, common property/debt scaling, then capped mortgage top-up.
+
+    The residual is allocated proportional to existing mortgage principal among
+    mortgagors with room below 95% LTV; saturated records leave the eligible pool.
+    Existing underwater records receive no extra debt. No new borrowers or survey
+    weights are manufactured to hit a control.
+    """
+    out = df.copy()
+    props = ["Value of the Main Residence", "Value of other Properties"]
+    morts = ["Outstanding Balance of HMR Mortgages", "Outstanding Balance of Mortgages on other Properties"]
+    def control(fields):
+        values = [g["target"] for g in targets.get("groups", {}).values() if set(g["fields"]) == set(fields)]
+        if len(values) != 1: raise ValueError("Missing unique property/mortgage control")
+        return float(values[0]) * 1e6
+    w = out["Weight"].to_numpy(float)
+    prop = out[props].to_numpy(float)
+    mort = out[morts].to_numpy(float)
+    factor = control(props) / np.sum(w[:, None] * prop)
+    prop = prop * factor
+    mort = mort * factor
+    base = mort.copy()
+    target = control(morts)
+    gap = target - np.sum(w[:, None] * mort)
+    initial_gap = gap
+    if gap < -max(1., target * 1e-10):
+        raise ValueError("Common scaling exceeds mortgage control; positive top-up method is inapplicable")
+    for _ in range(len(out) + 1):
+        if gap <= target * 1e-12: break
+        room = np.maximum(0., .95 * prop - mort)
+        eligible = (base > 0) & (room > 1e-7)
+        denominator = np.sum(w[:, None] * base * eligible)
+        if denominator <= 0: raise ValueError("Insufficient eligible mortgage capacity below 0.95 LTV")
+        addition = np.minimum(room, gap * base * eligible / denominator)
+        mort += addition
+        gap = target - np.sum(w[:, None] * mort)
+    if abs(gap) > max(1., target * 1e-10): raise ValueError("Mortgage top-up failed to reach NBSA total")
+    if np.any((mort > prop) & ~(base > prop)):
+        raise ValueError("Top-up created an underwater mortgage")
+    out[props] = prop
+    out[morts] = mort
+    out.attrs["mortgage_calibration"] = dict(method="fixed_weights_common_scale_capped_pro_rata",property_factor=factor,
+        mortgage_gap_CAD=initial_gap,unallocated_gap_CAD=gap,added_by_type_CAD=np.sum((mort-base)*w[:,None],axis=0).tolist(),
+        weights_unchanged=bool(np.array_equal(out.Weight.values,df.Weight.values)),topup_ltv_cap=.95)
+    return out
+
+
+def backcast_calibrate(df: pd.DataFrame, targets: dict, mortgage_method="pro_rata") -> pd.DataFrame:
     """Calibrate to 2022 official aggregates ($M CAD), preserving within-group ranks/joint structure by
     applying ONE positive factor per group/single. Group targets calibrate the SUM of the listed model
     fields (donor keeps the within-group split). No-op where a target is null. Weighted, in $M."""
-    out = df.copy()
+    out = (calibrate_mortgages_pro_rata(df, targets) if mortgage_method == "pro_rata" else
+           joint_mortgage_weights(df, targets) if mortgage_method == "reweight" else df.copy())
     w = out["Weight"].values if "Weight" in out else np.ones(len(out))
     scale_to_millions = 1e-6  # donor values are $; targets are $M
     for grp in targets.get("groups", {}).values():
         fields = [f for f in grp["fields"] if f in out]
+        if mortgage_method != "legacy" and ("Value of the Main Residence" in fields or "Outstanding Balance of HMR Mortgages" in fields):
+            continue
         target = grp.get("target")
         if not fields or not target:
             continue
@@ -320,10 +426,16 @@ def backcast_calibrate(df: pd.DataFrame, targets: dict) -> pd.DataFrame:
             for f in fields:
                 out[f] = out[f].values * factor
     for f, target in targets.get("singles", {}).items():
-        if f in out and target:
+        if f in out and target and f != "Net Worth":
             cur = float(np.nansum(out[f].values * w)) * scale_to_millions
             if cur > 0:
                 out[f] = out[f].values * (target / cur)
+    asset_fields = [f for f in VECTOR_FIELDS if f not in ["Income"] and not f.startswith("Outstanding")]
+    debt_fields = [f for f in VECTOR_FIELDS if f.startswith("Outstanding")]
+    out["Total Assets"] = out[asset_fields].sum(axis=1)
+    out["Total Debt"] = out[debt_fields].sum(axis=1)
+    out["Total Mortgage"] = out[["Outstanding Balance of HMR Mortgages", "Outstanding Balance of Mortgages on other Properties"]].sum(axis=1)
+    out["Net Worth"] = out["Total Assets"] - out["Total Debt"]
     return out
 
 
@@ -389,6 +501,8 @@ def main() -> None:
     ap.add_argument("--real", action="store_true", help="use downloaded SFS 2023 / CIS 2022 / controls")
     ap.add_argument("--standin", action="store_true", help="stand-in dry-run using local New_Household (default)")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--mortgage-method", choices=("pro_rata", "legacy", "reweight"), default="pro_rata")
+    ap.add_argument("--output-dir", type=Path, default=OUT_DIR)
     args = ap.parse_args()
     standin = not args.real
 
@@ -398,13 +512,15 @@ def main() -> None:
     after_joint = joint_transplant(recipient, donor, assign)
     after_marg = marginal_rescale(recipient, donor)
     after_joint = calibrate_tenure(after_joint, load_tenure_target())  # Canadianize tenure margin (CHS 2022)
-    after_joint = backcast_calibrate(after_joint, load_controls_2022())  # then hit $ aggregates on new weights
+    after_joint = backcast_calibrate(after_joint, load_controls_2022(), args.mortgage_method)  # then hit $ aggregates on new weights
 
     report = validate(recipient, after_joint, after_marg, donor, assign, levels)
     mode = "STANDIN (New_Household donor; NON-PRODUCTION numbers)" if standin else "REAL (SFS 2023)"
     report["MODE"] = mode
-    (OUT_DIR / "validation_report.json").write_text(json.dumps(report, indent=2))
-    out_csv = OUT_DIR / ("PROTOTYPE_STANDIN_household.csv" if standin else "prototype_household.csv")
+    report["mortgage_calibration"] = after_joint.attrs.get("mortgage_calibration", after_joint.attrs.get("joint_mortgage_calibration"))
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    (args.output_dir / "validation_report.json").write_text(json.dumps(report, indent=2))
+    out_csv = args.output_dir / ("PROTOTYPE_STANDIN_household.csv" if standin else "prototype_household.csv")
     after_joint.to_csv(out_csv, index=False)
     print(f"MODE: {mode}")
     print(f"wrote {out_csv.name} ({len(after_joint)} households) + validation_report.json")
