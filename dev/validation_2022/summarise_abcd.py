@@ -1,6 +1,7 @@
 """Aggregate completed serial runs; retain quarterly, seed and bank detail."""
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -72,9 +73,19 @@ def main():
     result.to_csv(OUT/'summary.csv', index=False)
     print(result[['arm','seed','quarters','household_writeoffs','bank_losses','recapitalisation','Q12_GDP','Q12_cash_saving']].to_string(index=False))
     provenance = HERE/'benchmarks/ABCD/order_benchmarks_snapshot.json'
+    downloaded = []
+    urls = {'rbc_2023.pdf':'https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2023_e.pdf',
+            'osb_2024.html':'https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/statistics-and-research/insolvency-statistics/annual-reports/annual-2024',
+            'b20_2017.html':'https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/residential-mortgage-underwriting-practices-procedures-guideline-2017'}
+    for filename, url in urls.items():
+        raw = provenance.parent/filename
+        if raw.exists():
+            downloaded.append(dict(file=filename,url=url,sha256=hashlib.sha256(raw.read_bytes()).hexdigest(),
+                                   retrieved_utc=datetime.fromtimestamp(raw.stat().st_mtime, timezone.utc).isoformat()))
     (HERE/'benchmarks/ABCD/provenance.json').write_text(json.dumps(dict(
         artifact=provenance.name, sha256=hashlib.sha256(provenance.read_bytes()).hexdigest(),
-        source_type='Selected-figure snapshot verified through primary-source web extraction; not a full-source PDF hash',
+        source_type='Selected-figure snapshot; full downloaded RBC, OSB and B20 sources separately hashed below. TransUnion full download returned HTTP 403.',
+        full_downloads=downloaded,
         retrieved_utc='2026-10-23', numeric_use='Orders-of-magnitude comparisons only; no model parameter fitted'), indent=2)+'\n')
 
 

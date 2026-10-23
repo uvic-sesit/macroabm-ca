@@ -1,7 +1,27 @@
 {
   "artifact": "order_benchmarks_snapshot.json",
-  "sha256": "e9c0f715c8498d72b370f1f53671479a12550c0491da1cec2c716f9eb16d05d4",
-  "source_type": "Selected-figure snapshot verified through primary-source web extraction; not a full-source PDF hash",
+  "sha256": "7599f12ff530fef3b63e5fb422c07a63354038e61b6fa5ca84763aea1be3d8f9",
+  "source_type": "Selected-figure snapshot; full downloaded RBC, OSB and B20 sources separately hashed below. TransUnion full download returned HTTP 403.",
+  "full_downloads": [
+    {
+      "file": "rbc_2023.pdf",
+      "url": "https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2023_e.pdf",
+      "sha256": "e397264e0830325a8b99c6b93339a726f96b4a4898627cf75241a161b5f793c6",
+      "retrieved_utc": "2026-10-23T05:59:25.869127+00:00"
+    },
+    {
+      "file": "osb_2024.html",
+      "url": "https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/statistics-and-research/insolvency-statistics/annual-reports/annual-2024",
+      "sha256": "724a3b241466a284f74019f8198103f31179b49cd7581bdb330c02507a5993f6",
+      "retrieved_utc": "2026-10-23T05:59:26.471762+00:00"
+    },
+    {
+      "file": "b20_2017.html",
+      "url": "https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/residential-mortgage-underwriting-practices-procedures-guideline-2017",
+      "sha256": "ce680f2a68858801b6b60eeea319ce98d078e213b7f72175a9f97f30f70d9592",
+      "retrieved_utc": "2026-10-23T05:59:27.066513+00:00"
+    }
+  ],
   "retrieved_utc": "2026-10-23",
   "numeric_use": "Orders-of-magnitude comparisons only; no model parameter fitted"
 }

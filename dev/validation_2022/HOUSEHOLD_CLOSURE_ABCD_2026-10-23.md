@@ -382,8 +382,11 @@ erasure of mortgage principal on a negative-net-worth trigger. They do not
 provide an exact like-for-like national charge-off target. No level is fitted.
 `benchmarks/ABCD/order_benchmarks_snapshot.json` records table/page, reference
 date, scope and figures; `provenance.json` records its SHA256 and retrieval date.
-The hash covers the selected-figure snapshot checked through primary-source web
-extraction, **not** a full publisher PDF (direct download returned HTTP 403).
+That snapshot hash covers the selected figures checked through primary-source
+web extraction. Separate full-source hashes and UTC retrieval timestamps are
+recorded for the downloaded RBC report, OSB page and OSFI B-20 page. TransUnion's
+full PDF download returned HTTP 403; its figures use the checked snapshot rather
+than claiming a full-PDF hash.
 Bank-capital and firm-instrument benchmarks have the full cached StatCan source
 hash, date and vectors in their respective provenance files. Saving benchmarks
 retain their original StatCan CSV and zip hashes. No utilisation number is used.

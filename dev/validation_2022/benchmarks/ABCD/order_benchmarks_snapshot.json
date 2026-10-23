@@ -1,6 +1,6 @@
 {
   "retrieved_utc": "2026-10-23",
-  "access": "Primary-source figures checked through web extraction. Full publisher PDF download returned HTTP 403; provenance hashes the selected-figure snapshot, not the inaccessible original PDF.",
+  "access": "Primary-source figures checked through web extraction. Full RBC, OSB and B20 sources downloaded and separately hashed. TransUnion full PDF download returned HTTP 403; selected figures retained in this snapshot.",
   "benchmarks": [
     {
       "source": "RBC Annual Report 2023",
