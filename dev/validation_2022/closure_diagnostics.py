@@ -177,6 +177,17 @@ class Diagnostics:
                                firms_L=cur(f,'nominal_amount_spent_in_lcu')[:,41].sum(),
                                rent_offset=np.asarray(c.households.states.get('rent_L_offset_cash',0.)).sum()))
 
+        # Match buyers to Canadian sellers, excluding imported L purchases.
+        for row,c in zip(self.L[-len(sim.countries):],sim.countries.values()):
+            for label,a in [('HH',c.households),('firms',c.firms),('government',c.government_entities)]:
+                total=0.
+                for source in sim.countries:
+                    x=cur(a,'nominal_amount_spent_in_lcu_to_'+str(source))
+                    if x.ndim==2:total+=x[:,41].sum()
+                row[label+'_L_domestic']=total
+            exports=cur(c.firms,'nominal_amount_sold_in_lcu_to_ROW')
+            row['ROW_L_sales']=exports[c.firms.states['Industry']==41].sum() if exports.ndim else 0.
+
     def save(self):
         self.out.mkdir(parents=True,exist_ok=True);(self.out/'micro').mkdir(exist_ok=True)
         for name,rows in [('firms',self.firm),('banks',self.bank),('income_flows',self.flows),('L',self.L)]:pd.DataFrame(rows).to_csv(self.out/f'{name}.csv',index=False)
