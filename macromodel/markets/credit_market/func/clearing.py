@@ -280,6 +280,8 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                 out=np.zeros(max_car.shape),
                 where=current_sum != 0.0,
             )
+            # Convert normalised category weights to currency budgets (not dollar fractions).
+            scale *= max_car
             max_supply_based_on_preferences_firms *= scale
             max_supply_based_on_preferences_hh_cons *= scale
             max_supply_based_on_preferences_mortgages *= scale
@@ -311,6 +313,7 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
 
         # Household loans
         if self.allow_household_loans:
+            max_supply_based_on_preferences_hh_cons = max_supply_based_on_preferences_hh_cons + new_credit_by_bank
             new_household_consumption_loans = self.clear_household_consumption_loans(
                 banks=banks,
                 households=households,
@@ -318,6 +321,7 @@ class DefaultCreditMarketClearer(CreditMarketClearer):
                 new_credit_by_household=new_credit_by_household,
                 max_supply_based_on_preferences=max_supply_based_on_preferences_hh_cons,
             )
+            max_supply_based_on_preferences_mortgages = max_supply_based_on_preferences_mortgages + new_credit_by_bank
             new_mortgages = self.clear_mortgages(
                 banks=banks,
                 households=households,
@@ -1019,6 +1023,8 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
                 out=np.zeros(max_car.shape),
                 where=current_sum != 0.0,
             )
+            # Convert normalised category weights to currency budgets (not dollar fractions).
+            scale *= max_car
             max_supply_based_on_preferences_firms *= scale
             max_supply_based_on_preferences_hh_cons *= scale
             max_supply_based_on_preferences_mortgages *= scale
@@ -1052,7 +1058,8 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
         )
         new_credit_by_bank += new_lt_loans[0].sum(axis=1)
 
-        # Household loans
+        # Each category has its own budget; CAR still limits total new lending.
+        max_supply_based_on_preferences_hh_cons = max_supply_based_on_preferences_hh_cons + new_credit_by_bank
         new_cons_loans = self.clear_loans(
             banks=banks,
             firms=firms,
@@ -1065,6 +1072,7 @@ class WaterBucketCreditMarketClearer(CreditMarketClearer):
         )
         new_credit_by_household += new_cons_loans[0].sum(axis=0)
         new_credit_by_bank += new_cons_loans[0].sum(axis=1)
+        max_supply_based_on_preferences_mortgages = max_supply_based_on_preferences_mortgages + new_credit_by_bank
         new_mort_loans = self.clear_loans(
             banks=banks,
             firms=firms,
