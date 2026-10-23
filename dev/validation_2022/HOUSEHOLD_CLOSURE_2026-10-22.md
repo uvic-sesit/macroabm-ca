@@ -1,6 +1,7 @@
 # Household closure corrections — 22 October 2026
 
-> **Latest:** [A–D implementation and remeasurement](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
+> **Latest:** [D timing / D1 household gate, staged steps 1–3](CLOSURE_DF_2026-10-23.md).
+> The accepted A–D implementation is retained in [its report](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
 > D3 and Phase B remain on hold. A new bank-capital pickle has a separate name;
 > the accepted inputs below remain unchanged.
 >

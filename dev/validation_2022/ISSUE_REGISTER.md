@@ -1,6 +1,6 @@
 # MacroABM-CA validation — single issue register
 
-Latest household review: [A–D implementation and remeasurement](HOUSEHOLD_CLOSURE_ABCD_2026-10-23.md).
+Latest household review: [D timing / D1 household gate, staged steps 1–3](CLOSURE_DF_2026-10-23.md).
 The dated updates below supersede the original issue descriptions where marked.
 
 Branch `feature/validation-2022` @ `ab87ee2`. Created 2026-10-13. Statuses: **C** confirmed (code read and,
@@ -299,3 +299,30 @@ failures, zero additional failures/errors**; the failed test identities match
 the prior suite exactly. Sampler worker count was one, and simulations were
 serial. No push, original-repository/ITC/user-cost edits, or protected-pickle
 changes. D3, Phase B and the C_dp_005 port remain on hold. Stop for review.
+
+## D timing and D1 household gate — 23 October 2026, staged steps 1–3
+
+The hand-over explicitly permits completing steps 1–3 as a staged pass. This
+update claims **no F implementation or F results**. The approved firm-debt
+boundary/new pickle, payment-based firm rule and F remeasurement (steps 4–6)
+are next-pass work. See [CLOSURE_DF_2026-10-23.md](CLOSURE_DF_2026-10-23.md).
+
+| Step / issue | Correction and evidence | Status |
+|---|---|---|
+| D timing | 54709c9 budgets current declared net wages, benefits/transfers, net rent and funded D2 distributions along with opening cash and executed financing flows. Payroll CPI is fixed at declaration and shared by firm debits, HH receipts and withholding; D2 commitments are paid once and cannot be revoked after purchases. Optional asset saving cannot divert senior-payment cash. 23 focused tests pass. | Mechanical timing corrected; zero unused capacity retained, no new parameter or D4-headroom proxy. |
+| Narrow D1 | 3d54d44 enables the existing renter-specific L offset in both new candidate arms; all other L purchases stay in the goods market. Six focused tests pass. Q1 offset 3.763–3.768B/quarter across seeds. | On in iv-ACD′ and v-ACD′; no wider housing producer block. |
+| Gate / measurement | ed02f71 adds the serial paired run driver and fixes diagnostic NumPy-boolean serialization (3 regressions pass). Both arms, seeds 0–2, each have a 2Q accounting run immediately before 12Q. | All 12 runs pass accounting; Q1 consumption shortfall 3.20–3.83%, within the 5% gate. Declared and actual HH receipts agree every quarter. |
+| Household closure | Old-rule 12Q write-offs 212.829–218.691B; D3 36.587–38.854B. Q1 cash saving 1.45–1.99%; Q12 12.71–15.53%, versus the D.8-free 2022 comparison -0.60%. | Gate passed, economic validation still incomplete. E is still needed; D3 remains on hold. |
+| Firm / bank losses | Old-rule bank losses 511.782–564.016B; D3 364.379–481.893B. Recapitalisations 282.345–460.563B / 200.778–353.071B, respectively. These retain legacy firm debt and default mechanics. | No plausibility claim. F remains approved next-pass work; no new firm-debt input was built. |
+
+All six 2Q/12Q pairs reproduce their first two quarters within floating-point
+tolerance. Payout declarations are checked against opening payer cash;
+subsequent operating cash shortfalls are not mislabelled as declaration-date
+funding. Source/input hashes and all quarterly seed, loss, support, lending,
+rent-offset and constraint panels are retained under `outputs/DF/`. Borrower
+microdata stay ignored locally. Full suite: **407 passed, the same 30 known NaN
+failures, zero additional failures/errors** (437 cases). Failed test identities
+match the prior suite, and the sampler used one worker. Evidence is in the linked
+report and `outputs/DF/full_test_execution.json`.
+No protected pickle, original-repository or ITC/user-cost file was modified;
+no push, E implementation, Phase B or C_dp_005 port. Stop for staged review.
