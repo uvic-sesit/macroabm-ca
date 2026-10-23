@@ -208,7 +208,7 @@ is also in the default. No Phase B, C_dp_005 port or push.
 | D4 | Opt-in uninsured-only 80% LTV; 49/145-quarter effective amortization reconciled with initial stock; 1fdedd2 | Insured originations need insurer/premiums/guarantees. Income/service caps remain scenarios, not a literal 2022 regulatory specification. OSFI LTI is a 2025 portfolio measure. |
 | D2 / A4?A5 | Gross dividend receipt target 92.052B from StatCan 36-10-0482, 2022; provincial payout calibration replaces 20%; funded counterparties, 4e9ac88 | Ownership/pension recipient proxies; missing pension institution and remaining interest/property-income scope. No invented withdrawals residual; no saving-rate fitting. |
 | D1 / A9 | Narrow private-rent offset against each renter's L purchases, f549246; L retained, no new housing producer | Q12 unabsorbed rent 0.313B (rent exceeds some renters' L budgets); owner-occupied cash/noncash and net SNA reconciliation remain open. Wider boundary not approved or implemented. |
-| D3 / A14 | Separate persistent-distress scenario, 8fabeee; old rule in arms i?iv | Retain for review because iv still has 488.848B household write-offs over 12 quarters, versus 178.915B with D3. Distress and haircut remain behavioural assumptions; no arrears/legal insolvency validation. |
+| D3 / A14 | Separate persistent-distress scenario, 8fabeee; old rule in arms i?iv | On hold after the four-check review below. Earlier iv/v totals 488.848B/178.915B are historical; large cancellations alone do not validate D3. Initial closure, overdrafts and bank capital/resolution remain unresolved. |
 | Saving overshoot | New paired old-insolvency Q12 effects: D2 +5.006pp, D1 +0.485pp, deposit-only +2.149pp. Full narrow/deposit arm cash saving ?7.220%. Historical +13.48%/+21.89% decomposed separately in report. | One seed, ordered differences include endogenous/random path effects. Pension-adjusted observed cash comparison ?0.602%, versus published net saving 2.100%; remaining concept gaps preclude claiming fit. |
 
 Five 2-quarter accounting diagnostics preceded five 12-quarter attribution runs;
@@ -223,3 +223,46 @@ setup errors. Both extra cases pass when rerun with a workspace-local pytest
 `Nan in transactor_total_real_supply`; 29 simulation cases plus the sampler.
 No additional unresolved test regression. Raw full-suite XML/log and the two-case
 rerun are retained; no test was skipped.
+
+## Four pre-D3 diagnostic checks — 22 October 2026
+
+Supersedes the preceding D3 retention recommendation. D3 and Phase B remain
+**on hold**. Full line bridge, cohort group tables, origination records, quarterly
+firms/banks, seed checks and revised iv/v losses:
+[HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md](HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md).
+
+**Additional blocking finding (bank resolution):** both final D1 seed-1/seed-2
+runs complete but fail accounting. Ontario bank resolution cancels 1,320.852B
+in seed 1 Q11 and 1,356.011B in seed 2 Q10; the loan stock updates a quarter
+later and the cancellation lacks by-bank equity-loss recognition. Seed 2 has
+another 14.131B cancellation at Q12. Maximum normalized residuals are 2.939 and
+3.073. Eight of ten final runs pass; these two are retained as failed diagnostics.
+No cross-seed D1 acceptance is possible. Booked bank equity remaining positive
+does not establish solvency. Choosing loan transfer versus forgiveness and the
+equity/deposit/fiscal loss allocation is a resolution decision; no replacement
+was silently implemented.
+
+| Item | Finding / correction | Review decision |
+|---|---|---|
+| H-C1 income/consumption | Original iv Q1 annualized cash DI 1,478.170B vs 1,502.340B; C 1,620.402B vs 1,511.382B. Income explains 1.645pp and spending 7.375pp of the 9.020pp D.8-free saving gap. Gross SNA gaps include noncash and missing outflow counterparts. Initial D2 cash series are zero while the inherited propensity and unfunded FA-income proxy reflect an earlier closure. | Consistent initialization and consumption rule; no cash residual or saving-rate retuning applied. |
+| H-C1 Q1 cohort | 1,228 simulated / 1,035,940 represented HH, 171.143B term debt in original iv. None meet both old-rule conditions at t0; 68.10% have negative net worth and hold 93.88% of debt later cancelled. Spending/service/rent push deposits negative. | Choose collateral/recovery treatment; large cancellations do not validate D3. |
+| H-C2 screens | d7a2110 counts overdraft principal in LTI, overdraft interest plus actual remaining installment service in service screens, and adds consumer service capacity in both allocators. Regression coverage. | Automatic overdraft settlement still unbounded; facility/arrears policy needs approval. |
+| H-C2 liability state | 37cf590 synchronizes household debt/net worth immediately after old-rule loan cancellation. Previously forgiven liabilities remained in household decision records. Regression; old trigger unchanged. | No behavioural change to insolvency approved. |
+| F-C3 payout | Cash caps prevent payouts from creating overdrafts; requests use lagged profit, so current loss-makers may pay. Original iv Q9 loss 222.785B = HH 28.940 + firm loans 133.399 + firm overdraft 60.446. Utilities in ON/BC dominate term-debt losses. | Positive retained profit / available cash net obligations and reserve is a proposed rule only. Mixed income/pensions need a separate institutional boundary. |
+| B-C3 capital | Every region starts at 506.210B, sum 6,580.730B. 59a37ef repairs missing regional multiplier in bank-equity getter returns. Getter ASS/F5 selects banks' equity asset holdings, not own capital. Existing pickle unchanged. Canadian NBSA 2022Q4 book equity: chartered 405.572B, quasi 50.649B, combined 456.221B (36-10-0580, vectors retained with provenance). No negative bank equity in runs is not validation. | Select Canadian bank boundary, book-equity source and regional/balance-sheet allocation, then authorize fresh validation input and reruns. |
+| H-C4 sector L | Paired iv/D1 seeds 0/1/2, quarterly P×Q, inventory/employment and domestic buyer splits retained. Noise-driven prices and constrained quantities require separating nominal sales from real activity; see final table. | Narrow D1 remains opt-in; no wider producer block. |
+
+Final seed-0 iv/v household write-offs are **485.027B / 176.932B**; bank losses
+are **926.139B / 534.627B**, with quarterly panels in the linked report. Both
+iv/v paths pass accounting. Original iii/iv/D1 twelve-quarter replays match the
+previous results to within one cent. The original D1 L-sales increase of 26.697B
+decomposes into +30.219B national price/unit-value effect and -3.522B quantity
+effect; province-level decomposition also confirms that prices dominate.
+
+52 focused tests passed. Full suite: **391 passed, 30 known NaN failures, zero
+additional failures or setup errors**. The sampler fixture's initial internal
+parallelism was discovered after its case finished; its one-worker rerun confirms
+the same known NaN. `run_pre_D3_tests.py` enforces one sampler worker in future
+suites without skipping tests. All household diagnostic simulations were serial.
+No original-repository, ITC/user-cost or input-pickle modifications; no push,
+Phase B or C_dp_005.

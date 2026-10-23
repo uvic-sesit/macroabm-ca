@@ -1,5 +1,11 @@
 # Household closure corrections — 22 October 2026
 
+> **Current review status:** D3 and Phase B are on hold. The four requested
+> diagnostics, mechanical fixes and revised iv/v write-offs are in
+> [HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md](HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md).
+> The earlier recommendation below to retain D3 based only on loss totals is
+> superseded. No C_dp_005 port or push; serialized inputs are unchanged.
+
 Review candidate on `feature/validation-2022`, original base `4bdef06`.
 The quota correction applies to the default. H7 uses a separately rebuilt file;
 D1–D4 remain independent opt-in specifications. No push, Phase B or C_dp_005 port.
@@ -77,9 +83,12 @@ write-offs also rise from 421.807B to 551.732B. D2 reduces household write-offs
 but leaves substantial firm/bank losses. Neither credit access nor sourced extra
 income by itself repairs the old insolvency trigger.
 
-Arm iv still writes off **488.85B** over 12 quarters. Retain D3 as a review
-candidate: it produces **178.91B** in v. This satisfies the requested condition
-for retaining D3; it does not validate a Canadian insolvency law or an arrears model.
+Historically, arm iv wrote off **488.85B** over 12 quarters and D3 produced
+**178.91B** in v. These totals alone do not justify accepting D3. The subsequent
+[four-check review](HOUSEHOLD_CLOSURE_PRE_D3_2026-10-22.md) keeps D3 and Phase B
+on hold: initial consumption/income scope, overdrafts and bank capital/resolution
+remain unresolved. The original result tables here are historical, before the
+new mechanical screen and liability-state corrections.
 Its trigger is three consecutive increases in overdraft capped at scheduled service,
 with a 20% collateral haircut and recoverable nonhousing assets. Collateral-backed
 claims survive; actual write-downs reduce bank equity and household liabilities.

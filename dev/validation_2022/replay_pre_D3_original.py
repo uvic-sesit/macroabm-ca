@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -23,10 +24,12 @@ def replay(args):
     dest=snapshot/'dev/validation_2022';(dest/'battery').mkdir(parents=True,exist_ok=True)
     for name in ['closure_diagnostics.py','battery/accounting.py']:
         (dest/name).write_bytes((Path(__file__).parent/name).read_bytes())
+    env=os.environ.copy()
+    env['PYTHONPATH']=str(ROOT)+os.pathsep+env.get('PYTHONPATH','')
     subprocess.run([sys.executable,'-u',str(dest/'closure_diagnostics.py'),
         '--arm',args.arm,'--label','b1','--quarters',str(args.quarters),'--seed',str(args.seed),
         '--pickle',str(ROOT/'dev/pkl_files/io2022_household_agreed.pkl'),
-        '--output',str(args.output.resolve())],cwd=ROOT,check=True)
+        '--output',str(args.output.resolve())],cwd=ROOT,env=env,check=True)
     path=args.output/f'b1_{args.arm}_q{args.quarters}_s{args.seed}'/'manifest.json'
     manifest=json.loads(path.read_text())
     manifest.update(native_source_commit=subprocess.check_output(['git','rev-parse',args.commit],cwd=ROOT,text=True).strip(),

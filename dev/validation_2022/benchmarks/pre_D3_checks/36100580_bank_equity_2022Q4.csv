@@ -1,0 +1,28 @@
+REF_DATE,GEO,DGUID,Sectors,Valuation,Categories,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Total assets,Dollars,81,millions,6,v62696224,1.12.1.1,7002684.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696260,1.12.1.37,696282.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Liabilities and net worth,Dollars,81,millions,6,v62696272,1.12.1.49,7002684.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Total financial liabilities,Dollars,81,millions,6,v62696273,1.12.1.50,6951667.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696296,1.12.1.73,716297.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Net worth,Dollars,81,millions,6,v62696307,1.12.1.84,51017.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Net worth: current value,Dollars,81,millions,6,v62696308,1.12.1.85,717403.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Market value,Net worth: equity,Dollars,81,millions,6,v62696309,1.12.1.86,666386.0,,,,0
+2022-10,Canada,2016A000011124,Total chartered banks and quasi-banks,Book value,Equity and investment fund shares,Dollars,81,millions,6,v62696323,1.12.2.73,456221.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Total assets,Dollars,81,millions,6,v62696329,1.13.1.1,6264729.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696365,1.13.1.37,678359.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Liabilities and net worth,Dollars,81,millions,6,v62696377,1.13.1.49,6264729.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Total financial liabilities,Dollars,81,millions,6,v62696378,1.13.1.50,6212376.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696401,1.13.1.73,662416.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Net worth,Dollars,81,millions,6,v62696412,1.13.1.84,52353.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Net worth: current value,Dollars,81,millions,6,v62696413,1.13.1.85,714769.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Market value,Net worth: equity,Dollars,81,millions,6,v62696414,1.13.1.86,662416.0,,,,0
+2022-10,Canada,2016A000011124,Chartered banks,Book value,Equity and investment fund shares,Dollars,81,millions,6,v62696428,1.13.2.73,405572.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Total assets,Dollars,81,millions,6,v62696434,1.14.1.1,737955.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696470,1.14.1.37,17923.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Liabilities and net worth,Dollars,81,millions,6,v62696482,1.14.1.49,737955.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Total financial liabilities,Dollars,81,millions,6,v62696483,1.14.1.50,739291.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Equity and investment fund shares,Dollars,81,millions,6,v62696506,1.14.1.73,53881.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Net worth,Dollars,81,millions,6,v62696517,1.14.1.84,-1336.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Net worth: current value,Dollars,81,millions,6,v62696518,1.14.1.85,2634.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Market value,Net worth: equity,Dollars,81,millions,6,v62696519,1.14.1.86,3970.0,,,,0
+2022-10,Canada,2016A000011124,Quasi-banks,Book value,Equity and investment fund shares,Dollars,81,millions,6,v62696533,1.14.2.73,50649.0,,,,0

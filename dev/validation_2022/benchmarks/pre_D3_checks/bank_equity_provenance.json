@@ -1,0 +1,9 @@
+{
+  "url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610058001",
+  "source_file": "..\\macroabm-ca\\dev\\raw_data\\can_2022\\controls\\36100580.csv",
+  "source_sha256": "1c4f10ddd68a67e79b0565a63b731bcfaf97ebcbf294701b3c9a63ce20919b9a",
+  "reference": "2022 Q4",
+  "vintage": "inherited 2026-10-13 controls snapshot",
+  "selection": "Canada, chartered/quasi banks, equity/net worth/assets/liabilities; valuation retained",
+  "concept": "Use liability-side Book value equity; asset-side holdings and market net worth are different concepts."
+}

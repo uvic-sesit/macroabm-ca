@@ -81,20 +81,27 @@ def cohorts():
 
 
 def runs():
-    summary=[];firmq=[];L=[];writeoffs=[];industry=[];banks=[]
+    summary=[];firmq=[];L=[];writeoffs=[];industry=[];banks=[];Lregions={}
     for path in sorted(OUT.glob('*_q*_s*')):
         if not (path/'manifest.json').exists():continue
         meta=json.loads((path/'manifest.json').read_text());tag=path.name
         f=pd.read_csv(path/'firms.csv');b=pd.read_csv(path/'banks.csv');o=pd.read_csv(path/'outcomes.csv');loans=pd.read_csv(path/'micro/originations.csv')
+        if tag=='b1_iv_q12_s0':
+            utilities=f[f.region.isin(['CAN_ON','CAN_BC'])&f.industry.eq(27)&f.quarter.isin([7,8,9])].copy()
+            utilities['noncash_assets_residual']=utilities.equity+utilities.debt-utilities.deposits
+            utilities.to_csv(OUT/'Q9_utilities_balance_bridge.csv',index=False)
         banks.append(b.assign(run=tag))
         for (q,ind),g in f[f.failed].groupby(['quarter','industry']):
             industry.append(dict(run=tag,quarter=q,industry=ind,insolvencies=len(g),
                                  loan_debt_B=g.loan_debt.sum()/1e9,overdraft_loss_B=g.overdraft_cancelled.sum()/1e9))
-        cohort=pd.read_csv(path/'micro/cohort.csv')
-        audit=loans.merge(cohort[['region','household','represented']],on=['region','household'],validate='many_to_one')
-        for key in ['value','deposit','overdraft','net_worth','income','installment_debt','existing_service','loss']:
-            audit[key+'_per_household_CAD']=audit[key]/audit.represented
-        audit.to_csv(path/'micro/origination_audit.csv',index=False)
+        audit_path=path/'micro/origination_audit.csv'
+        inputs=[path/'micro/cohort.csv',path/'micro/originations.csv']
+        if not audit_path.exists() or audit_path.stat().st_mtime<max(p.stat().st_mtime for p in inputs):
+            cohort=pd.read_csv(inputs[0])
+            audit=loans.merge(cohort[['region','household','represented']],on=['region','household'],validate='many_to_one')
+            for key in ['value','deposit','overdraft','net_worth','income','installment_debt','existing_service','loss']:
+                audit[key+'_per_household_CAD']=audit[key]/audit.represented
+            audit.to_csv(audit_path,index=False)
         total=loans.value.sum();loss=loans.loss.sum()
         last=o[o.quarter.eq(o.quarter.max())]
         flows=pd.read_csv(path/'income_flows.csv')
@@ -119,7 +126,8 @@ def runs():
                 r['all_payouts_cash_short_B']=g.loc[g.cash_before_payout<0,['paid_dividends','paid_mixed','paid_transfers']].sum().sum()/1e9
                 r['created_overdraft_count']=int(((g.cash_before_payout>=0)&(g.cash_after_payout<-.01)).sum())
             firmq.append(r)
-        z=pd.read_csv(path/'L.csv').groupby('quarter').sum(numeric_only=True)
+        Lregions[tag]=pd.read_csv(path/'L.csv')
+        z=Lregions[tag].groupby('quarter').sum(numeric_only=True)
         for q,row in z.iterrows():
             r=row.to_dict();r.update(run=tag,quarter=q,price=row.sales/row.quantity);L.append(r)
         for q,g in o.groupby('quarter'):writeoffs.append(dict(run=tag,quarter=q,HH_writeoffs_B=g.writeoffs.sum()/1e9,bank_losses_B=g.bank_losses.sum()/1e9,new_lending_B=g.new_loans.sum()/1e9))
@@ -134,9 +142,15 @@ def runs():
             if a.empty or b.empty:continue
             for q in a.index:
                 p0,p1=a.loc[q,'price'],b.loc[q,'price'];q0,q1=a.loc[q,'quantity'],b.loc[q,'quantity']
+                ra=Lregions[f'{label}_iv_q12_s{seed}'];rb=Lregions[f'{label}_d1_q12_s{seed}']
+                rr=ra[ra.quarter.eq(q)].merge(rb[rb.quarter.eq(q)],on='region',suffixes=('_0','_1'),validate='one_to_one')
+                rp0=np.divide(rr.sales_0,rr.quantity_0,out=rr.price_min_0.to_numpy().copy(),where=rr.quantity_0>0)
+                rp1=np.divide(rr.sales_1,rr.quantity_1,out=rr.price_min_1.to_numpy().copy(),where=rr.quantity_1>0)
                 effects.append(dict(label=label,seed=seed,quarter=q,base_sales_B=a.loc[q,'sales']/1e9,D1_sales_B=b.loc[q,'sales']/1e9,
                                     delta_sales_B=(p1*q1-p0*q0)/1e9,delta_pct=100*((p1*q1)/(p0*q0)-1),
                                     price_effect_B=(p1-p0)*(q0+q1)/2/1e9,quantity_effect_B=(q1-q0)*(p0+p1)/2/1e9,
+                                    regional_price_effect_B=((rp1-rp0)*(rr.quantity_0+rr.quantity_1)/2).sum()/1e9,
+                                    regional_quantity_effect_B=((rr.quantity_1-rr.quantity_0)*(rp0+rp1)/2).sum()/1e9,
                                     price_base=p0,price_D1=p1,inventory_base_B_units=a.loc[q,'inventory']/1e9,inventory_D1_B_units=b.loc[q,'inventory']/1e9))
     pd.DataFrame(effects).to_csv(OUT/'L_price_quantity_effects.csv',index=False)
 
@@ -144,5 +158,5 @@ def runs():
 if __name__=='__main__':
     income_bridge();cohorts();runs()
     # Microdata are local only, but all are traceable by hashes in this manifest.
-    files=[p for p in OUT.rglob('*') if p.is_file() and p.suffix in ['.csv','.json'] and p.name!='result_manifest.json']
+    files=[p for p in OUT.rglob('*') if p.is_file() and p.suffix in ['.csv','.json','.xml','.log'] and p.name!='result_manifest.json']
     (OUT/'result_manifest.json').write_text(json.dumps({str(p.relative_to(OUT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files},indent=2))
