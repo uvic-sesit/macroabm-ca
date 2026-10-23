@@ -191,3 +191,35 @@ Pickle rebuilt (F-X1, F-I3); battery 2 quarters: every identity 0, `reserves_une
 | F-S6 | investment = replacement only (stock-gap fraction 0), no accelerator | | behaviour |
 | F-S7 | depreciation calibrated to t0 capital purchases (zero net investment, incl. inventory change); CFC 399 vs 459 | | calibration |
 | F-S8 | firms never borrow (credit = shortfall of deposits) and never pay out (A4): deposits +17%/q, debt amortises | | architecture |
+
+
+## Household closure correction review ? 22 October 2026
+
+Supersedes the uncommitted wider candidate; see
+[HOUSEHOLD_CLOSURE_2026-10-22.md](HOUSEHOLD_CLOSURE_2026-10-22.md) and
+`outputs/household_corrections/`. Branch remains `feature/validation-2022`,
+base `4bdef06`. All behavioural components are opt-in; the mechanical quota fix
+is also in the default. No Phase B, C_dp_005 port or push.
+
+| Item | Revised state | Remaining issue |
+|---|---|---|
+| Loan quota units | Fixed by default in both allocators, c4862de; fractions become currency budgets, regression passes | Changes the corrected-default attribution relative to the old candidate's control |
+| H7 | Fixed-weight property/mortgage common scaling plus capped pro-rata mortgage gap; 4cea6e2 | Underwater shares 0.616%/9.260%; other-property mortgage share 28.771% vs SFS 23.099%; quintile fit remains imperfect. No entropy weights in default. Other liabilities leave derived net worth 36.880B above NBSA. |
+| D4 | Opt-in uninsured-only 80% LTV; 49/145-quarter effective amortization reconciled with initial stock; 1fdedd2 | Insured originations need insurer/premiums/guarantees. Income/service caps remain scenarios, not a literal 2022 regulatory specification. OSFI LTI is a 2025 portfolio measure. |
+| D2 / A4?A5 | Gross dividend receipt target 92.052B from StatCan 36-10-0482, 2022; provincial payout calibration replaces 20%; funded counterparties, 4e9ac88 | Ownership/pension recipient proxies; missing pension institution and remaining interest/property-income scope. No invented withdrawals residual; no saving-rate fitting. |
+| D1 / A9 | Narrow private-rent offset against each renter's L purchases, f549246; L retained, no new housing producer | Q12 unabsorbed rent 0.313B (rent exceeds some renters' L budgets); owner-occupied cash/noncash and net SNA reconciliation remain open. Wider boundary not approved or implemented. |
+| D3 / A14 | Separate persistent-distress scenario, 8fabeee; old rule in arms i?iv | Retain for review because iv still has 488.848B household write-offs over 12 quarters, versus 178.915B with D3. Distress and haircut remain behavioural assumptions; no arrears/legal insolvency validation. |
+| Saving overshoot | New paired old-insolvency Q12 effects: D2 +5.006pp, D1 +0.485pp, deposit-only +2.149pp. Full narrow/deposit arm cash saving ?7.220%. Historical +13.48%/+21.89% decomposed separately in report. | One seed, ordered differences include endogenous/random path effects. Pension-adjusted observed cash comparison ?0.602%, versus published net saving 2.100%; remaining concept gaps preclude claiming fit. |
+
+Five 2-quarter accounting diagnostics preceded five 12-quarter attribution runs;
+two further 12-quarter pairs measure D1 and deposit saving. All 12 runs are finite
+and pass regional accounting. Write-off and bank-loss quarterly panels, debt
+bridges and hashes are retained. Focused tests passed at every commit (44 at f).
+Final full-suite results are recorded in the report and `full_tests.xml`.
+
+Final full suite: 381 passed, 30 known NaN failures, 2 extra temporary-directory
+setup errors. Both extra cases pass when rerun with a workspace-local pytest
+`--basetemp` (2 passed). All 30 failure messages match
+`Nan in transactor_total_real_supply`; 29 simulation cases plus the sampler.
+No additional unresolved test regression. Raw full-suite XML/log and the two-case
+rerun are retained; no test was skipped.

@@ -1,0 +1,1121 @@
+REF_DATE,GEO,DGUID,Seasonal adjustment,Corporations,Estimates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net operating surplus,Dollars,81,millions,6,v62306942,1.1.1.1,484872.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net property income,Dollars,81,millions,6,v62306943,1.1.1.2,-213748.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Property income received,Dollars,81,millions,6,v62306944,1.1.1.3,423648.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from residents,Dollars,81,millions,6,v62306945,1.1.1.4,198108.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62306946,1.1.1.5,21496.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62306947,1.1.1.6,174096.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306948,1.1.1.7,29948.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other receipts,Dollars,81,millions,6,v62306949,1.1.1.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: property income paid,Dollars,81,millions,6,v62306950,1.1.1.9,637396.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62306951,1.1.1.10,223232.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306952,1.1.1.11,53372.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62306953,1.1.1.12,262176.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306954,1.1.1.13,47968.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306955,1.1.1.14,12852.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other payments,Dollars,81,millions,6,v62306956,1.1.1.15,37796.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: primary income,Dollars,81,millions,6,v62306957,1.1.1.16,271124.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Primary income,Dollars,81,millions,6,v62306958,1.1.1.17,271124.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62306959,1.1.1.18,168760.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306960,1.1.1.19,167652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306961,1.1.1.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306962,1.1.1.23,1108.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62306963,1.1.1.24,261404.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To households,Dollars,81,millions,6,v62306964,1.1.1.25,122024.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62306965,1.1.1.26,3664.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To general governments,Dollars,81,millions,6,v62306966,1.1.1.29,133652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62306967,1.1.1.30,133652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-residents,Dollars,81,millions,6,v62306968,1.1.1.31,2064.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62306969,1.1.1.32,178480.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Disposable income,Dollars,81,millions,6,v62306970,1.1.1.33,178480.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775402,1.1.1.51,45628.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net saving,Dollars,81,millions,6,v62306971,1.1.1.34,132852.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net saving,Dollars,81,millions,6,v62306972,1.1.1.35,132852.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62306973,1.1.1.36,268264.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62306974,1.1.1.37,14536.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306975,1.1.1.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306976,1.1.1.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From general governments,Dollars,81,millions,6,v62306977,1.1.1.42,14536.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306978,1.1.1.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62306979,1.1.1.44,415652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62306980,1.1.1.45,317948.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Fixed capital,Dollars,81,millions,6,v62306981,1.1.1.46,291276.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,New capital,Dollars,81,millions,6,v62306982,1.1.1.47,300636.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Existing capital,Dollars,81,millions,6,v62306983,1.1.1.48,-9360.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Inventories,Dollars,81,millions,6,v62306984,1.1.1.49,26672.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62306985,1.1.1.50,97704.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62306986,1.1.2.1,432916.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62306987,1.1.2.2,-218368.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Property income received,Dollars,81,millions,6,v62306988,1.1.2.3,89424.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62306989,1.1.2.4,25356.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62306990,1.1.2.5,8572.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62306991,1.1.2.6,38896.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306992,1.1.2.7,16600.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62306993,1.1.2.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62306994,1.1.2.9,307792.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62306995,1.1.2.10,65800.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306996,1.1.2.11,29040.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62306997,1.1.2.12,125396.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306998,1.1.2.13,43708.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306999,1.1.2.14,6052.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307000,1.1.2.15,37796.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307001,1.1.2.16,214548.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307002,1.1.2.17,214548.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307003,1.1.2.18,1108.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307004,1.1.2.19,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307005,1.1.2.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307006,1.1.2.21,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307007,1.1.2.23,1108.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307008,1.1.2.24,106368.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To households,Dollars,81,millions,6,v62307009,1.1.2.25,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307010,1.1.2.26,1880.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307011,1.1.2.27,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307012,1.1.2.29,103728.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307013,1.1.2.30,103728.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307014,1.1.2.31,760.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307015,1.1.2.32,109288.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307016,1.1.2.33,109288.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307017,1.1.2.34,109288.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307018,1.1.2.35,109288.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307019,1.1.2.36,255624.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307020,1.1.2.37,14536.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307021,1.1.2.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307022,1.1.2.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307023,1.1.2.40,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307024,1.1.2.42,14536.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307025,1.1.2.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307026,1.1.2.44,379448.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307027,1.1.2.45,297104.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307028,1.1.2.46,274968.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,New capital,Dollars,81,millions,6,v62307029,1.1.2.47,284520.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307030,1.1.2.48,-9552.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307031,1.1.2.49,22136.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307032,1.1.2.50,82344.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307033,1.1.3.1,51956.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307034,1.1.3.2,4620.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Property income received,Dollars,81,millions,6,v62307035,1.1.3.3,334224.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307036,1.1.3.4,172752.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307037,1.1.3.5,12924.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307038,1.1.3.6,135200.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307039,1.1.3.7,13348.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other receipts,Dollars,81,millions,6,v62307040,1.1.3.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307041,1.1.3.9,329604.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307042,1.1.3.10,157432.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307043,1.1.3.11,24332.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307044,1.1.3.12,136780.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307045,1.1.3.13,4260.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307046,1.1.3.14,6800.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other payments,Dollars,81,millions,6,v62307047,1.1.3.15,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307048,1.1.3.16,56576.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Primary income,Dollars,81,millions,6,v62307049,1.1.3.17,56576.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307050,1.1.3.18,167652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307051,1.1.3.19,167652.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307052,1.1.3.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307053,1.1.3.22,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307054,1.1.3.23,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307055,1.1.3.24,155036.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To households,Dollars,81,millions,6,v62307056,1.1.3.25,122024.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307057,1.1.3.26,1784.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307058,1.1.3.28,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To general governments,Dollars,81,millions,6,v62307059,1.1.3.29,29924.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307060,1.1.3.30,29924.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-residents,Dollars,81,millions,6,v62307061,1.1.3.31,1304.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307062,1.1.3.32,69192.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Disposable income,Dollars,81,millions,6,v62307063,1.1.3.33,69192.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775403,1.1.3.51,45628.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307064,1.1.3.34,23564.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net saving,Dollars,81,millions,6,v62307065,1.1.3.35,23564.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307066,1.1.3.36,12640.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307067,1.1.3.37,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307068,1.1.3.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307069,1.1.3.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307070,1.1.3.41,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From general governments,Dollars,81,millions,6,v62307071,1.1.3.42,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307072,1.1.3.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307073,1.1.3.44,36204.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307074,1.1.3.45,20844.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307075,1.1.3.46,16308.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,New capital,Dollars,81,millions,6,v62307076,1.1.3.47,16116.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Existing capital,Dollars,81,millions,6,v62307077,1.1.3.48,192.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Inventories,Dollars,81,millions,6,v62307078,1.1.3.49,4536.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307079,1.1.3.50,15360.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Net operating surplus,Dollars,81,millions,6,v62307080,1.2.1.1,101853.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net property income,Dollars,81,millions,6,v62307081,1.2.1.2,-52581.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Property income received,Dollars,81,millions,6,v62307082,1.2.1.3,100481.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from residents,Dollars,81,millions,6,v62307083,1.2.1.4,48822.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62307084,1.2.1.5,5240.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62307085,1.2.1.6,39343.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307086,1.2.1.7,7076.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Other receipts,Dollars,81,millions,6,v62307087,1.2.1.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Less: property income paid,Dollars,81,millions,6,v62307088,1.2.1.9,153062.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62307089,1.2.1.10,54483.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307090,1.2.1.11,13675.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62307091,1.2.1.12,60763.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307092,1.2.1.13,11976.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307093,1.2.1.14,2113.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Other payments,Dollars,81,millions,6,v62307094,1.2.1.15,10052.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Equals: primary income,Dollars,81,millions,6,v62307095,1.2.1.16,49272.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Primary income,Dollars,81,millions,6,v62307096,1.2.1.17,49272.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62307097,1.2.1.18,39831.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307098,1.2.1.19,39548.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307099,1.2.1.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307100,1.2.1.23,283.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62307101,1.2.1.24,64998.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,To households,Dollars,81,millions,6,v62307102,1.2.1.25,30251.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307103,1.2.1.26,822.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,To general governments,Dollars,81,millions,6,v62307104,1.2.1.29,33429.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307105,1.2.1.30,33429.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,To non-residents,Dollars,81,millions,6,v62307106,1.2.1.31,496.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62307107,1.2.1.32,24105.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Disposable income,Dollars,81,millions,6,v62307108,1.2.1.33,24105.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775404,1.2.1.51,9297.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net saving,Dollars,81,millions,6,v62307109,1.2.1.34,14808.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Net saving,Dollars,81,millions,6,v62307110,1.2.1.35,14808.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307111,1.2.1.36,67273.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307112,1.2.1.37,4454.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307113,1.2.1.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307114,1.2.1.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From general governments,Dollars,81,millions,6,v62307115,1.2.1.42,4454.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307116,1.2.1.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307117,1.2.1.44,86535.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307118,1.2.1.45,71573.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Fixed capital,Dollars,81,millions,6,v62307119,1.2.1.46,69378.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,New capital,Dollars,81,millions,6,v62307120,1.2.1.47,69902.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Existing capital,Dollars,81,millions,6,v62307121,1.2.1.48,-524.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Inventories,Dollars,81,millions,6,v62307122,1.2.1.49,2195.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307123,1.2.1.50,14962.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62307124,1.2.2.1,88924.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62307125,1.2.2.2,-57508.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Property income received,Dollars,81,millions,6,v62307126,1.2.2.3,20260.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62307127,1.2.2.4,6193.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307128,1.2.2.5,2099.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307129,1.2.2.6,8041.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307130,1.2.2.7,3927.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62307131,1.2.2.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62307132,1.2.2.9,77768.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307133,1.2.2.10,16121.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307134,1.2.2.11,7547.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307135,1.2.2.12,32554.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307136,1.2.2.13,10913.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307137,1.2.2.14,581.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307138,1.2.2.15,10052.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307139,1.2.2.16,31416.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307140,1.2.2.17,31416.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307141,1.2.2.18,283.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307142,1.2.2.19,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307143,1.2.2.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307144,1.2.2.21,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307145,1.2.2.23,283.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307146,1.2.2.24,26551.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,To households,Dollars,81,millions,6,v62307147,1.2.2.25,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307148,1.2.2.26,421.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307149,1.2.2.27,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307150,1.2.2.29,25949.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307151,1.2.2.30,25949.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307152,1.2.2.31,181.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307153,1.2.2.32,5148.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307154,1.2.2.33,5148.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307155,1.2.2.34,5148.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307156,1.2.2.35,5148.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307157,1.2.2.36,64114.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307158,1.2.2.37,4454.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307159,1.2.2.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307160,1.2.2.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307161,1.2.2.40,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307162,1.2.2.42,4454.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307163,1.2.2.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307164,1.2.2.44,73716.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307165,1.2.2.45,66669.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307166,1.2.2.46,65608.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,New capital,Dollars,81,millions,6,v62307167,1.2.2.47,66180.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307168,1.2.2.48,-572.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307169,1.2.2.49,1061.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307170,1.2.2.50,7047.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307171,1.2.3.1,12929.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307172,1.2.3.2,4927.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Property income received,Dollars,81,millions,6,v62307173,1.2.3.3,80221.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307174,1.2.3.4,42629.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307175,1.2.3.5,3141.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307176,1.2.3.6,31302.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307177,1.2.3.7,3149.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Other receipts,Dollars,81,millions,6,v62307178,1.2.3.8,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307179,1.2.3.9,75294.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307180,1.2.3.10,38362.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307181,1.2.3.11,6128.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307182,1.2.3.12,28209.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307183,1.2.3.13,1063.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307184,1.2.3.14,1532.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Other payments,Dollars,81,millions,6,v62307185,1.2.3.15,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307186,1.2.3.16,17856.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Primary income,Dollars,81,millions,6,v62307187,1.2.3.17,17856.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307188,1.2.3.18,39548.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307189,1.2.3.19,39548.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307190,1.2.3.20,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307191,1.2.3.22,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307192,1.2.3.23,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307193,1.2.3.24,38447.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,To households,Dollars,81,millions,6,v62307194,1.2.3.25,30251.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307195,1.2.3.26,401.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307196,1.2.3.28,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,To general governments,Dollars,81,millions,6,v62307197,1.2.3.29,7480.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307198,1.2.3.30,7480.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,To non-residents,Dollars,81,millions,6,v62307199,1.2.3.31,315.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307200,1.2.3.32,18957.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Disposable income,Dollars,81,millions,6,v62307201,1.2.3.33,18957.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775405,1.2.3.51,9297.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307202,1.2.3.34,9660.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Net saving,Dollars,81,millions,6,v62307203,1.2.3.35,9660.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307204,1.2.3.36,3159.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307205,1.2.3.37,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307206,1.2.3.38,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307207,1.2.3.39,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307208,1.2.3.41,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From general governments,Dollars,81,millions,6,v62307209,1.2.3.42,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307210,1.2.3.43,0.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307211,1.2.3.44,12819.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307212,1.2.3.45,4904.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307213,1.2.3.46,3770.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,New capital,Dollars,81,millions,6,v62307214,1.2.3.47,3722.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Existing capital,Dollars,81,millions,6,v62307215,1.2.3.48,48.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Inventories,Dollars,81,millions,6,v62307216,1.2.3.49,1134.0,,,,0
+2022-01,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307217,1.2.3.50,7915.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net operating surplus,Dollars,81,millions,6,v62306942,1.1.1.1,545776.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net property income,Dollars,81,millions,6,v62306943,1.1.1.2,-209868.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Property income received,Dollars,81,millions,6,v62306944,1.1.1.3,449372.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from residents,Dollars,81,millions,6,v62306945,1.1.1.4,208624.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62306946,1.1.1.5,24684.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62306947,1.1.1.6,177412.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306948,1.1.1.7,38652.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other receipts,Dollars,81,millions,6,v62306949,1.1.1.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: property income paid,Dollars,81,millions,6,v62306950,1.1.1.9,659240.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62306951,1.1.1.10,217384.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306952,1.1.1.11,62156.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62306953,1.1.1.12,270492.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306954,1.1.1.13,59296.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306955,1.1.1.14,5836.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other payments,Dollars,81,millions,6,v62306956,1.1.1.15,44076.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: primary income,Dollars,81,millions,6,v62306957,1.1.1.16,335908.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Primary income,Dollars,81,millions,6,v62306958,1.1.1.17,335908.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62306959,1.1.1.18,162264.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306960,1.1.1.19,161132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306961,1.1.1.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306962,1.1.1.23,1132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62306963,1.1.1.24,271180.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To households,Dollars,81,millions,6,v62306964,1.1.1.25,122068.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62306965,1.1.1.26,3788.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To general governments,Dollars,81,millions,6,v62306966,1.1.1.29,142868.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62306967,1.1.1.30,142868.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-residents,Dollars,81,millions,6,v62306968,1.1.1.31,2456.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62306969,1.1.1.32,226992.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Disposable income,Dollars,81,millions,6,v62306970,1.1.1.33,226992.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775402,1.1.1.51,39064.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net saving,Dollars,81,millions,6,v62306971,1.1.1.34,187928.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net saving,Dollars,81,millions,6,v62306972,1.1.1.35,187928.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62306973,1.1.1.36,274988.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62306974,1.1.1.37,11612.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306975,1.1.1.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306976,1.1.1.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From general governments,Dollars,81,millions,6,v62306977,1.1.1.42,11612.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306978,1.1.1.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62306979,1.1.1.44,474528.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62306980,1.1.1.45,382544.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Fixed capital,Dollars,81,millions,6,v62306981,1.1.1.46,315244.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,New capital,Dollars,81,millions,6,v62306982,1.1.1.47,319988.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Existing capital,Dollars,81,millions,6,v62306983,1.1.1.48,-4744.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Inventories,Dollars,81,millions,6,v62306984,1.1.1.49,67300.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62306985,1.1.1.50,91984.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62306986,1.1.2.1,496800.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62306987,1.1.2.2,-227764.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Property income received,Dollars,81,millions,6,v62306988,1.1.2.3,94904.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62306989,1.1.2.4,27736.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62306990,1.1.2.5,8928.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62306991,1.1.2.6,35744.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306992,1.1.2.7,22496.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62306993,1.1.2.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62306994,1.1.2.9,322668.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62306995,1.1.2.10,55404.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306996,1.1.2.11,30140.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62306997,1.1.2.12,134016.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306998,1.1.2.13,54140.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306999,1.1.2.14,4892.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307000,1.1.2.15,44076.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307001,1.1.2.16,269036.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307002,1.1.2.17,269036.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307003,1.1.2.18,1132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307004,1.1.2.19,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307005,1.1.2.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307006,1.1.2.21,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307007,1.1.2.23,1132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307008,1.1.2.24,115232.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To households,Dollars,81,millions,6,v62307009,1.1.2.25,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307010,1.1.2.26,2024.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307011,1.1.2.27,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307012,1.1.2.29,112280.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307013,1.1.2.30,112280.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307014,1.1.2.31,928.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307015,1.1.2.32,154936.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307016,1.1.2.33,154936.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307017,1.1.2.34,154936.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307018,1.1.2.35,154936.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307019,1.1.2.36,262140.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307020,1.1.2.37,11612.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307021,1.1.2.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307022,1.1.2.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307023,1.1.2.40,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307024,1.1.2.42,11612.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307025,1.1.2.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307026,1.1.2.44,428688.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307027,1.1.2.45,363716.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307028,1.1.2.46,298208.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,New capital,Dollars,81,millions,6,v62307029,1.1.2.47,303144.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307030,1.1.2.48,-4936.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307031,1.1.2.49,65508.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307032,1.1.2.50,64972.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307033,1.1.3.1,48976.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307034,1.1.3.2,17896.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Property income received,Dollars,81,millions,6,v62307035,1.1.3.3,354468.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307036,1.1.3.4,180888.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307037,1.1.3.5,15756.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307038,1.1.3.6,141668.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307039,1.1.3.7,16156.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other receipts,Dollars,81,millions,6,v62307040,1.1.3.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307041,1.1.3.9,336572.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307042,1.1.3.10,161980.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307043,1.1.3.11,32016.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307044,1.1.3.12,136476.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307045,1.1.3.13,5156.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307046,1.1.3.14,944.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other payments,Dollars,81,millions,6,v62307047,1.1.3.15,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307048,1.1.3.16,66872.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Primary income,Dollars,81,millions,6,v62307049,1.1.3.17,66872.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307050,1.1.3.18,161132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307051,1.1.3.19,161132.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307052,1.1.3.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307053,1.1.3.22,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307054,1.1.3.23,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307055,1.1.3.24,155948.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To households,Dollars,81,millions,6,v62307056,1.1.3.25,122068.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307057,1.1.3.26,1764.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307058,1.1.3.28,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To general governments,Dollars,81,millions,6,v62307059,1.1.3.29,30588.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307060,1.1.3.30,30588.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-residents,Dollars,81,millions,6,v62307061,1.1.3.31,1528.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307062,1.1.3.32,72056.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Disposable income,Dollars,81,millions,6,v62307063,1.1.3.33,72056.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775403,1.1.3.51,39064.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307064,1.1.3.34,32992.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net saving,Dollars,81,millions,6,v62307065,1.1.3.35,32992.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307066,1.1.3.36,12848.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307067,1.1.3.37,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307068,1.1.3.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307069,1.1.3.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307070,1.1.3.41,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From general governments,Dollars,81,millions,6,v62307071,1.1.3.42,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307072,1.1.3.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307073,1.1.3.44,45840.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307074,1.1.3.45,18828.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307075,1.1.3.46,17036.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,New capital,Dollars,81,millions,6,v62307076,1.1.3.47,16844.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Existing capital,Dollars,81,millions,6,v62307077,1.1.3.48,192.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Inventories,Dollars,81,millions,6,v62307078,1.1.3.49,1792.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307079,1.1.3.50,27012.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Net operating surplus,Dollars,81,millions,6,v62307080,1.2.1.1,130028.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net property income,Dollars,81,millions,6,v62307081,1.2.1.2,-52050.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Property income received,Dollars,81,millions,6,v62307082,1.2.1.3,100286.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from residents,Dollars,81,millions,6,v62307083,1.2.1.4,50548.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62307084,1.2.1.5,6107.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62307085,1.2.1.6,33994.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307086,1.2.1.7,9637.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Other receipts,Dollars,81,millions,6,v62307087,1.2.1.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Less: property income paid,Dollars,81,millions,6,v62307088,1.2.1.9,152336.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62307089,1.2.1.10,52130.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307090,1.2.1.11,15657.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62307091,1.2.1.12,57500.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307092,1.2.1.13,15138.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307093,1.2.1.14,1907.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Other payments,Dollars,81,millions,6,v62307094,1.2.1.15,10004.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Equals: primary income,Dollars,81,millions,6,v62307095,1.2.1.16,77978.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Primary income,Dollars,81,millions,6,v62307096,1.2.1.17,77978.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62307097,1.2.1.18,42854.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307098,1.2.1.19,42571.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307099,1.2.1.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307100,1.2.1.23,283.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62307101,1.2.1.24,67873.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,To households,Dollars,81,millions,6,v62307102,1.2.1.25,30738.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307103,1.2.1.26,783.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,To general governments,Dollars,81,millions,6,v62307104,1.2.1.29,35727.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307105,1.2.1.30,35727.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,To non-residents,Dollars,81,millions,6,v62307106,1.2.1.31,625.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62307107,1.2.1.32,52959.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Disposable income,Dollars,81,millions,6,v62307108,1.2.1.33,52959.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775404,1.2.1.51,11833.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net saving,Dollars,81,millions,6,v62307109,1.2.1.34,41126.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Net saving,Dollars,81,millions,6,v62307110,1.2.1.35,41126.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307111,1.2.1.36,68588.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307112,1.2.1.37,2477.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307113,1.2.1.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307114,1.2.1.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From general governments,Dollars,81,millions,6,v62307115,1.2.1.42,2477.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307116,1.2.1.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307117,1.2.1.44,112191.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307118,1.2.1.45,77418.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Fixed capital,Dollars,81,millions,6,v62307119,1.2.1.46,77616.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,New capital,Dollars,81,millions,6,v62307120,1.2.1.47,78846.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Existing capital,Dollars,81,millions,6,v62307121,1.2.1.48,-1230.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Inventories,Dollars,81,millions,6,v62307122,1.2.1.49,-198.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307123,1.2.1.50,34773.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62307124,1.2.2.1,117716.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62307125,1.2.2.2,-53160.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Property income received,Dollars,81,millions,6,v62307126,1.2.2.3,21575.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62307127,1.2.2.4,6791.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307128,1.2.2.5,2175.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307129,1.2.2.6,6996.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307130,1.2.2.7,5613.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62307131,1.2.2.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62307132,1.2.2.9,74735.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307133,1.2.2.10,13101.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307134,1.2.2.11,7579.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307135,1.2.2.12,29708.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307136,1.2.2.13,13823.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307137,1.2.2.14,520.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307138,1.2.2.15,10004.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307139,1.2.2.16,64556.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307140,1.2.2.17,64556.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307141,1.2.2.18,283.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307142,1.2.2.19,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307143,1.2.2.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307144,1.2.2.21,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307145,1.2.2.23,283.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307146,1.2.2.24,28722.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,To households,Dollars,81,millions,6,v62307147,1.2.2.25,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307148,1.2.2.26,418.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307149,1.2.2.27,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307150,1.2.2.29,28066.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307151,1.2.2.30,28066.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307152,1.2.2.31,238.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307153,1.2.2.32,36117.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307154,1.2.2.33,36117.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307155,1.2.2.34,36117.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307156,1.2.2.35,36117.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307157,1.2.2.36,65379.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307158,1.2.2.37,2477.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307159,1.2.2.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307160,1.2.2.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307161,1.2.2.40,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307162,1.2.2.42,2477.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307163,1.2.2.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307164,1.2.2.44,103973.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307165,1.2.2.45,72725.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307166,1.2.2.46,73371.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,New capital,Dollars,81,millions,6,v62307167,1.2.2.47,74649.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307168,1.2.2.48,-1278.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307169,1.2.2.49,-646.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307170,1.2.2.50,31248.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307171,1.2.3.1,12312.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307172,1.2.3.2,1110.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Property income received,Dollars,81,millions,6,v62307173,1.2.3.3,78711.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307174,1.2.3.4,43757.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307175,1.2.3.5,3932.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307176,1.2.3.6,26998.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307177,1.2.3.7,4024.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Other receipts,Dollars,81,millions,6,v62307178,1.2.3.8,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307179,1.2.3.9,77601.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307180,1.2.3.10,39029.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307181,1.2.3.11,8078.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307182,1.2.3.12,27792.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307183,1.2.3.13,1315.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307184,1.2.3.14,1387.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Other payments,Dollars,81,millions,6,v62307185,1.2.3.15,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307186,1.2.3.16,13422.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Primary income,Dollars,81,millions,6,v62307187,1.2.3.17,13422.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307188,1.2.3.18,42571.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307189,1.2.3.19,42571.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307190,1.2.3.20,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307191,1.2.3.22,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307192,1.2.3.23,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307193,1.2.3.24,39151.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,To households,Dollars,81,millions,6,v62307194,1.2.3.25,30738.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307195,1.2.3.26,365.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307196,1.2.3.28,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,To general governments,Dollars,81,millions,6,v62307197,1.2.3.29,7661.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307198,1.2.3.30,7661.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,To non-residents,Dollars,81,millions,6,v62307199,1.2.3.31,387.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307200,1.2.3.32,16842.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Disposable income,Dollars,81,millions,6,v62307201,1.2.3.33,16842.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775405,1.2.3.51,11833.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307202,1.2.3.34,5009.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Net saving,Dollars,81,millions,6,v62307203,1.2.3.35,5009.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307204,1.2.3.36,3209.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307205,1.2.3.37,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307206,1.2.3.38,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307207,1.2.3.39,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307208,1.2.3.41,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From general governments,Dollars,81,millions,6,v62307209,1.2.3.42,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307210,1.2.3.43,0.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307211,1.2.3.44,8218.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307212,1.2.3.45,4693.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307213,1.2.3.46,4245.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,New capital,Dollars,81,millions,6,v62307214,1.2.3.47,4197.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Existing capital,Dollars,81,millions,6,v62307215,1.2.3.48,48.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Inventories,Dollars,81,millions,6,v62307216,1.2.3.49,448.0,,,,0
+2022-04,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307217,1.2.3.50,3525.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net operating surplus,Dollars,81,millions,6,v62306942,1.1.1.1,511412.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net property income,Dollars,81,millions,6,v62306943,1.1.1.2,-205760.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Property income received,Dollars,81,millions,6,v62306944,1.1.1.3,487464.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from residents,Dollars,81,millions,6,v62306945,1.1.1.4,238608.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62306946,1.1.1.5,31352.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62306947,1.1.1.6,181084.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306948,1.1.1.7,36420.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other receipts,Dollars,81,millions,6,v62306949,1.1.1.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: property income paid,Dollars,81,millions,6,v62306950,1.1.1.9,693224.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62306951,1.1.1.10,235772.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306952,1.1.1.11,69500.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62306953,1.1.1.12,274944.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306954,1.1.1.13,61368.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306955,1.1.1.14,8380.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other payments,Dollars,81,millions,6,v62306956,1.1.1.15,43260.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: primary income,Dollars,81,millions,6,v62306957,1.1.1.16,305652.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Primary income,Dollars,81,millions,6,v62306958,1.1.1.17,305652.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62306959,1.1.1.18,161076.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306960,1.1.1.19,159940.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306961,1.1.1.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306962,1.1.1.23,1136.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62306963,1.1.1.24,276704.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To households,Dollars,81,millions,6,v62306964,1.1.1.25,122308.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62306965,1.1.1.26,3788.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To general governments,Dollars,81,millions,6,v62306966,1.1.1.29,148276.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62306967,1.1.1.30,148276.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-residents,Dollars,81,millions,6,v62306968,1.1.1.31,2332.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62306969,1.1.1.32,190024.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Disposable income,Dollars,81,millions,6,v62306970,1.1.1.33,190024.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775402,1.1.1.51,37632.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net saving,Dollars,81,millions,6,v62306971,1.1.1.34,152392.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net saving,Dollars,81,millions,6,v62306972,1.1.1.35,152392.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62306973,1.1.1.36,281952.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62306974,1.1.1.37,12096.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306975,1.1.1.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306976,1.1.1.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From general governments,Dollars,81,millions,6,v62306977,1.1.1.42,12096.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306978,1.1.1.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62306979,1.1.1.44,446440.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62306980,1.1.1.45,402408.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Fixed capital,Dollars,81,millions,6,v62306981,1.1.1.46,329808.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,New capital,Dollars,81,millions,6,v62306982,1.1.1.47,326124.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Existing capital,Dollars,81,millions,6,v62306983,1.1.1.48,3684.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Inventories,Dollars,81,millions,6,v62306984,1.1.1.49,72600.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62306985,1.1.1.50,44032.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62306986,1.1.2.1,464540.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62306987,1.1.2.2,-234648.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Property income received,Dollars,81,millions,6,v62306988,1.1.2.3,95544.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62306989,1.1.2.4,29900.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62306990,1.1.2.5,10020.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62306991,1.1.2.6,35708.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306992,1.1.2.7,19916.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62306993,1.1.2.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62306994,1.1.2.9,330192.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62306995,1.1.2.10,51812.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306996,1.1.2.11,33584.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62306997,1.1.2.12,139528.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306998,1.1.2.13,56460.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306999,1.1.2.14,5548.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307000,1.1.2.15,43260.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307001,1.1.2.16,229892.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307002,1.1.2.17,229892.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307003,1.1.2.18,1136.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307004,1.1.2.19,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307005,1.1.2.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307006,1.1.2.21,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307007,1.1.2.23,1136.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307008,1.1.2.24,118224.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To households,Dollars,81,millions,6,v62307009,1.1.2.25,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307010,1.1.2.26,2024.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307011,1.1.2.27,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307012,1.1.2.29,115392.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307013,1.1.2.30,115392.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307014,1.1.2.31,808.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307015,1.1.2.32,112804.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307016,1.1.2.33,112804.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307017,1.1.2.34,112804.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307018,1.1.2.35,112804.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307019,1.1.2.36,268816.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307020,1.1.2.37,12096.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307021,1.1.2.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307022,1.1.2.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307023,1.1.2.40,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307024,1.1.2.42,12096.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307025,1.1.2.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307026,1.1.2.44,393716.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307027,1.1.2.45,377024.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307028,1.1.2.46,312176.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,New capital,Dollars,81,millions,6,v62307029,1.1.2.47,308684.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307030,1.1.2.48,3492.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307031,1.1.2.49,64848.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307032,1.1.2.50,16692.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307033,1.1.3.1,46872.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307034,1.1.3.2,28888.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Property income received,Dollars,81,millions,6,v62307035,1.1.3.3,391920.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307036,1.1.3.4,208708.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307037,1.1.3.5,21332.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307038,1.1.3.6,145376.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307039,1.1.3.7,16504.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other receipts,Dollars,81,millions,6,v62307040,1.1.3.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307041,1.1.3.9,363032.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307042,1.1.3.10,183960.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307043,1.1.3.11,35916.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307044,1.1.3.12,135416.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307045,1.1.3.13,4908.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307046,1.1.3.14,2832.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other payments,Dollars,81,millions,6,v62307047,1.1.3.15,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307048,1.1.3.16,75760.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Primary income,Dollars,81,millions,6,v62307049,1.1.3.17,75760.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307050,1.1.3.18,159940.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307051,1.1.3.19,159940.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307052,1.1.3.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307053,1.1.3.22,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307054,1.1.3.23,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307055,1.1.3.24,158480.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To households,Dollars,81,millions,6,v62307056,1.1.3.25,122308.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307057,1.1.3.26,1764.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307058,1.1.3.28,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To general governments,Dollars,81,millions,6,v62307059,1.1.3.29,32884.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307060,1.1.3.30,32884.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-residents,Dollars,81,millions,6,v62307061,1.1.3.31,1524.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307062,1.1.3.32,77220.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Disposable income,Dollars,81,millions,6,v62307063,1.1.3.33,77220.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775403,1.1.3.51,37632.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307064,1.1.3.34,39588.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net saving,Dollars,81,millions,6,v62307065,1.1.3.35,39588.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307066,1.1.3.36,13136.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307067,1.1.3.37,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307068,1.1.3.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307069,1.1.3.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307070,1.1.3.41,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From general governments,Dollars,81,millions,6,v62307071,1.1.3.42,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307072,1.1.3.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307073,1.1.3.44,52724.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307074,1.1.3.45,25384.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307075,1.1.3.46,17632.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,New capital,Dollars,81,millions,6,v62307076,1.1.3.47,17440.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Existing capital,Dollars,81,millions,6,v62307077,1.1.3.48,192.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Inventories,Dollars,81,millions,6,v62307078,1.1.3.49,7752.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307079,1.1.3.50,27340.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Net operating surplus,Dollars,81,millions,6,v62307080,1.2.1.1,147597.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net property income,Dollars,81,millions,6,v62307081,1.2.1.2,-48338.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Property income received,Dollars,81,millions,6,v62307082,1.2.1.3,106588.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from residents,Dollars,81,millions,6,v62307083,1.2.1.4,58400.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62307084,1.2.1.5,7768.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62307085,1.2.1.6,31635.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307086,1.2.1.7,8785.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Other receipts,Dollars,81,millions,6,v62307087,1.2.1.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Less: property income paid,Dollars,81,millions,6,v62307088,1.2.1.9,154926.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62307089,1.2.1.10,56246.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307090,1.2.1.11,17160.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62307091,1.2.1.12,54907.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307092,1.2.1.13,15046.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307093,1.2.1.14,857.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Other payments,Dollars,81,millions,6,v62307094,1.2.1.15,10710.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Equals: primary income,Dollars,81,millions,6,v62307095,1.2.1.16,99259.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Primary income,Dollars,81,millions,6,v62307096,1.2.1.17,99259.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62307097,1.2.1.18,37603.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307098,1.2.1.19,37320.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307099,1.2.1.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307100,1.2.1.23,283.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62307101,1.2.1.24,68805.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,To households,Dollars,81,millions,6,v62307102,1.2.1.25,30180.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307103,1.2.1.26,993.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,To general governments,Dollars,81,millions,6,v62307104,1.2.1.29,37066.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307105,1.2.1.30,37066.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,To non-residents,Dollars,81,millions,6,v62307106,1.2.1.31,566.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62307107,1.2.1.32,68057.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Disposable income,Dollars,81,millions,6,v62307108,1.2.1.33,68057.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775404,1.2.1.51,7140.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net saving,Dollars,81,millions,6,v62307109,1.2.1.34,60917.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Net saving,Dollars,81,millions,6,v62307110,1.2.1.35,60917.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307111,1.2.1.36,70383.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307112,1.2.1.37,2665.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307113,1.2.1.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307114,1.2.1.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From general governments,Dollars,81,millions,6,v62307115,1.2.1.42,2665.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307116,1.2.1.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307117,1.2.1.44,133965.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307118,1.2.1.45,123916.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Fixed capital,Dollars,81,millions,6,v62307119,1.2.1.46,85522.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,New capital,Dollars,81,millions,6,v62307120,1.2.1.47,86343.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Existing capital,Dollars,81,millions,6,v62307121,1.2.1.48,-821.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Inventories,Dollars,81,millions,6,v62307122,1.2.1.49,38394.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307123,1.2.1.50,10049.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62307124,1.2.2.1,135929.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62307125,1.2.2.2,-44023.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Property income received,Dollars,81,millions,6,v62307126,1.2.2.3,21478.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62307127,1.2.2.4,7529.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307128,1.2.2.5,2539.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307129,1.2.2.6,6605.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307130,1.2.2.7,4805.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62307131,1.2.2.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62307132,1.2.2.9,65501.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307133,1.2.2.10,11615.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307134,1.2.2.11,8086.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307135,1.2.2.12,20757.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307136,1.2.2.13,13843.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307137,1.2.2.14,490.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307138,1.2.2.15,10710.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307139,1.2.2.16,91906.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307140,1.2.2.17,91906.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307141,1.2.2.18,283.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307142,1.2.2.19,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307143,1.2.2.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307144,1.2.2.21,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307145,1.2.2.23,283.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307146,1.2.2.24,29558.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,To households,Dollars,81,millions,6,v62307147,1.2.2.25,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307148,1.2.2.26,530.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307149,1.2.2.27,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307150,1.2.2.29,28834.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307151,1.2.2.30,28834.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307152,1.2.2.31,194.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307153,1.2.2.32,62631.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307154,1.2.2.33,62631.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307155,1.2.2.34,62631.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307156,1.2.2.35,62631.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307157,1.2.2.36,67100.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307158,1.2.2.37,2665.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307159,1.2.2.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307160,1.2.2.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307161,1.2.2.40,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307162,1.2.2.42,2665.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307163,1.2.2.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307164,1.2.2.44,132396.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307165,1.2.2.45,117334.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307166,1.2.2.46,80878.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,New capital,Dollars,81,millions,6,v62307167,1.2.2.47,81747.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307168,1.2.2.48,-869.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307169,1.2.2.49,36456.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307170,1.2.2.50,15062.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307171,1.2.3.1,11668.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307172,1.2.3.2,-4315.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Property income received,Dollars,81,millions,6,v62307173,1.2.3.3,85110.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307174,1.2.3.4,50871.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307175,1.2.3.5,5229.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307176,1.2.3.6,25030.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307177,1.2.3.7,3980.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Other receipts,Dollars,81,millions,6,v62307178,1.2.3.8,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307179,1.2.3.9,89425.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307180,1.2.3.10,44631.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307181,1.2.3.11,9074.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307182,1.2.3.12,34150.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307183,1.2.3.13,1203.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307184,1.2.3.14,367.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Other payments,Dollars,81,millions,6,v62307185,1.2.3.15,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307186,1.2.3.16,7353.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Primary income,Dollars,81,millions,6,v62307187,1.2.3.17,7353.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307188,1.2.3.18,37320.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307189,1.2.3.19,37320.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307190,1.2.3.20,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307191,1.2.3.22,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307192,1.2.3.23,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307193,1.2.3.24,39247.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,To households,Dollars,81,millions,6,v62307194,1.2.3.25,30180.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307195,1.2.3.26,463.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307196,1.2.3.28,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,To general governments,Dollars,81,millions,6,v62307197,1.2.3.29,8232.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307198,1.2.3.30,8232.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,To non-residents,Dollars,81,millions,6,v62307199,1.2.3.31,372.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307200,1.2.3.32,5426.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Disposable income,Dollars,81,millions,6,v62307201,1.2.3.33,5426.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775405,1.2.3.51,7140.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307202,1.2.3.34,-1714.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Net saving,Dollars,81,millions,6,v62307203,1.2.3.35,-1714.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307204,1.2.3.36,3283.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307205,1.2.3.37,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307206,1.2.3.38,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307207,1.2.3.39,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307208,1.2.3.41,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From general governments,Dollars,81,millions,6,v62307209,1.2.3.42,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307210,1.2.3.43,0.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307211,1.2.3.44,1569.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307212,1.2.3.45,6582.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307213,1.2.3.46,4644.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,New capital,Dollars,81,millions,6,v62307214,1.2.3.47,4596.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Existing capital,Dollars,81,millions,6,v62307215,1.2.3.48,48.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Inventories,Dollars,81,millions,6,v62307216,1.2.3.49,1938.0,,,,0
+2022-07,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307217,1.2.3.50,-5013.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net operating surplus,Dollars,81,millions,6,v62306942,1.1.1.1,472572.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net property income,Dollars,81,millions,6,v62306943,1.1.1.2,-214244.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Property income received,Dollars,81,millions,6,v62306944,1.1.1.3,541040.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from residents,Dollars,81,millions,6,v62306945,1.1.1.4,281944.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62306946,1.1.1.5,41380.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62306947,1.1.1.6,182364.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306948,1.1.1.7,35352.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other receipts,Dollars,81,millions,6,v62306949,1.1.1.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: property income paid,Dollars,81,millions,6,v62306950,1.1.1.9,755284.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62306951,1.1.1.10,271800.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306952,1.1.1.11,88172.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62306953,1.1.1.12,278924.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306954,1.1.1.13,63580.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306955,1.1.1.14,9660.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Other payments,Dollars,81,millions,6,v62306956,1.1.1.15,43148.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: primary income,Dollars,81,millions,6,v62306957,1.1.1.16,258328.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Primary income,Dollars,81,millions,6,v62306958,1.1.1.17,258328.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62306959,1.1.1.18,160768.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306960,1.1.1.19,159616.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306961,1.1.1.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306962,1.1.1.23,1152.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62306963,1.1.1.24,265780.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To households,Dollars,81,millions,6,v62306964,1.1.1.25,119600.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62306965,1.1.1.26,3672.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To general governments,Dollars,81,millions,6,v62306966,1.1.1.29,140256.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62306967,1.1.1.30,140256.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,To non-residents,Dollars,81,millions,6,v62306968,1.1.1.31,2252.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62306969,1.1.1.32,153316.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Disposable income,Dollars,81,millions,6,v62306970,1.1.1.33,153316.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775402,1.1.1.51,40016.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net saving,Dollars,81,millions,6,v62306971,1.1.1.34,113300.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Net saving,Dollars,81,millions,6,v62306972,1.1.1.35,113300.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62306973,1.1.1.36,288960.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62306974,1.1.1.37,13720.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From households,Dollars,81,millions,6,v62306975,1.1.1.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62306976,1.1.1.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From general governments,Dollars,81,millions,6,v62306977,1.1.1.42,13720.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,From non-residents,Dollars,81,millions,6,v62306978,1.1.1.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62306979,1.1.1.44,415980.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62306980,1.1.1.45,365280.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Fixed capital,Dollars,81,millions,6,v62306981,1.1.1.46,319836.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,New capital,Dollars,81,millions,6,v62306982,1.1.1.47,321200.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Existing capital,Dollars,81,millions,6,v62306983,1.1.1.48,-1364.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Inventories,Dollars,81,millions,6,v62306984,1.1.1.49,45444.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62306985,1.1.1.50,50700.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62306986,1.1.2.1,429376.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62306987,1.1.2.2,-249840.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Property income received,Dollars,81,millions,6,v62306988,1.1.2.3,102484.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62306989,1.1.2.4,33516.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62306990,1.1.2.5,11424.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62306991,1.1.2.6,38328.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62306992,1.1.2.7,19216.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62306993,1.1.2.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62306994,1.1.2.9,352324.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62306995,1.1.2.10,64232.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62306996,1.1.2.11,38168.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62306997,1.1.2.12,142204.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62306998,1.1.2.13,58496.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62306999,1.1.2.14,6076.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307000,1.1.2.15,43148.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307001,1.1.2.16,179536.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307002,1.1.2.17,179536.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307003,1.1.2.18,1152.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307004,1.1.2.19,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307005,1.1.2.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307006,1.1.2.21,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307007,1.1.2.23,1152.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307008,1.1.2.24,115684.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To households,Dollars,81,millions,6,v62307009,1.1.2.25,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307010,1.1.2.26,1976.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307011,1.1.2.27,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307012,1.1.2.29,112992.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307013,1.1.2.30,112992.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307014,1.1.2.31,716.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307015,1.1.2.32,65004.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307016,1.1.2.33,65004.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307017,1.1.2.34,65004.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307018,1.1.2.35,65004.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307019,1.1.2.36,275548.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307020,1.1.2.37,13720.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From households,Dollars,81,millions,6,v62307021,1.1.2.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307022,1.1.2.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307023,1.1.2.40,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307024,1.1.2.42,13720.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307025,1.1.2.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307026,1.1.2.44,354272.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307027,1.1.2.45,336028.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307028,1.1.2.46,302544.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,New capital,Dollars,81,millions,6,v62307029,1.1.2.47,304100.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307030,1.1.2.48,-1556.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307031,1.1.2.49,33484.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307032,1.1.2.50,18244.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307033,1.1.3.1,43196.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307034,1.1.3.2,35596.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Property income received,Dollars,81,millions,6,v62307035,1.1.3.3,438556.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307036,1.1.3.4,248428.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307037,1.1.3.5,29956.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307038,1.1.3.6,144036.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307039,1.1.3.7,16136.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other receipts,Dollars,81,millions,6,v62307040,1.1.3.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307041,1.1.3.9,402960.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307042,1.1.3.10,207568.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307043,1.1.3.11,50004.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307044,1.1.3.12,136720.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307045,1.1.3.13,5084.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307046,1.1.3.14,3584.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Other payments,Dollars,81,millions,6,v62307047,1.1.3.15,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307048,1.1.3.16,78792.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Primary income,Dollars,81,millions,6,v62307049,1.1.3.17,78792.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307050,1.1.3.18,159616.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307051,1.1.3.19,159616.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307052,1.1.3.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307053,1.1.3.22,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307054,1.1.3.23,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307055,1.1.3.24,150096.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To households,Dollars,81,millions,6,v62307056,1.1.3.25,119600.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307057,1.1.3.26,1696.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307058,1.1.3.28,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To general governments,Dollars,81,millions,6,v62307059,1.1.3.29,27264.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307060,1.1.3.30,27264.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,To non-residents,Dollars,81,millions,6,v62307061,1.1.3.31,1536.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307062,1.1.3.32,88312.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Disposable income,Dollars,81,millions,6,v62307063,1.1.3.33,88312.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775403,1.1.3.51,40016.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307064,1.1.3.34,48296.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Net saving,Dollars,81,millions,6,v62307065,1.1.3.35,48296.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307066,1.1.3.36,13412.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307067,1.1.3.37,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From households,Dollars,81,millions,6,v62307068,1.1.3.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307069,1.1.3.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307070,1.1.3.41,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From general governments,Dollars,81,millions,6,v62307071,1.1.3.42,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,From non-residents,Dollars,81,millions,6,v62307072,1.1.3.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307073,1.1.3.44,61708.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307074,1.1.3.45,29252.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307075,1.1.3.46,17292.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,New capital,Dollars,81,millions,6,v62307076,1.1.3.47,17100.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Existing capital,Dollars,81,millions,6,v62307077,1.1.3.48,192.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Inventories,Dollars,81,millions,6,v62307078,1.1.3.49,11960.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307079,1.1.3.50,32456.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Net operating surplus,Dollars,81,millions,6,v62307080,1.2.1.1,124180.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net property income,Dollars,81,millions,6,v62307081,1.2.1.2,-57936.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Property income received,Dollars,81,millions,6,v62307082,1.2.1.3,168026.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from residents,Dollars,81,millions,6,v62307083,1.2.1.4,74051.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Interest received from non-residents,Dollars,81,millions,6,v62307084,1.2.1.5,10613.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from residents,Dollars,81,millions,6,v62307085,1.2.1.6,73767.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307086,1.2.1.7,9595.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Other receipts,Dollars,81,millions,6,v62307087,1.2.1.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Less: property income paid,Dollars,81,millions,6,v62307088,1.2.1.9,225962.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to residents,Dollars,81,millions,6,v62307089,1.2.1.10,74188.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307090,1.2.1.11,21808.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to residents,Dollars,81,millions,6,v62307091,1.2.1.12,98464.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307092,1.2.1.13,15893.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307093,1.2.1.14,4305.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Other payments,Dollars,81,millions,6,v62307094,1.2.1.15,11304.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Equals: primary income,Dollars,81,millions,6,v62307095,1.2.1.16,66244.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Primary income,Dollars,81,millions,6,v62307096,1.2.1.17,66244.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Plus: current transfers received,Dollars,81,millions,6,v62307097,1.2.1.18,42929.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307098,1.2.1.19,42646.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307099,1.2.1.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307100,1.2.1.23,283.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Less: current transfers paid,Dollars,81,millions,6,v62307101,1.2.1.24,67091.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,To households,Dollars,81,millions,6,v62307102,1.2.1.25,30331.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307103,1.2.1.26,1130.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,To general governments,Dollars,81,millions,6,v62307104,1.2.1.29,35041.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307105,1.2.1.30,35041.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,To non-residents,Dollars,81,millions,6,v62307106,1.2.1.31,589.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Equals: disposable income,Dollars,81,millions,6,v62307107,1.2.1.32,42082.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Disposable income,Dollars,81,millions,6,v62307108,1.2.1.33,42082.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775404,1.2.1.51,12315.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net saving,Dollars,81,millions,6,v62307109,1.2.1.34,29767.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Net saving,Dollars,81,millions,6,v62307110,1.2.1.35,29767.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307111,1.2.1.36,72297.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307112,1.2.1.37,3395.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From households,Dollars,81,millions,6,v62307113,1.2.1.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307114,1.2.1.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From general governments,Dollars,81,millions,6,v62307115,1.2.1.42,3395.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,From non-residents,Dollars,81,millions,6,v62307116,1.2.1.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307117,1.2.1.44,105459.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307118,1.2.1.45,94138.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Fixed capital,Dollars,81,millions,6,v62307119,1.2.1.46,81525.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,New capital,Dollars,81,millions,6,v62307120,1.2.1.47,81896.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Existing capital,Dollars,81,millions,6,v62307121,1.2.1.48,-371.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Inventories,Dollars,81,millions,6,v62307122,1.2.1.49,12613.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Total corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307123,1.2.1.50,11321.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net operating surplus,Dollars,81,millions,6,v62307124,1.2.2.1,113339.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net property income,Dollars,81,millions,6,v62307125,1.2.2.2,-77964.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Property income received,Dollars,81,millions,6,v62307126,1.2.2.3,32276.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from residents,Dollars,81,millions,6,v62307127,1.2.2.4,8614.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307128,1.2.2.5,2923.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307129,1.2.2.6,15527.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307130,1.2.2.7,5212.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other receipts,Dollars,81,millions,6,v62307131,1.2.2.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: property income paid,Dollars,81,millions,6,v62307132,1.2.2.9,110240.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307133,1.2.2.10,18475.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307134,1.2.2.11,9521.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307135,1.2.2.12,52267.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307136,1.2.2.13,14622.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307137,1.2.2.14,4051.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Other payments,Dollars,81,millions,6,v62307138,1.2.2.15,11304.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: primary income,Dollars,81,millions,6,v62307139,1.2.2.16,35375.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Primary income,Dollars,81,millions,6,v62307140,1.2.2.17,35375.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307141,1.2.2.18,283.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307142,1.2.2.19,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307143,1.2.2.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From financial corporations to non-financial corporations,Dollars,81,millions,6,v62307144,1.2.2.21,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307145,1.2.2.23,283.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307146,1.2.2.24,29046.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,To households,Dollars,81,millions,6,v62307147,1.2.2.25,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307148,1.2.2.26,607.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,To financial corporations from non-financial corporations,Dollars,81,millions,6,v62307149,1.2.2.27,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,To general governments,Dollars,81,millions,6,v62307150,1.2.2.29,28249.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307151,1.2.2.30,28249.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,To non-residents,Dollars,81,millions,6,v62307152,1.2.2.31,190.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307153,1.2.2.32,6612.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Disposable income,Dollars,81,millions,6,v62307154,1.2.2.33,6612.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net saving,Dollars,81,millions,6,v62307155,1.2.2.34,6612.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Net saving,Dollars,81,millions,6,v62307156,1.2.2.35,6612.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307157,1.2.2.36,68939.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307158,1.2.2.37,3395.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From households,Dollars,81,millions,6,v62307159,1.2.2.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307160,1.2.2.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,By non-financial corporations from financial corporations,Dollars,81,millions,6,v62307161,1.2.2.40,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From general governments,Dollars,81,millions,6,v62307162,1.2.2.42,3395.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,From non-residents,Dollars,81,millions,6,v62307163,1.2.2.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307164,1.2.2.44,78946.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307165,1.2.2.45,86740.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Fixed capital,Dollars,81,millions,6,v62307166,1.2.2.46,77117.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,New capital,Dollars,81,millions,6,v62307167,1.2.2.47,77536.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Existing capital,Dollars,81,millions,6,v62307168,1.2.2.48,-419.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Inventories,Dollars,81,millions,6,v62307169,1.2.2.49,9623.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Non-financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307170,1.2.2.50,-7794.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Net operating surplus,Dollars,81,millions,6,v62307171,1.2.3.1,10841.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net property income,Dollars,81,millions,6,v62307172,1.2.3.2,20028.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Property income received,Dollars,81,millions,6,v62307173,1.2.3.3,135750.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from residents,Dollars,81,millions,6,v62307174,1.2.3.4,65437.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Interest received from non-residents,Dollars,81,millions,6,v62307175,1.2.3.5,7690.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from residents,Dollars,81,millions,6,v62307176,1.2.3.6,58240.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends received from non-residents,Dollars,81,millions,6,v62307177,1.2.3.7,4383.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Other receipts,Dollars,81,millions,6,v62307178,1.2.3.8,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Less: property income paid,Dollars,81,millions,6,v62307179,1.2.3.9,115722.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to residents,Dollars,81,millions,6,v62307180,1.2.3.10,55713.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Interest paid to non-residents,Dollars,81,millions,6,v62307181,1.2.3.11,12287.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to residents,Dollars,81,millions,6,v62307182,1.2.3.12,46197.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Dividends paid to non-residents,Dollars,81,millions,6,v62307183,1.2.3.13,1271.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Remitted profits of government business enterprises to government,Dollars,81,millions,6,v62307184,1.2.3.14,254.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Other payments,Dollars,81,millions,6,v62307185,1.2.3.15,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: primary income,Dollars,81,millions,6,v62307186,1.2.3.16,30869.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Primary income,Dollars,81,millions,6,v62307187,1.2.3.17,30869.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: current transfers received,Dollars,81,millions,6,v62307188,1.2.3.18,42646.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307189,1.2.3.19,42646.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307190,1.2.3.20,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From non-financial corporations to financial corporations,Dollars,81,millions,6,v62307191,1.2.3.22,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307192,1.2.3.23,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Less: current transfers paid,Dollars,81,millions,6,v62307193,1.2.3.24,38045.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,To households,Dollars,81,millions,6,v62307194,1.2.3.25,30331.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,To non-profit institutions serving households,Dollars,81,millions,6,v62307195,1.2.3.26,523.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,To non-financial corporations from financial corporations,Dollars,81,millions,6,v62307196,1.2.3.28,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,To general governments,Dollars,81,millions,6,v62307197,1.2.3.29,6792.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Of which: taxes on income (corporate income tax),Dollars,81,millions,6,v62307198,1.2.3.30,6792.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,To non-residents,Dollars,81,millions,6,v62307199,1.2.3.31,399.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: disposable income,Dollars,81,millions,6,v62307200,1.2.3.32,35470.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Disposable income,Dollars,81,millions,6,v62307201,1.2.3.33,35470.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Less: change in pension entitlements,Dollars,81,millions,6,v105775405,1.2.3.51,12315.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net saving,Dollars,81,millions,6,v62307202,1.2.3.34,23155.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Net saving,Dollars,81,millions,6,v62307203,1.2.3.35,23155.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: consumption of fixed capital at replacement cost,Dollars,81,millions,6,v62307204,1.2.3.36,3358.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Plus: net capital transfers received,Dollars,81,millions,6,v62307205,1.2.3.37,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From households,Dollars,81,millions,6,v62307206,1.2.3.38,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From non-profit institutions serving households,Dollars,81,millions,6,v62307207,1.2.3.39,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,By financial corporations from non-financial corporations,Dollars,81,millions,6,v62307208,1.2.3.41,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From general governments,Dollars,81,millions,6,v62307209,1.2.3.42,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,From non-residents,Dollars,81,millions,6,v62307210,1.2.3.43,0.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: gross saving and capital transfers,Dollars,81,millions,6,v62307211,1.2.3.44,26513.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Less: capital acquisitions,Dollars,81,millions,6,v62307212,1.2.3.45,7398.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Fixed capital,Dollars,81,millions,6,v62307213,1.2.3.46,4408.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,New capital,Dollars,81,millions,6,v62307214,1.2.3.47,4360.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Existing capital,Dollars,81,millions,6,v62307215,1.2.3.48,48.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Inventories,Dollars,81,millions,6,v62307216,1.2.3.49,2990.0,,,,0
+2022-10,Canada,2016A000011124,Unadjusted,Financial corporations,Equals: net lending or net borrowing,Dollars,81,millions,6,v62307217,1.2.3.50,19115.0,,,,0

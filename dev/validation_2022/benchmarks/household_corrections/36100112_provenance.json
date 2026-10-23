@@ -1,0 +1,7 @@
+{
+  "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100112-eng.zip",
+  "retrieved": "2026-10-23",
+  "zip_sha256": "b577daa453e1527602f55000d301624143bdaf3dba87bfbd458f44d6ab797d1e",
+  "csv_sha256": "5cfe7a3c5a9cd3610faa2d7fd19b591b1cfed01750d0c493568f0c1f25cc7d97",
+  "selection": "all rows for 2022, without changing units/seasonal treatment"
+}
