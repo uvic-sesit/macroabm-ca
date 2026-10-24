@@ -1,0 +1,7 @@
+{
+  "url": "https://www150.statcan.gc.ca/n1/tbl/csv/33100225-eng.zip",
+  "retrieved_utc": "2026-10-24T00:47:18.133624+00:00",
+  "zip_sha256": "abb244842c5c26c52944c52d6f717e0a5437fdbb5d3bdf3b38be0612b3f6ffcf",
+  "csv_sha256": "fdaffb5976fa21e97451040cc86809fd831b5a472772e5a2085298cf11139951",
+  "extract_sha256": "295b21804aa75c0a8d9a46ae811c60ae277d4d529d8230d5e02fde9bdac754f6"
+}
