@@ -382,3 +382,36 @@ The seed-0 ledger replay uses de244bc; corrected pairs use b75d4a7. Initial
 source snapshots and accepted input hashes are audited; original repository,
 ITC/user-cost files and accepted pickles are unchanged. Nothing pushed.
 Full tests/ through run_pre_D3_tests.py: **421 passed, the same 30 known NaN failures, zero additional failures/errors** (451 cases). Sampler worker count was one; failed identities are checked against AFE. Final audit, exact source/input hashes, raw-ledger hash inventory, JUnit and logs are retained under outputs/IFE/.
+
+
+## F continuation - 24 October 2026 UTC (23 October local), execution pending
+
+The review accepts planned initial investment, not realized investment, as
+Gate 1: 60.59825B/quarter versus 36-10-0112 v62305994. This **supersedes the
+FAIL status in the earlier IFE entry**. Investment is income-based; the 5%
+quarterly rate is depreciation. Consumption priority remains accepted.
+
+- F-I2: 12987e6 builds the new firmdebt pickle, external firm bank-loan proxy
+  1,281.615B versus 2,271.807B; K/O/P/Q/T excluded; 33-10-0225 industry vectors
+  and output regional shares, with explicit mortgage/holder assumptions.
+  Consolidation equity credit +1,164.071B and separate scope adjustment
+  -173.879B give net +990.192B equity. Bonds 625.741B are a named boundary.
+  All accepted pickle hashes unchanged; initial bank ratios above threshold.
+- F default: 923f107, candidate flag default off; N=3, haircut=20% provisional
+  assumptions. Continuing producer retains collateral-covered contracts;
+  only uncovered bank principal is written down. Existing overdrafts survive.
+  43bd9f9 includes overdraft interest in scheduled service. Revaluation alone
+  cannot default a firm. Collateral-covered principal is not a cash recovery.
+- bd72103 / 9a26aeb add diagnostic and gate machinery; read-only follow-up
+  separates employment and firm-income receipts. Eleven focused tests pass.
+- Final 2Q/12Q seeds 0-2 and the full suite are pending. A 2Q seed-0 pilot
+  passes at 3.91e-15 but is not final serial evidence: another BDA workflow
+  was discovered active. Automatic approval review rejected starting final
+  measurements under a global one-simulation-at-a-time interpretation.
+  Clarification of scope is pending; no external workflow was altered.
+- No claim that F losses or bank support are plausible; E not started.
+  Positive Q4-Q12 constrained-share slope on any seed will stop E.
+  Buffer-stock spending remains proposal only. Phase B and C_dp_005 held.
+
+Details, initial industry/bank tables, assumptions and resumption scripts:
+[CLOSURE_FE_2026-10-24.md](CLOSURE_FE_2026-10-24.md).

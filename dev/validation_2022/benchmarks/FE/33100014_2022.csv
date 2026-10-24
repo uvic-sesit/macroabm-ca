@@ -1,0 +1,577 @@
+REF_DATE,GEO,DGUID,Supplier type,Financing characteristic,North American Industry Classification System (NAICS),UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985894,1.1.1.1,1178333.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985895,1.1.1.2,120518.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61985896,1.1.1.3,43092.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61985897,1.1.1.4,120810.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61985898,1.1.1.5,97060.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61985899,1.1.1.6,117405.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61985900,1.1.1.7,61719.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61985901,1.1.1.8,94689.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61985902,1.1.1.9,264094.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985903,1.1.1.10,37998.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61985904,1.1.1.11,32515.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61985905,1.1.1.12,188432.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,All industries,Number,223,units,0,v61985907,1.1.2.1,3102457.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Agriculture,Number,223,units,0,v61985908,1.1.2.2,373338.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Other primary industries,Number,223,units,0,v61985909,1.1.2.3,51820.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Construction [23],Number,223,units,0,v61985910,1.1.2.4,285427.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61985911,1.1.2.5,153265.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61985912,1.1.2.6,344745.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61985913,1.1.2.7,147162.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Finance and insurance [52],Number,223,units,0,v61985914,1.1.2.8,60126.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61985915,1.1.2.9,207588.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61985916,1.1.2.10,238113.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61985917,1.1.2.11,89427.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of accounts,All other industries,Number,223,units,0,v61985918,1.1.2.12,1151446.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61985920,1.1.3.1,176343.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61985921,1.1.3.2,16582.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61985922,1.1.3.3,12406.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61985923,1.1.3.4,17937.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61985924,1.1.3.5,16896.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61985925,1.1.3.6,16268.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61985926,1.1.3.7,7126.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61985927,1.1.3.8,23751.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61985928,1.1.3.9,26675.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985929,1.1.3.10,5162.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61985930,1.1.3.11,4565.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61985931,1.1.3.12,28974.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),All industries,Number,223,units,0,v61985933,1.1.4.1,190501.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61985934,1.1.4.2,37480.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61985935,1.1.4.3,3524.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61985936,1.1.4.4,15095.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61985937,1.1.4.5,8801.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61985938,1.1.4.6,22743.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61985939,1.1.4.7,5777.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61985940,1.1.4.8,3093.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61985941,1.1.4.9,16132.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61985942,1.1.4.10,6624.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61985943,1.1.4.11,4745.0,,,,0
+2022-01,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),All other industries,Number,223,units,0,v61985944,1.1.4.12,66487.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985946,1.2.1.1,723605.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985947,1.2.1.2,54116.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61985948,1.2.1.3,25620.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61985949,1.2.1.4,85053.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61985950,1.2.1.5,53827.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61985951,1.2.1.6,76207.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61985952,1.2.1.7,38109.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61985953,1.2.1.8,71740.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61985954,1.2.1.9,163657.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985955,1.2.1.10,21338.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61985956,1.2.1.11,16332.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61985957,1.2.1.12,117605.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,All industries,Number,223,units,0,v61985959,1.2.2.1,2484035.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Agriculture,Number,223,units,0,v61985960,1.2.2.2,190244.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Other primary industries,Number,223,units,0,v61985961,1.2.2.3,34095.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Construction [23],Number,223,units,0,v61985962,1.2.2.4,226654.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61985963,1.2.2.5,117586.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61985964,1.2.2.6,290693.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61985965,1.2.2.7,127554.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Finance and insurance [52],Number,223,units,0,v61985966,1.2.2.8,52844.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61985967,1.2.2.9,149581.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61985968,1.2.2.10,207445.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61985969,1.2.2.11,66884.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of accounts,All other industries,Number,223,units,0,v61985970,1.2.2.12,1020455.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61985972,1.2.3.1,105586.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61985973,1.2.3.2,8112.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61985974,1.2.3.3,4012.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61985975,1.2.3.4,10421.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61985976,1.2.3.5,6569.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61985977,1.2.3.6,9457.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61985978,1.2.3.7,4206.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61985979,1.2.3.8,19387.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61985980,1.2.3.9,15760.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985981,1.2.3.10,2813.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61985982,1.2.3.11,2620.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61985983,1.2.3.12,22229.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),All industries,Number,223,units,0,v61985985,1.2.4.1,107026.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61985986,1.2.4.2,12976.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61985987,1.2.4.3,1318.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61985988,1.2.4.4,6488.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61985989,1.2.4.5,3482.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61985990,1.2.4.6,15595.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61985991,1.2.4.7,2238.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61985992,1.2.4.8,1758.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61985993,1.2.4.9,8936.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61985994,1.2.4.10,3047.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61985995,1.2.4.11,2390.0,,,,0
+2022-01,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),All other industries,Number,223,units,0,v61985996,1.2.4.12,48798.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985998,1.3.1.1,128039.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985999,1.3.1.2,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986000,1.3.1.3,10322.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986001,1.3.1.4,13960.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986002,1.3.1.5,16774.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986003,1.3.1.6,13110.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986004,1.3.1.7,8390.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986005,1.3.1.8,16155.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986006,1.3.1.9,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986007,1.3.1.10,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986008,1.3.1.11,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986009,1.3.1.12,14701.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,All industries,Number,223,units,0,v61986011,1.3.2.1,87397.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Agriculture,Number,223,units,0,v61986012,1.3.2.2,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Other primary industries,Number,223,units,0,v61986013,1.3.2.3,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Construction [23],Number,223,units,0,v61986014,1.3.2.4,7011.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986015,1.3.2.5,4991.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986016,1.3.2.6,7312.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986017,1.3.2.7,3584.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986018,1.3.2.8,1565.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986019,1.3.2.9,6686.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986020,1.3.2.10,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986021,1.3.2.11,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of accounts,All other industries,Number,223,units,0,v61986022,1.3.2.12,14266.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986024,1.3.3.1,34720.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986025,1.3.3.2,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986026,1.3.3.3,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986027,1.3.3.4,4098.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986028,1.3.3.5,6334.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986029,1.3.3.6,4010.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986030,1.3.3.7,1747.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986031,1.3.3.8,3439.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986032,1.3.3.9,4393.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986033,1.3.3.10,1419.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986034,1.3.3.11,779.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986035,1.3.3.12,3221.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),All industries,Number,223,units,0,v61986037,1.3.4.1,13451.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986038,1.3.4.2,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986039,1.3.4.3,873.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986040,1.3.4.4,1750.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986041,1.3.4.5,1644.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986042,1.3.4.6,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986043,1.3.4.7,588.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986044,1.3.4.8,572.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986045,1.3.4.9,1029.0,,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986046,1.3.4.10,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986047,1.3.4.11,,x,,,0
+2022-01,Canada,2021A000011124,Other banks,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986048,1.3.4.12,837.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986050,1.4.1.1,125574.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986051,1.4.1.2,18658.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986052,1.4.1.3,2276.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986053,1.4.1.4,16017.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986054,1.4.1.5,5272.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986055,1.4.1.6,8137.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986056,1.4.1.7,2720.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986057,1.4.1.8,1439.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986058,1.4.1.9,40275.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986059,1.4.1.10,2952.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986060,1.4.1.11,6330.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986061,1.4.1.12,21497.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,All industries,Number,223,units,0,v61986063,1.4.2.1,267442.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Agriculture,Number,223,units,0,v61986064,1.4.2.2,55231.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Other primary industries,Number,223,units,0,v61986065,1.4.2.3,9549.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Construction [23],Number,223,units,0,v61986066,1.4.2.4,35430.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986067,1.4.2.5,10495.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986068,1.4.2.6,20978.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986069,1.4.2.7,8774.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986070,1.4.2.8,2388.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986071,1.4.2.9,43677.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986072,1.4.2.10,10789.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986073,1.4.2.11,11448.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,All other industries,Number,223,units,0,v61986074,1.4.2.12,58683.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986076,1.4.3.1,15008.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986077,1.4.3.2,2476.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986078,1.4.3.3,266.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986079,1.4.3.4,2467.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986080,1.4.3.5,531.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986081,1.4.3.6,931.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986082,1.4.3.7,,x,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986083,1.4.3.8,406.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986084,1.4.3.9,4520.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986085,1.4.3.10,,x,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986086,1.4.3.11,,x,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986087,1.4.3.12,2440.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),All industries,Number,223,units,0,v61986089,1.4.4.1,34462.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986090,1.4.4.2,8296.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986091,1.4.4.3,979.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986092,1.4.4.4,4901.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986093,1.4.4.5,1083.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986094,1.4.4.6,2957.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986095,1.4.4.7,1567.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986096,1.4.4.8,593.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986097,1.4.4.9,5496.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986098,1.4.4.10,787.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986099,1.4.4.11,1306.0,,,,0
+2022-01,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986100,1.4.4.12,6497.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986102,1.5.1.1,103240.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986103,1.5.1.2,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986104,1.5.1.3,3947.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986105,1.5.1.4,4273.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986106,1.5.1.5,15837.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986107,1.5.1.6,10254.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986108,1.5.1.7,6847.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986109,1.5.1.8,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986110,1.5.1.9,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986111,1.5.1.10,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986112,1.5.1.11,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986113,1.5.1.12,7732.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,All industries,Number,223,units,0,v61986115,1.5.2.1,257744.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Agriculture,Number,223,units,0,v61986116,1.5.2.2,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Other primary industries,Number,223,units,0,v61986117,1.5.2.3,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Construction [23],Number,223,units,0,v61986118,1.5.2.4,16134.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986119,1.5.2.5,19757.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986120,1.5.2.6,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986121,1.5.2.7,6942.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986122,1.5.2.8,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986123,1.5.2.9,5946.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986124,1.5.2.10,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986125,1.5.2.11,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of accounts,All other industries,Number,223,units,0,v61986126,1.5.2.12,56845.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986128,1.5.3.1,16584.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986129,1.5.3.2,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986130,1.5.3.3,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986131,1.5.3.4,721.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986132,1.5.3.5,2565.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986133,1.5.3.6,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986134,1.5.3.7,553.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986135,1.5.3.8,143.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986136,1.5.3.9,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986137,1.5.3.10,359.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986138,1.5.3.11,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986139,1.5.3.12,678.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),All industries,Number,223,units,0,v61986141,1.5.4.1,35080.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986142,1.5.4.2,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986143,1.5.4.3,354.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986144,1.5.4.4,1810.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986145,1.5.4.5,2551.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986146,1.5.4.6,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986147,1.5.4.7,1368.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986148,1.5.4.8,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986149,1.5.4.9,556.0,,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986150,1.5.4.10,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986151,1.5.4.11,,x,,,0
+2022-01,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986152,1.5.4.12,10317.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986154,1.6.1.1,97875.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986155,1.6.1.2,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986156,1.6.1.3,927.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986157,1.6.1.4,1507.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986158,1.6.1.5,5351.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986159,1.6.1.6,9697.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986160,1.6.1.7,5653.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986161,1.6.1.8,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986162,1.6.1.9,35367.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986163,1.6.1.10,7141.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986164,1.6.1.11,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986165,1.6.1.12,26897.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,All industries,Number,223,units,0,v61986167,1.6.2.1,5839.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Agriculture,Number,223,units,0,v61986168,1.6.2.2,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Other primary industries,Number,223,units,0,v61986169,1.6.2.3,42.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Construction [23],Number,223,units,0,v61986170,1.6.2.4,198.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986171,1.6.2.5,436.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986172,1.6.2.6,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986173,1.6.2.7,308.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986174,1.6.2.8,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986175,1.6.2.9,1698.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986176,1.6.2.10,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986177,1.6.2.11,137.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,All other industries,Number,223,units,0,v61986178,1.6.2.12,1197.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986180,1.6.3.1,4445.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986181,1.6.3.2,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986182,1.6.3.3,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986183,1.6.3.4,230.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986184,1.6.3.5,898.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986185,1.6.3.6,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986186,1.6.3.7,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986187,1.6.3.8,375.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986188,1.6.3.9,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986189,1.6.3.10,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986190,1.6.3.11,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986191,1.6.3.12,406.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),All industries,Number,223,units,0,v61986193,1.6.4.1,482.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986194,1.6.4.2,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986195,1.6.4.3,0.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986196,1.6.4.4,146.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986197,1.6.4.5,41.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986198,1.6.4.6,28.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986199,1.6.4.7,16.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986200,1.6.4.8,,x,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986201,1.6.4.9,115.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986202,1.6.4.10,31.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986203,1.6.4.11,15.0,,,,0
+2022-01,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986204,1.6.4.12,38.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985894,1.1.1.1,1235834.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985895,1.1.1.2,123782.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61985896,1.1.1.3,46865.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61985897,1.1.1.4,127787.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61985898,1.1.1.5,100823.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61985899,1.1.1.6,124931.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61985900,1.1.1.7,67333.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61985901,1.1.1.8,98899.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61985902,1.1.1.9,276315.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985903,1.1.1.10,39717.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61985904,1.1.1.11,32997.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61985905,1.1.1.12,196383.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,All industries,Number,223,units,0,v61985907,1.1.2.1,3175323.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Agriculture,Number,223,units,0,v61985908,1.1.2.2,366942.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Other primary industries,Number,223,units,0,v61985909,1.1.2.3,52283.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Construction [23],Number,223,units,0,v61985910,1.1.2.4,293124.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61985911,1.1.2.5,157816.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61985912,1.1.2.6,358166.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61985913,1.1.2.7,153025.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Finance and insurance [52],Number,223,units,0,v61985914,1.1.2.8,63260.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61985915,1.1.2.9,214747.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61985916,1.1.2.10,248753.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61985917,1.1.2.11,90319.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of accounts,All other industries,Number,223,units,0,v61985918,1.1.2.12,1176888.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61985920,1.1.3.1,184966.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61985921,1.1.3.2,15925.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61985922,1.1.3.3,11038.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61985923,1.1.3.4,17891.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61985924,1.1.3.5,19583.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61985925,1.1.3.6,16559.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61985926,1.1.3.7,11400.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61985927,1.1.3.8,23032.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61985928,1.1.3.9,25473.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985929,1.1.3.10,5563.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61985930,1.1.3.11,4929.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61985931,1.1.3.12,33573.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),All industries,Number,223,units,0,v61985933,1.1.4.1,191811.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61985934,1.1.4.2,36140.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61985935,1.1.4.3,3418.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61985936,1.1.4.4,15590.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61985937,1.1.4.5,8076.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61985938,1.1.4.6,22543.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61985939,1.1.4.7,5758.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61985940,1.1.4.8,3410.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61985941,1.1.4.9,16400.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61985942,1.1.4.10,6769.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61985943,1.1.4.11,4967.0,,,,0
+2022-07,Canada,2021A000011124,All suppliers,Number of disbursements (term credit),All other industries,Number,223,units,0,v61985944,1.1.4.12,68740.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985946,1.2.1.1,781357.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985947,1.2.1.2,56770.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61985948,1.2.1.3,30072.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61985949,1.2.1.4,91802.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61985950,1.2.1.5,57762.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61985951,1.2.1.6,84389.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61985952,1.2.1.7,44789.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61985953,1.2.1.8,74916.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61985954,1.2.1.9,171485.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985955,1.2.1.10,23199.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61985956,1.2.1.11,16521.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61985957,1.2.1.12,129651.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,All industries,Number,223,units,0,v61985959,1.2.2.1,2552297.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Agriculture,Number,223,units,0,v61985960,1.2.2.2,192948.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Other primary industries,Number,223,units,0,v61985961,1.2.2.3,33473.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Construction [23],Number,223,units,0,v61985962,1.2.2.4,232202.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61985963,1.2.2.5,120501.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61985964,1.2.2.6,303393.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61985965,1.2.2.7,131691.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Finance and insurance [52],Number,223,units,0,v61985966,1.2.2.8,54978.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61985967,1.2.2.9,154496.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61985968,1.2.2.10,214771.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61985969,1.2.2.11,66809.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of accounts,All other industries,Number,223,units,0,v61985970,1.2.2.12,1047035.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61985972,1.2.3.1,111997.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61985973,1.2.3.2,7822.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61985974,1.2.3.3,4994.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61985975,1.2.3.4,10034.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61985976,1.2.3.5,7878.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61985977,1.2.3.6,9346.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61985978,1.2.3.7,7258.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61985979,1.2.3.8,18782.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61985980,1.2.3.9,14967.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61985981,1.2.3.10,2938.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61985982,1.2.3.11,3210.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61985983,1.2.3.12,24768.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),All industries,Number,223,units,0,v61985985,1.2.4.1,110421.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61985986,1.2.4.2,13210.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61985987,1.2.4.3,1342.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61985988,1.2.4.4,6551.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61985989,1.2.4.5,3585.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61985990,1.2.4.6,15671.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61985991,1.2.4.7,2425.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61985992,1.2.4.8,1932.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61985993,1.2.4.9,9223.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61985994,1.2.4.10,3292.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61985995,1.2.4.11,2700.0,,,,0
+2022-07,Canada,2021A000011124,Domestic banks,Number of disbursements (term credit),All other industries,Number,223,units,0,v61985996,1.2.4.12,50490.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,All industries,Dollars,81,millions,6,v61985998,1.3.1.1,130204.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61985999,1.3.1.2,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986000,1.3.1.3,10201.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986001,1.3.1.4,14404.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986002,1.3.1.5,17407.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986003,1.3.1.6,13114.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986004,1.3.1.7,8546.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986005,1.3.1.8,15630.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986006,1.3.1.9,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986007,1.3.1.10,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986008,1.3.1.11,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986009,1.3.1.12,14825.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,All industries,Number,223,units,0,v61986011,1.3.2.1,91164.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Agriculture,Number,223,units,0,v61986012,1.3.2.2,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Other primary industries,Number,223,units,0,v61986013,1.3.2.3,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Construction [23],Number,223,units,0,v61986014,1.3.2.4,7268.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986015,1.3.2.5,5221.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986016,1.3.2.6,7559.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986017,1.3.2.7,3655.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986018,1.3.2.8,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986019,1.3.2.9,6687.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986020,1.3.2.10,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986021,1.3.2.11,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of accounts,All other industries,Number,223,units,0,v61986022,1.3.2.12,14866.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986024,1.3.3.1,37011.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986025,1.3.3.2,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986026,1.3.3.3,3661.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986027,1.3.3.4,3876.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986028,1.3.3.5,6945.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986029,1.3.3.6,3903.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986030,1.3.3.7,2804.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986031,1.3.3.8,3330.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986032,1.3.3.9,4355.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986033,1.3.3.10,1978.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986034,1.3.3.11,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986035,1.3.3.12,4074.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),All industries,Number,223,units,0,v61986037,1.3.4.1,13833.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986038,1.3.4.2,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986039,1.3.4.3,875.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986040,1.3.4.4,1942.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986041,1.3.4.5,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986042,1.3.4.6,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986043,1.3.4.7,530.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986044,1.3.4.8,687.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986045,1.3.4.9,1035.0,,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986046,1.3.4.10,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986047,1.3.4.11,,x,,,0
+2022-07,Canada,2021A000011124,Other banks,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986048,1.3.4.12,882.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986050,1.4.1.1,118950.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986051,1.4.1.2,17724.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986052,1.4.1.3,2087.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986053,1.4.1.4,15651.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986054,1.4.1.5,3837.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986055,1.4.1.6,6812.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986056,1.4.1.7,1649.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986057,1.4.1.8,1476.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986058,1.4.1.9,43294.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986059,1.4.1.10,2752.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986060,1.4.1.11,6174.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986061,1.4.1.12,17495.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,All industries,Number,223,units,0,v61986063,1.4.2.1,269914.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Agriculture,Number,223,units,0,v61986064,1.4.2.2,46231.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Other primary industries,Number,223,units,0,v61986065,1.4.2.3,10583.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Construction [23],Number,223,units,0,v61986066,1.4.2.4,37165.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986067,1.4.2.5,11687.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986068,1.4.2.6,21083.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986069,1.4.2.7,10381.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986070,1.4.2.8,3202.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986071,1.4.2.9,45966.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986072,1.4.2.10,13439.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986073,1.4.2.11,12175.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of accounts,All other industries,Number,223,units,0,v61986074,1.4.2.12,58002.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986076,1.4.3.1,15558.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986077,1.4.3.2,2263.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986078,1.4.3.3,,x,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986079,1.4.3.4,2859.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986080,1.4.3.5,571.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986081,1.4.3.6,885.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986082,1.4.3.7,,x,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986083,1.4.3.8,402.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986084,1.4.3.9,4729.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986085,1.4.3.10,,x,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986086,1.4.3.11,544.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986087,1.4.3.12,2284.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),All industries,Number,223,units,0,v61986089,1.4.4.1,35097.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986090,1.4.4.2,8422.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986091,1.4.4.3,905.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986092,1.4.4.4,5420.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986093,1.4.4.5,1139.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986094,1.4.4.6,2955.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986095,1.4.4.7,1539.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986096,1.4.4.8,598.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986097,1.4.4.9,5646.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986098,1.4.4.10,810.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986099,1.4.4.11,1331.0,,,,0
+2022-07,Canada,2021A000011124,Credit unions and caisses populaires,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986100,1.4.4.12,6332.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986102,1.5.1.1,105807.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986103,1.5.1.2,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986104,1.5.1.3,3771.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986105,1.5.1.4,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986106,1.5.1.5,15742.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986107,1.5.1.6,10561.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986108,1.5.1.7,6456.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986109,1.5.1.8,3574.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986110,1.5.1.9,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986111,1.5.1.10,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986112,1.5.1.11,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986113,1.5.1.12,7507.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,All industries,Number,223,units,0,v61986115,1.5.2.1,256241.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Agriculture,Number,223,units,0,v61986116,1.5.2.2,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Other primary industries,Number,223,units,0,v61986117,1.5.2.3,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Construction [23],Number,223,units,0,v61986118,1.5.2.4,16300.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986119,1.5.2.5,19927.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986120,1.5.2.6,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986121,1.5.2.7,6963.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986122,1.5.2.8,2882.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986123,1.5.2.9,6009.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986124,1.5.2.10,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986125,1.5.2.11,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of accounts,All other industries,Number,223,units,0,v61986126,1.5.2.12,55791.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986128,1.5.3.1,16075.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986129,1.5.3.2,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986130,1.5.3.3,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986131,1.5.3.4,963.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986132,1.5.3.5,3324.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986133,1.5.3.6,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986134,1.5.3.7,777.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986135,1.5.3.8,99.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986136,1.5.3.9,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986137,1.5.3.10,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986138,1.5.3.11,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986139,1.5.3.12,1659.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),All industries,Number,223,units,0,v61986141,1.5.4.1,31987.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986142,1.5.4.2,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986143,1.5.4.3,296.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986144,1.5.4.4,1517.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986145,1.5.4.5,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986146,1.5.4.6,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986147,1.5.4.7,1244.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986148,1.5.4.8,141.0,,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986149,1.5.4.9,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986150,1.5.4.10,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986151,1.5.4.11,,x,,,0
+2022-07,Canada,2021A000011124,Finance companies,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986152,1.5.4.12,10989.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,All industries,Dollars,81,millions,6,v61986154,1.6.1.1,99516.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Agriculture,Dollars,81,millions,6,v61986155,1.6.1.2,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Other primary industries,Dollars,81,millions,6,v61986156,1.6.1.3,733.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Construction [23],Dollars,81,millions,6,v61986157,1.6.1.4,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Manufacturing [31-33],Dollars,81,millions,6,v61986158,1.6.1.5,6076.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Wholesale and retail trade,Dollars,81,millions,6,v61986159,1.6.1.6,10054.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Transportation and warehousing [48-49],Dollars,81,millions,6,v61986160,1.6.1.7,5893.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Finance and insurance [52],Dollars,81,millions,6,v61986161,1.6.1.8,3303.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Real estate and rental and leasing [53],Dollars,81,millions,6,v61986162,1.6.1.9,35759.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986163,1.6.1.10,7103.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,Accommodation and food services [72],Dollars,81,millions,6,v61986164,1.6.1.11,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of credit outstanding,All other industries,Dollars,81,millions,6,v61986165,1.6.1.12,26905.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,All industries,Number,223,units,0,v61986167,1.6.2.1,5707.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Agriculture,Number,223,units,0,v61986168,1.6.2.2,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Other primary industries,Number,223,units,0,v61986169,1.6.2.3,38.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Construction [23],Number,223,units,0,v61986170,1.6.2.4,189.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Manufacturing [31-33],Number,223,units,0,v61986171,1.6.2.5,480.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Wholesale and retail trade,Number,223,units,0,v61986172,1.6.2.6,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Transportation and warehousing [48-49],Number,223,units,0,v61986173,1.6.2.7,335.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Finance and insurance [52],Number,223,units,0,v61986174,1.6.2.8,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Real estate and rental and leasing [53],Number,223,units,0,v61986175,1.6.2.9,1589.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,"Professional, scientific and technical services [54]",Number,223,units,0,v61986176,1.6.2.10,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,Accommodation and food services [72],Number,223,units,0,v61986177,1.6.2.11,125.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of accounts,All other industries,Number,223,units,0,v61986178,1.6.2.12,1194.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),All industries,Dollars,81,millions,6,v61986180,1.6.3.1,4326.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Agriculture,Dollars,81,millions,6,v61986181,1.6.3.2,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Other primary industries,Dollars,81,millions,6,v61986182,1.6.3.3,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Construction [23],Dollars,81,millions,6,v61986183,1.6.3.4,159.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Manufacturing [31-33],Dollars,81,millions,6,v61986184,1.6.3.5,865.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Wholesale and retail trade,Dollars,81,millions,6,v61986185,1.6.3.6,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Transportation and warehousing [48-49],Dollars,81,millions,6,v61986186,1.6.3.7,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Finance and insurance [52],Dollars,81,millions,6,v61986187,1.6.3.8,420.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Real estate and rental and leasing [53],Dollars,81,millions,6,v61986188,1.6.3.9,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),"Professional, scientific and technical services [54]",Dollars,81,millions,6,v61986189,1.6.3.10,134.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),Accommodation and food services [72],Dollars,81,millions,6,v61986190,1.6.3.11,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Value of disbursements (term credit),All other industries,Dollars,81,millions,6,v61986191,1.6.3.12,709.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),All industries,Number,223,units,0,v61986193,1.6.4.1,473.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Agriculture,Number,223,units,0,v61986194,1.6.4.2,0.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Other primary industries,Number,223,units,0,v61986195,1.6.4.3,0.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Construction [23],Number,223,units,0,v61986196,1.6.4.4,160.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Manufacturing [31-33],Number,223,units,0,v61986197,1.6.4.5,39.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Wholesale and retail trade,Number,223,units,0,v61986198,1.6.4.6,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Transportation and warehousing [48-49],Number,223,units,0,v61986199,1.6.4.7,20.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Finance and insurance [52],Number,223,units,0,v61986200,1.6.4.8,52.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Real estate and rental and leasing [53],Number,223,units,0,v61986201,1.6.4.9,,x,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),"Professional, scientific and technical services [54]",Number,223,units,0,v61986202,1.6.4.10,21.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),Accommodation and food services [72],Number,223,units,0,v61986203,1.6.4.11,15.0,,,,0
+2022-07,Canada,2021A000011124,Insurance companies and portfolio managers,Number of disbursements (term credit),All other industries,Number,223,units,0,v61986204,1.6.4.12,46.0,,,,0

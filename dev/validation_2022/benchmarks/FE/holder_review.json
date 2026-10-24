@@ -1,0 +1,18 @@
+{
+  "url": "https://www150.statcan.gc.ca/n1/tbl/csv/33100014-eng.zip",
+  "retrieved_utc": "2026-10-24T01:04:04.962833+00:00",
+  "zip_sha256": "b7a9af5a58575b797e2d18e6ad78b6c4f6211988913c38c9b24513a2bc56b807",
+  "csv_sha256": "523031d2f09c907b27edcc9e84e2765d3cd873695c450a1fdd2b142cbc5e82fc",
+  "extract_sha256": "633e1c514626d4e3b95c09db02a457d994c5c186e6e213989ff8e67f22e6bd10",
+  "table": "33-10-0014",
+  "reference": "2022 H2 (REF_DATE 2022-07)",
+  "vectors": {
+    "v61985894": 1235834000000.0,
+    "v61985946": 781357000000.0,
+    "v61985998": 130204000000.0,
+    "v61986050": 118950000000.0,
+    "v61986102": 105807000000.0,
+    "v61986154": 99516000000.0
+  },
+  "assessment": "Holder detail exists for all business borrowers, including finance and unincorporated enterprises, not the NBSA private non-financial corporation external-loan instruments. No directly commensurate NFPC bank-holder cross-tab established. Retain all-external-as-bank upper-bound assumption; do not transplant these shares as an exact NFPC observation."
+}
