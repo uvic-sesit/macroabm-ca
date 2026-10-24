@@ -101,6 +101,12 @@ class Diagnostics:
             for i in range(len(failed)):
                 r=dict(region=n,quarter=self.t,firm=i,industry=int(f.states['Industry'][i]),failed=bool(failed[i]),
                        loan_debt=float(z['debt'][i]),overdraft_cancelled=float(max(0,-z['deposits'][i])) if failed[i] else 0.)
+                if c.configuration.household_closure.firm_payment_default_enabled:
+                    r.update(loan_debt=float(f.states['payment_default_loss'][i]), overdraft_cancelled=0.,
+                        retained_contract=float(f.states['payment_default_retained'][i]),
+                        recovery_cash=float(f.states['payment_default_recovery_cash'][i]),
+                        service_shortfall=float(f.states['payment_service_shortfall'][i]),
+                        collateral_capacity=float(f.states['payment_default_collateral_capacity'][i]))
                 r.update({k:float(v[i]) for k,v in z.items()})
                 for k,v in p.items():r[k]=float(v[i])
                 self.firm.append(r)
