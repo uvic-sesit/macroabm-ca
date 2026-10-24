@@ -178,6 +178,9 @@ class HouseholdClosure:
         add_series(f,"household_distribution_requests",np.zeros((3,len(f.ts.current("deposits")))))
         add_series(b,"household_dividends",np.zeros_like(b.ts.current("equity")))
         add_series(g,"taxes_household_distributions",[0.])
+        if config.prudent_firm_payout_enabled:
+            # Explicit opening proxy: one initial quarter, not all book equity.
+            f.states['payout_retained_profit']=np.maximum(0.,f.ts.current('profits')-f.ts.current('corporate_taxes_paid'))
         self.plan_payments()
 
     def plan_payments(self):
@@ -199,6 +202,14 @@ class HouseholdClosure:
         capacity = np.maximum(0, f.ts.current("deposits"))
         factor = np.minimum(1, np.divide(capacity, requested, out=np.ones_like(requested), where=requested > 0))
         self.firm_requests = requests * factor
+        if cfg.prudent_firm_payout_enabled:
+            from .firm_payout import prudent_requests,scheduled_reserve
+            reserve=scheduled_reserve(c)
+            f.states['payout_retained_before']=f.states['payout_retained_profit'].copy()
+            f.states['payout_cash_at_declaration']=f.ts.current('deposits').copy()
+            f.states['payout_reserve']=reserve.copy()
+            self.firm_requests=prudent_requests(self.firm_requests,f.ts.current('deposits'),
+                f.states['payout_retained_profit'],reserve)
         bank_profit = np.maximum(0, b.ts.current("profits")) * (1 - g.states["Profit Tax"])
         buffer = np.maximum(0, b.ts.current("equity")
                             - b.parameters.capital_adequacy_ratio * b.ts.current("total_outstanding_loans"))
@@ -243,7 +254,12 @@ class HouseholdClosure:
             self.c.central_government.states["Profit Tax"] * self.actual_firm_payments[0])
         put(f, "corporate_taxes_paid", f.ts.current("corporate_taxes_paid") - self.corporate_tax_rebate)
         f.ts.household_distributions.append(paid)
+        if self.cfg.prudent_firm_payout_enabled:
+            f.states['payout_cash_before_settlement']=f.ts.current('deposits').copy()
         put(f, "deposits", f.ts.current("deposits") - paid + self.corporate_tax_rebate)
+        if self.cfg.prudent_firm_payout_enabled:
+            f.states['payout_cash_after_settlement']=f.ts.current('deposits').copy()
+            f.states['payout_retained_profit'] += f.ts.current('profits')-f.ts.current('corporate_taxes_paid')-paid
 
     def realised_income(self):
         c = self.c

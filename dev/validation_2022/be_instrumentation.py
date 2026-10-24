@@ -13,7 +13,7 @@ def price_components(previous, actual, expected_factor, demand_factor, cost_fact
 
 class FirmCostDiagnosis:
     def __init__(self, sim, diag, data):
-        self.rows = []; self.prices = {}; self.io = {}; self.parameters = []
+        self.rows = []; self.prices = {}; self.io = {}; self.parameters = [];self.payouts=[]
         for name, c in sim.countries.items():
             n = str(name); f = c.firms; setter = f.functions['prices']
             v = data.synthetic_countries[name].industry_data['industry_vectors']
@@ -61,7 +61,17 @@ class FirmCostDiagnosis:
             for k,v in costs.items(): row[k]=v[i]
             row['unit_cost_reconstructed']=sum(v[i] for v in costs.values())/output[i] if output[i] else np.nan
             self.rows.append(row)
+            if t and c.configuration.household_closure.prudent_firm_payout_enabled:
+                closure=c.household_closure
+                self.payouts.append(dict(region=n,quarter=t,firm=i,industry=int(industries[i]),
+                    retained_before=f.states['payout_retained_before'][i],retained_after=f.states['payout_retained_profit'][i],
+                    cash_at_declaration=f.states['payout_cash_at_declaration'][i],reserve=f.states['payout_reserve'][i],
+                    cash_before_settlement=f.states['payout_cash_before_settlement'][i],cash_after_settlement=f.states['payout_cash_after_settlement'][i],
+                    dividend_requested=closure.requested_firm_payments[2,i],dividend_paid=closure.actual_firm_payments[2,i],
+                    mixed_paid=closure.actual_firm_payments[0,i],transfers_paid=closure.actual_firm_payments[1,i],
+                    current_profit=cur(f,'profits')[i]))
 
     def save(self,out):
         pd.DataFrame(self.rows).to_csv(out/'firm_costs.csv',index=False)
         pd.DataFrame(self.parameters).to_csv(out/'price_parameters.csv',index=False)
+        if self.payouts:pd.DataFrame(self.payouts).to_csv(out/'payout_log.csv',index=False)
