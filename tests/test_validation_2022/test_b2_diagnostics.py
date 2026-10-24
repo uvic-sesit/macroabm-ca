@@ -3,7 +3,7 @@ import sys
 import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'dev/validation_2022'))
 from b2_gates import assess
-from b2_instrumentation import fixed_groups,consumption_units,weighted_median
+from b2_instrumentation import fixed_groups,consumption_units,weighted_median,income_per_household
 
 
 def test_B2_gates_zero_share_strict_and_quintile_relative_share_thresholds():
@@ -21,3 +21,11 @@ def test_source_specific_OECD_units_and_weighted_household_ranks():
     np.testing.assert_allclose(units,[2.3,1.,1.])
     np.testing.assert_array_equal(fixed_groups(np.array([10.,20.,30.,40.]),np.ones(4),2),[1,1,2,2])
     assert weighted_median(np.array([0.,1.,10.]),np.array([1.,1.,8.]))==10.
+
+
+def test_national_income_rank_is_invariant_to_regional_expansion_factors():
+    a=income_per_household(np.array([10000.,30000.])*1000,1000)
+    b=income_per_household(np.array([10000.,30000.])*10,10)
+    np.testing.assert_array_equal(a,b)
+    values=np.r_[a,b]
+    np.testing.assert_array_equal(fixed_groups(values,np.ones(4),2),[1,2,1,2])

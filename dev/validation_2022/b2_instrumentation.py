@@ -10,6 +10,11 @@ def fixed_groups(income,weights,n):
     return np.clip(np.ceil(n*r),1,n).astype(int)
 
 
+def income_per_household(income,scale):
+    if not np.isfinite(scale) or scale<=0:raise ValueError('Positive household expansion factor required')
+    return np.asarray(income,float)/scale
+
+
 def weighted_median(values,weights):
     order=np.argsort(values,kind='stable');v=np.asarray(values)[order];w=np.asarray(weights)[order]
     return v[np.searchsorted(np.cumsum(w),w.sum()/2)]
@@ -23,8 +28,9 @@ def consumption_units(ages,households,n):
 
 
 class B2HouseholdDiagnosis:
-    def __init__(self,sim,data):
+    def __init__(self,sim,data,micro_out=None):
         self.rows=[];self.initial=[];self.units={};self.calibration=[]
+        self.micro_out=micro_out;self.micro=[]
         for name,c in sim.countries.items():
             h=c.households;n=len(cur(h,'income'))
             self.units[str(name)]=consumption_units(np.asarray(c.individuals.states['Age'],float),
@@ -71,8 +77,13 @@ class B2HouseholdDiagnosis:
         blocks=[];weights=[];DHEA=[];SHS=[]
         for c in sim.countries.values():
             income,di,gross=self.income(c,t);blocks.append((c,income));weights.append(np.full(len(income),c.scale))
-            DHEA.append(di/self.units[str(c.country_name)]);SHS.append(gross)
+            DHEA.append(income_per_household(di,c.scale)/self.units[str(c.country_name)])
+            SHS.append(income_per_household(gross,c.scale))
         w=np.concatenate(weights)
+        if self.micro_out is not None:
+            C=np.concatenate([cur(c.households,'consumption')*(1+c.central_government.states['Value-added Tax'])+
+                cur(c.households,'rent') for c,_ in blocks])
+            self.micro.append(np.column_stack([np.full(len(w),t),w,np.concatenate(DHEA),np.concatenate(SHS),C]))
         for scheme,values in [('DHEA_equivalised_DI',DHEA),('SHS_gross_household_income',SHS)]:
             ranks=fixed_groups(np.concatenate(values),w,5);start=0
             for c,income in blocks:
@@ -93,3 +104,8 @@ class B2HouseholdDiagnosis:
     def save(self,out):
         pd.DataFrame(self.rows).to_csv(out/'consumption_quintiles.csv',index=False)
         if len(self.gaps):self.gaps.to_csv(out/'initial_wealth_gaps.csv',index=False)
+        if self.micro_out is not None:
+            self.micro_out.mkdir(parents=True,exist_ok=True)
+            np.savez_compressed(self.micro_out/'distribution_ranks.npz',
+                columns=np.array(['quarter','households','equivalised_DI_per_HH','gross_income_per_HH','consumption_aggregate']),
+                data=np.vstack(self.micro))
