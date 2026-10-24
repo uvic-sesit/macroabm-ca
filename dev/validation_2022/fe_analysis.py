@@ -60,9 +60,13 @@ def main():
         g=l.groupby(keys)[['debt','capital','GOS','deposits','overdraft']].sum()
         g['debt_to_capital']=g.debt/g.capital
         g['debt_to_annualised_GOS']=g.debt/(4*g.GOS)
+        g['total_bank_credit']=g.debt+g.overdraft
+        g['credit_to_capital']=g.total_bank_credit/g.capital
+        g['credit_to_annualised_GOS']=g.total_bank_credit/(4*g.GOS)
         g.to_csv(OUT/f'leverage_{label}.csv')
     f=pd.concat(defaults,ignore_index=True)
-    columns=['loan_debt','overdraft_cancelled','retained_contract','recovery_cash','service_shortfall','collateral_capacity']
+    columns=['loan_debt','overdraft_cancelled','retained_contract','retained_loan','retained_overdraft',
+             'recovery_cash','service_shortfall','collateral_capacity']
     if len(f):
         g=f.groupby(['seed','quarter','industry']).agg(defaults=('firm','size'),**{k:(k,'sum') for k in columns})
         g.to_csv(OUT/'firm_defaults_detail.csv')

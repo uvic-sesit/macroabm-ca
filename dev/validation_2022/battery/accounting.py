@@ -95,6 +95,11 @@ class AccountingBattery:
         distributions = _cur(f.ts, "household_distributions", [0.0]).sum()
         bank_dividends = _cur(b.ts, "household_dividends", [0.0]).sum()
         implied_f -= distributions
+        # Non-cash relief of an explicit overdraft liability is recognized
+        # separately, not inferred from an unexplained cash residual.
+        firm_od_relief = float(np.sum(f.states.get('overdraft_writeoff_current', 0.)))
+        implied_f += firm_od_relief
+        r['firm_overdraft_relief'] = firm_od_relief
         hh_distributions = sum(_cur(h.ts, k, [0.0]).sum() for k in
                                ("income_mixed", "income_dividends", "income_corporate_transfers"))
         distribution_tax = _cur(g.ts, "taxes_household_distributions", [0.0]).sum()
@@ -195,7 +200,7 @@ class AccountingBattery:
         r['bank_recapitalisation_counterparty_resid'] = injection - bank_recap
         r["bank_equity_unexplained"] = dE - (prof.sum() - st["Profit Tax"] * np.maximum(0, prof).sum() - losses - bank_dividends + bank_recap)
         # write-offs move R only to the extent that the lending bank does not recognise the loss (A14)
-        named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) - firm_zeroing
+        named_boundary = fai + fai_pit - d_ofa + (writeoffs - losses) + firm_od_relief - firm_zeroing
         r['ofa_without_issuer'] = -d_ofa
         r['ofa_liquidation_without_issuer'] = float(np.sum(h.states.get('ofa_liquidation_without_issuer', 0.)))
         # an unexplained jump in the loan stock moves R one-for-one with opposite sign; it is reported separately

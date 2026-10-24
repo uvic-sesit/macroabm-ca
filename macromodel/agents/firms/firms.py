@@ -1792,6 +1792,7 @@ class Firms(Agent):
         # granted it, recognised against bank equity like the loan write-offs (A14 / F-A2).
         new_firm_deposits = self.ts.current("deposits")
         overdraft = np.where(self.states["is_insolvent"], np.maximum(0.0, -new_firm_deposits), 0.0)
+        self.states['overdraft_writeoff_current'] = overdraft.copy()
         if overdraft.any() and hasattr(credit_market, "queue_bank_losses"):
             n_banks = credit_market.states["lt_loans"].shape[1]
             credit_market.queue_bank_losses(

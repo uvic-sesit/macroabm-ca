@@ -24,11 +24,12 @@ def payment_distress(deposits_after_service, scheduled_service, previous, period
 
 
 def resolve_payment_default(firms, credit_market, capital_value, periods, haircut):
-    """Write down only uncovered bank principal, keep cash/assets/producer.
+    """Write down uncovered total bank credit, keeping assets and producer.
 
     Existing contractual interest and amortisation are reduced pro rata with
-    principal. No maturity extension is added. An unchanged overdraft remains
-    owed to its bank; it is never silently cancelled by this rule.
+    principal. No maturity extension is added. Overdrafts share collateral and
+    uncovered losses pro rata with formal loans; their covered debit balance
+    remains owed. Relief never creates positive cash or collateral-sale money.
     """
     f = firms; cm = credit_market
     debt = cm.compute_outstanding_short_term_loans_by_firm() + cm.compute_outstanding_long_term_loans_by_firm()
@@ -37,16 +38,29 @@ def resolve_payment_default(firms, credit_market, capital_value, periods, haircu
     streak, default, shortfall = payment_distress(f.ts.current('deposits'), service,
         f.states.get('payment_distress_streak', np.zeros(len(debt), dtype=int)), periods)
     capacity = np.maximum(0., np.asarray(capital_value)) * (1 - haircut)
-    loss = np.where(default, np.maximum(0., debt - capacity), 0.)
-    retained = np.where(default, debt-loss, 0.)
+    overdraft = np.maximum(0., -f.ts.current('deposits'))
+    total_credit = debt + overdraft
+    total_loss = np.where(default, np.maximum(0., total_credit - capacity), 0.)
+    fraction = np.divide(total_loss,total_credit,out=np.zeros_like(debt),where=total_credit>0)
+    loss = debt * fraction
+    od_loss = overdraft * fraction
+    retained = np.where(default, total_credit-total_loss, 0.)
     cm.restructure_firm_principal(loss)
+    if od_loss.any():
+        cm.queue_bank_losses(np.bincount(np.asarray(f.states['Corresponding Bank ID'],dtype=int),
+            weights=od_loss,minlength=cm.states['st_loans'].shape[1]))
     f.states.update(is_insolvent=default, payment_distress_streak=np.where(default, 0, streak),
         payment_service_shortfall=shortfall, payment_default_loss=loss,
+        payment_default_overdraft_loss=od_loss,overdraft_writeoff_current=od_loss,
+        payment_default_total_loss=total_loss,
+        payment_default_retained_loans=np.where(default,debt-loss,0.),
+        payment_default_retained_overdraft=np.where(default,overdraft-od_loss,0.),
         payment_default_retained=retained, payment_default_collateral_capacity=capacity,
         payment_default_recovery_cash=np.zeros(len(debt)))
     for name, value in [('short_term_loan_debt',cm.compute_outstanding_short_term_loans_by_firm()),
                         ('long_term_loan_debt',cm.compute_outstanding_long_term_loans_by_firm()),
-                        ('debt',debt-loss), ('equity',f.ts.current('equity')+loss)]:
+                        ('debt',debt-loss), ('deposits',f.ts.current('deposits')+od_loss),
+                        ('equity',f.ts.current('equity')+loss+od_loss)]:
         f.ts.dicts[name][-1] = value
     # A default event is a restructuring date, not permanent exit. A fresh N
     # consecutive distressed quarters is needed for another restructuring.

@@ -117,7 +117,7 @@ def run(args):
     pd.DataFrame(events, columns=['region', 'bank', 'quarter', 'resolution_count', 'equity_before',
         'losses_absorbed_by_equity', 'uncovered_loss', 'recapitalisation', 'equity_after']).to_csv(out / 'resolutions.csv', index=False)
     checks = IDENTITY_COLUMNS + ['bank_hh_deposit_snapshot_gap', 'bank_firm_deposit_snapshot_gap',
-                                'bank_equity_unexplained', 'goods_market_gap']
+                                'bank_equity_unexplained', 'goods_market_gap', 'firm_cash_identity_resid']
     if not np.isfinite(frame[checks].to_numpy()).all():
         raise AssertionError('Non-finite accounting identity')
     err = frame[checks].abs().div(frame[['hh_income', 'firm_sales']].abs().max(axis=1).clip(lower=1), axis=0).max().max()
