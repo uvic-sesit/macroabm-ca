@@ -1,0 +1,28 @@
+{
+  "checked_utc_date": "2026-10-24",
+  "source": "StatCan SFS 2023 economic-family PUMF codebooks; original files read only",
+  "vector": "PUMF variables, not CANSIM vectors",
+  "files": [
+    {
+      "path": "C:\\Users\\eizadi\\OneDrive - University of Victoria\\Documents\\Work\\Esiz_Git\\SESIT\\macroabm-ca\\dev\\raw_data\\can_2022\\pumf\\sfs_2023\\SFS2023_EFAM_PUMF_vare.sps",
+      "sha256": "956899177a60ba956b18e7b31cbaa181644a112827de905ccf78403ca3466b4b"
+    },
+    {
+      "path": "C:\\Users\\eizadi\\OneDrive - University of Victoria\\Documents\\Work\\Esiz_Git\\SESIT\\macroabm-ca\\dev\\raw_data\\can_2022\\pumf\\sfs_2023\\SFS2023_EFAM_PUMF_vale.sps",
+      "sha256": "67864ab5fcd74671e74e38d236f013ef55b40278fd14b7b398154e6aa2a55199"
+    }
+  ],
+  "verified_definitions": {
+    "PWASTDEP": "Money in banks, non-registered",
+    "PWASTMUI": "Mutual funds, other investment, Income trusts, non-registered",
+    "PWASTSTK": "Stocks and shares, non registered",
+    "PWASTBND": "Bonds, non-registered",
+    "PWASTOIN": "Other investments or financial assets",
+    "PWATFS": "Tax Free Saving Accounts (TFSA)",
+    "PEFATINC": "After-tax income",
+    "PAGEMIEG": "Major income recipient: <25,25-34,35-44,45-54,55-64,65-79,80+"
+  },
+  "income_special_codes_observed": 0,
+  "age_special_codes_observed": 0,
+  "reference_values_changed": false
+}

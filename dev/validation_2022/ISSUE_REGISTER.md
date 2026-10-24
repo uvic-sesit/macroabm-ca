@@ -448,3 +448,35 @@ Full-suite result: 433 passed / 30 failed out of 463; all failures are the known
 See CLOSURE_FE_2026-10-24.md for per-quarter losses, planned/realized
 investment, GDP/consumption/saving, bank support/capital, initial industry debt,
 resolution events, leverage, firm-default cells and the three-seed diagnosis.
+
+## Buffer-stock B and prudent payouts - 24 October 2026 UTC
+
+Supersedes the FE proposal-only status for B. F remains an accepted candidate.
+Gate B fails on all seeds; E, Phase B and C_dp_005 have not started.
+
+| Check / decision | Commit / evidence | Finding / decision needed |
+|---|---|---|
+| Fixed SFS buffer response | 2948b08, 47e6002; 5 regressions | Default off, candidate on; kappa .10, smoothing .25, fixed SFS decile/age buffers; initial contractual service replaces unset interest TS. |
+| t0 consumption level | buffer_calibration.csv | Matches 377.8455B/q exactly. Common level is -83,544.52 CAD/household/q. It shifts the effective buffer threshold and clips widespread positive-income goods demand to zero; review this distributional anchor before accepting the candidate. |
+| Gate B | 1e83c42; 2 diagnostic/gate regressions | Saving fails in every base seed and all four one-factor sensitivities. No coefficient or SFS cell was refitted to the gate. |
+| Firm t0 costs | 6a973a6; industry_costs.csv | I cost/price=1.323, H53=1.295, A02=1.082 at t0. Positive GOS is outweighed by inherited investment-proxy depreciation. No proven mechanical t0 data error; empirical CFC bridge remains needed. |
+| Prudent discretionary dividends | 95cf3e6; 3 regressions and exact payout ledger audit | Positive retained profit plus cash above next service/wage reserve. Mixed income and corporate transfers retain treatment. Firm-loss effect differs across seeds. |
+| E / pricing / entry | not implemented | E held by Gate B; pricing and producer adjustment remain specified proposals only. |
+
+| seed | constrained_slope_pp | Q12_constrained_pct | Q12_saving_pct | gate_passed |
+| --- | --- | --- | --- | --- |
+| 0 | 0.040 | 0.679 | 48.222 | False |
+| 1 | 0.039 | 0.678 | 47.408 | False |
+| 2 | 0.050 | 0.743 | 48.239 | False |
+
+| seed | firm_loss_B | firm_loss_P | payout_B | payout_P | Q12_GDP_B | Q12_GDP_P | Q12_income_B | Q12_income_P |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 281.057 | 244.728 | 727.589 | 742.999 | 531.724 | 517.005 | 310.198 | 310.366 |
+| 1 | 241.029 | 292.927 | 742.445 | 722.057 | 525.032 | 531.788 | 311.016 | 308.412 |
+| 2 | 255.954 | 246.033 | 707.765 | 728.285 | 483.763 | 510.995 | 296.556 | 310.952 |
+
+All 16 serial runs pass accounting (max 1.44e-14); protected inputs and paired prefixes match. Full suite: 443 passed / 30 known failures / 0 extra failures, 473 cases; sampler one worker.
+
+Recommendation: do not accept this anchored B candidate or declare household losses plausible. Firm losses combine a starting capital-cost proxy with price/demand/continuation behaviour; they can be disclosed in exploratory work, not treated as a validated closure. Phase B remains gated.
+
+[CLOSURE_BE_2026-10-24.md](CLOSURE_BE_2026-10-24.md) contains the full quarterly, sensitivity, industry and seed evidence. Stop for review.

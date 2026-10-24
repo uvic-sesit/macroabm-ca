@@ -22,7 +22,8 @@ def source_matches(path,digest,head):
     # The first 2Q pilot preceded the instrumentation commit; its exact source
     # was subsequently committed without changes. Git normalises text endings.
     for revision in (head,'6a973a6'):
-        data=subprocess.run(['git','show',f'{revision}:{path}'],cwd=ROOT,capture_output=True)
+        gitpath=path.replace('\\','/')
+        data=subprocess.run(['git','show',f'{revision}:{gitpath}'],cwd=ROOT,capture_output=True)
         if data.returncode:continue
         blob=data.stdout;lf=blob.replace(b'\r\n',b'\n')
         if digest in [hashlib.sha256(v).hexdigest() for v in (blob,lf,lf.replace(b'\n',b'\r\n'))]:return revision
@@ -35,6 +36,11 @@ def main():
     provenance=json.loads((HERE/'benchmarks/BE/buffer_provenance.json').read_text())
     assert sha(Path(provenance['source']))==provenance['source_sha256']
     assert sha(HERE/'benchmarks/BE/sfs_liquid_buffers.csv')==provenance['extract_sha256']
+    index=json.loads((HERE/'benchmarks/BE/benchmark_index.json').read_text())
+    for ref in index['inherited_provenance']:assert sha(HERE/ref['path'])==ref['sha256']
+    account=index['household_account']
+    assert sha(HERE/'benchmarks/BE/household_targets_2022.csv')==account['selected_sha256']
+    assert sha(HERE/'benchmarks/household_corrections/36100112_2022.csv')==account['local_full_2022_extract_sha256']
     runs=[];maxerr=0.
     for manifest in sorted(OUT.glob('*/manifest.json')):
         m=json.loads(manifest.read_text());p=manifest.parent
@@ -52,6 +58,17 @@ def main():
             cols=a.select_dtypes('number').columns
             assert np.allclose(a[cols],b[cols],rtol=1e-12,atol=1e-4,equal_nan=True)
             paired=True
+        if m['payout']:
+            log=pd.read_csv(p/'payout_log.csv')
+            firm=pd.read_csv(p/'firms.csv')
+            v=log.merge(firm,on=['region','quarter','firm','industry'],suffixes=('_log','_firm'),validate='one_to_one')
+            cashcap=np.maximum(0.,v.cash_at_declaration-v.mixed_paid-v.transfers_paid-v.reserve)
+            assert (v.dividend_paid<=cashcap+1e-4).all()
+            assert (v.dividend_paid<=np.maximum(0.,v.retained_before)+1e-4).all()
+            expected=v.retained_before+v.current_profit-v.corporate_taxes_paid-v.mixed_paid-v.transfers_paid-v.dividend_paid
+            assert np.allclose(v.retained_after,expected,rtol=1e-12,atol=1e-4)
+            expectedcash=v.cash_before_settlement-v.mixed_paid-v.transfers_paid-v.dividend_paid+v.payout_tax_rebate
+            assert np.allclose(v.cash_after_settlement,expectedcash,rtol=1e-12,atol=1e-4)
         maxerr=max(maxerr,m['max_accounting_error'])
         runs.append(dict(run=p.name,head=m['head'],error=m['max_accounting_error'],prefix_match=paired,historical_sources=historical))
     def failures(p):

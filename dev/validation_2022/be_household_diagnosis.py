@@ -1,12 +1,24 @@
 """Aggregate local micro ledgers; publish group evidence, not household rows."""
 from pathlib import Path
 import json
+import sys
 import pandas as pd
 HERE=Path(__file__).resolve().parent
+sys.path.insert(0,str(HERE.parents[1]))
 OUT=HERE/'outputs/BE'
 
 
 def main():
+    from macro_data import DataWrapper
+    data=DataWrapper.init_from_pickle(HERE.parent/'pkl_files/io2022_household_agreed_bankcap_firmdebt.pkl')
+    initial=[]
+    for name,c in data.synthetic_countries.items():
+        if not str(name).startswith('CAN_'):continue
+        h=c.population.household_data
+        initial.append(dict(region=str(name),debt=h.Debt.sum(),
+            mortgage=h['Outstanding Balance of HMR Mortgages'].sum()+h['Outstanding Balance of Mortgages on other Properties'].sum(),
+            unsecured=h['Outstanding Balance of other Non-Mortgage Loans'].sum()))
+    pd.DataFrame(initial).to_csv(OUT/'initial_household_debt.csv',index=False)
     groups=[]
     for manifest in sorted(OUT.glob('*/manifest.json')):
         m=json.loads(manifest.read_text());p=manifest.parent
