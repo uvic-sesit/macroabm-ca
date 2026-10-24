@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 
 class HouseholdClosureConfiguration(BaseModel):
     buffer_stock_enabled: bool = False
+    buffer_stock_reanchor_enabled: bool = False
     buffer_stock_kappa: float = Field(default=.10,ge=0)
+    buffer_stock_kappa_below: float | None = Field(default=None,ge=0)
     buffer_stock_smoothing: float = Field(default=.25,gt=0,le=1)
     buffer_stock_reference: dict[str,list[float]] = {}
     prudent_firm_payout_enabled: bool = False
