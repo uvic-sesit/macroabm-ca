@@ -3,6 +3,11 @@ from pydantic import BaseModel, Field
 
 
 class HouseholdClosureConfiguration(BaseModel):
+    buffer_stock_enabled: bool = False
+    buffer_stock_kappa: float = Field(default=.10,ge=0)
+    buffer_stock_smoothing: float = Field(default=.25,gt=0,le=1)
+    buffer_stock_reference: dict[str,list[float]] = {}
+    prudent_firm_payout_enabled: bool = False
     firm_payment_default_enabled: bool = False
     firm_distress_periods: int = Field(default=3, ge=1)
     firm_collateral_haircut: float = Field(default=.20, ge=0, lt=1)

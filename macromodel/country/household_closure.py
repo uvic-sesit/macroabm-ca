@@ -302,6 +302,8 @@ def install_household_closures(countries):
         c.household_closure = HouseholdClosure(c,c.configuration.household_closure,weight)
     recalibrate_d2_saving(enabled)
     recalibrate_household_investment(enabled)
+    from .buffer_stock import initialize
+    initialize(enabled)
 
 
 def recalibrate_household_investment(countries):

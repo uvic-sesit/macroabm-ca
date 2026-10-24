@@ -1,0 +1,29 @@
+{
+  "table": "SFS 2023 economic-family PUMF, StatCan 13M0006X",
+  "vector": "PUMF variables, no vector IDs",
+  "url": "https://www150.statcan.gc.ca/n1/en/catalogue/13M0006X",
+  "reference": "SFS 2023 assets and PEFATINC income",
+  "extracted_utc": "2026-10-24T06:18:51.490081+00:00",
+  "source": "C:\\Users\\eizadi\\OneDrive - University of Victoria\\Documents\\Work\\Esiz_Git\\SESIT\\macroabm-ca\\dev\\raw_data\\can_2022\\pumf\\sfs_2023\\sfs2023_efam_pumf.csv",
+  "source_sha256": "958846bf6f72ab6cb85d1884e299fd675d04956135b9bbba27fc86650abe59af",
+  "extract_sha256": "393e772d9d32577a0c3bf02f28c1a4cea7d3c37c47f7f04717754ce0706065aa",
+  "variables": {
+    "weight": "PWEIGHT",
+    "income": "PEFATINC",
+    "age": "PAGEMIEG",
+    "liquid_assets": [
+      "PWASTDEP",
+      "PWASTMUI",
+      "PWASTSTK",
+      "PWASTBND",
+      "PWASTOIN",
+      "PWATFS"
+    ]
+  },
+  "method": "Weighted median of individual L/(annual after-tax income/4) among positive-income families, in weighted income decile x SFS age cell. No pensions or debt netting. Age 0 pools ages within income decile.",
+  "fallback": "For nonpositive model permanent income use the fixed cell weighted-median liquid-assets level, converted to model scale; not b times negative income.",
+  "exclusions": 0,
+  "survey_weights_unchanged": true,
+  "model_mapping": "Initial national model income decile, with initial highest-income linked individual age as major-income-recipient proxy; unknown age uses pooled-age SFS cell. Fixed thereafter.",
+  "uncertainty": "Survey economic families differ from model households; 2023 wealth vintage, Canadian income ranks with retained member skeleton; source ratios are not fitted to gates."
+}

@@ -958,12 +958,18 @@ class Country:
         Updates production plans, consumption demands, and prices before
         market clearing.
         """
+        buffer_receipts = None
+        if self.configuration.household_closure.buffer_stock_enabled:
+            from macromodel.country.household_closure import known_household_receipts
+            from macromodel.country.buffer_stock import apply
+            buffer_receipts = known_household_receipts(self)
+            apply(self,buffer_receipts)
         if self.configuration.household_closure.rent_offset_enabled:
             from macromodel.country.household_closure import offset_private_rent
             offset_private_rent(self)
         if self.configuration.household_closure.overdraft_limit_enabled:
             from macromodel.country.household_closure import cap_household_goods_budget
-            cap_household_goods_budget(self)
+            cap_household_goods_budget(self,net_receipts=buffer_receipts)
         self.firms.prepare_goods_market_clearing(
             exchange_rate_usd_to_lcu=self.exchange_rate_usd_to_lcu,
             previous_good_prices=self.economy.ts.current("good_prices"),
