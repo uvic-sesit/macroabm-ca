@@ -18,6 +18,11 @@ def constraint_classes(constrained, planned, resources, income, reference_income
         ['unconstrained','income_restoration_sufficient','persistent_spending_gap_assets_down'],default='other_or_combined')
 
 
+def household_workers(household_ids, firm_ids, size):
+    return np.bincount(np.asarray(household_ids,dtype=int),
+        weights=(np.asarray(firm_ids)>=0).astype(float),minlength=size)
+
+
 class FirmHouseholdDiagnosis:
     def __init__(self,sim,diag):
         self.rows=[];self.budgets={};self.leverage=[];self.initial=[];self.reference={}
@@ -47,20 +52,29 @@ class FirmHouseholdDiagnosis:
                     GOS=cur(f,'gross_operating_surplus_mixed_income',np.zeros(len(cur(f,'debt'))))[i]))
             def capture(*args,c=c,h=h,n=n,z=z,bands=bands,**kwargs):
                 b=self.budgets[n]
-                components=h.states['budget_receipt_components']
                 wages=cur(h,'income_employee').copy()
+                d2=cur(h,'income_mixed')+cur(h,'income_dividends')+cur(h,'income_corporate_transfers')
+                workers=household_workers(c.individuals.states['Corresponding Household ID'],
+                    c.individuals.states['Corresponding Firm ID'],len(wages))
                 if diag.t==1:
-                    self.reference[n]=dict(income=b['income'].copy(),assets=b['assets'].copy(),wages=wages.copy())
+                    self.reference[n]=dict(income=b['income'].copy(),assets=b['assets'].copy(),wages=wages.copy(),
+                        d2=d2.copy(),workers=workers.copy())
                 ref=self.reference[n]; constrained=h.states['overdraft_constrained']
                 klass=constraint_classes(constrained,b['planned'],b['resources'],b['income'],ref['income'],b['assets'],ref['assets'])
                 frame=pd.DataFrame(dict(decile=z['decile'],asset_band=bands,diagnosis=klass,
                     households=np.full(len(klass),c.scale),constrained=constrained*c.scale,
                     income_down=(b['income']<ref['income']-1e-5)*c.scale,
                     wages_down=(wages<ref['wages']-1e-5)*c.scale,
+                    firm_receipts_down=(d2<ref['d2']-1e-5)*c.scale,
+                    employment_down=(workers<ref['workers'])*c.scale,
+                    represented_employment=workers*c.scale,
+                    employment_change=(workers-ref['workers'])*c.scale,
                     assets_down=(b['assets']<ref['assets']-1e-5)*c.scale,
                     plan_above_income=(b['planned']>b['income']+1e-5)*c.scale,
                     income=b['income'],reference_income=ref['income'],income_change=b['income']-ref['income'],
-                    wage_change=wages-ref['wages'],opening_assets=b['assets'],reference_assets=ref['assets'],
+                    wage_change=wages-ref['wages'],firm_receipts_change=d2-ref['d2'],
+                    other_income_change=b['income']-ref['income']-(wages-ref['wages'])-(d2-ref['d2']),
+                    opening_assets=b['assets'],reference_assets=ref['assets'],
                     planned_consumption=b['planned_consumption'],planned_investment=b['planned_investment'],
                     consumption_cut=h.states['overdraft_consumption_cut'],investment_cut=h.states['overdraft_investment_cut']))
                 group=frame.groupby(['decile','asset_band','diagnosis']).sum().reset_index()
