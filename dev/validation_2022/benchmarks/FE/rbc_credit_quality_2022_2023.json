@@ -1,0 +1,30 @@
+{
+  "source": "RBC Annual Report 2023",
+  "url": "https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2023_e.pdf",
+  "reference": "Fiscal years ended 31 October 2022 and 2023",
+  "table": {
+    "wholesale_net_writeoffs": "Allowance for credit losses, printed/PDF page 178",
+    "total_PCL": "Table 77, page 126",
+    "net_writeoff_ratio": "Table 78, page 127"
+  },
+  "vector": "not applicable",
+  "verified_utc": "2026-10-24T04:49:47.274959+00:00",
+  "full_pdf_sha256": "e397264e0830325a8b99c6b93339a726f96b4a4898627cf75241a161b5f793c6",
+  "data": {
+    "2022": {
+      "wholesale_net_writeoffs_CAD": 136000000.0,
+      "total_net_writeoffs_CAD": 763000000.0,
+      "total_PCL_CAD": 484000000.0,
+      "net_writeoffs_percent_average_loans": 0.1,
+      "Canada_wholesale_impaired_PCL_CAD": 78000000.0
+    },
+    "2023": {
+      "wholesale_net_writeoffs_CAD": 293000000.0,
+      "total_net_writeoffs_CAD": 1213000000.0,
+      "total_PCL_CAD": 2468000000.0,
+      "net_writeoffs_percent_average_loans": 0.14,
+      "Canada_wholesale_impaired_PCL_CAD": 239000000.0
+    }
+  },
+  "scope": "RBC consolidated except specifically Canada-labeled PCL. One banking group, not Canada totals; net write-offs, provisions and fiscal recapitalisations are different measures. No model parameter fitted."
+}

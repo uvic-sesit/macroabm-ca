@@ -386,6 +386,10 @@ Full tests/ through run_pre_D3_tests.py: **421 passed, the same 30 known NaN fai
 
 ## F continuation - 24 October 2026 UTC (23 October local), execution pending
 
+Historical checkpoint: the execution block below was resolved by the user's
+clarification that serialization applies within this validation task. See the
+completed F measurements at the end of this register.
+
 The review accepts planned initial investment, not realized investment, as
 Gate 1: 60.59825B/quarter versus 36-10-0112 v62305994. This **supersedes the
 FAIL status in the earlier IFE entry**. Investment is income-based; the 5%
@@ -415,3 +419,32 @@ quarterly rate is depreciation. Consumption priority remains accepted.
 
 Details, initial industry/bank tables, assumptions and resumption scripts:
 [CLOSURE_FE_2026-10-24.md](CLOSURE_FE_2026-10-24.md).
+
+
+## F measured - 24 October 2026 UTC; stop before E
+
+The user clarified: keep this task's validation runs serial; the separate BDA
+workflow may continue. Six final runs (2Q then 12Q, seeds 0-2) completed
+sequentially at a039998. Source/input hashes and paired prefixes match.
+Maximum normalized accounting error is 6.67e-15, including explicit firm cash
+and overdraft-relief counterparties. Accepted input pickles remain unchanged.
+
+| Decision / issue | Commit or evidence | Result / next decision |
+|---|---|---|
+| Planned initial I / S-H7 wording | 9a26aeb; benchmark v62305994 | Initial planned 60.59825B/q exactly matches; Gate 1 passes. Investment is income-based; 5% is depreciation. |
+| F-I2 external loan boundary | 12987e6; new bankcap_firmdebt input | 1,281.615B vs 2,271.807B; +1,164.071B consolidation equity credit, -173.879B separate scope adjustment. Industry vectors/output allocation and holder/mortgage proxies documented. |
+| F payment distress | 923f107, 43bd9f9 | N=3, capital haircut 20%, provisional assumptions. Equity revaluation alone never triggers default. |
+| F uncovered overdraft principal | a039998; 12 focused tests pass | Corrects the loan-only shortfall omission. Formal loans and overdrafts share collateral and losses; exact lender loss and non-cash overdraft relief. Covered contracts/debit balances survive; recovery cash is zero. Superseded loan-only runs excluded. |
+| F gate | outputs/FE/gates_and_comparison.csv | Accounting passes all runs; firm losses fall 41.8% / 20.2% / 34.6%. Seed 1 misses our predeclared 25% materiality assessment (the user did not specify a numeric threshold). |
+| Household continuation check | Q4-Q12 OLS, unrounded | Slopes +2.126 / +2.088 / +2.061 percentage points/q. FAIL on all seeds; E does not start regardless of the firm-materiality interpretation. |
+| Household saving / constraints | final quarterly tables | Q12 cash saving 2.94% / 3.31% / 3.86% vs -0.6%; constrained share 50.52% / 50.32% / 49.68%. Consumption-only cuts are separately reported. |
+| Firm risk / bank support | final loss and resolution tables | Firm losses 205.4 / 265.0 / 230.0B, HH write-offs 236.5 / 237.1 / 237.0B, bank losses 441.9 / 502.1 / 467.0B, recapitalisations 220.1 / 310.2 / 235.2B over 12Q. Not accepted as normal Canadian loss/support magnitudes. |
+| Remaining firm mechanisms | firm_loss_industry_diagnosis.csv, largest_firm_loss_events.csv | Accommodation/food-service losses 67-75B across seeds; seed 1 also has food-manufacturing/refining stress. About 98-99% of losses occur with negative current profit; payouts at loss events are zero. Earlier payouts/operating deficits and continuing overdrafts remain relevant. No causal claim that D2 is harmless. |
+| Public producer financing | final leverage_industry.csv | Initial and Q12 O/P/Q formal loans are zero; operating overdrafts can still reappear in inherited settlement. A strict no-private-credit operating boundary needs an explicit government working-capital counterparty; proposal only. |
+| Household diagnosis / spending option | bd72103, 980c8cd; constraint tables | Restoring Q1 income relieves 6-9% of current constraints; 39-42% have persistent plan/income gaps with assets down. Much of the residual began with zero liquid assets. Wages, jobs and D2 receipts separately reported by fixed decile/assets. Buffer-stock rule specified as a proposal, not implemented. |
+| E / Phase B / C_dp_005 | not started | Remain held. Decide on a liquid-wealth spending response and remaining firm cash/workout/public-financing design before reopening E or Phase B. |
+
+Full-suite result: 433 passed / 30 failed out of 463; all failures are the known Nan in transactor_total_real_supply cases, no additional failures; sampler n_cores=1.
+See CLOSURE_FE_2026-10-24.md for per-quarter losses, planned/realized
+investment, GDP/consumption/saving, bank support/capital, initial industry debt,
+resolution events, leverage, firm-default cells and the three-seed diagnosis.
