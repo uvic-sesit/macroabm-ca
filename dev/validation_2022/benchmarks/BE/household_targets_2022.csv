@@ -1,0 +1,21 @@
+REF_DATE,GEO,DGUID,Seasonal adjustment,Estimates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Equals: household disposable income,Dollars,81,millions,6,v62305980,1.1.29,1465024.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Less: household final consumption expenditure,Dollars,81,millions,6,v62305982,1.1.31,1442984.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Plus: change in pension entitlements,Dollars,81,millions,6,v105775422,1.1.48,45628.0,,,,0
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Household saving rate,Percent,239,units,0,v62305984,1.1.33,4.6,,,,1
+2022-01,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,269468.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Equals: household disposable income,Dollars,81,millions,6,v62305980,1.1.29,1489856.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Less: household final consumption expenditure,Dollars,81,millions,6,v62305982,1.1.31,1511092.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Plus: change in pension entitlements,Dollars,81,millions,6,v105775422,1.1.48,39064.0,,,,0
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Household saving rate,Percent,239,units,0,v62305984,1.1.33,1.2,,,,1
+2022-04,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,240876.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Equals: household disposable income,Dollars,81,millions,6,v62305980,1.1.29,1503576.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Less: household final consumption expenditure,Dollars,81,millions,6,v62305982,1.1.31,1533028.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Plus: change in pension entitlements,Dollars,81,millions,6,v105775422,1.1.48,37632.0,,,,0
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Household saving rate,Percent,239,units,0,v62305984,1.1.33,0.5,,,,1
+2022-07,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,225284.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Equals: household disposable income,Dollars,81,millions,6,v62305980,1.1.29,1550904.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Less: household final consumption expenditure,Dollars,81,millions,6,v62305982,1.1.31,1558424.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Plus: change in pension entitlements,Dollars,81,millions,6,v105775422,1.1.48,40016.0,,,,0
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Household saving rate,Percent,239,units,0,v62305984,1.1.33,2.1,,,,1
+2022-10,Canada,2016A000011124,Seasonally adjusted at annual rates,Fixed capital,Dollars,81,millions,6,v62305994,1.1.43,233944.0,,,,0

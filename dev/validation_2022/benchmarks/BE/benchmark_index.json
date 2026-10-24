@@ -1,0 +1,65 @@
+{
+  "created_utc": "2026-10-24",
+  "consumption": {
+    "table": "36-10-0112",
+    "vector": "v62305982",
+    "reference": "2022 annual mean SAAR",
+    "CAD_year": 1511382000000,
+    "CAD_quarter": 377845500000
+  },
+  "saving": {
+    "table": "36-10-0112",
+    "concept": "cash disposable income excluding D.8",
+    "percent": -0.601861,
+    "source": "inherited account bridge; see ABCD/FE records"
+  },
+  "industry_IO": {
+    "source": "accepted firmdebt input industry_vectors",
+    "reference": "2022 Canadian provincial IO, quarterly CAD",
+    "vector": "derived residual: Value Added in LCU - Labour Compensation in LCU - Taxes Less Subsidies in LCU; no single StatCan vector",
+    "pickle_sha256": "0abf12059d02f3bbcce09bee5d504325c740d3b7505f5f6c6a75e2c871bb130d",
+    "uncertainty": "IO residual proxy for GOS, not separately estimated net profit; household/unincorporated and imputed-rent boundaries inherited"
+  },
+  "inherited_provenance": [
+    {
+      "path": "benchmarks/IFE/provenance.json",
+      "sha256": "5b1e499e445e9bc14339e59222a3cbfa3076040d27a0c5c9e4487b6eaaee44aa"
+    },
+    {
+      "path": "benchmarks/ABCD/provenance.json",
+      "sha256": "1edfa47351453b6781de7e57f79cc9d6e23865ee12504922ce58b985b0d4b1c7"
+    },
+    {
+      "path": "benchmarks/ABCD/order_benchmarks_snapshot.json",
+      "sha256": "7599f12ff530fef3b63e5fb422c07a63354038e61b6fa5ca84763aea1be3d8f9"
+    },
+    {
+      "path": "benchmarks/FE/rbc_credit_quality_2022_2023.json",
+      "sha256": "c14555bcff15b114750ff703eea9171976c6287f16917a75580ba8f6eeae6556"
+    },
+    {
+      "path": "benchmarks/FE/industry_provenance.json",
+      "sha256": "03b3572601b800f8f26c0a690777be89a46d010d9ad8018a79d9ad2e4042049f"
+    }
+  ],
+  "household_account": {
+    "table": "36-10-0112",
+    "vectors": {
+      "v105775422": 40585.0,
+      "v62305980": 1502340.0,
+      "v62305982": 1511382.0,
+      "v62305984": 2.0999999999999996,
+      "v62305994": 242393.0
+    },
+    "raw_provenance": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100112-eng.zip",
+      "retrieved": "2026-10-23",
+      "zip_sha256": "b577daa453e1527602f55000d301624143bdaf3dba87bfbd458f44d6ab797d1e",
+      "csv_sha256": "5cfe7a3c5a9cd3610faa2d7fd19b591b1cfed01750d0c493568f0c1f25cc7d97",
+      "selection": "all rows for 2022, without changing units/seasonal treatment"
+    },
+    "local_full_2022_extract_sha256": "b83ad39b9608aadb67083b008ec3ff0d744aa93b358b994403205119b1164b83",
+    "selected_sha256": "a0fd74822f30d57f468b6eeadd0e0c4ffc33967d932479a3578362fc320e2207",
+    "cash_saving_formula": "100 * (1 - v62305982 / v62305980), excludes D.8 pension adjustment"
+  }
+}
