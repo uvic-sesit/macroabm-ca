@@ -32,7 +32,8 @@ def resolve_payment_default(firms, credit_market, capital_value, periods, haircu
     """
     f = firms; cm = credit_market
     debt = cm.compute_outstanding_short_term_loans_by_firm() + cm.compute_outstanding_long_term_loans_by_firm()
-    service = f.ts.current('debt_installments') + np.maximum(0., f.ts.current('interest_paid_on_loans'))
+    service = (f.ts.current('debt_installments') + np.maximum(0., f.ts.current('interest_paid_on_loans'))
+               + np.maximum(0., f.ts.current('interest_paid_on_deposits')))
     streak, default, shortfall = payment_distress(f.ts.current('deposits'), service,
         f.states.get('payment_distress_streak', np.zeros(len(debt), dtype=int)), periods)
     capacity = np.maximum(0., np.asarray(capital_value)) * (1 - haircut)

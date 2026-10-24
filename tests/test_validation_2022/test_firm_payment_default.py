@@ -15,7 +15,7 @@ def setup():
     cm=CreditMarket.__new__(CreditMarket)
     cm.states={'st_loans':np.array([[[20.],[0.]],[[2.],[0.]],[[4.],[0.]]]),
                'lt_loans':np.array([[[0.],[80.]],[[0.],[8.]],[[0.],[16.]]])}
-    f=SimpleNamespace(states={},ts=TS(deposits=[-5],debt_installments=[20],interest_paid_on_loans=[10],
+    f=SimpleNamespace(states={},ts=TS(deposits=[-5],debt_installments=[20],interest_paid_on_loans=[10],interest_paid_on_deposits=[0],
         short_term_loan_debt=[20],long_term_loan_debt=[80],debt=[100],equity=[-200]))
     return f,cm
 
@@ -59,3 +59,13 @@ def test_invalid_write_down_rejected_without_mutation():
     _,cm=setup()
     with pytest.raises(ValueError):cm.restructure_firm_principal(np.array([101.]))
     assert cm.states['lt_loans'][0].sum()==80
+
+
+def test_overdraft_interest_is_a_senior_debt_service_obligation():
+    f,cm=setup()
+    f.ts.dicts['debt_installments'][-1]=np.array([0.])
+    f.ts.dicts['interest_paid_on_loans'][-1]=np.array([0.])
+    f.ts.dicts['interest_paid_on_deposits'][-1]=np.array([2.])
+    for _ in range(3):resolve_payment_default(f,cm,[50],3,.2)
+    assert f.states['is_insolvent'][0]
+    assert f.states['payment_service_shortfall'][0]==2
