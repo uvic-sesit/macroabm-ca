@@ -1,0 +1,6 @@
+REF_DATE,GEO,DGUID,Statistic,Before-tax household income quintile,"Household expenditures, summary-level categories",UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2023,Canada,2016A000011124,Average expenditure per household,Lowest quintile,Total current consumption,Dollars,81,units,0,v54529951,1.1.2.2,40091.0,,,,0
+2023,Canada,2016A000011124,Average expenditure per household,Second quintile,Total current consumption,Dollars,81,units,0,v54529993,1.1.3.2,57503.0,,,,0
+2023,Canada,2016A000011124,Average expenditure per household,Third quintile,Total current consumption,Dollars,81,units,0,v54530035,1.1.4.2,71570.0,,,,0
+2023,Canada,2016A000011124,Average expenditure per household,Fourth quintile,Total current consumption,Dollars,81,units,0,v54530077,1.1.5.2,88993.0,,,,0
+2023,Canada,2016A000011124,Average expenditure per household,Highest quintile,Total current consumption,Dollars,81,units,0,v54530119,1.1.6.2,122479.0,,,,0

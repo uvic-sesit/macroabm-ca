@@ -1,0 +1,78 @@
+{
+  "reference_dates": {
+    "DHEA": 2022,
+    "SHS": 2023
+  },
+  "sources": {
+    "primary": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100587-eng.zip",
+      "retrieved_utc": "2026-10-24T20:06:39.688171+00:00",
+      "sha256": "33c30001d2d3dafc3b6bf22057a689654df0c2f3775313e292cadcc4ac9da2e7",
+      "full_csv_sha256": "958c746574f4fba2cb3ffab6b49183902da5da6d8e536032ed6bbbf5cca8a0a7"
+    },
+    "secondary": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/11100223-eng.zip",
+      "retrieved_utc": "2026-10-24T19:58:38.428383+00:00",
+      "sha256": "fada25b467ad0d900ba9c1f4401accbdf2fda30b170d4f922c7d5d3221f0e734",
+      "table": "11100223",
+      "reference": "2023",
+      "full_csv_sha256": "9c7d9dceba4c363e096bc57d7324cbd6a0051560c9e52d75dc21255faf271c00",
+      "selected_year_sha256": "53000bacec7ce89a151224c36111e02e7897486bf8211bf7697ef0264d7c34f4",
+      "selected_rows": 23322,
+      "extraction": "Reference year only, unchanged source rows and vector IDs"
+    }
+  },
+  "primary_table": "36-10-0587-01",
+  "primary_vectors": [
+    "v116884012",
+    "v116884035",
+    "v116884058",
+    "v116884081",
+    "v116884104"
+  ],
+  "primary_shares": [
+    0.13383918416335788,
+    0.15924177953805163,
+    0.19427530185968991,
+    0.21692941753270684,
+    0.29571431690619376
+  ],
+  "secondary_table": "11-10-0223-01",
+  "secondary_vectors": [
+    "v54529951",
+    "v54529993",
+    "v54530035",
+    "v54530077",
+    "v54530119"
+  ],
+  "secondary_shares": [
+    0.1053263485324562,
+    0.15107083933206528,
+    0.18802740676131527,
+    0.23380079656154437,
+    0.3217746088126189
+  ],
+  "secondary_annual_means": [
+    40091.0,
+    57503.0,
+    71570.0,
+    88993.0,
+    122479.0
+  ],
+  "definitions": {
+    "DHEA": "Household disposable income equivalised using OECD-modified units (1/.5/.3), household-weighted quintiles; HFCE excluding social transfers in kind.",
+    "SHS": "Household total before-tax income, not equivalised; current consumption."
+  },
+  "gate_protocol": {
+    "G1": "Positive cash-income households; realized zero goods at t0 and each quarter strictly <2%.",
+    "G2": "Accounting <=1e-8; Q4-Q12 constrained-share OLS <=.25 pp/q; Q12 saving [-5.6,4.4]%; Q1 consumption >=95% target.",
+    "G3": "DHEA shares primary, relative deviation <=15% in every quintile at t0 and every quarter; SHS secondary only. No distributional rescale.",
+    "G4": "Q12 C and GDP within5% of same-seed accepted FE arm F, e386f4e lineage."
+  },
+  "kappa": "User-approved unestimated assumptions: .01/q base, .005/.02/q sensitivities; asymmetric above .005 and below .02. Smoothing .25.",
+  "mapping_limits": "Model cash DI omits SNA noncash income components; source household-member skeleton retained. OECD equivalence is applied without reweighting. SHS gross-income rank reconstructed from modeled net components/tax rates. Noncash owner housing consumption is not separately tagged inside L; subtracting the rent_imputed memo would not be an exact bridge. Expected owner-imputed-rent bias raises upper-quintile SHS-comparison shares.",
+  "extracts": {
+    "dhea_hfce_2022.csv": "94f0dd9a519b925c5c8b4aa8e3010a9280d644ca609643cbf478e5fd9fe232df",
+    "shs_consumption_2023.csv": "80fdd69a4e325b6daa1abe4650224dd24fbeaf32cae1ce50c48bafed7cf159c6"
+  }
+}

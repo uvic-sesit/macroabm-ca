@@ -1,0 +1,21 @@
+REF_DATE,GEO,DGUID,Statistics,Characteristics,"Income, consumption and savings",UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022,Canada,2016A000011124,Value,Lowest income quintile,Household final consumption expenditure (HFCE),Dollars,81,millions,6,v116884012,1.1.2.8,202282.0,,,,0
+2022,Canada,2016A000011124,Value,Second income quintile,Household final consumption expenditure (HFCE),Dollars,81,millions,6,v116884035,1.1.3.8,240675.0,,,,0
+2022,Canada,2016A000011124,Value,Third income quintile,Household final consumption expenditure (HFCE),Dollars,81,millions,6,v116884058,1.1.4.8,293624.0,,,,0
+2022,Canada,2016A000011124,Value,Fourth income quintile,Household final consumption expenditure (HFCE),Dollars,81,millions,6,v116884081,1.1.5.8,327863.0,,,,0
+2022,Canada,2016A000011124,Value,Highest income quintile,Household final consumption expenditure (HFCE),Dollars,81,millions,6,v116884104,1.1.6.8,446937.0,,,,0
+2022,Canada,2016A000011124,Distribution of value,Lowest income quintile,Household final consumption expenditure (HFCE),Percent,239,units,0,v116884495,1.2.2.8,13.4,,,,1
+2022,Canada,2016A000011124,Distribution of value,Second income quintile,Household final consumption expenditure (HFCE),Percent,239,units,0,v116884518,1.2.3.8,15.9,,,,1
+2022,Canada,2016A000011124,Distribution of value,Third income quintile,Household final consumption expenditure (HFCE),Percent,239,units,0,v116884541,1.2.4.8,19.4,,,,1
+2022,Canada,2016A000011124,Distribution of value,Fourth income quintile,Household final consumption expenditure (HFCE),Percent,239,units,0,v116884564,1.2.5.8,21.7,,,,1
+2022,Canada,2016A000011124,Distribution of value,Highest income quintile,Household final consumption expenditure (HFCE),Percent,239,units,0,v116884587,1.2.6.8,29.6,,,,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116884978,1.3.2.8,62295.0,,,,0
+2022,Canada,2016A000011124,Value per household,Second income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885001,1.3.3.8,74118.0,,,,0
+2022,Canada,2016A000011124,Value per household,Third income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885024,1.3.4.8,90424.0,,,,0
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885047,1.3.5.8,100969.0,,,,0
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885070,1.3.6.8,137639.0,,,,0
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885461,1.4.2.8,41791.0,,,,0
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885484,1.4.3.8,45294.0,,,,0
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885507,1.4.4.8,53082.0,,,,0
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885530,1.4.5.8,58156.0,,,,0
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Household final consumption expenditure (HFCE),Dollars,81,units,0,v116885553,1.4.6.8,81996.0,,,,0
