@@ -42,6 +42,11 @@ def basket(h):
     return np.divide(C,total[:,None],out=np.broadcast_to(h.consumption_weights,C.shape).copy(),where=total[:,None]>0)
 
 
+def opening_debt_service(contracts, deposits, overdraft_rates):
+    """Initial TS interest is unset; read scheduled contractual cash instead."""
+    return sum((v[1]+np.minimum(v[0],v[2])).sum(axis=0) for v in contracts)+np.maximum(0.,-deposits)*overdraft_rates
+
+
 def initialize(countries):
     selected=[c for c in countries if c.configuration.household_closure.buffer_stock_enabled]
     if not selected:return
@@ -65,7 +70,9 @@ def initialize(countries):
         fallback=np.array([ref[f'{int(x)}:{int(y)}'][1]*c.scale for x,y in zip(q,band)])
         receipts=(h.ts.initial('income')-h.ts.initial('income_financial_assets')+
                   closure.planned_mixed+closure.planned_dividends+closure.planned_transfers)
-        senior=h.ts.current('debt_installments')+h.ts.current('rent')+h.ts.current('interest_paid')
+        service=opening_debt_service([c.credit_market.states[k] for k in ('cons_loans','mort_loans')],
+            h.ts.current('wealth_deposits'),c.banks.ts.current('overdraft_rate_on_household_deposits')[h.states['Corresponding Bank ID']])
+        senior=service+h.ts.current('rent')
         y=receipts-senior
         L=np.maximum(0.,h.ts.current('wealth_deposits'))+np.maximum(0.,h.ts.current('wealth_other_financial_assets')-h.states['protected_pension_assets'])
         W=basket(h)

@@ -1,7 +1,7 @@
 from types import SimpleNamespace as NS
 import numpy as np
 import pytest
-from macromodel.country.buffer_stock import spending,calibrated_level,apply
+from macromodel.country.buffer_stock import spending,calibrated_level,apply,opening_debt_service
 from macromodel.country.household_closure import cap_household_goods_budget
 from macromodel.configurations.household_closure_configuration import HouseholdClosureConfiguration
 from macromodel.timeseries import TimeSeries
@@ -10,6 +10,11 @@ from macromodel.timeseries import TimeSeries
 def test_wealth_above_and_below_target_changes_spending():
     assert spending([100],[300],[2],[0],.1)[0]==110
     assert spending([100],[100],[2],[0],.1)[0]==90
+
+
+def test_initial_service_uses_contracts_without_unset_interest_series():
+    loans=np.array([[[10.,0.]],[[1.,0.]],[[2.,0.]]])
+    np.testing.assert_allclose(opening_debt_service([loans],np.array([0.,-5.]),np.array([.1,.2])),[3.,1.])
 
 
 def test_nonpositive_income_uses_level_buffer_and_consumption_never_negative():
