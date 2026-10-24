@@ -263,6 +263,7 @@ class Firms(Agent):
             used_intermediate_inputs=synthetic_firms.used_intermediate_inputs,
             capital_inputs_stock=synthetic_firms.capital_inputs_stock,
             used_capital_inputs=synthetic_firms.used_capital_inputs,
+            initial_capital_purchases=getattr(synthetic_firms, "initial_capital_purchases", None),
             initial_good_prices=average_initial_price,
             n_industries=len(synthetic_firms.industries),
             calculate_hill_exponent=configuration.calculate_hill_exponent,

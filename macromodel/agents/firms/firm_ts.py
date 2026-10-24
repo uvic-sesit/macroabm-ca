@@ -138,6 +138,7 @@ class FirmTimeSeries(TimeSeries):
         gas_capital_emissions: Optional[np.ndarray] = None,
         oil_capital_emissions: Optional[np.ndarray] = None,
         refined_products_capital_emissions: Optional[np.ndarray] = None,
+        initial_capital_purchases: Optional[np.ndarray] = None,
     ) -> "FirmTimeSeries":
         """Create a FirmTimeSeries instance from initial data.
 
@@ -256,8 +257,11 @@ class FirmTimeSeries(TimeSeries):
             expected_capital_inputs_stock_value=np.matmul(capital_inputs_stock, initial_good_prices),
             used_capital_inputs=used_capital_inputs,
             used_capital_inputs_costs=np.matmul(used_capital_inputs, initial_good_prices),
-            total_capital_inputs_bought_costs=np.matmul(used_capital_inputs, initial_good_prices),
-            gross_fixed_capital_formation=(used_capital_inputs * initial_good_prices).sum(axis=0),
+            total_capital_inputs_bought_costs=np.matmul(
+                used_capital_inputs if initial_capital_purchases is None else initial_capital_purchases,
+                initial_good_prices),
+            gross_fixed_capital_formation=((used_capital_inputs if initial_capital_purchases is None
+                else initial_capital_purchases) * initial_good_prices).sum(axis=0),
             itc_refunds=np.zeros(data.shape[0]),
             #
             real_amount_bought_as_intermediate_inputs=np.full((data.shape[0], n_industries), np.nan),
