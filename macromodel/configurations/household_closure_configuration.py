@@ -3,6 +3,9 @@ from pydantic import BaseModel, Field
 
 
 class HouseholdClosureConfiguration(BaseModel):
+    firm_payment_default_enabled: bool = False
+    firm_distress_periods: int = Field(default=3, ge=1)
+    firm_collateral_haircut: float = Field(default=.20, ge=0, lt=1)
     distress_enabled: bool = False
     deposit_only_saving: bool = False
     overdraft_limit_enabled: bool = False

@@ -1759,7 +1759,7 @@ class Firms(Agent):
             - self.ts.current("taxes_paid_on_production")
         )
 
-    def handle_insolvency(self, credit_market: CreditMarket) -> float:
+    def handle_insolvency(self, credit_market: CreditMarket, payment_default_config=None, capital_value=None) -> float:
         """Process insolvent firms and compute non-performing loan ratios.
 
         Handles firms that become insolvent by:
@@ -1774,6 +1774,10 @@ class Firms(Agent):
         Returns:
             float: Non-performing loan ratio for firm loans
         """
+        if payment_default_config is not None and payment_default_config.firm_payment_default_enabled:
+            from .func.payment_default import resolve_payment_default
+            return resolve_payment_default(self, credit_market, capital_value,
+                payment_default_config.firm_distress_periods, payment_default_config.firm_collateral_haircut)
         self.states["is_insolvent"] = self.functions["demography"].handle_firm_insolvency(
             current_firm_is_insolvent=self.states["is_insolvent"],
             current_firm_equity=self.ts.current("equity"),

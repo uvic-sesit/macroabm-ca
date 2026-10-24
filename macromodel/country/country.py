@@ -1244,7 +1244,13 @@ class Country:
         )
 
         # D3. FIRM INSOLVENCY
-        npl_firm_loans = self.firms.handle_insolvency(credit_market=self.credit_market)
+        if self.configuration.household_closure.firm_payment_default_enabled:
+            cfg = self.configuration.household_closure
+            npl_firm_loans = self.firms.handle_insolvency(
+                credit_market=self.credit_market, payment_default_config=cfg,
+                capital_value=np.dot(self.firms.ts.current('capital_inputs_stock'), self.economy.ts.current('good_prices')))
+        else:
+            npl_firm_loans = self.firms.handle_insolvency(credit_market=self.credit_market)
         self.economy.ts.npl_firm_loans.append([npl_firm_loans])
 
         firm_insolvency_rate, num_insolvent_firms_by_sector = self.firms.compute_insolvency_rate()

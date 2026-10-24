@@ -566,6 +566,23 @@ class CreditMarket:
         self.states.pop("mortgage_commitments")
         self.states.pop("mortgage_book_before_commitments")
 
+    def restructure_firm_principal(self, loss: np.ndarray) -> None:
+        """Partial firm write-down through the ordinary same-quarter bank path.
+
+        Preserve lender shares and surviving contract terms. Interest amounts
+        and scheduled principal shrink with the remaining principal; the
+        collateral-covered balance remains owed by the continuing producer.
+        """
+        debt = self.states['st_loans'][0].sum(axis=0) + self.states['lt_loans'][0].sum(axis=0)
+        loss = np.asarray(loss, dtype=float)
+        if loss.shape != debt.shape or not np.isfinite(loss).all() or (loss < 0).any() or (loss > debt + 1e-6).any():
+            raise ValueError('Firm write-down must lie between zero and outstanding principal')
+        fraction = np.divide(loss, debt, out=np.zeros_like(debt), where=debt>0)
+        by_bank = sum((self.states[key][0]*fraction).sum(axis=1) for key in ('st_loans','lt_loans'))
+        for key in ('st_loans','lt_loans'):
+            self.states[key] *= (1-fraction)[None,None,:]
+        self._record_writeoff(float(loss.sum()), by_bank=by_bank)
+
     def remove_loans_to_firm(self, firm_id: int | np.ndarray) -> float:
         """Remove all loans associated with specified firm(s).
 
