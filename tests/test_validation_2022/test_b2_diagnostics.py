@@ -3,7 +3,7 @@ import sys
 import numpy as np
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'dev/validation_2022'))
 from b2_gates import assess
-from b2_instrumentation import fixed_groups,consumption_units,weighted_median,income_per_household
+from b2_instrumentation import fixed_groups,consumption_units,weighted_median,income_per_household,gross_wages_from_net
 
 
 def test_B2_gates_zero_share_strict_and_quintile_relative_share_thresholds():
@@ -29,3 +29,8 @@ def test_national_income_rank_is_invariant_to_regional_expansion_factors():
     np.testing.assert_array_equal(a,b)
     values=np.r_[a,b]
     np.testing.assert_array_equal(fixed_groups(values,np.ones(4),2),[1,2,1,2])
+
+
+def test_SHS_gross_income_inverts_the_multiplicative_payroll_identity():
+    gross=np.array([100.,200.]);pit=.2;ssc=.1
+    np.testing.assert_allclose(gross_wages_from_net(gross*(1-ssc)*(1-pit),pit,ssc),gross)

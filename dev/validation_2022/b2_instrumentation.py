@@ -15,6 +15,13 @@ def income_per_household(income,scale):
     return np.asarray(income,float)/scale
 
 
+def gross_wages_from_net(net_wages,income_tax,employee_contributions):
+    """Invert the model payroll identity, with SSC deducted before PIT."""
+    denominator=(1-income_tax)*(1-employee_contributions)
+    if not np.isfinite(denominator) or denominator<=0:raise ValueError('Positive payroll net-wage factor required')
+    return np.asarray(net_wages,float)/denominator
+
+
 def weighted_median(values,weights):
     order=np.argsort(values,kind='stable');v=np.asarray(values)[order];w=np.asarray(weights)[order]
     return v[np.searchsorted(np.cumsum(w),w.sum()/2)]
@@ -70,7 +77,7 @@ class B2HouseholdDiagnosis:
         else:
             income=cur(h,'income');d2=cur(h,'income_mixed')+cur(h,'income_dividends')+cur(h,'income_corporate_transfers')
             net_interest=cur(h,'interest_paid');interest_received=np.maximum(0.,-cur(h,'interest_paid_on_deposits'))
-        gross=cur(h,'income_employee')/(1-tax-ee)+cur(h,'income_unemployment_benefits')+cur(h,'income_social_transfers')+(cur(h,'income_rental')+d2)/(1-tax)+interest_received
+        gross=gross_wages_from_net(cur(h,'income_employee'),tax,ee)+cur(h,'income_unemployment_benefits')+cur(h,'income_social_transfers')+(cur(h,'income_rental')+d2)/(1-tax)+interest_received
         return income,income-net_interest,gross
 
     def capture_all(self,sim,t):
