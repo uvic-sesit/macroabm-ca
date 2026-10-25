@@ -20,7 +20,7 @@ def cis_households():
     return a.rename(columns={'EFATINC':'income','EFWGSAL':'wages','EFSEMP':'self_employment','EFINVA':'investment','EFGTR':'government_transfers','EFINCTX':'taxes','EFPRPEN':'private_pensions','FWEIGHT':'weight'})
 def summarize(stage,a):
     a=a.copy();a['decile']=fixed_groups(a.income.to_numpy()/a.weight.to_numpy(),a.weight.to_numpy(),10)
-    q=a.groupby('decile').sum(numeric_only=True);q['share']=q.income/q.income.sum();q['per_HH']=q.income/q.weight;q['stage']=stage
+    q=a.groupby('decile').sum(numeric_only=True,min_count=1);q['share']=q.income/q.income.sum();q['per_HH']=q.income/q.weight;q['stage']=stage
     return q.reset_index()
 def main():
     cis=cis_households();cis['decile']=fixed_groups(cis.income.to_numpy(),cis.weight.to_numpy(),10)

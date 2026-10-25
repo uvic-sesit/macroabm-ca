@@ -544,3 +544,19 @@ Report: [CLOSURE_IH_2026-10-25.md](CLOSURE_IH_2026-10-25.md). IO handoff: [IO_HA
 | IH-IO: pipeline handoff | 48.338B row/column plus26.546B input-product valuation explains74.883B/year excess;100.504B signed other-production taxes separately identified. Exact vectors/date/source hashes in handoff and inherited bridge provenance. | Read-only handoff. Needs balanced SUT and independent regional GDP checks; pipeline untouched. |
 
 All independent steps completed despite E2/cost failures. Final suite and source/stock audit are recorded in the IH report and outputs/IH/audit.json. Stop for review; household/firm losses and recapitalisations remain unvalidated in order of magnitude.
+
+<!-- HI-2026-10-25 -->
+## HI review - 2026-10-25 UTC
+
+Report: [CLOSURE_HI_2026-10-25.md](CLOSURE_HI_2026-10-25.md). Continue on F_CFC. Neither new input passes adoption; no combined build or dependent F_CFC/E2 twelve-quarter reruns. Phase B, C_dp_005 and investment expansion remain on hold.
+
+| Step / issue | Commit, tests and finding | Decision |
+|---|---|---|
+| HI-G1: source cash-income distribution | ab8676a; household-unit regression. CIS PUMF household target uses unique EFID family incomes within PUMFID and household weights, unequivalised after-tax income. Actual adapter source top-decile share30.687% vs CIS26.210%; retained payroll processing widens concentration. Published economic-family and adjusted-person tables remain separate crosschecks. | Diagnostic gate passes; historical intermediate donor/fit IDs were not archived, so a full numerical stage replay is not claimed. Preserve IDs and snapshots in a future rebuild. |
+| HI-G2/G3: one source-defined allocation candidate | fc70bf5; payroll, transfer and reset regressions. National DI and per-employer payroll preserved. Maximum income-share error21.153%, transfer-amount-share error28.793%; recipient-rate gap1.131pp. No adjustment after failure. | Fails. No decile top-up or DHEA cash plug; resolve source household/member/job support and tax/benefit allocation jointly before adoption. |
+| HI-G4: stocks / accounting | All accepted balance-sheet fields and regional component totals exact. Baseline/candidate two-quarter accounting errors4.07e-15/4.99e-15. Income-ranked wealth shares move and are reported. | Marginal stocks preserved; no claim of a new joint income/wealth fit. Read-only planned-dissaver shares71.94% baseline and70.10% candidate; unable-at-t0 about0.35% in both. |
+| HI-G5: observed initial GFCF | d9102ec; acquisition-value regression. National412.998B/year vs411.341B (+0.403%); four mapped source groups exceed2%, maximum7.931%. Unsupported capital-good composition leaves1.284M/year unallocated. All13 unchanged GDP checks fail, net expenditure gap3.528B/q. | Independent reconciliation completed despite CIS failure. New input not adopted or iterated; no capital basket, trade, inventory or cash plug invented. |
+| Step4 / E2 | No passing input; no new twelve-quarter outcomes or empirical E2 gate. Historical IH seed0-2 results labelled as references. | Skip dependent work; no claim that demand spiral or losses improve. |
+| Balanced SUT FYI | User reports feature/sut-balance handoff, compatibility CSV hash prefix41590fdb, re-export and intermediate-product-tax corrections. Not read, verified or adopted in HI. | Dedicated separately named later build after this round; macroabm-io2022 untouched. |
+
+Final full suite: 488 passed, exactly the same30 known NaN failures as IH, no additional failures; sampler one worker. Protected input and benchmark hashes audited. Aggregate evidence, source vectors, custom-tabulation caveats and exact test IDs are frozen under outputs/HI. Stop for review.
