@@ -306,11 +306,16 @@ def create_economy_timeseries(
     current_expenditure = ts.current("gdp_expenditure")[0]
     current_income = ts.current("gdp_income")[0]
 
-    assert np.isclose(current_output, current_expenditure), (
-        f"mismatch, output/expenditure GDP: {current_output / current_expenditure}"
-    )
-    assert np.isclose(current_output, current_expenditure), (
-        f"mismatch, output/income GDP: {current_output / current_income}"
-    )
+    validate_initial_gdp(current_output, current_expenditure, current_income)
 
     return ts
+
+
+def validate_initial_gdp(output, expenditure, income):
+    """Check both independent identities using the existing numpy tolerance."""
+    assert np.isclose(output, expenditure), (
+        f"mismatch, output/expenditure GDP: {output / expenditure}"
+    )
+    assert np.isclose(output, income), (
+        f"mismatch, output/income GDP: {output / income}"
+    )
