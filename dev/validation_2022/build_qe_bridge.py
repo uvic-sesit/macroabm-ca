@@ -41,10 +41,13 @@ def main():
         gos=(obs.gross_operating_surplus+obs.gross_mixed_income).to_numpy()*1e6/4
         wages=(obs.wages_salaries+obs.employers_social_contributions).to_numpy()*1e6/4
         intermediate=f.used_intermediate_inputs.sum(axis=1)
+        duplicate_housing=(initial.loc[name,'real_rent']+initial.loc[name,'imputed_rent']) if getattr(c,'housing_services_in_household_io',False) else 0.
+        housing=initial.loc[name,'real_rent']+initial.loc[name,'imputed_rent']-duplicate_housing
+        expenditure=initial.loc[name,'gdp_expenditure']-duplicate_housing
         result=gdp_bridge(bridge['new_output'].sum(),intermediate.sum(),bridge['product_tax'].sum(),wages.sum(),gos.sum(),bridge['other_tax'].sum(),
             float(g[['VAT','Capital Formation Taxes','Export Taxes']].sum(axis=1).iloc[0]),
-            initial.loc[name,'real_rent']+initial.loc[name,'imputed_rent'],initial.loc[name,'gdp_expenditure'])
-        regions.append(dict(region=name,**{k:float(v) for k,v in result.items()},input_product_tax=bridge['product_tax'].sum(),other_production_tax=bridge['other_tax'].sum(),row_column_adjustment=bridge['sales_row_statistical_discrepancy'].sum()))
+            housing,expenditure)
+        regions.append(dict(region=name,**{k:float(v) for k,v in result.items()},input_product_tax=bridge['product_tax'].sum(),other_production_tax=bridge['other_tax'].sum(),row_column_adjustment=bridge['sales_row_statistical_discrepancy'].sum(),removed_duplicate_housing_memo=duplicate_housing,expenditure_market_scope_adjusted=expenditure))
         for i,r in d.iterrows():
             j=int(r.Industry);output=float(r.Production*r.Price)
             modelgos=output-f.used_intermediate_inputs[i].sum()-r['Total Wages Paid']-r['Taxes paid on Production']

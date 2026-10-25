@@ -78,15 +78,24 @@ def run(args):
             if args.arm in ['F_CFC','Q']:
                 from qe_wealth_audit import capture
                 holder['wealth']=capture(sim)
+            if args.arm=='E' and args.variant.startswith('rent_debug'):
+                def debug(s,t,y,m):
+                    if t!=3:return
+                    out=HERE/'outputs/QE'/args.variant/'micro';out.mkdir(parents=True,exist_ok=True)
+                    for name,c in s.countries.items():
+                        h=c.households
+                        pd.DataFrame(dict(rent=cur(h,'rent'),rental_income=cur(h,'income_rental'),house=h.states['Corresponding Inhabited House ID'],tenure=h.states['Tenure Status of the Main Residence'])).to_csv(out/(str(name)+'_households.csv'),index=False)
+                        c.housing_market.states['properties'].to_csv(out/(str(name)+'_properties.csv'),index=False)
+                sim.posthooks.append(debug)
             return sim
     holder={};base.Simulation=Factory
     source=PICKLE if args.arm in ['F_CFC','Q','E'] else ROOT/'dev/pkl_files/io2022_household_agreed_bankcap_firmdebt.pkl'
     if args.arm=='C':source=ROOT/'dev/pkl_files/io2022_household_agreed_bankcap.pkl'
     if source==PICKLE:assert hashlib.sha256(source.read_bytes()).hexdigest()==PICKLE_SHA256
     out=HERE/'outputs/QE/runs'
-    params=SimpleNamespace(arm=args.arm,variant='base',household_base='F',quarters=args.quarters,seed=args.seed,
+    params=SimpleNamespace(arm=args.arm,variant=args.variant,household_base='F',quarters=args.quarters,seed=args.seed,
         pickle=source,output=out,kappa=.01,kappa_below=None,smoothing=.25,payout=False)
-    target=out/f'{args.arm}_base_q{args.quarters}_s{args.seed}'
+    target=out/f'{args.arm}_{args.variant}_q{args.quarters}_s{args.seed}'
     if args.arm=='C':
         data=DataWrapper.init_from_pickle(source)
         configs={n:CountryConfiguration.n_industry_default(n_industries=data.n_industries) for n in data.all_country_names if str(n).startswith('CAN_')}
@@ -112,4 +121,5 @@ def run(args):
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--arm',choices=['C','F','F_CFC','Q','E'],required=True)
     ap.add_argument('--seed',type=int,default=0);ap.add_argument('--quarters',type=int,default=12)
+    ap.add_argument('--variant',default='base')
     run(ap.parse_args())

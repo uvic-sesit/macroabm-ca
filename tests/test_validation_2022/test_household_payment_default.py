@@ -1,6 +1,6 @@
 import numpy as np
 from macromodel.country.household_payment_default import allocate_service,foreclosure_waterfall,arrears_days
-from macromodel.country.household_payment_default import settle_foreclosures
+from macromodel.country.household_payment_default import settle_foreclosures,PaymentDefaultHandler
 from types import SimpleNamespace
 import pandas as pd
 
@@ -44,3 +44,22 @@ def test_executed_foreclosure_reduces_bank_book_by_repayment_plus_loss():
     # bank assets fall 100, deposits fall 80, and equity absorbs 20.
     assert -100 == -repayments.sum()-recorded[0][0]
     assert h.states['E_foreclosure_surplus'].sum()==0
+
+
+def test_handler_does_not_default_negative_net_worth_when_payments_are_met():
+    vals={'wealth_deposits':[np.array([1.])],'wealth':[np.array([0.])],
+        'net_wealth':[np.array([-100.])],'consumption_loan_debt':[np.array([100.])],
+        'mortgage_debt':[np.array([0.])],'debt':[np.array([100.])],
+        'total_consumption_loan_debt':[np.array([100.])],'total_mortgage_debt':[np.array([0.])]}
+    ts=SimpleNamespace(dicts=vals,current=lambda key:vals[key][-1]);h=SimpleNamespace(ts=ts,states={})
+    cons=np.array([[[100.]],[[2.]],[[10.]]]);zero=np.zeros((2,1,1))
+    cm=SimpleNamespace(states={'cons_loans':cons.copy(),'mort_loans':np.zeros_like(cons),
+        'E_arrears_quarters':np.zeros((2,1),int),'E_days_past_due':np.zeros((2,1),int),
+        'E_principal_arrears':zero.copy(),'E_interest_arrears':zero.copy()})
+    losses=[];cm._record_writeoff=lambda amount,by_bank:losses.append(amount)
+    cfg=SimpleNamespace(household_payment_default_periods=3)
+    country=SimpleNamespace(configuration=SimpleNamespace(household_closure=cfg))
+    result=PaymentDefaultHandler(country).handle_insolvency(h,None,cm)
+    assert result[0]==0 and sum(losses)==0
+    np.testing.assert_array_equal(cm.states['cons_loans'],cons)
+    assert h.ts.current('net_wealth')[0]==-100
