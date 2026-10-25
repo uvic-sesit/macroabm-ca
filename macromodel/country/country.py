@@ -378,6 +378,7 @@ class Country:
             government_entities=government_entities,
             households=households,
             industry_vectors=synthetic_country.industry_data["industry_vectors"],
+            housing_services_in_household_io=bool(getattr(synthetic_country, "housing_services_in_household_io", False)),
             exogenous=exogenous,
         )
 
@@ -1534,7 +1535,7 @@ class Country:
             if self.housing_services_in_household_io
             else self.economy.ts.current("total_real_rent_rec")[0]
             + self.central_government.ts.current("taxes_rental_income")[0],
-            central_government_rent_received=self.central_government.ts.current("total_rent_received")[0],
+            central_government_rent_received=0.0 if self.housing_services_in_household_io else self.central_government.ts.current("total_rent_received")[0],
             running_multiple_countries=self.running_multiple_countries,
         )
 

@@ -146,6 +146,7 @@ class Economy:
         central_government: CentralGovernment,
         exogenous: Exogenous,
         industry_vectors: pd.DataFrame,
+        housing_services_in_household_io: bool = False,
     ):
         """Create an Economy instance from agent-level data and configurations.
 
@@ -271,6 +272,7 @@ class Economy:
             initial_ppi_inflation=initial_ppi_inflation,
             initial_hpi_inflation=initial_hpi_inflation,
             initial_real_rent_paid=initial_real_rent_paid,
+            housing_services_in_household_io=housing_services_in_household_io,
             initial_imp_rent_paid=initial_imp_rent_paid,
             initial_hh_rental_income=initial_hh_rental_income,
             initial_hh_consumption=initial_hh_consumption,
