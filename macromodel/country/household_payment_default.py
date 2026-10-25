@@ -53,6 +53,21 @@ def resolve_overdraft(h,cm,eligible):
     return relief
 
 
+def cure_transition(previous_days, previous_periods, old_arrears, unpaid, paid, current_due):
+    """E2 assumption: current service plus positive catch-up freezes arrears age.
+
+    Full repayment cures. Partial catch-up must reduce the *old* arrears after
+    covering the full current schedule; merely paying something cannot freeze age.
+    No restructuring, forgiveness or change to cash allocation is introduced.
+    """
+    partial=(old_arrears>1e-8)&(unpaid>1e-8)&(paid>=current_due-1e-8)&(unpaid<old_arrears-1e-8)
+    days=arrears_days(previous_days,unpaid,paid,unpaid+paid)
+    days=np.where(partial,previous_days,days)
+    periods=np.where(unpaid>1e-8,np.where(partial,previous_periods,previous_periods+1),0)
+    cured=(previous_days>0)&(unpaid<=1e-8)
+    return days,periods,partial,cured
+
+
 def service(c):
     h=c.households;cm=c.credit_market
     receipts=known_household_receipts(c);d=h.ts.current('wealth_deposits')
@@ -76,6 +91,12 @@ def service(c):
     cm.states['E_days_past_due']=arrears_days(previous,unpaid,paid,unpaid+paid)
     periods=cm.states.get('E_arrears_quarters',np.zeros((2,shape[-1]),int))
     cm.states['E_arrears_quarters']=np.where(unpaid>1e-8,periods+1,0)
+    if c.configuration.household_closure.household_arrears_cure_enabled:
+        current_due=(np.minimum(loans[:,0],loans[:,2])+loans[:,1]).sum(axis=1)
+        days,periods,partial,cured=cure_transition(previous,periods,(oldp+oldi).sum(axis=1),unpaid,paid,current_due)
+        cm.states['E_days_past_due']=days
+        cm.states['E_arrears_quarters']=periods
+        cm.states['E2_metrics']={'partial_catchup':partial.sum()*c.scale,'service_cures':cured.sum()*c.scale,'restructurings':0.}
     h.states['E_scheduled_service']=unpaid+paid;h.states['E_unpaid_service']=unpaid
     h.states['E_paid_service']=paid
     return paidp.sum(axis=(0,1))

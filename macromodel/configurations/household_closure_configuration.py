@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 class HouseholdClosureConfiguration(BaseModel):
     household_payment_default_enabled: bool = False
+    household_arrears_cure_enabled: bool = False
     household_payment_default_periods: int = Field(default=3,ge=1)
     foreclosure_sale_haircut: float = Field(default=.20,ge=0,lt=1)
     quintile_propensity_enabled: bool = False
