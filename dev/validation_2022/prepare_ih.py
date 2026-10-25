@@ -36,6 +36,8 @@ def main():
     # Preserve the exact accepted input hashes and raw IO bridge provenance.
     for p in [HERE/'qe_baseline.py',HERE/'outputs/QE/bridge/provenance.json',HERE/'outputs/B2/firm_data/cfc_build_provenance.json',HERE/'benchmarks/QE/credit_benchmarks.json']:
         if p.exists():sources.append(dict(source=str(p.relative_to(ROOT)),sha256=sha(p)))
-    (BENCH/'provenance.json').write_text(json.dumps(dict(created_utc=datetime.now(timezone.utc).isoformat(),sources=sources),indent=2)+'\n')
+    dependencies=['outputs/B2/firm_data/cfc_allocation.csv','outputs/B2/firm_data/cfc_cost_bridge.csv','outputs/B2/firm_data/observed_VA_2022.csv','outputs/QE/bridge/firm_bridge.csv','outputs/QE/bridge/GDP_bridge.csv','outputs/QE/bridge/provenance.json','benchmarks/B2/raw/36100587_metadata.csv','benchmarks/B2/raw/36100096_2022_provenance.json','benchmarks/QE/credit_benchmarks.json']
+    extra=[dict(source=str((HERE/n).relative_to(ROOT)),sha256=sha(HERE/n),provenance='Inherited source mappings and StatCan vectors/dates in named companion provenance; source files unchanged.') for n in dependencies]
+    (BENCH/'provenance.json').write_text(json.dumps(dict(created_utc=datetime.now(timezone.utc).isoformat(),sources=sources,derived_input_sources=extra),indent=2)+'\n')
     print(pd.DataFrame(gates).to_string(index=False));print(totals.to_string())
 if __name__=='__main__':main()

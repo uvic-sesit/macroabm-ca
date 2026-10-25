@@ -1,0 +1,21 @@
+{
+  "sources": [
+    {
+      "name": "CMHC",
+      "url": "https://www.cmhc-schl.gc.ca/professionals/industry-innovation-and-leadership/industry-expertise/resources-for-mortgage-professionals/i-cant-pay-my-mortgage",
+      "table": "web guidance",
+      "vector": "not applicable",
+      "sha256": "39f2df9396ed03fa005ec819fb44ee7d72d627df747db93b9af1296f4b23b6de",
+      "cached_file": "dev\\validation_2022\\benchmarks\\IH\\CMHC_source_extract.json"
+    },
+    {
+      "name": "FCAC",
+      "url": "https://www.canada.ca/en/financial-consumer-agency/services/debt/paying-debt.html",
+      "table": "web guidance",
+      "vector": "not applicable",
+      "sha256": "d4809ba254a47dd81bac9803b53932e8b9e626114a2d6795c1419f9564937274",
+      "cached_file": "dev\\validation_2022\\benchmarks\\IH\\FCAC_source_extract.json"
+    }
+  ],
+  "specification": "Full cash settlement of current schedule and old arrears cures; current schedule plus positive catch-up that reduces old arrears freezes age. Freeze of both days and default quarters is an explicit diagnostic assumption, not an estimated Canadian roll rate. No restructuring offered. N=3 and haircut=.20 remain inherited assumptions, unchanged, not calibrated."
+}

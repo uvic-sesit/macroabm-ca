@@ -1,0 +1,106 @@
+REF_DATE,GEO,DGUID,Statistics,Characteristics,"Income, consumption and savings",UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS,quintile
+2022,Canada,2016A000011124,Value,Lowest income quintile,Household disposable income,Dollars,81,millions,6,v116884005,1.1.2.1,102239.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Compensation of employees,Dollars,81,millions,6,v116884006,1.1.2.2,38194.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Net mixed income,Dollars,81,millions,6,v116884007,1.1.2.3,16828.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Property income received,Dollars,81,millions,6,v116884008,1.1.2.4,7997.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Less: property income paid,Dollars,81,millions,6,v116884009,1.1.2.5,12290.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Current transfers received,Dollars,81,millions,6,v116884010,1.1.2.6,83095.0,,,,0,1
+2022,Canada,2016A000011124,Value,Lowest income quintile,Less: current transfers paid,Dollars,81,millions,6,v116884011,1.1.2.7,31585.0,,,,0,1
+2022,Canada,2016A000011124,Value,Second income quintile,Household disposable income,Dollars,81,millions,6,v116884028,1.1.3.1,187391.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Compensation of employees,Dollars,81,millions,6,v116884029,1.1.3.2,113525.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Net mixed income,Dollars,81,millions,6,v116884030,1.1.3.3,30967.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Property income received,Dollars,81,millions,6,v116884031,1.1.3.4,14711.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Less: property income paid,Dollars,81,millions,6,v116884032,1.1.3.5,13065.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Current transfers received,Dollars,81,millions,6,v116884033,1.1.3.6,96581.0,,,,0,2
+2022,Canada,2016A000011124,Value,Second income quintile,Less: current transfers paid,Dollars,81,millions,6,v116884034,1.1.3.7,55329.0,,,,0,2
+2022,Canada,2016A000011124,Value,Third income quintile,Household disposable income,Dollars,81,millions,6,v116884051,1.1.4.1,250486.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Compensation of employees,Dollars,81,millions,6,v116884052,1.1.4.2,224155.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Net mixed income,Dollars,81,millions,6,v116884053,1.1.4.3,38789.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Property income received,Dollars,81,millions,6,v116884054,1.1.4.4,25881.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Less: property income paid,Dollars,81,millions,6,v116884055,1.1.4.5,16109.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Current transfers received,Dollars,81,millions,6,v116884056,1.1.4.6,85861.0,,,,0,3
+2022,Canada,2016A000011124,Value,Third income quintile,Less: current transfers paid,Dollars,81,millions,6,v116884057,1.1.4.7,108092.0,,,,0,3
+2022,Canada,2016A000011124,Value,Fourth income quintile,Household disposable income,Dollars,81,millions,6,v116884074,1.1.5.1,358762.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Compensation of employees,Dollars,81,millions,6,v116884075,1.1.5.2,372640.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Net mixed income,Dollars,81,millions,6,v116884076,1.1.5.3,50936.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Property income received,Dollars,81,millions,6,v116884077,1.1.5.4,43313.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Less: property income paid,Dollars,81,millions,6,v116884078,1.1.5.5,19514.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Current transfers received,Dollars,81,millions,6,v116884079,1.1.5.6,81199.0,,,,0,4
+2022,Canada,2016A000011124,Value,Fourth income quintile,Less: current transfers paid,Dollars,81,millions,6,v116884080,1.1.5.7,169813.0,,,,0,4
+2022,Canada,2016A000011124,Value,Highest income quintile,Household disposable income,Dollars,81,millions,6,v116884097,1.1.6.1,603465.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Compensation of employees,Dollars,81,millions,6,v116884098,1.1.6.2,630015.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Net mixed income,Dollars,81,millions,6,v116884099,1.1.6.3,87319.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Property income received,Dollars,81,millions,6,v116884100,1.1.6.4,154688.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Less: property income paid,Dollars,81,millions,6,v116884101,1.1.6.5,23233.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Current transfers received,Dollars,81,millions,6,v116884102,1.1.6.6,75788.0,,,,0,5
+2022,Canada,2016A000011124,Value,Highest income quintile,Less: current transfers paid,Dollars,81,millions,6,v116884103,1.1.6.7,321111.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Household disposable income,Dollars,81,units,0,v116884971,1.3.2.1,31485.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Compensation of employees,Dollars,81,units,0,v116884972,1.3.2.2,11762.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Net mixed income,Dollars,81,units,0,v116884973,1.3.2.3,5182.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Property income received,Dollars,81,units,0,v116884974,1.3.2.4,2463.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Less: property income paid,Dollars,81,units,0,v116884975,1.3.2.5,3785.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Current transfers received,Dollars,81,units,0,v116884976,1.3.2.6,25590.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Lowest income quintile,Less: current transfers paid,Dollars,81,units,0,v116884977,1.3.2.7,9727.0,,,,0,1
+2022,Canada,2016A000011124,Value per household,Second income quintile,Household disposable income,Dollars,81,units,0,v116884994,1.3.3.1,57709.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Compensation of employees,Dollars,81,units,0,v116884995,1.3.3.2,34961.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Net mixed income,Dollars,81,units,0,v116884996,1.3.3.3,9537.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Property income received,Dollars,81,units,0,v116884997,1.3.3.4,4531.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Less: property income paid,Dollars,81,units,0,v116884998,1.3.3.5,4023.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Current transfers received,Dollars,81,units,0,v116884999,1.3.3.6,29743.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Second income quintile,Less: current transfers paid,Dollars,81,units,0,v116885000,1.3.3.7,17039.0,,,,0,2
+2022,Canada,2016A000011124,Value per household,Third income quintile,Household disposable income,Dollars,81,units,0,v116885017,1.3.4.1,77139.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Compensation of employees,Dollars,81,units,0,v116885018,1.3.4.2,69031.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Net mixed income,Dollars,81,units,0,v116885019,1.3.4.3,11946.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Property income received,Dollars,81,units,0,v116885020,1.3.4.4,7970.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Less: property income paid,Dollars,81,units,0,v116885021,1.3.4.5,4961.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Current transfers received,Dollars,81,units,0,v116885022,1.3.4.6,26442.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Third income quintile,Less: current transfers paid,Dollars,81,units,0,v116885023,1.3.4.7,33288.0,,,,0,3
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Household disposable income,Dollars,81,units,0,v116885040,1.3.5.1,110484.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Compensation of employees,Dollars,81,units,0,v116885041,1.3.5.2,114758.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Net mixed income,Dollars,81,units,0,v116885042,1.3.5.3,15686.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Property income received,Dollars,81,units,0,v116885043,1.3.5.4,13339.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Less: property income paid,Dollars,81,units,0,v116885044,1.3.5.5,6009.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Current transfers received,Dollars,81,units,0,v116885045,1.3.5.6,25006.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Fourth income quintile,Less: current transfers paid,Dollars,81,units,0,v116885046,1.3.5.7,52296.0,,,,0,4
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Household disposable income,Dollars,81,units,0,v116885063,1.3.6.1,185843.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Compensation of employees,Dollars,81,units,0,v116885064,1.3.6.2,194019.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Net mixed income,Dollars,81,units,0,v116885065,1.3.6.3,26891.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Property income received,Dollars,81,units,0,v116885066,1.3.6.4,47638.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Less: property income paid,Dollars,81,units,0,v116885067,1.3.6.5,7155.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Current transfers received,Dollars,81,units,0,v116885068,1.3.6.6,23339.0,,,,0,5
+2022,Canada,2016A000011124,Value per household,Highest income quintile,Less: current transfers paid,Dollars,81,units,0,v116885069,1.3.6.7,98889.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Household disposable income,Dollars,81,units,0,v116885454,1.4.2.1,21122.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Compensation of employees,Dollars,81,units,0,v116885455,1.4.2.2,7891.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Net mixed income,Dollars,81,units,0,v116885456,1.4.2.3,3477.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Property income received,Dollars,81,units,0,v116885457,1.4.2.4,1652.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Less: property income paid,Dollars,81,units,0,v116885458,1.4.2.5,2539.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Current transfers received,Dollars,81,units,0,v116885459,1.4.2.6,17167.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Lowest income quintile,Less: current transfers paid,Dollars,81,units,0,v116885460,1.4.2.7,6525.0,,,,0,1
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Household disposable income,Dollars,81,units,0,v116885477,1.4.3.1,35266.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Compensation of employees,Dollars,81,units,0,v116885478,1.4.3.2,21365.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Net mixed income,Dollars,81,units,0,v116885479,1.4.3.3,5828.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Property income received,Dollars,81,units,0,v116885480,1.4.3.4,2769.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Less: property income paid,Dollars,81,units,0,v116885481,1.4.3.5,2459.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Current transfers received,Dollars,81,units,0,v116885482,1.4.3.6,18176.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Second income quintile,Less: current transfers paid,Dollars,81,units,0,v116885483,1.4.3.7,10413.0,,,,0,2
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Household disposable income,Dollars,81,units,0,v116885500,1.4.4.1,45284.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Compensation of employees,Dollars,81,units,0,v116885501,1.4.4.2,40523.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Net mixed income,Dollars,81,units,0,v116885502,1.4.4.3,7012.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Property income received,Dollars,81,units,0,v116885503,1.4.4.4,4679.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Less: property income paid,Dollars,81,units,0,v116885504,1.4.4.5,2912.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Current transfers received,Dollars,81,units,0,v116885505,1.4.4.6,15522.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Third income quintile,Less: current transfers paid,Dollars,81,units,0,v116885506,1.4.4.7,19541.0,,,,0,3
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Household disposable income,Dollars,81,units,0,v116885523,1.4.5.1,63637.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Compensation of employees,Dollars,81,units,0,v116885524,1.4.5.2,66099.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Net mixed income,Dollars,81,units,0,v116885525,1.4.5.3,9035.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Property income received,Dollars,81,units,0,v116885526,1.4.5.4,7683.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Less: property income paid,Dollars,81,units,0,v116885527,1.4.5.5,3461.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Current transfers received,Dollars,81,units,0,v116885528,1.4.5.6,14403.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Fourth income quintile,Less: current transfers paid,Dollars,81,units,0,v116885529,1.4.5.7,30121.0,,,,0,4
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Household disposable income,Dollars,81,units,0,v116885546,1.4.6.1,110712.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Compensation of employees,Dollars,81,units,0,v116885547,1.4.6.2,115583.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Net mixed income,Dollars,81,units,0,v116885548,1.4.6.3,16020.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Property income received,Dollars,81,units,0,v116885549,1.4.6.4,28379.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Less: property income paid,Dollars,81,units,0,v116885550,1.4.6.5,4262.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Current transfers received,Dollars,81,units,0,v116885551,1.4.6.6,13904.0,,,,0,5
+2022,Canada,2016A000011124,Value per consumption unit,Highest income quintile,Less: current transfers paid,Dollars,81,units,0,v116885552,1.4.6.7,58911.0,,,,0,5
