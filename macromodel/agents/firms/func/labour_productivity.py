@@ -143,10 +143,17 @@ class WorkEffortLabourProductivitySetter(LabourProductivitySetter):
             current_target_production
             + self.consider_capital_inputs * (current_limiting_capital_inputs - current_target_production),
         )
-        return 1.0 + self.work_effort_increase_speed * (
+        denominator = labour_inputs_from_employees * industry_labour_productivity_by_firm
+        # A dormant, zero-target contract holder cannot produce or demand labour.
+        # Keep the original division and arithmetic on every other entry.
+        dormant = (current_target_production == 0) & (denominator == 0)
+        ratio = np.divide(current_target_production, denominator,
+                          out=np.zeros_like(current_target_production, dtype=float), where=~dormant)
+        factor = 1.0 + self.work_effort_increase_speed * (
             np.minimum(
                 self.max_increase_in_work_effort,
-                current_target_production / (labour_inputs_from_employees * industry_labour_productivity_by_firm),
+                ratio,
             )
             - 1.0
         )
+        return np.where(dormant, 0.0, factor)
