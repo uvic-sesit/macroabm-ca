@@ -1454,11 +1454,10 @@ class Country:
 
         # G5. GOVERNMENT REVENUE
         # General government fields
+        from .household_closure import private_rent_tax_base
         self.central_government.compute_taxes(
             current_ind_employee_income=self.individuals.ts.current("employee_income"),
-            current_total_rent_paid=self.households.ts.current("rent")[
-                self.households.states["Tenure Status of the Main Residence"] == 3
-            ].sum(),
+            current_total_rent_paid=private_rent_tax_base(self.households.ts.current('income_rental'),self.central_government.states['Income Tax']),
             current_income_financial_assets=self.households.ts.current("income_financial_assets"),
             current_ind_activity=self.individuals.states["Activity Status"],
             current_ind_realised_cons=self.households.ts.current("consumption"),

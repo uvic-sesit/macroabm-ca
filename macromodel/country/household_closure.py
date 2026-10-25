@@ -3,6 +3,12 @@ from copy import deepcopy
 import numpy as np
 
 
+def private_rent_tax_base(net_landlord_receipts,income_tax):
+    """Gross up actual household-landlord receipts; public rent is not PIT."""
+    if not 0<=income_tax<1:raise ValueError('Rental income tax must be below one')
+    return np.asarray(net_landlord_receipts).sum()/(1-income_tax)
+
+
 def offset_private_rent(country, industry=41):
     """Remove only renters' duplicated L purchases, on the cash/VAT boundary.
 
