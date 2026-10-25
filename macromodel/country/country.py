@@ -1653,6 +1653,7 @@ class Country:
         Returns:
             pd.DataFrame: DataFrame containing GDP measures and their components
         """
+        housing_scope = lambda values: np.zeros_like(values) if self.housing_services_in_household_io else values
         data_dict = {
             # GDP Output Approach Components
             "GDP_Output": self.economy.ts.get_aggregate("gdp_output"),
@@ -1660,8 +1661,8 @@ class Country:
             "-Total_Intermediate_Consumption": self.economy.ts.get_aggregate("total_intermediate_consumption"),
             "+Taxes_on_Products": self.central_government.ts.get_aggregate("taxes_on_products"),
             "-Taxes_on_Production": self.central_government.ts.get_aggregate("taxes_production"),
-            "+Total_Real_Rent_Paid": self.economy.ts.get_aggregate("total_real_rent_paid"),
-            "+Total_Imputed_Rent_Paid": self.economy.ts.get_aggregate("total_imp_rent_paid"),
+            "+Total_Real_Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_real_rent_paid")),
+            "+Total_Imputed_Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_imp_rent_paid")),
             # GDP Expenditure Approach Components
             "GDP_Expenditure": self.economy.ts.get_aggregate("gdp_expenditure"),
             "+Household_Consumption": self.households.ts.get_aggregate("total_consumption"),
@@ -1670,15 +1671,15 @@ class Country:
             "+Gross_Fixed_Capital_Formation": self.economy.ts.get_aggregate("total_gross_fixed_capital_formation"),
             "+Exports": self.economy.ts.get_aggregate("total_exports"),
             "-Imports": self.economy.ts.get_aggregate("total_imports"),
-            "+Rent_Paid": self.economy.ts.get_aggregate("total_real_rent_paid"),
-            "+Rent_Imputed": self.economy.ts.get_aggregate("total_imp_rent_paid"),
+            "+Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_real_rent_paid")),
+            "+Rent_Imputed": housing_scope(self.economy.ts.get_aggregate("total_imp_rent_paid")),
             # GDP Income Approach Components
             "GDP_Income": self.economy.ts.get_aggregate("gdp_income"),
             "+Operating_Surplus": self.firms.ts.get_aggregate("gross_operating_surplus_mixed_income"),
             "+Wages": self.firms.ts.get_aggregate("total_wage"),
-            "+Rent_Received": self.economy.ts.get_aggregate("total_real_rent_rec"),
-            "+Central_Government_Rent_Received": self.central_government.ts.get_aggregate("total_rent_received"),
-            "+Central_Government_Rental_Taxes": self.central_government.ts.get_aggregate("taxes_rental_income"),
+            "+Rent_Received": housing_scope(self.economy.ts.get_aggregate("total_real_rent_rec")),
+            "+Central_Government_Rent_Received": housing_scope(self.central_government.ts.get_aggregate("total_rent_received")),
+            "+Central_Government_Rental_Taxes": housing_scope(self.central_government.ts.get_aggregate("taxes_rental_income")),
             "+Central_Government_Product_Taxes": self.central_government.ts.get_aggregate("taxes_on_products"),
             # Additional Value Added Components
             "Total_Gross_Value_Added": self.economy.ts.get_aggregate("total_gross_value_added"),
@@ -1698,6 +1699,8 @@ class Country:
             "Total_Gross_Value_Added_RSTU": self.economy.ts.get_aggregate("total_gross_value_added_rstu"),
         }
 
+        data_dict["Memo_Real_Rent_Paid"] = self.economy.ts.get_aggregate("total_real_rent_paid")
+        data_dict["Memo_Imputed_Rent_Paid"] = self.economy.ts.get_aggregate("total_imp_rent_paid")
         return pd.DataFrame(data_dict)
 
     @property
@@ -1711,6 +1714,7 @@ class Country:
         Returns:
             pd.DataFrame: DataFrame containing GDP measures and their components
         """
+        housing_scope = lambda values: np.zeros_like(values) if self.housing_services_in_household_io else values
         data_dict = {
             # GDP Output Approach Components
             "GDP_Output": self.economy.ts.get_aggregate("gdp_output"),
@@ -1718,8 +1722,8 @@ class Country:
             "-Total_Intermediate_Consumption": self.economy.ts.get_aggregate("total_intermediate_consumption"),
             "+Taxes_on_Products": self.central_government.ts.get_aggregate("taxes_on_products"),
             "-Taxes_on_Production": self.central_government.ts.get_aggregate("taxes_production"),
-            "+Total_Real_Rent_Paid": self.economy.ts.get_aggregate("total_real_rent_paid"),
-            "+Total_Imputed_Rent_Paid": self.economy.ts.get_aggregate("total_imp_rent_paid"),
+            "+Total_Real_Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_real_rent_paid")),
+            "+Total_Imputed_Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_imp_rent_paid")),
             # GDP Expenditure Approach Components
             "GDP_Expenditure": self.economy.ts.get_aggregate("gdp_expenditure"),
             "+Household_Consumption": self.households.ts.get_aggregate("total_consumption"),
@@ -1728,15 +1732,15 @@ class Country:
             "+Gross_Fixed_Capital_Formation": self.economy.ts.get_aggregate("total_gross_fixed_capital_formation"),
             "+Exports": self.economy.ts.get_aggregate("total_exports"),
             "-Imports": self.economy.ts.get_aggregate("total_imports"),
-            "+Rent_Paid": self.economy.ts.get_aggregate("total_real_rent_paid"),
-            "+Rent_Imputed": self.economy.ts.get_aggregate("total_imp_rent_paid"),
+            "+Rent_Paid": housing_scope(self.economy.ts.get_aggregate("total_real_rent_paid")),
+            "+Rent_Imputed": housing_scope(self.economy.ts.get_aggregate("total_imp_rent_paid")),
             # GDP Income Approach Components
             "GDP_Income": self.economy.ts.get_aggregate("gdp_income"),
             "+Operating_Surplus": self.firms.ts.get_aggregate("gross_operating_surplus_mixed_income"),
             "+Wages": self.firms.ts.get_aggregate("total_wage"),
-            "+Rent_Received": self.economy.ts.get_aggregate("total_real_rent_rec"),
-            "+Central_Government_Rent_Received": self.central_government.ts.get_aggregate("total_rent_received"),
-            "+Central_Government_Rental_Taxes": self.central_government.ts.get_aggregate("taxes_rental_income"),
+            "+Rent_Received": housing_scope(self.economy.ts.get_aggregate("total_real_rent_rec")),
+            "+Central_Government_Rent_Received": housing_scope(self.central_government.ts.get_aggregate("total_rent_received")),
+            "+Central_Government_Rental_Taxes": housing_scope(self.central_government.ts.get_aggregate("taxes_rental_income")),
             "+Central_Government_Product_Taxes": self.central_government.ts.get_aggregate("taxes_on_products"),
             # Additional Value Added Components
             "Total_Gross_Value_Added": self.economy.ts.get_aggregate("total_gross_value_added"),
@@ -1756,6 +1760,8 @@ class Country:
             "Total_Gross_Value_Added_RSTU": self.economy.ts.get_aggregate("total_gross_value_added_rstu"),
         }
 
+        data_dict["Memo_Real_Rent_Paid"] = self.economy.ts.get_aggregate("total_real_rent_paid")
+        data_dict["Memo_Imputed_Rent_Paid"] = self.economy.ts.get_aggregate("total_imp_rent_paid")
         return pd.DataFrame(data_dict)
 
     @property

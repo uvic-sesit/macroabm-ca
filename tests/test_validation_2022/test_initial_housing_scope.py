@@ -16,3 +16,15 @@ def test_io_housing_removed_from_all_gdp_measures_but_memos_unchanged():
     assert old.current('gdp_income')[0]-new.current('gdp_income')[0]==50.
     for key in ['total_real_rent_paid','total_imp_rent_paid','total_real_rent_rec','total_household_fce','total_gross_fixed_capital_formation','total_exports','total_imports']:
         np.testing.assert_array_equal(old.current(key),new.current(key))
+
+
+def test_gdp_debug_report_addends_obey_scope_and_keep_rent_memos():
+    from types import SimpleNamespace
+    from macromodel.country.country import Country
+    agent=SimpleNamespace(ts=SimpleNamespace(get_aggregate=lambda key:np.ones(2)))
+    for io in [True,False]:
+        c=SimpleNamespace(economy=agent,households=agent,firms=agent,government_entities=agent,central_government=agent,housing_services_in_household_io=io)
+        for report in [Country.gdp_debug_output(c),Country.gdp_components_df.fget(c)]:
+            for key in ['+Rent_Paid','+Rent_Imputed','+Rent_Received','+Central_Government_Rent_Received','+Central_Government_Rental_Taxes']:
+                np.testing.assert_array_equal(report[key],np.full(2,0. if io else 1.))
+            np.testing.assert_array_equal(report.Memo_Real_Rent_Paid,np.ones(2))
