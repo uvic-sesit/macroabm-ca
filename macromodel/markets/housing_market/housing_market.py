@@ -477,9 +477,15 @@ class HousingMarket:
             [s_ >= 0 and inhabited[s_] == p_ for s_, p_ in zip(sellers, prop_ids)], dtype=bool
         )
         foreclosure=np.array([bool(props.at[p,'E foreclosure']) if 'E foreclosure' in props else False for p in prop_ids])&is_sell
+        prior_inhabitants=props.loc[prop_ids,'Corresponding Inhabitant Household ID'].to_numpy(int)
+        third_party_tenant=(prior_inhabitants>=0)&(prior_inhabitants!=sellers)&(prior_inhabitants!=buyers)
         for _ in range(len(sales) + 1):
             movers = set(buyers[executed])
             new_executed = executed & ~(is_sell & ~foreclosure & seller_lives_there & ~np.isin(sellers, list(movers)))
+            # A collateral sale cannot overwrite an unrelated tenant's home.
+            # Vacant possession requires that tenant to have an executed move;
+            # otherwise the mortgage remains in the foreclosure holding queue.
+            new_executed &= ~(is_sell & third_party_tenant & ~np.isin(prior_inhabitants,list(movers)))
             if np.array_equal(new_executed, executed):
                 break
             executed = new_executed
