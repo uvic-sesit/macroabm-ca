@@ -44,6 +44,7 @@ class Headline:
                     foreclosure_sales=(np.asarray(h.states.get('E_foreclosure_repayment',0.))>0).sum()*c.scale,
                     mortgage_writeoffs=np.asarray(h.states.get('E_mortgage_writeoff',0.)).sum(),
                     unsecured_writeoffs=np.asarray(h.states.get('E_unsecured_writeoff',0.)).sum(),
+                    household_overdraft_writeoffs=np.asarray(h.states.get('overdraft_writeoff_current',0.)).sum(),
                     foreclosure_recoveries=np.asarray(h.states.get('E_foreclosure_repayment',0.)).sum(),
                     foreclosure_surplus=np.asarray(h.states.get('E_foreclosure_surplus',0.)).sum(),
                     interest_nonaccrual_memo=np.asarray(cm.states.get('E_interest_arrears',0.)).sum(),

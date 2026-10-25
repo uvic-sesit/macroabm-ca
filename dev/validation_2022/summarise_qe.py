@@ -17,7 +17,7 @@ def main():
     for p in sorted((OUT/'runs').glob('*_q12_s*/manifest.json')):
         m=json.loads(p.read_text());arm=m['arm'];seed=m['seed'];directory=p.parent
         if m['max_accounting_error']>1e-8:continue
-        if arm=='E' and m.get('variant')!='cashfix':continue
+        if arm=='E' and m.get('variant')!='complete':continue
         h=pd.read_csv(directory/'headline.csv');n=h.groupby('quarter').sum(numeric_only=True)
         for t,r in n.iterrows():
             headline.append(dict(arm=arm,seed=seed,quarter=t,**r.to_dict(),implicit_GDP_PPI=n.loc[t,'gdp']/n.loc[t,'gdp_PPI_deflated']))
@@ -75,7 +75,7 @@ def main():
                     annual_writeoff_pct=annual_ratio,Q12_60plus_pct=arrears60.loc[12],Q12_90plus_pct=arrears90.loc[12],
                     min_60plus_pct=arrears60.min(),max_60plus_pct=arrears60.max(),Q1_writeoffs=q1,Q4_Q12_mean_writeoffs=later,max_accounting_error=m['max_accounting_error']))
                 for t in range(1,13):
-                    e_metrics.append(dict(seed=seed,quarter=t,**{k:n.loc[t,k] for k in ['mortgage_borrowers','mortgage_30plus','mortgage_60plus','mortgage_90plus','defaults','foreclosure_pending','foreclosure_sales','mortgage_writeoffs','unsecured_writeoffs','foreclosure_recoveries','foreclosure_surplus','interest_nonaccrual_memo','household_debt']},mortgage_60plus_pct=arrears60.loc[t],mortgage_90plus_pct=arrears90.loc[t]))
+                    e_metrics.append(dict(seed=seed,quarter=t,**{k:n.loc[t,k] for k in ['mortgage_borrowers','mortgage_30plus','mortgage_60plus','mortgage_90plus','defaults','foreclosure_pending','foreclosure_sales','mortgage_writeoffs','unsecured_writeoffs','household_overdraft_writeoffs','foreclosure_recoveries','foreclosure_surplus','interest_nonaccrual_memo','household_debt']},mortgage_60plus_pct=arrears60.loc[t],mortgage_90plus_pct=arrears90.loc[t]))
     for name,rows in [('headline_quarterly',headline),('headline_changes',changes),('GDP_expenditure_decomposition',decomposition),('consumption_distribution',distributions),('gates',gates),('quarterly',quarterly),('E_metrics',e_metrics)]:pd.DataFrame(rows).to_csv(OUT/(name+'.csv'),index=False)
     q=[r for r in gates if r['arm']=='Q'];e=[r for r in gates if r['arm']=='E']
     bridge=json.loads((OUT/'bridge/gates.json').read_text()) if (OUT/'bridge/gates.json').exists() else dict(passed=False)

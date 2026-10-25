@@ -1,6 +1,6 @@
 import numpy as np
 from macromodel.country.household_payment_default import allocate_service,foreclosure_waterfall,arrears_days
-from macromodel.country.household_payment_default import settle_foreclosures,PaymentDefaultHandler
+from macromodel.country.household_payment_default import settle_foreclosures,PaymentDefaultHandler,resolve_overdraft
 from types import SimpleNamespace
 import pandas as pd
 
@@ -63,3 +63,17 @@ def test_handler_does_not_default_negative_net_worth_when_payments_are_met():
     assert result[0]==0 and sum(losses)==0
     np.testing.assert_array_equal(cm.states['cons_loans'],cons)
     assert h.ts.current('net_wealth')[0]==-100
+
+
+def test_overdraft_resolution_preserves_formal_loans_and_exact_bank_identity():
+    values={key:[np.array([-20.,-30.])] for key in ['wealth_deposits','wealth_financial_assets','wealth','net_wealth']}
+    h=SimpleNamespace(states={'Corresponding Bank ID':np.array([0,1])},ts=SimpleNamespace(dicts=values,current=lambda key:values[key][-1]))
+    loans=np.zeros((3,2,2));loans[0]=np.array([[10.,0.],[0.,10.]])
+    cm=SimpleNamespace(states={'cons_loans':loans.copy(),'cumulative_writeoffs':0.})
+    queued=[];cm.queue_bank_losses=lambda by_bank:queued.append(by_bank.copy())
+    relief=resolve_overdraft(h,cm,np.array([True,False]))
+    np.testing.assert_array_equal(relief,[20,0]);np.testing.assert_array_equal(queued[0],[20,0])
+    np.testing.assert_array_equal(cm.states['cons_loans'],loans);assert cm.states['cumulative_writeoffs']==0
+    np.testing.assert_array_equal(h.ts.current('wealth_deposits'),[0,-30])
+    # dDeposits + dEquity - dFormalLoans = 20 - 20 - 0 = dReserves = 0.
+    assert relief.sum()-queued[0].sum()==0

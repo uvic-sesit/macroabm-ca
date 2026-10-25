@@ -1,0 +1,10 @@
+{
+  "date_UTC": "2026-10-25T02:18:36.646518+00:00",
+  "source": "Approved E unsecured-debt scope and approved D zero unused overdraft capacity; model specification, not an empirical benchmark",
+  "vector": "not applicable",
+  "N": 3,
+  "new_parameter": false,
+  "rule": "An unfunded senior payment/negative end-quarter deposit ages as an unsecured overdraft claim repayable on demand. After the same N, cancel only the negative-deposit claim, charge its deposit bank, preserve the formal loan book, and record household_overdraft_relief as a noncash accounting term.",
+  "uncertainty": "Quarterly senior-payment distress proxy for unauthorized overdrafts; the household file has no observed credit limits or arrears. No Canadian legal repayment schedule is claimed; no value fitted to a gate.",
+  "foreclosure_reporting": "Actual mortgage losses now populate the mortgage NPL reporting path, rather than being returned as zero."
+}

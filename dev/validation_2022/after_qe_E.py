@@ -4,7 +4,7 @@ from pathlib import Path
 HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[1]
 
 def main():
-    final=HERE/'outputs/QE/runs/E_cashfix_q12_s2'
+    final=HERE/'outputs/QE/runs/E_complete_q12_s2'
     print('Waiting for serial E measurements',flush=True)
     while True:
         try:

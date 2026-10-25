@@ -39,6 +39,20 @@ def arrears_days(previous_days,unpaid,paid,total_due):
     return np.where(unpaid>1e-8,np.where(previous_days>0,previous_days+90,first),0).astype(int)
 
 
+def resolve_overdraft(h,cm,eligible):
+    """Cancel the bank's negative-deposit claim, never the formal loan book."""
+    relief=np.where(eligible,np.maximum(0.,-h.ts.current('wealth_deposits')),0.)
+    h.states['overdraft_writeoff_current']=relief
+    if np.any(relief>0):
+        by_bank=np.bincount(h.states['Corresponding Bank ID'],weights=relief,minlength=cm.states['cons_loans'].shape[1])
+        cm.queue_bank_losses(by_bank)
+        for key in ['wealth_deposits','wealth_financial_assets','wealth','net_wealth']:
+            if key in h.ts.dicts:h.ts.dicts[key][-1]=h.ts.current(key)+relief
+        for aggregate,key in [('total_wealth_deposits','wealth_deposits'),('total_wealth_financial_assets','wealth_financial_assets'),('total_wealth','wealth')]:
+            if aggregate in h.ts.dicts:h.ts.dicts[aggregate][-1]=np.array([h.ts.current(key).sum()])
+    return relief
+
+
 def service(c):
     h=c.households;cm=c.credit_market
     receipts=known_household_receipts(c);d=h.ts.current('wealth_deposits')
@@ -48,6 +62,7 @@ def service(c):
     cash=(d+receipts+liquidatable_household_assets(h)+h.ts.current('received_consumption_loans')+
         h.ts.current('received_mortgages')+h.ts.current('property_sale_proceeds')-
         h.ts.current('rent')-h.ts.current('price_paid_for_property')-deposit_interest)
+    h.states['E_overdraft_senior_shortfall']=np.maximum(0.,-cash)
     loans=np.stack([cm.states[k] for k in ('cons_loans','mort_loans')])
     shape=loans[:,0].shape
     oldp=cm.states.get('E_principal_arrears',np.zeros(shape));oldi=cm.states.get('E_interest_arrears',np.zeros(shape))
@@ -86,10 +101,22 @@ class PaymentDefaultHandler:
         newly_queued=eligible[1]&(mort>1e-8)&~queue
         queue&=cm.states['E_days_past_due'][1]>0
         queue|=eligible[1]&(mort>1e-8);h.states['E_foreclosure_queue']=queue
-        h.states['E_unsecured_writeoff']=loss
-        h.states['E_new_defaults']=(loss>1e-8)|newly_queued
+        # Under D's zero unused capacity, an outstanding negative deposit is
+        # an unfunded senior-payment claim, repayable on demand. Age it using
+        # the same N, even when no formal consumer/mortgage contract remains.
+        od_distress=np.maximum(h.states.get('E_overdraft_senior_shortfall',np.zeros(n)),np.maximum(0.,-h.ts.current('wealth_deposits')))>1e-8
+        prior=h.states.get('E_overdraft_arrears_quarters',np.zeros(n,int))
+        od_quarters=np.where(od_distress,prior+1,0)
+        od_loss=resolve_overdraft(h,cm,od_quarters>=cfg.household_payment_default_periods)
+        h.states['E_overdraft_arrears_quarters']=np.where(od_loss>0,0,od_quarters)
+        h.states['E_formal_unsecured_writeoff']=loss
+        h.states['E_unsecured_writeoff']=loss+od_loss
+        h.states['E_new_defaults']=(loss+od_loss>1e-8)|newly_queued
         sync_debt(h,cm)
-        return (eligible.any(axis=0).mean(),loss.sum()/cons.sum() if cons.sum() else 0.,0.)
+        mortgage_loss=np.asarray(h.states.get('E_mortgage_writeoff',0.)).sum()
+        mortgage_book=h.states.get('E_mortgage_opening_before_foreclosure',mort.sum())
+        return (h.states['E_new_defaults'].mean(),loss.sum()/cons.sum() if cons.sum() else 0.,
+            mortgage_loss/mortgage_book if mortgage_book else 0.)
 
 
 def sync_debt(h,cm):
@@ -111,6 +138,7 @@ def list_foreclosures(c):
 def settle_foreclosures(c):
     """Executed sales alone repay creditors; no hypothetical buyer or REO cash."""
     cm=c.credit_market;h=c.households;market=c.housing_market
+    h.states['E_mortgage_opening_before_foreclosure']=float(cm.states['mort_loans'][0].sum())
     sales=market.states['current_sales'];props=market.states['properties'];n=len(h.ts.current('wealth_deposits'))
     repayments=np.zeros(n);losses=np.zeros(n);surpluses=np.zeros(n)
     by_bank=np.zeros(cm.states['mort_loans'].shape[1])

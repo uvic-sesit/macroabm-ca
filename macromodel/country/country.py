@@ -1389,6 +1389,7 @@ class Country:
         self.credit_market.states["household_writeoffs_current"] = self.credit_market.states.get("cumulative_writeoffs",0.)-writeoffs_before_households
         if self.configuration.household_closure.household_payment_default_enabled:
             self.credit_market.states['household_writeoffs_current']+=self.households.states['E_mortgage_writeoff'].sum()
+            self.credit_market.states['household_writeoffs_current']+=self.households.states['overdraft_writeoff_current'].sum()
         self.economy.ts.household_insolvency_rate.append([household_insolvency_rate])
         self.economy.ts.npl_hh_cons_loans.append([npl_hh_cons_loans])
         self.economy.ts.npl_mortgages.append([npl_mortgages])
