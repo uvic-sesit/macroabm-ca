@@ -1,0 +1,44 @@
+{
+  "table": "36-10-0124-01",
+  "reference": "2022 current prices, Canada, seasonally adjusted at quarterly rates; sum four quarters",
+  "series_code": "1.1.1.18",
+  "native_StatCan_vector": null,
+  "source_note": "DBnomics series ID, not a native v-number. Original cache has no native vector. Official bulk download attempted2026-10-25 but connection closed; web download also timed out. No native ID invented.",
+  "cached_indexed_at": "2026-09-30T02:23:27.708Z",
+  "checked_utc": "2026-10-25",
+  "source": "dev\\validation_2022\\benchmarks\\raw\\dbn_36100124.json",
+  "source_sha256": "a38f13e8c1bec7c8659849d379ac5780fd40be06e58fffc37a03fae9581735d3",
+  "extract_sha256": "5f5c498f943af0724bd3da61daa92d859dd11ba58bccb670ab8787aa5c8e78cb",
+  "annual_CAD": 235938000000.0,
+  "values": [
+    {
+      "period": "2022-Q1",
+      "value_M": 57441.0,
+      "table": "36-10-0124-01",
+      "series_code": "1.1.1.18",
+      "series_name": "Quarterly \u2013 Canada \u2013 Current prices \u2013 Seasonally adjusted at quarterly rates \u2013 Imputed rental fees for housing"
+    },
+    {
+      "period": "2022-Q2",
+      "value_M": 58553.0,
+      "table": "36-10-0124-01",
+      "series_code": "1.1.1.18",
+      "series_name": "Quarterly \u2013 Canada \u2013 Current prices \u2013 Seasonally adjusted at quarterly rates \u2013 Imputed rental fees for housing"
+    },
+    {
+      "period": "2022-Q3",
+      "value_M": 59397.0,
+      "table": "36-10-0124-01",
+      "series_code": "1.1.1.18",
+      "series_name": "Quarterly \u2013 Canada \u2013 Current prices \u2013 Seasonally adjusted at quarterly rates \u2013 Imputed rental fees for housing"
+    },
+    {
+      "period": "2022-Q4",
+      "value_M": 60547.0,
+      "table": "36-10-0124-01",
+      "series_code": "1.1.1.18",
+      "series_name": "Quarterly \u2013 Canada \u2013 Current prices \u2013 Seasonally adjusted at quarterly rates \u2013 Imputed rental fees for housing"
+    }
+  ],
+  "url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610012401"
+}

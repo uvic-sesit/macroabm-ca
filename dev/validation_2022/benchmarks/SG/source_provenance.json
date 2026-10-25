@@ -1,0 +1,117 @@
+{
+  "files": [
+    {
+      "file": "HANDOFF_TO_VALIDATION_2026-10-25.md",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "a5404312ffc06d7c7820a282a64ec08ecca1932c2cf891bbb22da962740fc4fa",
+      "CRLF_sha256": "4dcf7249a16296b27ca81ae6f8a95c43be840e18fe178516bccd8d9c4eeaad28",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "SUT_BALANCE_2026-10-25.md",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "ae41015aa70b22e7329cf4e22caec9c1e081d2a2a0f115d5c1a22b24a3532994",
+      "CRLF_sha256": "a4b4b8c2f8abf9b137894efd8e06c87c3bd5030e804f2d2fe4d003d1c25c8fe5",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "compatibility/compat_icio_2022_can_provinces.csv",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "f0004ad3d40e465cceba3d9735d6dda5b00658fe6ca88af5ffed944917a8adb9",
+      "CRLF_sha256": "41590fdb19d9eb79758169b51afc0751e6d5c19ce88183bb8fbe330889e689aa",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "canonical/VA_tax_output_basic.csv",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "6fbdf9db8985e7cafde8974ebfad0032776416bb4db84d6ca2f04c3408952940",
+      "CRLF_sha256": "6af2042259aebc5d25d7cb718d84fbd58a91bc345d3d92c0a4a29278267aa4c2",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "canonical/Z_intermediate_basic.csv",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "d6a79c03681a61bd051f690cac96dfcd9b2c3ba55cf643a4d9e7072a68f50cb1",
+      "CRLF_sha256": "0a7f48f14b0510ec67c347ee11c5db6260c9a1fd5b1e32ac609267e1e3fc02fe",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "canonical/FD_by_source_and_category_basic.csv",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "9a82192c8a2e54029782acaef282ec5dfe09eb1a2553f62b3ed6cbe3b1ef78af",
+      "CRLF_sha256": "d4fda8a8d0f525eed3fd70d704cf1f6b124306d01cfc4fdc564bdee002cbd89b",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "canonical/reexports_by_province_commodity_basic.csv",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "9ac15673705c01488f18c698fed33bf24bc596b710ac1b1397e04ca17badd253",
+      "CRLF_sha256": "ff5b99bb3afa748ee25608353fb395f10dacf88f1efb04886d449c018a461c73",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "validation/final_checks.json",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "784c16fad0b5e9e21352985164d935f57aba8c41f2e87e9936fcea5a5db0e61d",
+      "CRLF_sha256": "23d70c498ec25a7d818dc107b0ec2eb88a27de54e3187ebc55f6bfd81e4c7c27",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "src/ioqc/stages.py",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "8adbc54b50cd33a8956a57e99e8f0e0e647e859823a25400aa7fab186c1c6a24",
+      "CRLF_sha256": "4c04dcfa5e4f3f7566bb29eface230939df5591989a9da62f24afe1e50f3b257",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "canonical/SCHEMA.json",
+      "git_ref": "feature/sut-balance",
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "sha256": "c4192cc9af211e28d6b1fc10ad444f67adeb05ceb097e9513a8ad3219b8a525c",
+      "CRLF_sha256": "24dd54a9ad1485a6921bbe152af344f8834c04075002d815fa3dfe05f83df056",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "before/compatibility/compat_icio_2022_can_provinces.csv",
+      "git_ref": "479dcb4",
+      "commit": "479dcb4",
+      "sha256": "30cd16744bf11c68a94d2ab9254d63ba86f3e0e22e201c429bbe97c00d165896",
+      "CRLF_sha256": "bc1c7b48b22f06582e8eaf4afa70731d03b2663f04af91ebb0f792444ab959ac",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "before/canonical/VA_tax_output_basic.csv",
+      "git_ref": "479dcb4",
+      "commit": "479dcb4",
+      "sha256": "94fa41daa413bb976d94fbbbe54daadf40580fa981616cc2cb18f15f6302a14d",
+      "CRLF_sha256": "20a066ee3190cad9b9217184646da73c7a3a1d550e647c1a1a6b2245f6faaa10",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "before/canonical/Z_intermediate_basic.csv",
+      "git_ref": "479dcb4",
+      "commit": "479dcb4",
+      "sha256": "d58bcf0cc903026fca10029e66c6942a36eae500833b36e57926ed998f220b57",
+      "CRLF_sha256": "6220eafe91ea31949049b90a7f9a83566c26ad2a5cf2e0b0fd6ddb133c144df7",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "file": "before/canonical/FD_by_source_and_category_basic.csv",
+      "git_ref": "479dcb4",
+      "commit": "479dcb4",
+      "sha256": "59a2539c100a0a62592c2ba9570ba266aa0298c4aec1df648a47657b9184a168",
+      "CRLF_sha256": "be477193783c2b8d1154a81dca49dd8bccbfec59ec88b8438df2f98230c36c50",
+      "retrieved_utc": "2026-10-25"
+    }
+  ],
+  "hash_note": "Handoff SHA is Windows CRLF bytes. Git show returns LF bytes; both hashes recorded and CRLF conversion matches exactly. No numerical/content substitution."
+}

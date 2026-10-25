@@ -1,0 +1,464 @@
+{
+  "checks": {
+    "item1_bilateral_maxabs_k": 0.0001487433910369873,
+    "item1_bilateral_meanabs_k": 3.5685156548908183e-07,
+    "item1_failures_over_1k": 0,
+    "canonical_region_commodity_balance_relmax": 3.038581078891121e-10,
+    "industry_row_col": {
+      "row_total_M": 5057573.426013677,
+      "col_total_M": 5057573.426000797,
+      "net_gap_M": 1.2881054360315686e-05,
+      "abs_gap_M": 2.8825375361681647e-05,
+      "max_abs_cell_M": 4.36893105506897e-06,
+      "max_rel_cell": 1.0028686227769867e-07,
+      "worst_cells_M": [
+        {
+          "region": "AB",
+          "industry": "B06",
+          "row_M": 217824.9780046089,
+          "col_M": 217824.97800023996,
+          "gap_M": 4.36893105506897e-06
+        },
+        {
+          "region": "ON",
+          "industry": "C19",
+          "row_M": 33428.805002510715,
+          "col_M": 33428.8049998613,
+          "gap_M": 2.649415284395218e-06
+        },
+        {
+          "region": "ON",
+          "industry": "C24B",
+          "row_M": 36961.736998839944,
+          "col_M": 36961.73699995379,
+          "gap_M": -1.1138468980789184e-06
+        },
+        {
+          "region": "ON",
+          "industry": "P",
+          "row_M": 65078.97100093427,
+          "col_M": 65078.97099997659,
+          "gap_M": 9.576752781867981e-07
+        },
+        {
+          "region": "ON",
+          "industry": "C29",
+          "row_M": 79294.44099941711,
+          "col_M": 79294.44100028604,
+          "gap_M": -8.689314126968384e-07
+        },
+        {
+          "region": "ON",
+          "industry": "C10T12",
+          "row_M": 65546.7780008626,
+          "col_M": 65546.77800007293,
+          "gap_M": 7.896721363067627e-07
+        },
+        {
+          "region": "QC",
+          "industry": "C302T309",
+          "row_M": 17759.742000593185,
+          "col_M": 17759.74199997539,
+          "gap_M": 6.177946925163269e-07
+        },
+        {
+          "region": "BC",
+          "industry": "C26",
+          "row_M": 2398.627999420447,
+          "col_M": 2398.627999995389,
+          "gap_M": -5.749422125518322e-07
+        },
+        {
+          "region": "BC",
+          "industry": "C10T12",
+          "row_M": 13634.9530005859,
+          "col_M": 13634.953000013316,
+          "gap_M": 5.725827068090439e-07
+        },
+        {
+          "region": "ON",
+          "industry": "J62_63",
+          "row_M": 61717.624000492855,
+          "col_M": 61717.62399998023,
+          "gap_M": 5.126297473907471e-07
+        },
+        {
+          "region": "BC",
+          "industry": "C28",
+          "row_M": 4391.801000482408,
+          "col_M": 4391.8009999997585,
+          "gap_M": 4.826495423913002e-07
+        },
+        {
+          "region": "AB",
+          "industry": "C31T33",
+          "row_M": 1545.1460004430328,
+          "col_M": 1545.1459999995454,
+          "gap_M": 4.434871952980757e-07
+        },
+        {
+          "region": "QC",
+          "industry": "C10T12",
+          "row_M": 39425.76600041252,
+          "col_M": 39425.76599997523,
+          "gap_M": 4.3729692697525023e-07
+        },
+        {
+          "region": "AB",
+          "industry": "C29",
+          "row_M": 574.9060004184294,
+          "col_M": 574.9060000003931,
+          "gap_M": 4.180363612249494e-07
+        },
+        {
+          "region": "ON",
+          "industry": "J61",
+          "row_M": 27069.011000444985,
+          "col_M": 27069.011000044502,
+          "gap_M": 4.0048360824584963e-07
+        }
+      ]
+    },
+    "gdp_three_approaches_by_region": {
+      "NL": {
+        "production_M": 42035.82600014163,
+        "income_M": 42035.826,
+        "expenditure_M": 42035.826000141635,
+        "production_less_income_M": 1.4162808656692505e-07,
+        "expenditure_less_income_M": 1.4163553714752198e-07
+      },
+      "PE": {
+        "production_M": 9496.272000019677,
+        "income_M": 9496.272,
+        "expenditure_M": 9496.272000019677,
+        "production_less_income_M": 1.967698335647583e-08,
+        "expenditure_less_income_M": 1.967698335647583e-08
+      },
+      "NS": {
+        "production_M": 56226.97400033278,
+        "income_M": 56226.974,
+        "expenditure_M": 56226.974000332804,
+        "production_less_income_M": 3.327801823616028e-07,
+        "expenditure_less_income_M": 3.3280253410339355e-07
+      },
+      "NB": {
+        "production_M": 44911.60299990984,
+        "income_M": 44911.603,
+        "expenditure_M": 44911.60299990987,
+        "production_less_income_M": -9.015947580337525e-08,
+        "expenditure_less_income_M": -9.012967348098755e-08
+      },
+      "QC": {
+        "production_M": 556141.0740019566,
+        "income_M": 556141.074,
+        "expenditure_M": 556141.0740019567,
+        "production_less_income_M": 1.9565820693969727e-06,
+        "expenditure_less_income_M": 1.9567012786865236e-06
+      },
+      "ON": {
+        "production_M": 1065258.9370042467,
+        "income_M": 1065258.937,
+        "expenditure_M": 1065258.9370042467,
+        "production_less_income_M": 4.2467117309570315e-06,
+        "expenditure_less_income_M": 4.2467117309570315e-06
+      },
+      "MB": {
+        "production_M": 88260.97000023811,
+        "income_M": 88260.97,
+        "expenditure_M": 88260.97000023816,
+        "production_less_income_M": 2.3810565471649171e-07,
+        "expenditure_less_income_M": 2.3815035820007326e-07
+      },
+      "SK": {
+        "production_M": 117285.09900037953,
+        "income_M": 117285.099,
+        "expenditure_M": 117285.09900037952,
+        "production_less_income_M": 3.795325756072998e-07,
+        "expenditure_less_income_M": 3.79517674446106e-07
+      },
+      "AB": {
+        "production_M": 469995.2590052141,
+        "income_M": 469995.259,
+        "expenditure_M": 469995.25900521415,
+        "production_less_income_M": 5.214095115661622e-06,
+        "expenditure_less_income_M": 5.2141547203063964e-06
+      },
+      "BC": {
+        "production_M": 400154.9160003645,
+        "income_M": 400154.916,
+        "expenditure_M": 400154.91600036446,
+        "production_less_income_M": 3.645420074462891e-07,
+        "expenditure_less_income_M": 3.644824028015137e-07
+      },
+      "YT": {
+        "production_M": 3871.6840000055013,
+        "income_M": 3871.684,
+        "expenditure_M": 3871.684000005501,
+        "production_less_income_M": 5.501322448253632e-09,
+        "expenditure_less_income_M": 5.500856786966324e-09
+      },
+      "NT": {
+        "production_M": 5341.529000058499,
+        "income_M": 5341.529,
+        "expenditure_M": 5341.529000058501,
+        "production_less_income_M": 5.8499164879322054e-08,
+        "expenditure_less_income_M": 5.850102752447129e-08
+      },
+      "NU": {
+        "production_M": 4402.156000013152,
+        "income_M": 4402.156,
+        "expenditure_M": 4402.156000013152,
+        "production_less_income_M": 1.3152137398719787e-08,
+        "expenditure_less_income_M": 1.3152137398719787e-08
+      },
+      "CE": {
+        "production_M": 770.6000000003669,
+        "income_M": 770.6,
+        "expenditure_M": 770.6000000003667,
+        "production_less_income_M": 3.6682467907667163e-10,
+        "expenditure_less_income_M": 3.6659184843301773e-10
+      }
+    },
+    "gdp_max_abs_expenditure_less_income_M": 5.2141547203063964e-06
+  },
+  "va_tax_valuation_identities": {
+    "GDP_at_basic_prices_VA6_M": 2674953.17,
+    "wages_salaries_M": 1203006.695,
+    "employers_social_contributions_M": 184010.433,
+    "gross_mixed_income_M": 312828.684,
+    "gross_operating_surplus_M": 874603.794,
+    "taxes_on_production_M": 124345.05,
+    "subsidies_on_production_M": -23841.486,
+    "net_product_tax_all_uses_M": 189199.729,
+    "net_product_tax_intermediate_M": 26545.927,
+    "net_product_tax_final_demand_M": 162653.802,
+    "GDP_at_market_prices_M": 2864152.899,
+    "identity_VA6_equals_components": 0.0,
+    "note": "VA at basic = wages + employer contributions + mixed income + GOS + production taxes - production subsidies. Product taxes/subsidies are the basic->purchaser bridge (NOT VA). The earlier \"$2.701T\" = VA6 + product tax on INTERMEDIATE only, a non-standard figure; corrected here."
+  },
+  "units_currency_audit": {
+    "canonical_target": "2022 CAD millions, basic prices, nominal current-price",
+    "statcan_native": "CAD thousands (sheet header \"Thousands of dollars\"), basic & purchaser, 2022 current",
+    "oecd_icio_native": "USD millions, basic prices, 2022 current (ReadMe: \"current USD, million\")",
+    "statcan_conversion_point": "S8 export only: x1e-3 (thousands->millions). No scaling in S2-S7.",
+    "oecd_conversion_point": "S6: xfx (USD->CAD) x1e3 (M->k); then S8 x1e-3 (k->M) => net xfx, CAD millions",
+    "fx_source": "config usd_cad_2022_avg (Bank of Canada 2022 annual average, CAD per USD)",
+    "fx_rate_CAD_per_USD_2022": 1.3013,
+    "price_basis": "all nominal current-price 2022, basic prices \u2014 compatible",
+    "scaling_applied_once": true,
+    "hard_check_national_output": {
+      "statcan_native_k$": 5057573426.000797,
+      "converted_M$": 5057573.426000797,
+      "expected_ratio": 0.001,
+      "ok": true
+    },
+    "oecd_canada_transparency": {
+      "exports_native_MUSD": 679157.5086000001,
+      "exports_converted_MCAD": 883787.66594118,
+      "imports_native_MUSD": 675867.6771000073,
+      "imports_converted_MCAD": 879506.6082102394,
+      "statcan_exports_MCAD": 965801.2420043836,
+      "statcan_imports_MCAD": 951814.4790074847
+    }
+  },
+  "international_import_diagnostic": {
+    "two_INTIM_controls_reconciled": {
+      "INTIM_14_regions_incl_CE_MCAD": 951814.4790074847,
+      "INTIM_13_PT_only_MCAD": 950897.0900074778,
+      "difference_MCAD": 917.3890000069141,
+      "equals_CE_international_imports_MCAD": 917.3890000069111,
+      "explanation": "The two figures differ ONLY by region scope: $951.814B = 13 P/T + CE, $950.897B = 13 P/T. Difference = CE international imports (exact). Not a data discrepancy."
+    },
+    "use_vs_control": {
+      "status": "DECOMPOSED: INTIM total = InternatImportUse use + re-exports + residual",
+      "InternatImportUse_use_13PT_MCAD": 902465.1760003117,
+      "INTIM_total_13PT_MCAD": 950897.0900074778,
+      "reexports_imported_13PT_MCAD": 48431.91399187992,
+      "reexports_total_13PT_MCAD": 49093.793999955364,
+      "residual_INTIM_less_use_less_imported_reexports_13PT_MCAD": 1.528611034154892e-05,
+      "rel_gap": 0.05093286593903149,
+      "by_region_MCAD": {
+        "NL": {
+          "use": 9888.319000002324,
+          "INTIM": 10309.10699993342,
+          "reexports": 420.7879998404441,
+          "residual": 9.065103949978948e-08
+        },
+        "PE": {
+          "use": 2162.8179999954136,
+          "INTIM": 2270.46199998137,
+          "reexports": 107.64399997315624,
+          "residual": 1.2799879186786711e-08
+        },
+        "NS": {
+          "use": 17143.353999984673,
+          "INTIM": 17904.48199993111,
+          "reexports": 761.1279997272553,
+          "residual": 2.1918618585914374e-07
+        },
+        "NB": {
+          "use": 26101.225999999904,
+          "INTIM": 26794.5300000673,
+          "reexports": 693.3039998494578,
+          "residual": 2.1794019266963006e-07
+        },
+        "QC": {
+          "use": 181963.740999895,
+          "INTIM": 191589.68600121205,
+          "reexports": 9625.9449986614,
+          "residual": 2.655625343322754e-06
+        },
+        "ON": {
+          "use": 400721.19600043405,
+          "INTIM": 424529.11100504006,
+          "reexports": 23807.914996066247,
+          "residual": 8.53976234793663e-06
+        },
+        "MB": {
+          "use": 24537.491999991576,
+          "INTIM": 25760.396000374803,
+          "reexports": 1222.9039998002734,
+          "residual": 5.829508882015944e-07
+        },
+        "SK": {
+          "use": 23809.00000000597,
+          "INTIM": 25040.08300029689,
+          "reexports": 1231.0829999377474,
+          "residual": 3.531754482537508e-07
+        },
+        "AB": {
+          "use": 113056.6140000349,
+          "INTIM": 119697.00400139339,
+          "reexports": 6640.389998929374,
+          "residual": 2.4291202425956727e-06
+        },
+        "BC": {
+          "use": 99428.98199996806,
+          "INTIM": 103248.53799923,
+          "reexports": 3819.5559991161153,
+          "residual": 1.4581531286239625e-07
+        },
+        "YT": {
+          "use": 874.5699999999154,
+          "INTIM": 900.9350000071171,
+          "reexports": 26.364999994365107,
+          "residual": 1.2836579116992653e-08
+        },
+        "NT": {
+          "use": 1472.1440000003975,
+          "INTIM": 1542.324000021297,
+          "reexports": 70.179999990955,
+          "residual": 2.9944581910967825e-08
+        },
+        "NU": {
+          "use": 1305.7199999994973,
+          "INTIM": 1310.431999988922,
+          "reexports": 4.711999993130923,
+          "residual": -3.7063236959511416e-09
+        }
+      },
+      "note": "Canadian destination/using STRUCTURE is cell-for-cell from InternatImportUse (verified exact). The gap between import USE and the INTIM import TOTAL is re-exports (INTRX000) up to the reported residual: imported goods re-exported untransformed never enter Canadian use. Re-exports are therefore excluded from the Canada->ROW producer blocks and kept as a satellite."
+    }
+  },
+  "CE_treatment": {
+    "canonical_keeps_CE": true,
+    "CE_output_M": 1638.4469999995622,
+    "CE_VA_M": 770.6,
+    "CE_as_origin_supply_to_provinces_M": 1.216000000008786,
+    "CE_as_destination_from_provinces_M": 123.36400000143801,
+    "compat_treatment": "CE DROPPED from the behavioural 13 P/T + ROW view (NOT folded into ROW, NOT reallocated). Explicit excluded residual: CE output $1,638M / VA $771M; province->CE uses $123M and CE->province supply $1M leave a <0.01% commodity-balance residual in the affected provinces. No defensible Canadian province-allocation rule applied; canonical retains CE as the exact reference."
+  },
+  "boundary_unresolved": {
+    "BS114000": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "A03",
+      "industry_output_M": 4657.848,
+      "parent_sector_M": 6172.704,
+      "share_of_parent": 0.7545879407144745,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "hunting/trapping value share (NAICS 1142) to separate ISIC 017 (A01) from fishing (A03)"
+    },
+    "BS331500": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "C24A",
+      "industry_output_M": 3078.934,
+      "parent_sector_M": 30016.002,
+      "share_of_parent": 0.10257641907140065,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "ferrous vs non-ferrous foundry shipments (NAICS 33151/33152) to split C24A/C24B"
+    },
+    "BS336600": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "C301",
+      "industry_output_M": 3590.518,
+      "parent_sector_M": 3590.518,
+      "share_of_parent": 1.0,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "ship repair vs new-build revenue (ISIC 3315 vs 301) to split C31T33/C301"
+    },
+    "BS48A000": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "H49",
+      "industry_output_M": 4562.02,
+      "parent_sector_M": 143436.811,
+      "share_of_parent": 0.03180508523715018,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "scenic/sightseeing by mode (NAICS 4871/4872/4879) to split H49/H50/H51"
+    },
+    "BS519000": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "J62_63",
+      "industry_output_M": 6292.23,
+      "parent_sector_M": 117494.903,
+      "share_of_parent": 0.05355321668719536,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "libraries & archives vs web portals (NAICS 519210/519290) to split R/J62_63"
+    },
+    "BS811A00": {
+      "status": "UNRESOLVED",
+      "oecd_parent": "S",
+      "industry_output_M": 12816.59,
+      "parent_sector_M": 74100.719,
+      "share_of_parent": 0.1729617495344411,
+      "current_fallback": "whole-assign (documented)",
+      "subindustry_split_data_needed": "machinery repair vs personal/household repair (NAICS 8113/8114) to split C31T33/S"
+    }
+  },
+  "reader_load_test": {
+    "loaded": true,
+    "shape": [
+      703,
+      771
+    ],
+    "n_industries_matched": 50,
+    "all_50_matched": true,
+    "unmatched": [],
+    "has_TOTAL_Output_row": true,
+    "has_TOTAL_VA_row": true,
+    "fd_symbols": [
+      "Changes in Inventories",
+      "Direct Purchases Abroad",
+      "Fixed Capital Formation",
+      "Government Consumption",
+      "Household Consumption"
+    ]
+  },
+  "reader_smoke_test": {
+    "attempted": true,
+    "constructed": true,
+    "n_industries": 50,
+    "n_can_regions": 13,
+    "CAN_ON_output_first5": [
+      6186.1,
+      464.1,
+      21.6,
+      0.0,
+      413.6
+    ],
+    "CAN_ON_household_consumption_sum_M": 430555.2,
+    "downstream_legacy_dependencies": "investment_fractions / imputed_rent_fraction keyed by country; split_gfcf_column expects GFCF; several accessors assume industry code set \u2014 OECD-50 aliases accepted by the regex but sector-specific overrides (e.g. energy split D01a-e in 2014) are legacy and would need remapping for a full run."
+  },
+  "canonical_dir": "canonical/",
+  "compat_file": "compatibility/compat_icio_2022_can_provinces.csv",
+  "native_detail_dir": "checkpoints/native_detail/"
+}
