@@ -17,7 +17,7 @@ def test_above_price_without_negative_observed_nos_fails():
 
 def test_output_source_units_preserve_input_use_cfc_and_contracts():
     d=pd.DataFrame({'Industry':[0],'Production':[100.],'Demand':[100.],'Debt':[30.],'Deposits':[20.],'Equity':[90.]})
-    industry={'industry_vectors':pd.DataFrame({'Output in LCU':[100.],'Output in USD':[100.]})}
+    industry={'industry_vectors':pd.DataFrame({'Output in LCU':[100.],'Output in USD':[100.],'Value Added in LCU':[40.]})}
     industry.update({k:pd.DataFrame([[v]]) for k,v in [('intermediate_inputs_productivity_matrix',2.),('capital_inputs_productivity_matrix',5.),('capital_inputs_depreciation_matrix',.1)]})
     f=SimpleNamespace(firm_data=d,labour_productivity_by_industry=np.array([10.]))
     c=SimpleNamespace(firms=f,industry_data=industry);before=d[['Debt','Deposits','Equity']].copy()
@@ -25,6 +25,7 @@ def test_output_source_units_preserve_input_use_cfc_and_contracts():
     assert d.Production.iloc[0]/f.intermediate_inputs_productivity_matrix[0,0]==50.
     assert d.Production.iloc[0]*f.capital_inputs_depreciation_matrix[0,0]==10.
     pd.testing.assert_frame_equal(before,d[['Debt','Deposits','Equity']])
+    assert industry['industry_vectors']['Value Added in LCU'].iloc[0]==40.
 
 
 def test_observed_zero_output_retains_contract_holder():

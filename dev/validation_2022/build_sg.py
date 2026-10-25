@@ -13,7 +13,7 @@ def raw_table(prefix=''):
     return pd.read_csv(BENCH/(prefix+'compatibility/compat_icio_2022_can_provinces.csv'),header=[0,1],index_col=[0,1]).rename(index=ALIASES,columns=ALIASES,level=1)*1e6
 def sales(x,codes):
     return x.loc[x.index.get_level_values(1).isin(codes),x.columns!=('TOTAL','Output')].sum(axis=1)/4
-def target(arm):return ROOT/f'dev/pkl_files/io2022_{arm.lower()}_sg_2026_10_25.pkl'
+def target(arm):return ROOT/f'dev/pkl_files/io2022_{arm.lower()}_sg_v3_2026_10_25.pkl'
 def main():
     assert sha(PICKLE)==PICKLE_SHA256
     oldraw=raw_table('before/');newraw=raw_table();source=DataWrapper.init_from_pickle(PICKLE);codes=list(source.industries)
@@ -28,7 +28,12 @@ def main():
             old,ratio=rescale_output_units(c,new)
             new=v['Output in LCU'].to_numpy()
             d['Source inactive holder']=new[ids]<=1e-3
-            for k in ['Value Added in LCU','Value Added in USD']:v[k]=v[k].to_numpy()+delta
+            # The explicit VA6 row is not reader-implied residual VA.
+            # The balanced source leaves observed VA6 unchanged.
+            cells=[(name,i) for i in codes]
+            va_delta=(newraw.loc[('TOTAL','Value Added'),cells]-oldraw.loc[('TOTAL','Value Added'),cells]).to_numpy()/4
+            for k in ['Value Added in LCU','Value Added in USD']:v[k]=v[k].to_numpy()+va_delta
+            assert np.allclose(v['Value Added in LCU'],source.synthetic_countries[name].industry_data['industry_vectors']['Value Added in LCU'],rtol=0,atol=.001)
             export_delta=(newraw.loc[name,'ROW'].sum(axis=1)-oldraw.loc[name,'ROW'].sum(axis=1)).reindex(codes).to_numpy()/4
             for k in ['Exports in LCU','Exports in USD','Exports in LCU to ROW','Exports in USD to ROW']:v[k]=v[k].to_numpy()+export_delta
             o=obs.loc[[name+'|'+i for i in codes]];other=(o.tax_production+o.subsidy_production).to_numpy()*1e6/4
@@ -59,7 +64,14 @@ def main():
         reader=ICIOReader(flow,[str(n) for n in data.all_country_names if str(n)!='ROW'],codes,{},2022)
         data.origin_trade_proportions=reader.get_origin_trade_proportions();data.destination_trade_proportions=reader.get_destination_trade_proportions()
         row=data.synthetic_rest_of_the_world
-        # Existing ROW constructor stores bilateral imports/exports as arrays; source changes are retained in model vectors and sourcing shares.
+        # Transfer the same source IO delta to the external counterparty.
+        # Source row prices/exchange rate remain unchanged.
+        canadian_rows=(newraw.index.get_level_values(0)!='ROW')&newraw.index.get_level_values(1).isin(codes)
+        row_import_delta=(newraw.loc[canadian_rows,'ROW'].sum(axis=1)-oldraw.loc[canadian_rows,'ROW'].sum(axis=1)).groupby(level=1).sum().reindex(codes).to_numpy()/4
+        old_imports=row.row_data['Imports in USD'].to_numpy().copy()
+        row.row_data['Imports in USD']=old_imports+row_import_delta
+        row.row_data['Imports in LCU']+=row_import_delta*row.row_data['Price in LCU'].to_numpy()/row.row_data['Price in USD'].to_numpy()
+        assert np.allclose(row.row_data['Imports in USD'].to_numpy()-source.synthetic_rest_of_the_world.row_data['Imports in USD'].to_numpy(),row_import_delta,atol=.001,rtol=1e-12)
         frame=pd.DataFrame(rows);frame.to_csv(OUT/f'{arm}_firm_bridge.csv',index=False);pd.DataFrame(regional).to_csv(OUT/f'{arm}_fiscal_bridge.csv',index=False)
         data.save(target(arm));meta=dict(arm=arm,source_sha256=PICKLE_SHA256,new_pickle=str(target(arm)),new_pickle_sha256=sha(target(arm)),source_provenance=json.loads((BENCH/'source_provenance.json').read_text()),financial_household_bank_capital_and_acquisitions_exact=True,method='Clone accepted F_CFC; apply source IO sales/export deltas, preserve physical inputs and CFC and rescale output-unit coefficients; preserve inherited empty-sector floors. FS_T adds signed D29/D39 amounts only; counterpart fiscal terms updated.',margin_passed=bool(frame.margin_gap_pp.abs().max()<=1),above_price_passed=bool(not frame.above_price_nonnegative_NOS.any()),max_margin_gap_pp=float(frame.margin_gap_pp.abs().max()),above_price_exceptions=int(frame.above_price_nonnegative_NOS.sum()))
         (OUT/f'{arm}_build_provenance.json').write_text(json.dumps(meta,indent=2)+'\n');print(arm,'margin',meta['max_margin_gap_pp'],'above-price',meta['above_price_exceptions'],flush=True)
