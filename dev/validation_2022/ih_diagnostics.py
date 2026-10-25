@@ -10,6 +10,13 @@ from macromodel.country.household_closure import liquidatable_household_assets
 from b2_instrumentation import B2HouseholdDiagnosis,consumption_units,fixed_groups,gross_wages_from_net
 HERE=Path(__file__).resolve().parent
 OUT=HERE/'outputs/IH'
+def entrant_trigger(unable_t0,income_decline,initial_dissaver):
+    """Exclusive descriptive hierarchy; existing contracts have no rate reset."""
+    if unable_t0:return 'unable_from_t0'
+    if income_decline:return 'income_loss'
+    if initial_dissaver:return 'persistent_dissaver'
+    return 'other'
+
 class Diagnosis(qe.Headline):
     instances=[]
     def __init__(self,sim):
@@ -71,9 +78,9 @@ class Diagnosis(qe.Headline):
                 for j,kind in enumerate(['consumer','mortgage']):
                     entrants=(prior[j]==0)&(days[j]>0)
                     for i in np.flatnonzero(entrants):
-                        # Exclusive diagnostic hierarchy; payment reset only if observed contractual rate rises.
-                        reason='unable_from_t0' if self.initial[name]['unable'][i] else ('income_loss' if di[i]<self.initial[name]['income'][i]-1e-8*c.scale else ('rate_reset' if self.initial[name]['current_rates'][j,i]>self.initial[name]['rates'][j,i]+1e-12 else ('persistent_dissaver' if self.initial[name]['dissaver'][i] else 'other')))
-                        self.arrears.append(dict(region=name,quarter=t,kind=kind,household=i,weight=c.scale,tenure=z.tenure.iloc[i],initial_DI=self.initial[name]['income'][i]/c.scale,DI=di[i]/c.scale,trigger=reason))
+                        # Stock interest/principal ratios are NOT contractual reset rates.
+                        reason=entrant_trigger(self.initial[name]['unable'][i],di[i]<self.initial[name]['income'][i]-1e-8*c.scale,self.initial[name]['dissaver'][i])
+                        self.arrears.append(dict(region=name,quarter=t,kind=kind,household=i,weight=c.scale,tenure=z.tenure.iloc[i],initial_DI=self.initial[name]['income'][i]/c.scale,DI=di[i]/c.scale,trigger=reason,income_decline=bool(di[i]<self.initial[name]['income'][i]-1e-8*c.scale),initial_dissaver=bool(self.initial[name]['dissaver'][i]),unable_t0=bool(self.initial[name]['unable'][i])))
                 self.previous[name]=days.copy()
                 for key,val in metrics.items():headline[key]=float(np.asarray(val).sum())
                 for j,kind in enumerate(['consumer','mortgage']):
@@ -95,12 +102,12 @@ class Diagnosis(qe.Headline):
     def save(self,out):
         pd.DataFrame(self.firms).to_csv(out/'investment_cells.csv',index=False);pd.DataFrame(self.incomes).to_csv(out/'income_quintiles.csv',index=False)
         if self.arrears:
-            z=pd.DataFrame(self.arrears).merge(self.initial_ranks,on=['region','household']);z.groupby(['quarter','kind','decile','tenure','trigger']).agg(households=('weight','sum'),initial_DI=('initial_DI','mean'),DI=('DI','mean')).reset_index().to_csv(out/'arrears_entrants.csv',index=False)
+            z=pd.DataFrame(self.arrears).merge(self.initial_ranks,on=['region','household']);z.groupby(['quarter','kind','decile','tenure','trigger','income_decline','initial_dissaver','unable_t0']).agg(households=('weight','sum'),initial_DI=('initial_DI','mean'),DI=('DI','mean')).reset_index().to_csv(out/'arrears_entrants.csv',index=False)
         pd.DataFrame(self.rows).to_csv(out/'headline.csv',index=False)
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--arm',choices=['F_CFC','E','E2'],required=True);p.add_argument('--seed',type=int,default=0);p.add_argument('--quarters',type=int,default=12);a=p.parse_args()
-    variant='IH_'+a.arm;a.output=OUT/'runs';a.variant=variant
+    p=argparse.ArgumentParser();p.add_argument('--arm',choices=['F_CFC','E','E2'],required=True);p.add_argument('--seed',type=int,default=0);p.add_argument('--quarters',type=int,default=12);p.add_argument('--output',type=Path);p.add_argument('--variant');a=p.parse_args()
+    variant=a.variant or 'IH_'+a.arm;a.output=a.output or OUT/'runs';a.variant=variant
     if a.arm=='E2':
         original=qe.configuration
         def config():

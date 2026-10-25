@@ -33,10 +33,10 @@ def main():
         f['hold_initial_net_accounting']=f.CFC+f.initial_net_investment
         f['arm']=arm;f['seed']=seed;investments.append(f)
         inc=pd.read_csv(d/'income_quintiles.csv');inc['arm']=arm;inc['seed']=seed
-        inc['DI_share']=inc.DI/inc.groupby('quarter').DI.transform('sum');inc['DI_per_HH_annual']=4*inc.DI/inc.weight;inc['DI_per_unit_annual']=4*inc.equivalised_DI_weighted/inc.weight
-        inc['zero_DI_share']=inc.zero_DI_households/inc.weight;inc['negative_DI_share']=inc.negative_DI_households/inc.weight
+        inc['DI_share']=inc.DI/inc.groupby('quarter').DI.transform('sum');inc['DI_per_HH_annual']=4*inc.DI/inc.weight;inc['mean_equivalised_DI_per_HH_annual']=4*inc.equivalised_DI_weighted/inc.weight
+        inc['nonpositive_DI_share']=inc.zero_DI_households/inc.weight;inc['negative_DI_share']=inc.negative_DI_households/inc.weight
         # Exact gross-up under the common income tax rate; wage compensation excludes employer SSC.
-        inc['mixed_gross']=inc.mixed_net/(1-tax);inc['property_gross_ex_deposit_interest']=(inc.dividends_net+inc.rent_net)/(1-tax);inc['corporate_transfers_gross']=inc.corporate_transfers_net/(1-tax)
+        inc['mixed_gross']=inc.mixed_net/(1-tax);inc['property_gross_ex_deposit_interest']=(inc.dividends_net+inc.rent_net)/(1-tax);inc['corporate_transfers_gross']=inc.corporate_transfers_net/(1-tax);inc['current_transfers_gross']=inc.government_transfers+inc.corporate_transfers_gross
         incomes.append(inc)
         if (d/'arrears_entrants.csv').exists():
             x=pd.read_csv(d/'arrears_entrants.csv');x['arm']=arm;x['seed']=seed;entrants.append(x)
@@ -54,7 +54,7 @@ def main():
     g=f.groupby(['arm','seed','quarter'])[numeric].sum();g.to_csv(OUT/'investment_national.csv')
     f['producer_scope']=np.where(f.industry_code.isin(['O','P','Q']),'O_P_Q','other_industries');f.groupby(['arm','seed','quarter','producer_scope'])[numeric].sum().to_csv(OUT/'investment_scope.csv')
     inc=pd.concat(incomes,ignore_index=True);inc.to_csv(OUT/'income_quintiles.csv',index=False)
-    bridge=[];names={'wages_gross':'Compensation of employees','mixed_gross':'Net mixed income','property_gross_ex_deposit_interest':'Property income received','government_transfers':'Current transfers received','corporate_transfers_gross':'Current transfers received','taxes_contributions':'Less: current transfers paid','net_interest':'Less: property income paid','DI':'Household disposable income'}
+    bridge=[];names={'wages_gross':'Compensation of employees','mixed_gross':'Net mixed income','property_gross_ex_deposit_interest':'Property income received','current_transfers_gross':'Current transfers received','taxes_contributions':'Less: current transfers paid','net_interest':'Less: property income paid','DI':'Household disposable income'}
     for r in inc[(inc.arm=='F_CFC')&inc.quarter.isin([0,12])].itertuples():
         for model,source in names.items():
             row=value[(value.quintile==r.quintile)&(value['Income, consumption and savings']==source)].iloc[0]
@@ -64,7 +64,7 @@ def main():
     for r in inc[(inc.arm=='F_CFC')&inc.quarter.isin([0,12])].itertuples():
         z=obs[(obs.quintile==r.quintile)&(obs['Income, consumption and savings']=='Household disposable income')]
         val=z[z.Statistics=='Value'].iloc[0];per=z[z.Statistics=='Value per household'].iloc[0];unit=z[z.Statistics=='Value per consumption unit'].iloc[0]
-        compare.append(dict(seed=r.seed,quarter=r.quarter,quintile=r.quintile,model_DI_share=r.DI_share,DHEA_DI_share=val.VALUE/value[value['Income, consumption and savings']=='Household disposable income'].VALUE.sum(),model_per_HH=r.DI_per_HH_annual,DHEA_per_HH=per.VALUE,model_per_unit=r.DI_per_unit_annual,DHEA_per_unit=unit.VALUE,zero_DI_share=r.zero_DI_share,negative_DI_share=r.negative_DI_share,DI_vector=val.VECTOR,per_HH_vector=per.VECTOR,per_unit_vector=unit.VECTOR))
+        compare.append(dict(seed=r.seed,quarter=r.quarter,quintile=r.quintile,model_DI_share=r.DI_share,DHEA_DI_share=val.VALUE/value[value['Income, consumption and savings']=='Household disposable income'].VALUE.sum(),model_per_HH=r.DI_per_HH_annual,DHEA_per_HH=per.VALUE,nonpositive_DI_share=r.nonpositive_DI_share,negative_DI_share=r.negative_DI_share,DI_vector=val.VECTOR,per_HH_vector=per.VECTOR))
     pd.DataFrame(compare).to_csv(OUT/'DHEA_DI_comparison.csv',index=False)
     if entrants:pd.concat(entrants,ignore_index=True).to_csv(OUT/'arrears_entrants.csv',index=False)
     if resolutions:pd.concat(resolutions,ignore_index=True).to_csv(OUT/'resolution_log.csv',index=False)
