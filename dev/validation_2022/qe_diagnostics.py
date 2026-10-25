@@ -93,7 +93,7 @@ def run(args):
     source=PICKLE if args.arm in ['F_CFC','Q','E'] else ROOT/'dev/pkl_files/io2022_household_agreed_bankcap_firmdebt.pkl'
     if args.arm=='C':source=ROOT/'dev/pkl_files/io2022_household_agreed_bankcap.pkl'
     if source==PICKLE:assert hashlib.sha256(source.read_bytes()).hexdigest()==PICKLE_SHA256
-    out=HERE/'outputs/QE/runs'
+    out=getattr(args,'output',HERE/'outputs/QE/runs')
     params=SimpleNamespace(arm=args.arm,variant=args.variant,household_base='F',quarters=args.quarters,seed=args.seed,
         pickle=source,output=out,kappa=.01,kappa_below=None,smoothing=.25,payout=False)
     target=out/f'{args.arm}_{args.variant}_q{args.quarters}_s{args.seed}'
