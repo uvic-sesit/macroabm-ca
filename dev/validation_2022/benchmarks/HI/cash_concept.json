@@ -1,0 +1,20 @@
+{
+  "primary": "CIS 2022 PUMF household custom tabulation, household PUMFID; unique EFID family incomes summed once; household weights, unequivalised after-tax household cash income. No published vector exists for this custom household table. Official 11-10-0192 economic-family and 11-10-0193 adjusted-person deciles are separate crosschecks, not relabelled as household deciles.",
+  "pumf": "C:\\Users\\eizadi\\OneDrive - University of Victoria\\Documents\\Work\\Esiz_Git\\SESIT\\macroabm-ca\\dev\\raw_data\\can_2022\\pumf\\cis_2022\\CIS2022_PUMF.csv",
+  "pumf_sha256": "4002cf458a37d89e93d280b9e4101fddc4bb4352528c8941bd8213b1a884d2db",
+  "source_catalogue": "72M0003X, 2022",
+  "family_variables": [
+    "income",
+    "wages",
+    "self_employment",
+    "investment",
+    "government_transfers",
+    "taxes",
+    "private_pensions"
+  ],
+  "year": "2022 nominal dollars",
+  "cis_model_bridge": "CIS subtracts income tax, but not loan interest or employee CPP/EI. Add back model net interest and employee SSC for a like-for-like cash comparison. DHEA cash DI remains separately reported.",
+  "source_adapter": "C:\\Users\\eizadi\\OneDrive - University of Victoria\\Documents\\Work\\Esiz_Git\\SESIT\\macroabm-ca-validation\\dev\\io2022\\household_prototype\\prototype_household_consumption.csv",
+  "source_adapter_sha256": "fed33fe9849a8859de97e9951f8dcaca79cd5012a3ecb169093fb116517f18a3",
+  "source_pickle_sha256": "a16386b64e0eeca5986dc1d4a3d94a4a7c0b33b178f76e1a8933e926948677ae"
+}

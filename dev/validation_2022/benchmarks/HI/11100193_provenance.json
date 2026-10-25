@@ -1,0 +1,10 @@
+{
+  "url": "https://www150.statcan.gc.ca/n1/tbl/csv/11100193-eng.zip",
+  "table": "11100193",
+  "reference": "2022",
+  "retrieved_utc": "2026-10-25T06:46:36.463290+00:00",
+  "zip_sha256": "3fc9069dd3316a20ccc4a223391e421be467c0a3d403757011e58317fd5e4d95",
+  "full_csv_sha256": "5e108377d7661b0150d0c1c5d40d5c125912db4a39268d47a88df981fb7df490",
+  "extract_sha256": "82761b694ff1a8e79e4b7661a1f53b65d19d9b7d589dce653e52b582a92f48e3",
+  "metadata_sha256": "65ab0c08eeea1a54742f6554d3b424c683b0fe5557f207172633d10bfef8dd83"
+}

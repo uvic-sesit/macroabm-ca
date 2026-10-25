@@ -1,0 +1,83 @@
+﻿"Cube Title","Product Id","CANSIM Id",URL,"Cube Notes","Archive Status",Frequency,"Start Reference Period","End Reference Period","Total number of dimensions"
+"Upper income limit, income share and average of adjusted market, total and after-tax income by income decile","11100193","206-0032","https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1110019301",1;2;3;7;9;10,"CURRENT - a cube available to the public and that is current","Annual","1976-01-01","2024-01-01","4",
+
+"Dimension ID","Dimension name","Dimension Notes","Dimension Definitions"
+"1","Geography",,""
+"2","Income concept",4;5,""
+"3","Statistics",,""
+"4","Income decile",6,""
+
+"Dimension ID","Member Name","Classification Code","Member ID","Parent Member ID",Terminated,"Member Notes","Member Definitions"
+"1","Canada","[11124]","1","","",8,
+"1","Atlantic provinces","[1]","2","1","",,
+"1","Newfoundland and Labrador","[10]","3","2","",,
+"1","Prince Edward Island","[11]","4","2","",,
+"1","Nova Scotia","[12]","5","2","",,
+"1","New Brunswick","[13]","6","2","",,
+"1","Quebec","[24]","7","1","",,
+"1","Ontario","[35]","8","1","",,
+"1","Prairie provinces","[4]","9","1","",,
+"1","Manitoba","[46]","10","9","",,
+"1","Saskatchewan","[47]","11","9","",,
+"1","Alberta","[48]","12","9","",,
+"1","British Columbia","[59]","13","1","",,
+"1","Territories","[6]","14","1","",,
+"1","Yukon","[60]","15","14","",,
+"1","Northwest Territories","[61]","16","14","",,
+"1","Nunavut","[62]","17","14","",,
+"2","Adjusted market income","","1","","",,
+"2","Adjusted total income","","2","","",,
+"2","Adjusted after-tax income","","3","","",,
+"3","Upper income limit","","1","","",,
+"3","Share of income","","2","","",,
+"3","Average income","","3","","",,
+"4","Total deciles","","1","","",,
+"4","Lowest decile","","2","1","",,
+"4","Second decile","","3","1","",,
+"4","Third decile","","4","1","",,
+"4","Fourth decile","","5","1","",,
+"4","Fifth decile","","6","1","",,
+"4","Sixth decile","","7","1","",,
+"4","Seventh decile","","8","1","",,
+"4","Eighth decile","","9","1","",,
+"4","Ninth decile","","10","1","",,
+"4","Highest decile","","11","1","",,
+
+Symbol Legend
+Description,Symbol
+"not available for a specific reference period","..",
+"less than the limit of detection","<LOD",
+"value rounded to 0 (zero) where there is a meaningful distinction between true zero and the value that was rounded","0s",
+"data quality: excellent","A",
+"data quality: very good","B",
+"data quality: good","C",
+"data quality: acceptable","D",
+"use with caution","E",
+"too unreliable to be published","F",
+"not applicable","...",
+"preliminary","p",
+"revised","r",
+"suppressed to meet the confidentiality requirements of the Statistics Act","x",
+"terminated","t",
+
+"Survey Code","Survey Name"
+"5200","Canadian Income Survey"
+
+"Subject Code","Subject Name"
+"11","Income, pensions, spending and wealth"
+
+"Note ID",Note
+1,"Source: Centre for Housing and Income Statistics, Statistics Canada."
+2,"Data quality indicators are based on the coefficient of variation (CV) and number of observations. Quality indicators indicate the following: A - Excellent (CV between 0% and 2%); B - Very good (CV between 2% and 4%); C - Good (CV between 4% and 8%); D - Acceptable (CV between 8% and 16%); E - Use with caution (CV greater than or equal to 16%)."
+3,"Estimates are based on data from the following surveys: the Survey of Consumer Finances (SCF) from 1976 to 1992, a combination of the SCF and the Survey of Labour and Income Dynamics (SLID) from 1993 to 1997, the SLID from 1998 to 2011 and the Canadian Income Survey (CIS) beginning in 2012. For more information, see Statistics Canada, 2015, "Revisions to 2006 to 2011 income data", Income Research Paper Series, Cat. no. 75F0002MIE - No. 003. Also, two previous revisions of income data are described in Cotton, Cathy, 2000, "Bridging Two Surveys: An Integrated Series of Income Data from SCF and SLID 1989-1997", Statistics Canada, Cat. No. 75F0002MIE - No. 002, and Lathe, Heather, 2005, "Survey of Labour and Income Dynamics: 2003 Historical Revision", Statistics Canada, Cat. No. 75F0002MIE - No. 009."
+4,"The concept of income covers income received while a resident of Canada or as relevant for income tax purposes in Canada. Market income is the sum of earnings (from employment and net self-employment), net investment income, private retirement income, and the items under other income. It is also called income before taxes and transfers. Total income refers to income from all sources including government transfers and before deduction of federal and provincial income taxes. It may also be called income before tax (but after transfers). After-tax income is total income less income tax. It may also be called income after tax."
+5,"In order to take into account the economies of scale present in larger households, the different types of income are adjusted by dividing the household income by the square root of the household size."
+6,"In order to take into account the economies of scale present in larger households, the different types of income are adjusted by dividing the household income by the square root of the household size. All persons in the population are ranked from lowest to highest by the value of their adjusted household income. Then, the ranked population is divided into ten groups of equal numbers of units, called deciles."
+7,"Income estimates from the Survey of Consumer Finances and the Canadian Income Survey for the 2022 reference year and onwards include income for persons aged 15 years and over. Income estimates from the Survey of Labour and Income Dynamics and the Canadian Income Survey for reference years prior to 2022 include income data for persons aged 16 years and over."
+8,"Estimates for Canada do not include the territories prior to 2018."
+9,"In recent years, the Canadian Income Survey (CIS) has introduced improvements to the methods and sources used to produce income estimates. Beginning with the 2021 reference year, CIS income data were produced from the Administrative Personal Income Masterfile, a comprehensive source of personal income data generated not only from T1 tax returns, but also from associated tax slips. CIS estimates for previous years were produced using T1 tax returns only. Please consult the document <a href=https://www150.statcan.gc.ca/n1/pub/75f0002m/75f0002m2023005-eng.htm rel="external noopener noreferrer" target="_blank">Improvements to the Canadian Income Survey Methodology for the 2021 Reference Year (opens new window)</a> for more information. More improvements were introduced with the 2022 reference year. Foremost among these improvements is a significant increase in the sample size for a large subset of the CIS content. The weighting methodology was also improved and the target population for income data was changed from persons aged 16 years and over to persons aged 15 years and over. Please consult the document <a href=https://www150.statcan.gc.ca/n1/pub/75f0002m/75f0002m2024005-eng.htm rel="external noopener noreferrer" target="_blank">Improvements to the Canadian Income Survey Methodology for the 2022 Reference Year (opens new window)</a> for more information."
+10,"The Canadian Income Survey (CIS) periodically revises its estimates to incorporate data from the most recent Census of Population to ensure the continued accuracy and quality of income statistics. With the release of the 2024 CIS data, Statistics Canada revised estimates from 2018 to 2023 based on population counts from the 2021 Census."
+
+"Correction ID","Correction Date","Correction Note"
+"1230","2020-02-24","On February 24, 2020, adjusted after-tax income estimates for Quebec and Canada were corrected for 2017.",
+

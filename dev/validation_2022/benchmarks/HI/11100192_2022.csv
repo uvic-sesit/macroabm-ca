@@ -1,0 +1,280 @@
+REF_DATE,GEO,DGUID,Economic family type,Income concept,Statistics,Income decile,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434489,1.1.1.1.2,2700.0,C,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434490,1.1.1.1.3,18900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434491,1.1.1.1.4,34600.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434492,1.1.1.1.5,50600.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434493,1.1.1.1.6,68200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434494,1.1.1.1.7,89600.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434495,1.1.1.1.8,116000.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434496,1.1.1.1.9,152900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434497,1.1.1.1.10,213400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Total deciles,Percent,239,units,0,v96434499,1.1.1.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Lowest decile,Percent,239,units,0,v96434500,1.1.1.2.2,0.0,E,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Second decile,Percent,239,units,0,v96434501,1.1.1.2.3,1.1,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Third decile,Percent,239,units,0,v96434502,1.1.1.2.4,2.8,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Fourth decile,Percent,239,units,0,v96434503,1.1.1.2.5,4.4,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Fifth decile,Percent,239,units,0,v96434504,1.1.1.2.6,6.1,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Sixth decile,Percent,239,units,0,v96434505,1.1.1.2.7,8.1,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Seventh decile,Percent,239,units,0,v96434506,1.1.1.2.8,10.5,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Eighth decile,Percent,239,units,0,v96434507,1.1.1.2.9,13.7,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Ninth decile,Percent,239,units,0,v96434508,1.1.1.2.10,18.5,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Share of income,Highest decile,Percent,239,units,0,v96434509,1.1.1.2.11,34.9,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434510,1.1.1.3.1,97100.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434511,1.1.1.3.2,-100.0,E,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Second decile,2024 constant dollars,455,units,0,v96434512,1.1.1.3.3,10700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Third decile,2024 constant dollars,455,units,0,v96434513,1.1.1.3.4,26700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434514,1.1.1.3.5,42500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434515,1.1.1.3.6,59200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434516,1.1.1.3.7,78500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434517,1.1.1.3.8,102300.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434518,1.1.1.3.9,133200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434519,1.1.1.3.10,179500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Market income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434520,1.1.1.3.11,338800.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434522,1.1.2.1.2,25000.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434523,1.1.2.1.3,37800.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434524,1.1.2.1.4,51900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434525,1.1.2.1.5,66500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434526,1.1.2.1.6,84400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434527,1.1.2.1.7,105000.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434528,1.1.2.1.8,130300.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434529,1.1.2.1.9,165200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434530,1.1.2.1.10,223800.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Total deciles,Percent,239,units,0,v96434532,1.1.2.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Lowest decile,Percent,239,units,0,v96434533,1.1.2.2.2,1.3,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Second decile,Percent,239,units,0,v96434534,1.1.2.2.3,2.8,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Third decile,Percent,239,units,0,v96434535,1.1.2.2.4,4.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Fourth decile,Percent,239,units,0,v96434536,1.1.2.2.5,5.2,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Fifth decile,Percent,239,units,0,v96434537,1.1.2.2.6,6.7,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Sixth decile,Percent,239,units,0,v96434538,1.1.2.2.7,8.4,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Seventh decile,Percent,239,units,0,v96434539,1.1.2.2.8,10.4,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Eighth decile,Percent,239,units,0,v96434540,1.1.2.2.9,13.1,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Ninth decile,Percent,239,units,0,v96434541,1.1.2.2.10,17.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Share of income,Highest decile,Percent,239,units,0,v96434542,1.1.2.2.11,31.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434543,1.1.2.3.1,112300.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434544,1.1.2.3.2,14700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Second decile,2024 constant dollars,455,units,0,v96434545,1.1.2.3.3,31000.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Third decile,2024 constant dollars,455,units,0,v96434546,1.1.2.3.4,44900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434547,1.1.2.3.5,58900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434548,1.1.2.3.6,75200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434549,1.1.2.3.7,94400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434550,1.1.2.3.8,117100.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434551,1.1.2.3.9,146800.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434552,1.1.2.3.10,191200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,Total income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434553,1.1.2.3.11,348500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434555,1.1.3.1.2,24700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434556,1.1.3.1.3,35700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434557,1.1.3.1.4,47400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434558,1.1.3.1.5,59400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434559,1.1.3.1.6,73900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434560,1.1.3.1.7,90400.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434561,1.1.3.1.8,110300.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434562,1.1.3.1.9,137100.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434563,1.1.3.1.10,180200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Total deciles,Percent,239,units,0,v96434565,1.1.3.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Lowest decile,Percent,239,units,0,v96434566,1.1.3.2.2,1.3,C,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Second decile,Percent,239,units,0,v96434567,1.1.3.2.3,3.2,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Third decile,Percent,239,units,0,v96434568,1.1.3.2.4,4.5,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Fourth decile,Percent,239,units,0,v96434569,1.1.3.2.5,5.8,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Fifth decile,Percent,239,units,0,v96434570,1.1.3.2.6,7.2,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Sixth decile,Percent,239,units,0,v96434571,1.1.3.2.7,8.9,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Seventh decile,Percent,239,units,0,v96434572,1.1.3.2.8,10.8,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Eighth decile,Percent,239,units,0,v96434573,1.1.3.2.9,13.3,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Ninth decile,Percent,239,units,0,v96434574,1.1.3.2.10,16.9,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Share of income,Highest decile,Percent,239,units,0,v96434575,1.1.3.2.11,28.0,A,,,1
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434576,1.1.3.3.1,92200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434577,1.1.3.3.2,11700.0,C,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Second decile,2024 constant dollars,455,units,0,v96434578,1.1.3.3.3,29900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Third decile,2024 constant dollars,455,units,0,v96434579,1.1.3.3.4,41700.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434580,1.1.3.3.5,53200.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434581,1.1.3.3.6,66500.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434582,1.1.3.3.7,82000.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434583,1.1.3.3.8,99900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434584,1.1.3.3.9,122900.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434585,1.1.3.3.10,156100.0,A,,,0
+2022,Canada,2021A000011124,Economic families and persons not in an economic family,After-tax income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434586,1.1.3.3.11,258500.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434588,1.2.1.1.2,19200.0,B,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434589,1.2.1.1.3,42200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434590,1.2.1.1.4,63300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434591,1.2.1.1.5,83700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434592,1.2.1.1.6,104800.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434593,1.2.1.1.7,127900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434594,1.2.1.1.8,155300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434595,1.2.1.1.9,191900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434596,1.2.1.1.10,253000.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Total deciles,Percent,239,units,0,v96434598,1.2.1.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Lowest decile,Percent,239,units,0,v96434599,1.2.1.2.2,0.5,B,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Second decile,Percent,239,units,0,v96434600,1.2.1.2.3,2.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Third decile,Percent,239,units,0,v96434601,1.2.1.2.4,4.1,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Fourth decile,Percent,239,units,0,v96434602,1.2.1.2.5,5.6,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Fifth decile,Percent,239,units,0,v96434603,1.2.1.2.6,7.2,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Sixth decile,Percent,239,units,0,v96434604,1.2.1.2.7,8.9,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Seventh decile,Percent,239,units,0,v96434605,1.2.1.2.8,10.8,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Eighth decile,Percent,239,units,0,v96434606,1.2.1.2.9,13.2,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Ninth decile,Percent,239,units,0,v96434607,1.2.1.2.10,16.8,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Share of income,Highest decile,Percent,239,units,0,v96434608,1.2.1.2.11,30.5,A,,,1
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434609,1.2.1.3.1,130500.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434610,1.2.1.3.2,6200.0,B,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Second decile,2024 constant dollars,455,units,0,v96434611,1.2.1.3.3,31100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Third decile,2024 constant dollars,455,units,0,v96434612,1.2.1.3.4,52900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434613,1.2.1.3.5,73600.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434614,1.2.1.3.6,94300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434615,1.2.1.3.7,116000.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434616,1.2.1.3.8,141200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434617,1.2.1.3.9,172300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434618,1.2.1.3.10,219100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Market income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434619,1.2.1.3.11,398700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434621,1.2.2.1.2,49100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434622,1.2.2.1.3,68100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434623,1.2.2.1.4,86300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434624,1.2.2.1.5,104200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434625,1.2.2.1.6,122600.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434626,1.2.2.1.7,143400.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434627,1.2.2.1.8,168900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434628,1.2.2.1.9,203900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434629,1.2.2.1.10,263900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Total deciles,Percent,239,units,0,v96434631,1.2.2.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Lowest decile,Percent,239,units,0,v96434632,1.2.2.2.2,2.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Second decile,Percent,239,units,0,v96434633,1.2.2.2.3,3.9,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Third decile,Percent,239,units,0,v96434634,1.2.2.2.4,5.2,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Fourth decile,Percent,239,units,0,v96434635,1.2.2.2.5,6.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Fifth decile,Percent,239,units,0,v96434636,1.2.2.2.6,7.6,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Sixth decile,Percent,239,units,0,v96434637,1.2.2.2.7,8.9,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Seventh decile,Percent,239,units,0,v96434638,1.2.2.2.8,10.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Eighth decile,Percent,239,units,0,v96434639,1.2.2.2.9,12.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Ninth decile,Percent,239,units,0,v96434640,1.2.2.2.10,15.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Share of income,Highest decile,Percent,239,units,0,v96434641,1.2.2.2.11,27.4,A,,,1
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434642,1.2.2.3.1,149100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434643,1.2.2.3.2,35100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Second decile,2024 constant dollars,455,units,0,v96434644,1.2.2.3.3,58600.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Third decile,2024 constant dollars,455,units,0,v96434645,1.2.2.3.4,77300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434646,1.2.2.3.5,95300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434647,1.2.2.3.6,113100.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434648,1.2.2.3.7,132700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434649,1.2.2.3.8,155600.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434650,1.2.2.3.9,185200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434651,1.2.2.3.10,230000.0,A,,,0
+2022,Canada,2021A000011124,Economic families,Total income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434652,1.2.2.3.11,408300.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434654,1.2.3.1.2,47700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434655,1.2.3.1.3,63700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434656,1.2.3.1.4,78000.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434657,1.2.3.1.5,91700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434658,1.2.3.1.6,105700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434659,1.2.3.1.7,121500.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434660,1.2.3.1.8,140800.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434661,1.2.3.1.9,166200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434662,1.2.3.1.10,208900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Total deciles,Percent,239,units,0,v96434664,1.2.3.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Lowest decile,Percent,239,units,0,v96434665,1.2.3.2.2,2.5,B,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Second decile,Percent,239,units,0,v96434666,1.2.3.2.3,4.6,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Third decile,Percent,239,units,0,v96434667,1.2.3.2.4,5.8,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Fourth decile,Percent,239,units,0,v96434668,1.2.3.2.5,7.0,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Fifth decile,Percent,239,units,0,v96434669,1.2.3.2.6,8.1,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Sixth decile,Percent,239,units,0,v96434670,1.2.3.2.7,9.3,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Seventh decile,Percent,239,units,0,v96434671,1.2.3.2.8,10.7,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Eighth decile,Percent,239,units,0,v96434672,1.2.3.2.9,12.5,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Ninth decile,Percent,239,units,0,v96434673,1.2.3.2.10,15.2,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Share of income,Highest decile,Percent,239,units,0,v96434674,1.2.3.2.11,24.3,A,,,1
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434675,1.2.3.3.1,121900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434676,1.2.3.3.2,30400.0,B,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Second decile,2024 constant dollars,455,units,0,v96434677,1.2.3.3.3,55900.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Third decile,2024 constant dollars,455,units,0,v96434678,1.2.3.3.4,71000.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434679,1.2.3.3.5,84800.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434680,1.2.3.3.6,98500.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434681,1.2.3.3.7,113400.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434682,1.2.3.3.8,130800.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434683,1.2.3.3.9,152700.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434684,1.2.3.3.10,185200.0,A,,,0
+2022,Canada,2021A000011124,Economic families,After-tax income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434685,1.2.3.3.11,296300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434687,1.3.1.1.2,0.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434688,1.3.1.1.3,3600.0,C,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434689,1.3.1.1.4,13400.0,B,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434690,1.3.1.1.5,23400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434691,1.3.1.1.6,33600.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434692,1.3.1.1.7,45100.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434693,1.3.1.1.8,57300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434694,1.3.1.1.9,73700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434695,1.3.1.1.10,102500.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Total deciles,Percent,239,units,0,v96434697,1.3.1.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Lowest decile,Percent,239,units,0,v96434698,1.3.1.2.2,-0.1,E,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Second decile,Percent,239,units,0,v96434699,1.3.1.2.3,0.2,D,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Third decile,Percent,239,units,0,v96434700,1.3.1.2.4,1.8,B,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Fourth decile,Percent,239,units,0,v96434701,1.3.1.2.5,4.0,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Fifth decile,Percent,239,units,0,v96434702,1.3.1.2.6,6.2,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Sixth decile,Percent,239,units,0,v96434703,1.3.1.2.7,8.5,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Seventh decile,Percent,239,units,0,v96434704,1.3.1.2.8,11.1,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Eighth decile,Percent,239,units,0,v96434705,1.3.1.2.9,14.1,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Ninth decile,Percent,239,units,0,v96434706,1.3.1.2.10,18.8,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Share of income,Highest decile,Percent,239,units,0,v96434707,1.3.1.2.11,35.3,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434708,1.3.1.3.1,46000.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434709,1.3.1.3.2,-300.0,E,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Second decile,2024 constant dollars,455,units,0,v96434710,1.3.1.3.3,800.0,D,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Third decile,2024 constant dollars,455,units,0,v96434711,1.3.1.3.4,8400.0,B,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434712,1.3.1.3.5,18400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434713,1.3.1.3.6,28500.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434714,1.3.1.3.7,39300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434715,1.3.1.3.8,51100.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434716,1.3.1.3.9,65000.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434717,1.3.1.3.10,86700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Market income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434718,1.3.1.3.11,162300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434720,1.3.2.1.2,15100.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434721,1.3.2.1.3,23800.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434722,1.3.2.1.4,28700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434723,1.3.2.1.5,35100.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434724,1.3.2.1.6,44000.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434725,1.3.2.1.7,53400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434726,1.3.2.1.8,64200.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434727,1.3.2.1.9,79800.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434728,1.3.2.1.10,105700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Total deciles,Percent,239,units,0,v96434730,1.3.2.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Lowest decile,Percent,239,units,0,v96434731,1.3.2.2.2,1.3,B,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Second decile,Percent,239,units,0,v96434732,1.3.2.2.3,3.5,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Third decile,Percent,239,units,0,v96434733,1.3.2.2.4,4.7,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Fourth decile,Percent,239,units,0,v96434734,1.3.2.2.5,5.7,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Fifth decile,Percent,239,units,0,v96434735,1.3.2.2.6,7.0,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Sixth decile,Percent,239,units,0,v96434736,1.3.2.2.7,8.7,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Seventh decile,Percent,239,units,0,v96434737,1.3.2.2.8,10.4,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Eighth decile,Percent,239,units,0,v96434738,1.3.2.2.9,12.7,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Ninth decile,Percent,239,units,0,v96434739,1.3.2.2.10,16.3,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Share of income,Highest decile,Percent,239,units,0,v96434740,1.3.2.2.11,29.6,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434741,1.3.2.3.1,55900.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434742,1.3.2.3.2,7500.0,B,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Second decile,2024 constant dollars,455,units,0,v96434743,1.3.2.3.3,19700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Third decile,2024 constant dollars,455,units,0,v96434744,1.3.2.3.4,26300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434745,1.3.2.3.5,31600.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434746,1.3.2.3.6,39400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434747,1.3.2.3.7,48600.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434748,1.3.2.3.8,58400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434749,1.3.2.3.9,71300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434750,1.3.2.3.10,91300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,Total income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434751,1.3.2.3.11,165400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Lowest decile,2024 constant dollars,455,units,0,v96434753,1.3.3.1.2,14800.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Second decile,2024 constant dollars,455,units,0,v96434754,1.3.3.1.3,23400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Third decile,2024 constant dollars,455,units,0,v96434755,1.3.3.1.4,28200.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Fourth decile,2024 constant dollars,455,units,0,v96434756,1.3.3.1.5,33200.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Fifth decile,2024 constant dollars,455,units,0,v96434757,1.3.3.1.6,39800.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Sixth decile,2024 constant dollars,455,units,0,v96434758,1.3.3.1.7,46700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Seventh decile,2024 constant dollars,455,units,0,v96434759,1.3.3.1.8,54600.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Eighth decile,2024 constant dollars,455,units,0,v96434760,1.3.3.1.9,65700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Upper income limit,Ninth decile,2024 constant dollars,455,units,0,v96434761,1.3.3.1.10,84400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Total deciles,Percent,239,units,0,v96434763,1.3.3.2.1,100.0,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Lowest decile,Percent,239,units,0,v96434764,1.3.3.2.2,1.3,D,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Second decile,Percent,239,units,0,v96434765,1.3.3.2.3,4.1,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Third decile,Percent,239,units,0,v96434766,1.3.3.2.4,5.5,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Fourth decile,Percent,239,units,0,v96434767,1.3.3.2.5,6.5,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Fifth decile,Percent,239,units,0,v96434768,1.3.3.2.6,7.8,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Sixth decile,Percent,239,units,0,v96434769,1.3.3.2.7,9.2,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Seventh decile,Percent,239,units,0,v96434770,1.3.3.2.8,10.8,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Eighth decile,Percent,239,units,0,v96434771,1.3.3.2.9,12.7,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Ninth decile,Percent,239,units,0,v96434772,1.3.3.2.10,15.8,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Share of income,Highest decile,Percent,239,units,0,v96434773,1.3.3.2.11,26.2,A,,,1
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Total deciles,2024 constant dollars,455,units,0,v96434774,1.3.3.3.1,46900.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Lowest decile,2024 constant dollars,455,units,0,v96434775,1.3.3.3.2,6100.0,D,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Second decile,2024 constant dollars,455,units,0,v96434776,1.3.3.3.3,19400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Third decile,2024 constant dollars,455,units,0,v96434777,1.3.3.3.4,25900.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Fourth decile,2024 constant dollars,455,units,0,v96434778,1.3.3.3.5,30500.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Fifth decile,2024 constant dollars,455,units,0,v96434779,1.3.3.3.6,36400.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Sixth decile,2024 constant dollars,455,units,0,v96434780,1.3.3.3.7,43300.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Seventh decile,2024 constant dollars,455,units,0,v96434781,1.3.3.3.8,50500.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Eighth decile,2024 constant dollars,455,units,0,v96434782,1.3.3.3.9,59700.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Ninth decile,2024 constant dollars,455,units,0,v96434783,1.3.3.3.10,74100.0,A,,,0
+2022,Canada,2021A000011124,Persons not in an economic family,After-tax income,Average income,Highest decile,2024 constant dollars,455,units,0,v96434784,1.3.3.3.11,122800.0,A,,,0
