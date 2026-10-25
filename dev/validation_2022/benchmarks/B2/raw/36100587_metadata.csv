@@ -1,0 +1,144 @@
+﻿"Cube Title","Product Id","CANSIM Id",URL,"Cube Notes","Archive Status",Frequency,"Start Reference Period","End Reference Period","Total number of dimensions"
+"Distributions of household economic accounts, income, consumption and saving, by characteristic, annual","36100587","378-0152","https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3610058701",,"CURRENT - a cube available to the public and that is current","Annual","1999-01-01","2025-01-01","4",
+
+"Dimension ID","Dimension name","Dimension Notes","Dimension Definitions"
+"1","Geography",,""
+"2","Statistics",,""
+"3","Characteristics",,""
+"4","Income, consumption and savings",,""
+
+"Dimension ID","Member Name","Classification Code","Member ID","Parent Member ID",Terminated,"Member Notes","Member Definitions"
+"1","Canada","[11124]","1","","",,
+"2","Value","","1","","",,
+"2","Distribution of value","","2","","",9,
+"2","Value per household","","3","","",,
+"2","Value per consumption unit","","4","","",10,
+"3","All households","","1","","",,
+"3","Lowest income quintile","","2","1","",1,
+"3","Second income quintile","","3","1","",1,
+"3","Third income quintile","","4","1","",1,
+"3","Fourth income quintile","","5","1","",1,
+"3","Highest income quintile","","6","1","",1,
+"3","One-person households","","7","1","",,
+"3","Single less than 65 years","","8","7","t",,
+"3","Single 65 years and older","","9","7","t",,
+"3","Multiple-person households","","10","1","",,
+"3","Single with children living at home","","11","10","t",,
+"3","Two adults less than 65 years, no children at home","","12","10","t",,
+"3","Two adults at least one 65 years or older, no child living at home","","13","10","t",,
+"3","Two adults with less than 3 children living at home","","14","10","t",,
+"3","Two adults with at least 3 children living at home","","15","10","t",,
+"3","Others","","16","10","t",,
+"3","Less than 35 years","","17","1","",2,
+"3","35 to 44 years","","18","1","",2,
+"3","45 to 54 years","","19","1","",2,
+"3","55 to 64 years","","20","1","",2,
+"3","65 years and over","","21","1","",2,
+"3","Lowest income quintile, less than 35 years","","22","1","",1;2,
+"3","Lowest income quintile, 35 to 44 years","","23","1","",1;2,
+"3","Lowest income quintile, 45 to 54 years","","24","1","",1;2,
+"3","Lowest income quintile, 55 to 64 years","","25","1","",1;2,
+"3","Lowest income quintile, 65 years and over","","26","1","",1;2,
+"3","Second income quintile, less than 35 years","","27","1","",1;2,
+"3","Second income quintile, 35 to 44 years","","28","1","",1;2,
+"3","Second income quintile, 45 to 54 years","","29","1","",1;2,
+"3","Second income quintile, 55 to 64 years","","30","1","",1;2,
+"3","Second income quintile, 65 years and over","","31","1","",1;2,
+"3","Third income quintile, less than 35 years","","32","1","",1;2,
+"3","Third income quintile, 35 to 44 years","","33","1","",1;2,
+"3","Third income quintile, 45 to 54 years","","34","1","",1;2,
+"3","Third income quintile, 55 to 64 years","","35","1","",1;2,
+"3","Third income quintile, 65 years and over","","36","1","",1;2,
+"3","Fourth income quintile, less than 35 years","","37","1","",1;2,
+"3","Fourth income quintile, 35 to 44 years","","38","1","",1;2,
+"3","Fourth income quintile, 45 to 54 years","","39","1","",1;2,
+"3","Fourth income quintile, 55 to 64 years","","40","1","",1;2,
+"3","Fourth income quintile, 65 years and over","","41","1","",1;2,
+"3","Highest income quintile, less than 35 years","","42","1","",1;2,
+"3","Highest income quintile, 35 to 44 years","","43","1","",1;2,
+"3","Highest income quintile, 45 to 54 years","","44","1","",1;2,
+"3","Highest income quintile, 55 to 64 years","","45","1","",1;2,
+"3","Highest income quintile, 65 years and over","","46","1","",1;2,
+"3","Main source of household income: wages and salaries","","47","1","",3,
+"3","Main source of household income: self-employment income","","48","1","",3;4,
+"3","Main source of household income: net property income","","49","1","",3,
+"3","Main source of household income: current transfers received - pension benefits","","50","1","",3;5,
+"3","Main source of household income: current transfers received - others","","52","1","",3;6,
+"3","Owner","","53","1","",7,
+"3","Owner with mortgage","","54","53","",7,
+"3","Owner without mortgage","","55","53","",7,
+"3","Renter","","56","1","",7,
+"3","Pre-1946","","57","1","",8,
+"3","Baby boom","","58","1","",8,
+"3","Generation X","","59","1","",8,
+"3","Millennials","","60","1","",8,
+"4","Household disposable income","","1","","",,
+"4","Compensation of employees","","2","1","",,
+"4","Net mixed income","","3","1","",,
+"4","Property income received","","4","1","",,
+"4","Less: property income paid","","5","1","",,
+"4","Current transfers received","","6","1","",,
+"4","Less: current transfers paid","","7","1","",,
+"4","Social transfers in kind (STiK)","","24","","",,
+"4","Social transfers in kind (STiK): education","","25","24","",,
+"4","Social transfers in kind (STiK): health","","26","24","",,
+"4","Social transfers in kind (STiK): other","","27","24","",,
+"4","Adjusted household disposable income","","28","","",,
+"4","Household final consumption expenditure (HFCE)","","8","","",,
+"4","Food and non-alcoholic beverages","","9","8","",,
+"4","Alcoholic beverages and tobacco","","10","8","",,
+"4","Clothing and footwear","","11","8","",,
+"4","Housing, water, electricity, gas and other fuels","","12","8","",,
+"4","Furnishings, household equipment and other goods and services related to the dwelling and property","","13","8","",,
+"4","Health","","14","8","",,
+"4","Transport","","15","8","",,
+"4","Communications","","16","8","",,
+"4","Recreation and culture","","17","8","",,
+"4","Education","","18","8","",,
+"4","Food, beverage and accommodation services","","19","8","",,
+"4","Insurance and financial services","","20","8","",,
+"4","Miscellaneous goods and services","","21","8","",,
+"4","Social transfers in kind (STiK)","","29","","",,
+"4","Social transfers in kind (STiK): education","","30","29","",,
+"4","Social transfers in kind (STiK): health","","31","29","",,
+"4","Social transfers in kind (STiK): other","","32","29","",,
+"4","Household actual final consumption","","33","","",,
+"4","Change in pension entitlements","","22","","",,
+"4","Household net saving","","23","","",,
+
+Symbol Legend
+Description,Symbol
+"not available for a specific reference period","..",
+"less than the limit of detection","<LOD",
+"value rounded to 0 (zero) where there is a meaningful distinction between true zero and the value that was rounded","0s",
+"data quality: excellent","A",
+"data quality: very good","B",
+"data quality: good","C",
+"data quality: acceptable","D",
+"use with caution","E",
+"too unreliable to be published","F",
+"not applicable","...",
+"preliminary","p",
+"revised","r",
+"suppressed to meet the confidentiality requirements of the Statistics Act","x",
+"terminated","t",
+
+"Survey Code","Survey Name"
+"1901","National Gross Domestic Product by Income and by Expenditure Accounts"
+
+"Subject Code","Subject Name"
+"36","Economic accounts"
+
+"Note ID",Note
+1,"Income quintiles are assigned based on equivalized household disposable income, which takes into account differences in household size and composition using a method proposed by the Organization for Economic Co-operation and Development (OECD). The "OECD-modified" equivalence scale assigns a value of 1 to the first adult, 0.5 to each additional person aged 14 and over, and 0.3 for all children under 14."
+2,"Age groups refer to the age group of the major income earner."
+3,"This refers to the main source of income for the household, that is, wages and salaries, self-employment income, net property income, current transfers received related to pension benefits, or other current transfers received from non-pension related sources.  "
+4,"Self-employment income refers to mixed income related to non-farm and farm businesses. Household rental income is not included."
+5,"Revenues from Current transfers received - pension benefits relate to current transfers received from corporations for employer's pension plans and current transfers received from government for the Canada and Québec pension plans (CPP/QPP) and the Old Age Security program including the Guaranteed Income Supplement (OAS/GIS)."
+6,"Revenues from Current transfers received - others, relate to all other current transfers received not included in Current transfers received - pensions benefits, that is, it includes current transfers from the government sector except for the Canada and Québec pension plans (CPP/QPP) and from the Old Age Security Program (OAS) and the Guaranteed Income Supplement (GIS).  It also includes current transfers from Non-profit institutions serving households (NPISH) and from the non-residents sector."
+7,"Owner/Renter refers to the housing tenure of a household. Households that have subsidized rents (partially or fully) are included under Renter."
+8,"Distributions by generation are defined as follows and are based on the birth year of the major income earner : pre-1946 for those born before 1946, baby boom for those born between 1946 and 1964, generation X for those born between 1965 and 1980 and millennials for those born after 1980.  Note that generation Z has been combined with the millennial generation as their sample size is relatively small."
+9,""Distribution of value" is the share of a component of income, consumption or savings attributable to the various household characteristics (such as the lowest income quintile)."
+10,"Value per consumption unit reflects the Statistics "value" divided by the number of consumption units, which is based on a method proposed by the Organization for Economic Co-operation and Development (OECD). The "OECD-modified" equivalence scale assigns a value of 1 to the first adult, 0.5 to each additional person aged 14 and over, and 0.3 for all children under 14."
+
+"Correction ID","Correction Date","Correction Note"

@@ -6,7 +6,7 @@ import subprocess
 import warnings
 import numpy as np
 import pandas as pd
-from closure_diagnostics import ROOT,cur,AccountingBattery
+from closure_diagnostics import ROOT,cur,AccountingBattery,IDENTITY_COLUMNS
 from macro_data import DataWrapper
 from macromodel.configurations import CountryConfiguration,SimulationConfiguration
 from macromodel.configurations.household_closure_configuration import HouseholdClosureConfiguration
@@ -23,7 +23,7 @@ def main():
     for manifest in sorted((OUT/'final').glob('*/manifest.json')):
         m=json.loads(manifest.read_text())
         if m['quarters']!=12:continue
-        out=OUT/'distribution_replays'/manifest.parent.name
+        out=OUT/'distribution_replays_v2'/manifest.parent.name
         if (out/'manifest.json').exists():continue
         data=DataWrapper.init_from_pickle(Path(m['pickle']))
         names=[n for n in data.all_country_names if str(n).startswith('CAN_')]
@@ -39,6 +39,7 @@ def main():
         sim=Simulation.from_datawrapper(data,SimulationConfiguration(country_configurations=configs,t_max=12,seed=m['seed']))
         out.mkdir(parents=True,exist_ok=True)
         diagnosis=B2HouseholdDiagnosis(sim,data,micro_out=out/'micro')
+        battery=AccountingBattery();sim.posthooks.append(battery)
         old=pd.read_csv(manifest.parent/'outcomes.csv').set_index(['region','quarter'])
         checks=[]
         for t in range(12):
@@ -56,11 +57,17 @@ def main():
                         raise AssertionError(f'Replay changed {manifest.parent.name} {n} Q{t+1} {key}: {value} != {reference}')
                     checks.append(dict(region=str(n),quarter=t+1,field=key,difference=value-reference))
         diagnosis.save(out)
+        frame=battery.frame();frame.to_csv(out/'accounting.csv',index=False)
+        columns=IDENTITY_COLUMNS+['bank_hh_deposit_snapshot_gap','bank_firm_deposit_snapshot_gap',
+            'bank_equity_unexplained','goods_market_gap','firm_cash_identity_resid']
+        assert np.isfinite(frame[columns].to_numpy()).all()
+        error=frame[columns].abs().div(frame[['hh_income','firm_sales']].abs().max(axis=1).clip(lower=1),axis=0).max().max()
+        assert error<=1e-8
         pd.DataFrame(checks).to_csv(out/'macro_path_comparison.csv',index=False)
         meta=dict(original_manifest=str(manifest.relative_to(ROOT)),original_manifest_sha256=sha(manifest),
             original_pickle_sha256=m['pickle_sha256'],seed=m['seed'],quarters=12,
             correction='National income ranks use income per household, dividing aggregate balances by each regional expansion factor. Weights and consumption totals unchanged.',
-            all_macro_paths_match=True,head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+            all_macro_paths_match=True,max_accounting_error=float(error),head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
             source_sha256={str(p.relative_to(ROOT)):sha(p) for p in [Path(__file__),HERE/'b2_instrumentation.py']})
         (out/'manifest.json').write_text(json.dumps(meta,indent=2)+'\n')
         print('Corrected distributions, identical macro paths:',manifest.parent.name,flush=True)

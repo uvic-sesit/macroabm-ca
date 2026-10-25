@@ -18,7 +18,9 @@ def main():
         if m['quarters']!=12 or m['arm']!='B2':continue
         key=dict(arm=m['arm'],variant=m['variant'],seed=m['seed'])
         sub=summary[(summary.arm==m['arm'])&(summary.variant==m['variant'])&(summary.seed==m['seed'])].iloc[0]
-        x=pd.read_csv(p/'consumption_quintiles.csv').groupby(['scheme','quarter','quintile']).sum(numeric_only=True).reset_index()
+        corrected=OUT/'distribution_replays_v2'/p.name/'consumption_quintiles.csv'
+        if not corrected.exists():raise RuntimeError('Corrected per-household rank replay missing: '+p.name)
+        x=pd.read_csv(corrected).groupby(['scheme','quarter','quintile']).sum(numeric_only=True).reset_index()
         for scheme,benchmark in [('DHEA_equivalised_DI',bench['primary_shares']),('SHS_gross_household_income',bench['secondary_shares'])]:
             a=x[x.scheme==scheme].copy();a['share']=a.consumption/a.groupby('quarter').consumption.transform('sum')
             a['benchmark_share']=a.quintile.map(dict(zip(range(1,6),benchmark)))

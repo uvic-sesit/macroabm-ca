@@ -480,3 +480,37 @@ All 16 serial runs pass accounting (max 1.44e-14); protected inputs and paired p
 Recommendation: do not accept this anchored B candidate or declare household losses plausible. Firm losses combine a starting capital-cost proxy with price/demand/continuation behaviour; they can be disclosed in exploratory work, not treated as a validated closure. Phase B remains gated.
 
 [CLOSURE_BE_2026-10-24.md](CLOSURE_BE_2026-10-24.md) contains the full quarterly, sensitivity, industry and seed evidence. Stop for review.
+
+<!-- B2-2026-10-24 -->
+## B2 and independent firm-data reconciliation — 2026-10-24
+
+B2 fails. E, Phase B and C_dp_005 remain on hold. Per clarification, independent Step 2 was completed on accepted FE arm F (e386f4e lineage), with P off. No parameter tuning or push.
+
+| Item | Evidence / commit | Status |
+|---|---|---|
+| B2 form | c2c3eb8, ea3485a; 6 regressions | One c0 rescale .961350238407, no additive intercept; zero-goods gate passes; base G2–G4 fail every seed |
+| G3 clarification | DHEA 36-10-0587 primary, SHS 11-10-0223 secondary | Gate uses quintile shares, not dollar levels. Source-specific equivalence/ranking applied; full DHEA income remains a cash proxy, housing scope caveat disclosed |
+| Regional rank scaling | d40e353; scale-invariance regression | Corrected national per-household income ranks; 15 diagnostic replays require identical original macro paths. Original misranked tables retained but superseded |
+| Initial acquisitions vs CFC | 2237cb1; 1 regression | Clear mechanical separation; new CFC does not overwrite accepted initial purchases; default legacy fallback unchanged |
+| Observed CFC | c3df2d9; 2 allocation regressions | New cfc_v2 pickle; 377.244B/year allocated versus 377.319B source; missing-stock boundary explicit. I/H53/A02 national costs below price |
+| F-A1 / F-D1 | 55fb64a, b3227ea; 5 regressions | 100.504B/year missing signed taxes and 48.338B/year row–column discrepancy confirmed. Experimental correction not promoted: fails GDP initialisation. CFC-only retains unresolved bridge |
+| Step 2 gate | 409 gross-margin exceptions >1 pp; 87 above-price cells with nonnegative IO GOS | Fails; neither data boundary nor remaining losses declared validated |
+| E | no implementation | Step 1 gate prevents dependent work |
+
+| seed | constrained_slope_pp | Q12_saving_pct | max_zero_positive_pct | G1 | G2 | G3 | G4 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 1.031 | 0.179 | 1.686 | True | False | False | False |
+| 1 | 1.176 | -0.346 | 1.686 | True | False | False | False |
+| 2 | 1.222 | -3.664 | 1.686 | True | False | False | False |
+
+| seed | F_firm_losses_B | CFC_firm_losses_B | loss_change_pct | F_recap_B | CFC_recap_B | GDP_change_pct | C_change_pct |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 205.399 | 84.372 | -58.923 | 220.141 | 165.205 | -2.402 | -4.893 |
+| 1 | 265.003 | 138.852 | -47.603 | 310.153 | 199.720 | -3.277 | -3.430 |
+| 2 | 229.988 | 91.380 | -60.267 | 235.207 | 99.958 | -7.473 | -6.310 |
+
+Firm losses fall 48–60% under observed CFC; household write-offs stay about 233B over 12 quarters. Remaining firm losses mix data/concept limitations with price, demand and default behaviour; initial-condition diagnostics are not a causal behavioural decomposition. Bank recapitalisations remain large.
+
+Full tests: 458 passed / 30 known failures / 488 cases; sampler one worker. Exact failure IDs checked against BE baseline in the final audit.
+
+[CLOSURE_B2_2026-10-24.md](CLOSURE_B2_2026-10-24.md) contains every gate, quarterly losses, resolutions, seed comparisons, quintile raw levels and shares, source definitions/hashes, and remaining limitations. Stop for review; not ready for Phase B.

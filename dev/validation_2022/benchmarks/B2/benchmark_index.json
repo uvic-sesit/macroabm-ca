@@ -1,0 +1,82 @@
+{
+  "checked_UTC": "2026-10-24",
+  "selected_files": {
+    "benchmarks\\B2\\dhea_hfce_2022.csv": "94f0dd9a519b925c5c8b4aa8e3010a9280d644ca609643cbf478e5fd9fe232df",
+    "benchmarks\\B2\\shs_consumption_2023.csv": "80fdd69a4e325b6daa1abe4650224dd24fbeaf32cae1ce50c48bafed7cf159c6",
+    "outputs\\B2\\firm_data\\observed_nonres_CFC_2022.csv": "b2e16ddf161b5cf76965b9c39b6ce5edf62bfb81c63b3282fbf7910ee26436fe",
+    "outputs\\B2\\firm_data\\observed_VA_2022.csv": "071f244447f9c9144c7b0cf7bd368271c5f87c33b585dacb0a2c5b05780e5408",
+    "benchmarks\\BE\\sfs_liquid_buffers.csv": "393e772d9d32577a0c3bf02f28c1a4cea7d3c37c47f7f04717754ce0706065aa",
+    "benchmarks\\BE\\household_targets_2022.csv": "a0fd74822f30d57f468b6eeadd0e0c4ffc33967d932479a3578362fc320e2207",
+    "benchmarks\\B2\\raw\\36100587_metadata.csv": "a23f53c2e2d3108fb022d3b5982890ec04d0a082bf014ddf1676f80538e106f5",
+    "benchmarks\\B2\\raw\\11100223_metadata.csv": "3dd0a3417c945ade639b12a99fd5712f57a7a5533d2a5da5c1b34c56f0365692",
+    "benchmarks\\B2\\raw\\table_definitions_provenance.json": "5a45514dc044c551da924d2fff9ec5d4fd40d01e728f95803cd52503eb8005f0"
+  },
+  "inherited_provenance": {
+    "benchmarks\\BE\\buffer_provenance.json": "8b4575e2ca301701049e08aad27388cc72ee4d97657c0958d718edf7f69d6877",
+    "benchmarks\\BE\\benchmark_index.json": "5c611ea55ecd852ba62f666b26c35b7a53eb2a5986c9715b2be9a4be57dcda25"
+  },
+  "builders": {
+    "build_firm_io_b2.py": "951fc802c66433d4b9ff5aff729601c914a1c13c0390317083b98bf330f55aa2",
+    "build_firm_cfc_b2.py": "14a7e0c28dc58e58501ba52129ea25132855f5004349fd6d14bf8399d93cb378",
+    "extract_b2_benchmarks.py": "113712463ca1db8da023b28ec7ef04fd686075f6ac18f2d96da28023aaffb660",
+    "prepare_b2_targets.py": "c00c290d55132d6cdba5cea2b3b30de204dd5b3929fa048e12ebc00ff9974e74",
+    "macro_data\\processing\\synthetic_firms\\canadian_firm_accounts.py": "4f274a3e1e9582e3ac35929d42929c974e8b16ea3ba919c176bd30f1db52ed1b",
+    "extract_b2_metadata.py": "4aef4ac844276b8ac68871668aa8eb2c09072cc84e6383dce2e3012123385004"
+  },
+  "raw_provenance": {
+    "11100223_2023_provenance.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/11100223-eng.zip",
+      "retrieved_utc": "2026-10-24T19:58:38.428383+00:00",
+      "sha256": "fada25b467ad0d900ba9c1f4401accbdf2fda30b170d4f922c7d5d3221f0e734",
+      "table": "11100223",
+      "reference": "2023",
+      "full_csv_sha256": "9c7d9dceba4c363e096bc57d7324cbd6a0051560c9e52d75dc21255faf271c00",
+      "selected_year_sha256": "53000bacec7ce89a151224c36111e02e7897486bf8211bf7697ef0264d7c34f4",
+      "selected_rows": 23322,
+      "extraction": "Reference year only, unchanged source rows and vector IDs"
+    },
+    "11100223_download.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/11100223-eng.zip",
+      "retrieved_utc": "2026-10-24T19:58:38.428383+00:00",
+      "sha256": "fada25b467ad0d900ba9c1f4401accbdf2fda30b170d4f922c7d5d3221f0e734"
+    },
+    "36100096_2022_provenance.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100096-eng.zip",
+      "retrieved_utc": "2026-10-24T19:59:02.951130+00:00",
+      "sha256": "b5ec714f9eef4cedf80759f1ed5bf0f08ed1b18f2753f6933aee8a68fb1f0bd6",
+      "table": "36100096",
+      "reference": "2022",
+      "full_csv_sha256": "e790e88e5808acc587c33b7e6f4de32b7ab046a839c48ae9ad1065f31255b8e0",
+      "selected_year_sha256": "c80839b83259cdce64e053e1a5172f73d82845a682935eb90ce7d4140e45ddfd",
+      "selected_rows": 115200,
+      "extraction": "Reference year only, unchanged source rows and vector IDs"
+    },
+    "36100096_download.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100096-eng.zip",
+      "retrieved_utc": "2026-10-24T19:59:02.951130+00:00",
+      "sha256": "b5ec714f9eef4cedf80759f1ed5bf0f08ed1b18f2753f6933aee8a68fb1f0bd6"
+    },
+    "36100099_download.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100099-eng.zip",
+      "retrieved_utc": "2026-10-24T20:22:32.343037+00:00",
+      "sha256": "f6d5ed033f4e902d91e9fd747b564d41cc2d66b9bfdc03de51474acdec482d37",
+      "full_csv_sha256": "ff5992b66c3127a24c56eb9484051ec8afb436f2843e5dd4d263f24590502f76"
+    },
+    "36100587_download.json": {
+      "url": "https://www150.statcan.gc.ca/n1/tbl/csv/36100587-eng.zip",
+      "retrieved_utc": "2026-10-24T20:06:39.688171+00:00",
+      "sha256": "33c30001d2d3dafc3b6bf22057a689654df0c2f3775313e292cadcc4ac9da2e7",
+      "full_csv_sha256": "958c746574f4fba2cb3ffab6b49183902da5da6d8e536032ed6bbbf5cca8a0a7"
+    },
+    "DHEA_equivalence.html.json": {
+      "url": "https://www150.statcan.gc.ca/n1/pub/13-607-x/2016001/931-eng.htm",
+      "retrieved_utc": "2026-10-24T20:22:33.115145+00:00",
+      "sha256": "f7501899b6624a43252e4261ae088b9f4104a64ccab10bdfcdaa85eb6786b4da"
+    },
+    "DHEA_income_quintiles.html.json": {
+      "url": "https://www150.statcan.gc.ca/n1/pub/13-607-x/2016001/954-eng.htm",
+      "retrieved_utc": "2026-10-24T20:22:33.725459+00:00",
+      "sha256": "6faa4bb75e5e2c69a73971f1d63464ee79f1c76db41c6bcc082231ec0950bc9d"
+    }
+  }
+}
