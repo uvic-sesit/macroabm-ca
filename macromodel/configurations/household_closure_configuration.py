@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field
 
 
 class HouseholdClosureConfiguration(BaseModel):
+    quintile_propensity_enabled: bool = False
+    quintile_consumption_income_ratios: list[float] = []
     buffer_stock_enabled: bool = False
     buffer_stock_reanchor_enabled: bool = False
     buffer_stock_kappa: float = Field(default=.10,ge=0)

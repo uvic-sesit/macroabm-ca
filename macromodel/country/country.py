@@ -959,6 +959,11 @@ class Country:
         market clearing.
         """
         buffer_receipts = None
+        if self.configuration.household_closure.quintile_propensity_enabled:
+            from macromodel.country.household_closure import known_household_receipts
+            from macromodel.country.quintile_consumption import apply as apply_quintiles
+            buffer_receipts=known_household_receipts(self)
+            apply_quintiles(self,buffer_receipts)
         if self.configuration.household_closure.buffer_stock_enabled:
             from macromodel.country.household_closure import known_household_receipts
             from macromodel.country.buffer_stock import apply

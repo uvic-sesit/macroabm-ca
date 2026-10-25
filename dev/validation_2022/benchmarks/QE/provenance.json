@@ -1,0 +1,33 @@
+{
+  "table": "36-10-0587-01",
+  "reference": 2022,
+  "checked_UTC": "2026-10-25T01:13:45.127352+00:00",
+  "source_sha256": "958c746574f4fba2cb3ffab6b49183902da5da6d8e536032ed6bbbf5cca8a0a7",
+  "extract_sha256": "913e2b1c9191cecc193801a9c888dc86c2e3126b0be889f27231b3ca3ef63d8f",
+  "vectors": [
+    "v116884005",
+    "v116884012",
+    "v116884028",
+    "v116884035",
+    "v116884051",
+    "v116884058",
+    "v116884074",
+    "v116884081",
+    "v116884097",
+    "v116884104"
+  ],
+  "ratios": [
+    1.9785209166756326,
+    1.2843466335096136,
+    1.1722172097442571,
+    0.9138732641695608,
+    0.7406179314458999
+  ],
+  "definitions": "Household-weighted OECD-modified equivalised disposable-income quintiles, HFCE excluding STiK; source DI contains noncash imputations absent from model cash DI.",
+  "consumption_benchmark": {
+    "table": "36-10-0112",
+    "vector": "v62305982",
+    "annual_CAD": 1511382000000.0
+  },
+  "gate": "Relative consumption SHARE deviation <=15%; Q-G0 construction only. Q-G1 positive-income zero goods <2% all quarters; Q-G2 Q12 shares; Q-G3 existing Gate B unchanged."
+}

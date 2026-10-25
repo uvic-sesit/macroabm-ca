@@ -630,6 +630,8 @@ class Households(Agent):
         Returns:
             np.ndarray: Saving rates by household
         """
+        if 'quintile_consumption_propensity' in self.states:
+            return 1-self.states['quintile_consumption_propensity']
         inds = self.independents
         if len(inds) > 0:
             current_independents = np.stack(

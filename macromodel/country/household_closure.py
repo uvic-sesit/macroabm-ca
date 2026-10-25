@@ -320,6 +320,8 @@ def install_household_closures(countries):
     recalibrate_household_investment(enabled)
     from .buffer_stock import initialize
     initialize(enabled)
+    from .quintile_consumption import initialize as initialize_quintiles
+    initialize_quintiles(enabled)
 
 
 def recalibrate_household_investment(countries):
