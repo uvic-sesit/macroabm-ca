@@ -526,6 +526,8 @@ class CreditMarket:
         Returns:
             np.ndarray: Array of interest payments by household across all loan types
         """
+        if 'E_interest_paid_by_household' in self.states:
+            return self.states['E_interest_paid_by_household'].copy()
         return self.states["cons_loans"][1].sum(axis=0) + self.states["mort_loans"][1].sum(axis=0)
 
     def compute_interest_received_by_bank(self) -> np.ndarray:
@@ -534,6 +536,8 @@ class CreditMarket:
         Returns:
             np.ndarray: Array of interest income by bank across all loan types
         """
+        if 'E_interest_paid_by_bank' in self.states:
+            return self.states['st_loans'][1].sum(axis=1)+self.states['lt_loans'][1].sum(axis=1)+self.states['E_interest_paid_by_bank']
         return (
             self.states["st_loans"][1].sum(axis=1)
             + self.states["lt_loans"][1].sum(axis=1)

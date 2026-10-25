@@ -295,6 +295,11 @@ def install_household_closures(countries):
         c.households.states['overdraft_limit_enabled'] = cfg.overdraft_limit_enabled
         c.households.states['financial_asset_drawdown'] = cfg.financial_asset_drawdown
         c.households.states['consumption_before_investment'] = cfg.consumption_before_investment
+        if cfg.household_payment_default_enabled:
+            if cfg.distress_enabled:
+                raise ValueError('E replaces D3; select only one insolvency rule')
+            from .household_payment_default import PaymentDefaultHandler
+            c.households.functions['insolvency']=PaymentDefaultHandler(c)
         if cfg.distress_enabled:
             from macromodel.agents.households.func.insolvency import PersistentDistressHouseholdInsolvencyHandler
             c.households.functions["insolvency"] = PersistentDistressHouseholdInsolvencyHandler(cfg.distress_periods,cfg.collateral_haircut)

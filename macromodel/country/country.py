@@ -824,6 +824,9 @@ class Country:
         Matches buyers/renters with sellers/landlords and determines
         property transactions.
         """
+        if self.configuration.household_closure.household_payment_default_enabled:
+            from .household_payment_default import list_foreclosures
+            list_foreclosures(self)
         self.housing_market.clear(
             household_main_residence_tenure_status=self.households.states["Tenure Status of the Main Residence"],
             max_price_willing_to_pay=self.households.ts.current("max_price_willing_to_pay"),
@@ -901,7 +904,12 @@ class Country:
         # Handle debt installments
         self.firms.ts.debt_installments.append(self.credit_market.pay_firm_installments())
         self.firms.ts.total_debt_installments.append([self.firms.ts.current("debt_installments").sum()])
-        self.households.ts.debt_installments.append(self.credit_market.pay_household_installments())
+        if self.configuration.household_closure.household_payment_default_enabled:
+            from .household_payment_default import service,settle_foreclosures
+            foreclosure_repayment=settle_foreclosures(self)
+            self.households.ts.debt_installments.append(service(self)+foreclosure_repayment)
+        else:
+            self.households.ts.debt_installments.append(self.credit_market.pay_household_installments())
         self.households.ts.total_debt_installments.append([self.households.ts.current("debt_installments").sum()])
         self.credit_market.remove_repaid_loans()
 
@@ -1379,6 +1387,8 @@ class Country:
             credit_market=self.credit_market,
         )
         self.credit_market.states["household_writeoffs_current"] = self.credit_market.states.get("cumulative_writeoffs",0.)-writeoffs_before_households
+        if self.configuration.household_closure.household_payment_default_enabled:
+            self.credit_market.states['household_writeoffs_current']+=self.households.states['E_mortgage_writeoff'].sum()
         self.economy.ts.household_insolvency_rate.append([household_insolvency_rate])
         self.economy.ts.npl_hh_cons_loans.append([npl_hh_cons_loans])
         self.economy.ts.npl_mortgages.append([npl_mortgages])

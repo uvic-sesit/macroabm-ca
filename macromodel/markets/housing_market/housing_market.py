@@ -476,9 +476,10 @@ class HousingMarket:
         seller_lives_there = np.array(
             [s_ >= 0 and inhabited[s_] == p_ for s_, p_ in zip(sellers, prop_ids)], dtype=bool
         )
+        foreclosure=np.array([bool(props.at[p,'E foreclosure']) if 'E foreclosure' in props else False for p in prop_ids])&is_sell
         for _ in range(len(sales) + 1):
             movers = set(buyers[executed])
-            new_executed = executed & ~(is_sell & seller_lives_there & ~np.isin(sellers, list(movers)))
+            new_executed = executed & ~(is_sell & ~foreclosure & seller_lives_there & ~np.isin(sellers, list(movers)))
             if np.array_equal(new_executed, executed):
                 break
             executed = new_executed
@@ -493,6 +494,9 @@ class HousingMarket:
         total_number_of_newly_rented_houses = 0
         for k in np.where(executed)[0]:
             buyer_id, seller_id, property_id = buyers[k], sellers[k], prop_ids[k]
+            if foreclosure[k] and seller_id>=0 and inhabited[seller_id]==property_id:
+                inhabited[seller_id]=-1
+                household_states['Tenure Status of the Main Residence'][seller_id]=3
             props.at[property_id, "Corresponding Inhabitant Household ID"] = buyer_id
             inhabited[buyer_id] = property_id
             if is_rent[k]:
