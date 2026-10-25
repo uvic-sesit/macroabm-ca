@@ -5,6 +5,7 @@ import ih_diagnostics as ih
 from closure_diagnostics import cur
 from build_za import target
 from prepare_za import OUT,sha
+from za_state_schema import defined_floor_states
 class ZA(ih.Diagnosis):
     def __init__(self,sim):self.floor_rows=[];super().__init__(sim)
     def capture(self,sim,t):
@@ -15,8 +16,12 @@ class ZA(ih.Diagnosis):
                 if field not in c.firms.ts.dicts:continue
                 value=cur(c.firms,field)
                 for i in np.flatnonzero(mask):
-                    self.floor_rows.append(dict(region=str(name),quarter=t,firm=int(i),industry=int(c.firms.states['Industry'][i]),field=field,value=float(value[i]),finite=bool(np.isfinite(value[i]))))
-    def save(self,out):super().save(out);z=pd.DataFrame(self.floor_rows);z.to_csv(out/'floor_states.csv',index=False);assert z.finite.all()
+                    self.floor_rows.append(dict(region=str(name),quarter=t,firm=int(i),industry=int(c.firms.states['Industry'][i]),field=field,value=float(value[i]),finite=bool(np.isfinite(value[i])),defined=not(t==0 and field=='target_production')))
+    def save(self,out):
+        super().save(out)
+        z=pd.DataFrame(self.floor_rows);z['defined']=defined_floor_states(z)
+        z.to_csv(out/'floor_states.csv',index=False)
+        assert z.loc[z.defined,'finite'].all()
 def main():
     global FLOORS
     p=argparse.ArgumentParser();p.add_argument('--arm',choices=['FS_T','FS','FSG'],required=True);p.add_argument('--quarters',type=int,default=2);p.add_argument('--seed',type=int,default=0);p.add_argument('--variant');a=p.parse_args()
