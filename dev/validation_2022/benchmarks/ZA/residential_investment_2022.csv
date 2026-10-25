@@ -1,0 +1,16 @@
+GEO,REF_DATE,DGUID,Prices,Flows and stocks,Assets,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+Canada,2022,2016A000011124,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665012,1.1.1.1,249779.0,,,,0
+Newfoundland and Labrador,2022,2016A000210,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665048,2.1.1.1,1945.0,,,,0
+Prince Edward Island,2022,2016A000211,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665084,3.1.1.1,939.0,,,,0
+Nova Scotia,2022,2016A000212,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665120,4.1.1.1,5831.0,,,,0
+New Brunswick,2022,2016A000213,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665156,5.1.1.1,3652.0,,,,0
+Quebec,2022,2016A000224,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665192,6.1.1.1,48208.0,,,,0
+Ontario,2022,2016A000235,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665228,7.1.1.1,108300.0,,,,0
+Manitoba,2022,2016A000246,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665264,8.1.1.1,6947.0,,,,0
+Saskatchewan,2022,2016A000247,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665300,9.1.1.1,4523.0,,,,0
+Alberta,2022,2016A000248,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665336,10.1.1.1,25251.0,,,,0
+British Columbia,2022,2016A000259,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665372,11.1.1.1,43613.0,,,,0
+Yukon,2022,2016A000260,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665408,12.1.1.1,299.0,,,,0
+Northwest Territories including Nunavut,2022,,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665444,13.1.1.1,,..,,,0
+Northwest Territories,2022,2016A000261,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665480,14.1.1.1,147.0,,,,0
+Nunavut,2022,2016A000262,Current prices,Investment,Total residential,Dollars,81,millions,6,v91665516,15.1.1.1,124.0,,,,0

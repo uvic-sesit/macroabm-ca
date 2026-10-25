@@ -1,0 +1,37 @@
+{
+  "sources": [
+    {
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "file": "compatibility/compat_icio_2022_can_provinces.csv",
+      "sha256": "f0004ad3d40e465cceba3d9735d6dda5b00658fe6ca88af5ffed944917a8adb9",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "commit": "d847fb2e22fee298c7af31803d3ab6543126dda4",
+      "file": "canonical/VA_tax_output_basic.csv",
+      "sha256": "6fbdf9db8985e7cafde8974ebfad0032776416bb4db84d6ca2f04c3408952940",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "commit": "eb40128bdfb24d46771b5a3788e9b530fc4268c4",
+      "file": "OOH_SPLIT_2026-10-25.md",
+      "sha256": "40fff9b497db4a9c64a31b801ff984d2d7e65569898489e30802413bb3d42576",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "commit": "eb40128bdfb24d46771b5a3788e9b530fc4268c4",
+      "file": "canonical/ooh_by_province_basic.csv",
+      "sha256": "516e3c50527caa784090a87663ab605222fe91828b3ceb6997a69ff00c6d6495",
+      "retrieved_utc": "2026-10-25"
+    },
+    {
+      "commit": "eb40128bdfb24d46771b5a3788e9b530fc4268c4",
+      "file": "canonical/ooh_inputs_by_province_commodity_basic.csv",
+      "sha256": "3eb122c9bcc42c0ac5cb6e4d4dd5d01c4fd065edcf8f9f402d30b7844da21c8f",
+      "retrieved_utc": "2026-10-25"
+    }
+  ],
+  "OOH_table": "2022 StatCan provincial detailed SUT, BS5311A0, PEC04200; canonical OECD-L split",
+  "OOH_vectors": "PRM100000/200000 product taxes/subsidies, PRM300000/400000 production taxes/subsidies, PRM700000 gross mixed income; no native v-number for this mapped custom split",
+  "SUT_source": "d847fb2; table36-10-0478 detailed underlying provincial workbooks"
+}

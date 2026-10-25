@@ -1,0 +1,961 @@
+GEO,Industry,REF_DATE,DGUID,Prices,Flows and stocks,Assets,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+Canada,Total all industries,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968052,1.1.1.1.1,411341.0,,,,0
+Canada,"Agriculture, forestry, fishing and hunting",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968092,1.1.2.1.1,10321.0,,,,0
+Canada,Crop production,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968132,1.1.3.1.1,5408.0,,,,0
+Canada,Animal production,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968172,1.1.4.1.1,3695.0,,,,0
+Canada,Forestry and logging,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968212,1.1.5.1.1,670.0,,,,0
+Canada,"Fishing, hunting and trapping",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968252,1.1.6.1.1,168.0,,,,0
+Canada,Support activities for agriculture and forestry,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968292,1.1.7.1.1,381.0,,,,0
+Canada,"Mining, quarrying and oil and gas extraction",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968332,1.1.8.1.1,58240.0,,,,0
+Canada,Conventional oil and gas extraction,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968372,1.1.9.1.1,25231.0,,,,0
+Canada,Non-conventional oil extraction,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968412,1.1.10.1.1,12794.0,,,,0
+Canada,Mining and quarrying (except oil and gas),2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968452,1.1.11.1.1,15656.0,,,,0
+Canada,Support activities for mining and oil and gas extraction,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968492,1.1.12.1.1,4559.0,,,,0
+Canada,Utilities,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968532,1.1.13.1.1,31343.0,,,,0
+Canada,Construction,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968572,1.1.14.1.1,10095.0,,,,0
+Canada,Manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968612,1.1.15.1.1,34035.0,,,,0
+Canada,Food manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968652,1.1.16.1.1,3879.0,,,,0
+Canada,Beverage and tobacco products manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968692,1.1.17.1.1,850.0,,,,0
+Canada,Textile and textile product mills,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968732,1.1.18.1.1,142.0,,,,0
+Canada,Clothing and leather and allied product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968772,1.1.19.1.1,89.0,,,,0
+Canada,Wood product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968812,1.1.20.1.1,1550.0,,,,0
+Canada,Paper manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968852,1.1.21.1.1,1254.0,,,,0
+Canada,Printing and related support activities,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968892,1.1.22.1.1,324.0,,,,0
+Canada,Petroleum and coal products manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968932,1.1.23.1.1,2251.0,,,,0
+Canada,Chemical manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90968972,1.1.24.1.1,5358.0,,,,0
+Canada,Plastics and rubber products manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969012,1.1.25.1.1,1359.0,,,,0
+Canada,Non-metallic mineral product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969052,1.1.26.1.1,791.0,,,,0
+Canada,Primary metal manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969092,1.1.27.1.1,3435.0,,,,0
+Canada,Fabricated metal product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969132,1.1.28.1.1,1390.0,,,,0
+Canada,Machinery manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969172,1.1.29.1.1,1657.0,,,,0
+Canada,Computer and electronic product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969212,1.1.30.1.1,1357.0,,,,0
+Canada,"Electrical equipment, appliance and component manufacturing",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969252,1.1.31.1.1,1129.0,,,,0
+Canada,Transportation equipment manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969292,1.1.32.1.1,6176.0,,,,0
+Canada,Furniture and related product manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969332,1.1.33.1.1,342.0,,,,0
+Canada,Miscellaneous manufacturing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969372,1.1.34.1.1,703.0,,,,0
+Canada,Wholesale trade,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969412,1.1.35.1.1,11456.0,,,,0
+Canada,Retail trade,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969452,1.1.36.1.1,11812.0,,,,0
+Canada,Transportation and warehousing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969492,1.1.37.1.1,55170.0,,,,0
+Canada,Information and cultural industries,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969532,1.1.38.1.1,26646.0,,,,0
+Canada,"Finance, insurance, real estate, rental and leasing",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969572,1.1.39.1.1,29707.0,,,,0
+Canada,Finance and insurance,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969612,1.1.40.1.1,10246.0,,,,0
+Canada,Real estate and rental and leasing,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969652,1.1.41.1.1,17548.0,,,,0
+Canada,Holding companies,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969692,1.1.42.1.1,1913.0,,,,0
+Canada,"Professional, scientific and technical services",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969732,1.1.43.1.1,14941.0,,,,0
+Canada,"Administrative and support, waste management and remediation services",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969772,1.1.44.1.1,3816.0,,,,0
+Canada,Educational services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969812,1.1.45.1.1,654.0,,,,0
+Canada,Health care and social assistance,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969852,1.1.46.1.1,3379.0,,,,0
+Canada,"Arts, entertainment and recreation",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969892,1.1.47.1.1,3994.0,,,,0
+Canada,Accommodation and food services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969932,1.1.48.1.1,4359.0,,,,0
+Canada,Other services (except public administration),2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90969972,1.1.49.1.1,1373.0,,,,0
+Canada,Non-profit institutions serving households,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970012,1.1.50.1.1,1519.0,,,,0
+Canada,Non-profit education services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970052,1.1.51.1.1,,..,,,0
+Canada,Non-profit social assistance,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970092,1.1.52.1.1,,..,,,0
+Canada,"Non-profit arts, entertainment and recreation",2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970132,1.1.53.1.1,,..,,,0
+Canada,Religious organizations,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970172,1.1.54.1.1,,..,,,0
+Canada,Other non-profit institutions serving households,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970212,1.1.55.1.1,,..,,,0
+Canada,Government sector,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970252,1.1.56.1.1,98480.0,,,,0
+Canada,Government educational services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970292,1.1.57.1.1,27190.0,,,,0
+Canada,Hospitals,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970332,1.1.58.1.1,10295.0,,,,0
+Canada,Nursing and residential care facilities,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970372,1.1.59.1.1,1718.0,,,,0
+Canada,Defence services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970412,1.1.60.1.1,3746.0,,,,0
+Canada,Other federal government services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970452,1.1.61.1.1,8795.0,,,,0
+Canada,Other provincial and territorial government services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970492,1.1.62.1.1,17174.0,,,,0
+Canada,Other municipal government services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970532,1.1.63.1.1,27306.0,,,,0
+Canada,Other Indigenous government services,2022,2021A000011124,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90970572,1.1.64.1.1,2256.0,,,,0
+Newfoundland and Labrador,Total all industries,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975732,2.1.1.1.1,6558.0,,,,0
+Newfoundland and Labrador,"Agriculture, forestry, fishing and hunting",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975772,2.1.2.1.1,156.0,,,,0
+Newfoundland and Labrador,Crop production,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975812,2.1.3.1.1,6.0,,,,0
+Newfoundland and Labrador,Animal production,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975852,2.1.4.1.1,101.0,,,,0
+Newfoundland and Labrador,Forestry and logging,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975892,2.1.5.1.1,2.0,,,,0
+Newfoundland and Labrador,"Fishing, hunting and trapping",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975932,2.1.6.1.1,46.0,,,,0
+Newfoundland and Labrador,Support activities for agriculture and forestry,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90975972,2.1.7.1.1,1.0,,,,0
+Newfoundland and Labrador,"Mining, quarrying and oil and gas extraction",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976012,2.1.8.1.1,3342.0,,,,0
+Newfoundland and Labrador,Conventional oil and gas extraction,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976052,2.1.9.1.1,1714.0,,,,0
+Newfoundland and Labrador,Non-conventional oil extraction,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976092,2.1.10.1.1,,..,,,0
+Newfoundland and Labrador,Mining and quarrying (except oil and gas),2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976132,2.1.11.1.1,1403.0,,,,0
+Newfoundland and Labrador,Support activities for mining and oil and gas extraction,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976172,2.1.12.1.1,226.0,,,,0
+Newfoundland and Labrador,Utilities,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976212,2.1.13.1.1,376.0,,,,0
+Newfoundland and Labrador,Construction,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976252,2.1.14.1.1,84.0,,,,0
+Newfoundland and Labrador,Manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976292,2.1.15.1.1,98.0,,,,0
+Newfoundland and Labrador,Food manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976332,2.1.16.1.1,31.0,,,,0
+Newfoundland and Labrador,Beverage and tobacco products manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976372,2.1.17.1.1,15.0,,,,0
+Newfoundland and Labrador,Textile and textile product mills,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976412,2.1.18.1.1,1.0,,,,0
+Newfoundland and Labrador,Clothing and leather and allied product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976452,2.1.19.1.1,0.0,,,,0
+Newfoundland and Labrador,Wood product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976492,2.1.20.1.1,5.0,,,,0
+Newfoundland and Labrador,Paper manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976532,2.1.21.1.1,20.0,,,,0
+Newfoundland and Labrador,Printing and related support activities,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976572,2.1.22.1.1,0.0,,,,0
+Newfoundland and Labrador,Petroleum and coal products manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976612,2.1.23.1.1,0.0,,,,0
+Newfoundland and Labrador,Chemical manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976652,2.1.24.1.1,8.0,,,,0
+Newfoundland and Labrador,Plastics and rubber products manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976692,2.1.25.1.1,1.0,,,,0
+Newfoundland and Labrador,Non-metallic mineral product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976732,2.1.26.1.1,2.0,,,,0
+Newfoundland and Labrador,Primary metal manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976772,2.1.27.1.1,1.0,,,,0
+Newfoundland and Labrador,Fabricated metal product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976812,2.1.28.1.1,1.0,,,,0
+Newfoundland and Labrador,Machinery manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976852,2.1.29.1.1,1.0,,,,0
+Newfoundland and Labrador,Computer and electronic product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976892,2.1.30.1.1,2.0,,,,0
+Newfoundland and Labrador,"Electrical equipment, appliance and component manufacturing",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976932,2.1.31.1.1,0.0,,,,0
+Newfoundland and Labrador,Transportation equipment manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90976972,2.1.32.1.1,4.0,,,,0
+Newfoundland and Labrador,Furniture and related product manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977012,2.1.33.1.1,1.0,,,,0
+Newfoundland and Labrador,Miscellaneous manufacturing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977052,2.1.34.1.1,4.0,,,,0
+Newfoundland and Labrador,Wholesale trade,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977092,2.1.35.1.1,68.0,,,,0
+Newfoundland and Labrador,Retail trade,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977132,2.1.36.1.1,97.0,,,,0
+Newfoundland and Labrador,Transportation and warehousing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977172,2.1.37.1.1,327.0,,,,0
+Newfoundland and Labrador,Information and cultural industries,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977212,2.1.38.1.1,222.0,,,,0
+Newfoundland and Labrador,"Finance, insurance, real estate, rental and leasing",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977252,2.1.39.1.1,121.0,,,,0
+Newfoundland and Labrador,Finance and insurance,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977292,2.1.40.1.1,44.0,,,,0
+Newfoundland and Labrador,Real estate and rental and leasing,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977332,2.1.41.1.1,75.0,,,,0
+Newfoundland and Labrador,Holding companies,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977372,2.1.42.1.1,2.0,,,,0
+Newfoundland and Labrador,"Professional, scientific and technical services",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977412,2.1.43.1.1,71.0,,,,0
+Newfoundland and Labrador,"Administrative and support, waste management and remediation services",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977452,2.1.44.1.1,10.0,,,,0
+Newfoundland and Labrador,Educational services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977492,2.1.45.1.1,2.0,,,,0
+Newfoundland and Labrador,Health care and social assistance,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977532,2.1.46.1.1,21.0,,,,0
+Newfoundland and Labrador,"Arts, entertainment and recreation",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977572,2.1.47.1.1,42.0,,,,0
+Newfoundland and Labrador,Accommodation and food services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977612,2.1.48.1.1,68.0,,,,0
+Newfoundland and Labrador,Other services (except public administration),2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977652,2.1.49.1.1,11.0,,,,0
+Newfoundland and Labrador,Non-profit institutions serving households,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977692,2.1.50.1.1,12.0,,,,0
+Newfoundland and Labrador,Non-profit education services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977732,2.1.51.1.1,,..,,,0
+Newfoundland and Labrador,Non-profit social assistance,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977772,2.1.52.1.1,,..,,,0
+Newfoundland and Labrador,"Non-profit arts, entertainment and recreation",2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977812,2.1.53.1.1,,..,,,0
+Newfoundland and Labrador,Religious organizations,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977852,2.1.54.1.1,,..,,,0
+Newfoundland and Labrador,Other non-profit institutions serving households,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977892,2.1.55.1.1,,..,,,0
+Newfoundland and Labrador,Government sector,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977932,2.1.56.1.1,1431.0,,,,0
+Newfoundland and Labrador,Government educational services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90977972,2.1.57.1.1,329.0,,,,0
+Newfoundland and Labrador,Hospitals,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978012,2.1.58.1.1,418.0,,,,0
+Newfoundland and Labrador,Nursing and residential care facilities,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978052,2.1.59.1.1,5.0,,,,0
+Newfoundland and Labrador,Defence services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978092,2.1.60.1.1,12.0,,,,0
+Newfoundland and Labrador,Other federal government services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978132,2.1.61.1.1,226.0,,,,0
+Newfoundland and Labrador,Other provincial and territorial government services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978172,2.1.62.1.1,181.0,,,,0
+Newfoundland and Labrador,Other municipal government services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978212,2.1.63.1.1,230.0,,,,0
+Newfoundland and Labrador,Other Indigenous government services,2022,2021A000210,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90978252,2.1.64.1.1,30.0,,,,0
+Prince Edward Island,Total all industries,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983412,3.1.1.1.1,1187.0,,,,0
+Prince Edward Island,"Agriculture, forestry, fishing and hunting",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983452,3.1.2.1.1,108.0,,,,0
+Prince Edward Island,Crop production,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983492,3.1.3.1.1,53.0,,,,0
+Prince Edward Island,Animal production,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983532,3.1.4.1.1,35.0,,,,0
+Prince Edward Island,Forestry and logging,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983572,3.1.5.1.1,0.0,,,,0
+Prince Edward Island,"Fishing, hunting and trapping",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983612,3.1.6.1.1,18.0,,,,0
+Prince Edward Island,Support activities for agriculture and forestry,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983652,3.1.7.1.1,2.0,,,,0
+Prince Edward Island,"Mining, quarrying and oil and gas extraction",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983692,3.1.8.1.1,3.0,,,,0
+Prince Edward Island,Conventional oil and gas extraction,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983732,3.1.9.1.1,,..,,,0
+Prince Edward Island,Non-conventional oil extraction,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983772,3.1.10.1.1,,..,,,0
+Prince Edward Island,Mining and quarrying (except oil and gas),2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983812,3.1.11.1.1,3.0,,,,0
+Prince Edward Island,Support activities for mining and oil and gas extraction,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983852,3.1.12.1.1,0.0,,,,0
+Prince Edward Island,Utilities,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983892,3.1.13.1.1,103.0,,,,0
+Prince Edward Island,Construction,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983932,3.1.14.1.1,53.0,,,,0
+Prince Edward Island,Manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90983972,3.1.15.1.1,109.0,,,,0
+Prince Edward Island,Food manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984012,3.1.16.1.1,40.0,,,,0
+Prince Edward Island,Beverage and tobacco products manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984052,3.1.17.1.1,3.0,,,,0
+Prince Edward Island,Textile and textile product mills,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984092,3.1.18.1.1,0.0,,,,0
+Prince Edward Island,Clothing and leather and allied product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984132,3.1.19.1.1,0.0,,,,0
+Prince Edward Island,Wood product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984172,3.1.20.1.1,1.0,,,,0
+Prince Edward Island,Paper manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984212,3.1.21.1.1,6.0,,,,0
+Prince Edward Island,Printing and related support activities,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984252,3.1.22.1.1,1.0,,,,0
+Prince Edward Island,Petroleum and coal products manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984292,3.1.23.1.1,0.0,,,,0
+Prince Edward Island,Chemical manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984332,3.1.24.1.1,44.0,,,,0
+Prince Edward Island,Plastics and rubber products manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984372,3.1.25.1.1,0.0,,,,0
+Prince Edward Island,Non-metallic mineral product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984412,3.1.26.1.1,1.0,,,,0
+Prince Edward Island,Primary metal manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984452,3.1.27.1.1,,..,,,0
+Prince Edward Island,Fabricated metal product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984492,3.1.28.1.1,3.0,,,,0
+Prince Edward Island,Machinery manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984532,3.1.29.1.1,1.0,,,,0
+Prince Edward Island,Computer and electronic product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984572,3.1.30.1.1,1.0,,,,0
+Prince Edward Island,"Electrical equipment, appliance and component manufacturing",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984612,3.1.31.1.1,2.0,,,,0
+Prince Edward Island,Transportation equipment manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984652,3.1.32.1.1,7.0,,,,0
+Prince Edward Island,Furniture and related product manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984692,3.1.33.1.1,0.0,,,,0
+Prince Edward Island,Miscellaneous manufacturing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984732,3.1.34.1.1,1.0,,,,0
+Prince Edward Island,Wholesale trade,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984772,3.1.35.1.1,20.0,,,,0
+Prince Edward Island,Retail trade,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984812,3.1.36.1.1,37.0,,,,0
+Prince Edward Island,Transportation and warehousing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984852,3.1.37.1.1,45.0,,,,0
+Prince Edward Island,Information and cultural industries,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984892,3.1.38.1.1,67.0,,,,0
+Prince Edward Island,"Finance, insurance, real estate, rental and leasing",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984932,3.1.39.1.1,51.0,,,,0
+Prince Edward Island,Finance and insurance,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90984972,3.1.40.1.1,19.0,,,,0
+Prince Edward Island,Real estate and rental and leasing,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985012,3.1.41.1.1,32.0,,,,0
+Prince Edward Island,Holding companies,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985052,3.1.42.1.1,0.0,,,,0
+Prince Edward Island,"Professional, scientific and technical services",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985092,3.1.43.1.1,26.0,,,,0
+Prince Edward Island,"Administrative and support, waste management and remediation services",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985132,3.1.44.1.1,13.0,,,,0
+Prince Edward Island,Educational services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985172,3.1.45.1.1,0.0,,,,0
+Prince Edward Island,Health care and social assistance,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985212,3.1.46.1.1,9.0,,,,0
+Prince Edward Island,"Arts, entertainment and recreation",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985252,3.1.47.1.1,32.0,,,,0
+Prince Edward Island,Accommodation and food services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985292,3.1.48.1.1,23.0,,,,0
+Prince Edward Island,Other services (except public administration),2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985332,3.1.49.1.1,7.0,,,,0
+Prince Edward Island,Non-profit institutions serving households,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985372,3.1.50.1.1,2.0,,,,0
+Prince Edward Island,Non-profit education services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985412,3.1.51.1.1,,..,,,0
+Prince Edward Island,Non-profit social assistance,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985452,3.1.52.1.1,,..,,,0
+Prince Edward Island,"Non-profit arts, entertainment and recreation",2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985492,3.1.53.1.1,,..,,,0
+Prince Edward Island,Religious organizations,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985532,3.1.54.1.1,,..,,,0
+Prince Edward Island,Other non-profit institutions serving households,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985572,3.1.55.1.1,,..,,,0
+Prince Edward Island,Government sector,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985612,3.1.56.1.1,478.0,,,,0
+Prince Edward Island,Government educational services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985652,3.1.57.1.1,136.0,,,,0
+Prince Edward Island,Hospitals,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985692,3.1.58.1.1,29.0,,,,0
+Prince Edward Island,Nursing and residential care facilities,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985732,3.1.59.1.1,2.0,,,,0
+Prince Edward Island,Defence services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985772,3.1.60.1.1,1.0,,,,0
+Prince Edward Island,Other federal government services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985812,3.1.61.1.1,60.0,,,,0
+Prince Edward Island,Other provincial and territorial government services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985852,3.1.62.1.1,137.0,,,,0
+Prince Edward Island,Other municipal government services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985892,3.1.63.1.1,105.0,,,,0
+Prince Edward Island,Other Indigenous government services,2022,2021A000211,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90985932,3.1.64.1.1,7.0,,,,0
+Nova Scotia,Total all industries,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991092,4.1.1.1.1,6923.0,,,,0
+Nova Scotia,"Agriculture, forestry, fishing and hunting",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991132,4.1.2.1.1,149.0,,,,0
+Nova Scotia,Crop production,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991172,4.1.3.1.1,30.0,,,,0
+Nova Scotia,Animal production,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991212,4.1.4.1.1,64.0,,,,0
+Nova Scotia,Forestry and logging,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991252,4.1.5.1.1,9.0,,,,0
+Nova Scotia,"Fishing, hunting and trapping",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991292,4.1.6.1.1,42.0,,,,0
+Nova Scotia,Support activities for agriculture and forestry,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991332,4.1.7.1.1,2.0,,,,0
+Nova Scotia,"Mining, quarrying and oil and gas extraction",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991372,4.1.8.1.1,64.0,,,,0
+Nova Scotia,Conventional oil and gas extraction,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991412,4.1.9.1.1,,..,,,0
+Nova Scotia,Non-conventional oil extraction,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991452,4.1.10.1.1,,..,,,0
+Nova Scotia,Mining and quarrying (except oil and gas),2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991492,4.1.11.1.1,46.0,,,,0
+Nova Scotia,Support activities for mining and oil and gas extraction,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991532,4.1.12.1.1,18.0,,,,0
+Nova Scotia,Utilities,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991572,4.1.13.1.1,602.0,,,,0
+Nova Scotia,Construction,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991612,4.1.14.1.1,332.0,,,,0
+Nova Scotia,Manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991652,4.1.15.1.1,478.0,,,,0
+Nova Scotia,Food manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991692,4.1.16.1.1,124.0,,,,0
+Nova Scotia,Beverage and tobacco products manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991732,4.1.17.1.1,26.0,,,,0
+Nova Scotia,Textile and textile product mills,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991772,4.1.18.1.1,2.0,,,,0
+Nova Scotia,Clothing and leather and allied product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991812,4.1.19.1.1,2.0,,,,0
+Nova Scotia,Wood product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991852,4.1.20.1.1,60.0,,,,0
+Nova Scotia,Paper manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991892,4.1.21.1.1,12.0,,,,0
+Nova Scotia,Printing and related support activities,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991932,4.1.22.1.1,3.0,,,,0
+Nova Scotia,Petroleum and coal products manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90991972,4.1.23.1.1,7.0,,,,0
+Nova Scotia,Chemical manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992012,4.1.24.1.1,19.0,,,,0
+Nova Scotia,Plastics and rubber products manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992052,4.1.25.1.1,99.0,,,,0
+Nova Scotia,Non-metallic mineral product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992092,4.1.26.1.1,11.0,,,,0
+Nova Scotia,Primary metal manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992132,4.1.27.1.1,0.0,,,,0
+Nova Scotia,Fabricated metal product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992172,4.1.28.1.1,15.0,,,,0
+Nova Scotia,Machinery manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992212,4.1.29.1.1,9.0,,,,0
+Nova Scotia,Computer and electronic product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992252,4.1.30.1.1,41.0,,,,0
+Nova Scotia,"Electrical equipment, appliance and component manufacturing",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992292,4.1.31.1.1,3.0,,,,0
+Nova Scotia,Transportation equipment manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992332,4.1.32.1.1,30.0,,,,0
+Nova Scotia,Furniture and related product manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992372,4.1.33.1.1,3.0,,,,0
+Nova Scotia,Miscellaneous manufacturing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992412,4.1.34.1.1,9.0,,,,0
+Nova Scotia,Wholesale trade,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992452,4.1.35.1.1,150.0,,,,0
+Nova Scotia,Retail trade,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992492,4.1.36.1.1,237.0,,,,0
+Nova Scotia,Transportation and warehousing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992532,4.1.37.1.1,292.0,,,,0
+Nova Scotia,Information and cultural industries,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992572,4.1.38.1.1,486.0,,,,0
+Nova Scotia,"Finance, insurance, real estate, rental and leasing",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992612,4.1.39.1.1,331.0,,,,0
+Nova Scotia,Finance and insurance,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992652,4.1.40.1.1,117.0,,,,0
+Nova Scotia,Real estate and rental and leasing,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992692,4.1.41.1.1,198.0,,,,0
+Nova Scotia,Holding companies,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992732,4.1.42.1.1,16.0,,,,0
+Nova Scotia,"Professional, scientific and technical services",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992772,4.1.43.1.1,266.0,,,,0
+Nova Scotia,"Administrative and support, waste management and remediation services",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992812,4.1.44.1.1,173.0,,,,0
+Nova Scotia,Educational services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992852,4.1.45.1.1,12.0,,,,0
+Nova Scotia,Health care and social assistance,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992892,4.1.46.1.1,85.0,,,,0
+Nova Scotia,"Arts, entertainment and recreation",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992932,4.1.47.1.1,92.0,,,,0
+Nova Scotia,Accommodation and food services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90992972,4.1.48.1.1,71.0,,,,0
+Nova Scotia,Other services (except public administration),2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993012,4.1.49.1.1,38.0,,,,0
+Nova Scotia,Non-profit institutions serving households,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993052,4.1.50.1.1,18.0,,,,0
+Nova Scotia,Non-profit education services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993092,4.1.51.1.1,,..,,,0
+Nova Scotia,Non-profit social assistance,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993132,4.1.52.1.1,,..,,,0
+Nova Scotia,"Non-profit arts, entertainment and recreation",2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993172,4.1.53.1.1,,..,,,0
+Nova Scotia,Religious organizations,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993212,4.1.54.1.1,,..,,,0
+Nova Scotia,Other non-profit institutions serving households,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993252,4.1.55.1.1,,..,,,0
+Nova Scotia,Government sector,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993292,4.1.56.1.1,3047.0,,,,0
+Nova Scotia,Government educational services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993332,4.1.57.1.1,722.0,,,,0
+Nova Scotia,Hospitals,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993372,4.1.58.1.1,230.0,,,,0
+Nova Scotia,Nursing and residential care facilities,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993412,4.1.59.1.1,29.0,,,,0
+Nova Scotia,Defence services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993452,4.1.60.1.1,330.0,,,,0
+Nova Scotia,Other federal government services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993492,4.1.61.1.1,455.0,,,,0
+Nova Scotia,Other provincial and territorial government services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993532,4.1.62.1.1,833.0,,,,0
+Nova Scotia,Other municipal government services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993572,4.1.63.1.1,389.0,,,,0
+Nova Scotia,Other Indigenous government services,2022,2021A000212,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90993612,4.1.64.1.1,58.0,,,,0
+New Brunswick,Total all industries,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998772,5.1.1.1.1,5913.0,,,,0
+New Brunswick,"Agriculture, forestry, fishing and hunting",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998812,5.1.2.1.1,204.0,,,,0
+New Brunswick,Crop production,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998852,5.1.3.1.1,61.0,,,,0
+New Brunswick,Animal production,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998892,5.1.4.1.1,57.0,,,,0
+New Brunswick,Forestry and logging,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998932,5.1.5.1.1,54.0,,,,0
+New Brunswick,"Fishing, hunting and trapping",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90998972,5.1.6.1.1,26.0,,,,0
+New Brunswick,Support activities for agriculture and forestry,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999012,5.1.7.1.1,7.0,,,,0
+New Brunswick,"Mining, quarrying and oil and gas extraction",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999052,5.1.8.1.1,47.0,,,,0
+New Brunswick,Conventional oil and gas extraction,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999092,5.1.9.1.1,1.0,,,,0
+New Brunswick,Non-conventional oil extraction,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999132,5.1.10.1.1,,..,,,0
+New Brunswick,Mining and quarrying (except oil and gas),2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999172,5.1.11.1.1,17.0,,,,0
+New Brunswick,Support activities for mining and oil and gas extraction,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999212,5.1.12.1.1,30.0,,,,0
+New Brunswick,Utilities,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999252,5.1.13.1.1,663.0,,,,0
+New Brunswick,Construction,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999292,5.1.14.1.1,234.0,,,,0
+New Brunswick,Manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999332,5.1.15.1.1,825.0,,,,0
+New Brunswick,Food manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999372,5.1.16.1.1,77.0,,,,0
+New Brunswick,Beverage and tobacco products manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999412,5.1.17.1.1,26.0,,,,0
+New Brunswick,Textile and textile product mills,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999452,5.1.18.1.1,1.0,,,,0
+New Brunswick,Clothing and leather and allied product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999492,5.1.19.1.1,0.0,,,,0
+New Brunswick,Wood product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999532,5.1.20.1.1,102.0,,,,0
+New Brunswick,Paper manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999572,5.1.21.1.1,211.0,,,,0
+New Brunswick,Printing and related support activities,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999612,5.1.22.1.1,1.0,,,,0
+New Brunswick,Petroleum and coal products manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999652,5.1.23.1.1,326.0,,,,0
+New Brunswick,Chemical manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999692,5.1.24.1.1,9.0,,,,0
+New Brunswick,Plastics and rubber products manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999732,5.1.25.1.1,12.0,,,,0
+New Brunswick,Non-metallic mineral product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999772,5.1.26.1.1,10.0,,,,0
+New Brunswick,Primary metal manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999812,5.1.27.1.1,,..,,,0
+New Brunswick,Fabricated metal product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999852,5.1.28.1.1,17.0,,,,0
+New Brunswick,Machinery manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999892,5.1.29.1.1,16.0,,,,0
+New Brunswick,Computer and electronic product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999932,5.1.30.1.1,4.0,,,,0
+New Brunswick,"Electrical equipment, appliance and component manufacturing",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v90999972,5.1.31.1.1,3.0,,,,0
+New Brunswick,Transportation equipment manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000012,5.1.32.1.1,3.0,,,,0
+New Brunswick,Furniture and related product manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000052,5.1.33.1.1,3.0,,,,0
+New Brunswick,Miscellaneous manufacturing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000092,5.1.34.1.1,5.0,,,,0
+New Brunswick,Wholesale trade,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000132,5.1.35.1.1,113.0,,,,0
+New Brunswick,Retail trade,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000172,5.1.36.1.1,188.0,,,,0
+New Brunswick,Transportation and warehousing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000212,5.1.37.1.1,502.0,,,,0
+New Brunswick,Information and cultural industries,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000252,5.1.38.1.1,699.0,,,,0
+New Brunswick,"Finance, insurance, real estate, rental and leasing",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000292,5.1.39.1.1,329.0,,,,0
+New Brunswick,Finance and insurance,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000332,5.1.40.1.1,96.0,,,,0
+New Brunswick,Real estate and rental and leasing,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000372,5.1.41.1.1,212.0,,,,0
+New Brunswick,Holding companies,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000412,5.1.42.1.1,21.0,,,,0
+New Brunswick,"Professional, scientific and technical services",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000452,5.1.43.1.1,160.0,,,,0
+New Brunswick,"Administrative and support, waste management and remediation services",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000492,5.1.44.1.1,43.0,,,,0
+New Brunswick,Educational services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000532,5.1.45.1.1,13.0,,,,0
+New Brunswick,Health care and social assistance,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000572,5.1.46.1.1,46.0,,,,0
+New Brunswick,"Arts, entertainment and recreation",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000612,5.1.47.1.1,46.0,,,,0
+New Brunswick,Accommodation and food services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000652,5.1.48.1.1,45.0,,,,0
+New Brunswick,Other services (except public administration),2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000692,5.1.49.1.1,28.0,,,,0
+New Brunswick,Non-profit institutions serving households,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000732,5.1.50.1.1,18.0,,,,0
+New Brunswick,Non-profit education services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000772,5.1.51.1.1,,..,,,0
+New Brunswick,Non-profit social assistance,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000812,5.1.52.1.1,,..,,,0
+New Brunswick,"Non-profit arts, entertainment and recreation",2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000852,5.1.53.1.1,,..,,,0
+New Brunswick,Religious organizations,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000892,5.1.54.1.1,,..,,,0
+New Brunswick,Other non-profit institutions serving households,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000932,5.1.55.1.1,,..,,,0
+New Brunswick,Government sector,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91000972,5.1.56.1.1,1710.0,,,,0
+New Brunswick,Government educational services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001012,5.1.57.1.1,207.0,,,,0
+New Brunswick,Hospitals,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001052,5.1.58.1.1,153.0,,,,0
+New Brunswick,Nursing and residential care facilities,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001092,5.1.59.1.1,7.0,,,,0
+New Brunswick,Defence services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001132,5.1.60.1.1,75.0,,,,0
+New Brunswick,Other federal government services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001172,5.1.61.1.1,154.0,,,,0
+New Brunswick,Other provincial and territorial government services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001212,5.1.62.1.1,703.0,,,,0
+New Brunswick,Other municipal government services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001252,5.1.63.1.1,375.0,,,,0
+New Brunswick,Other Indigenous government services,2022,2021A000213,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91001292,5.1.64.1.1,35.0,,,,0
+Quebec,Total all industries,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006452,6.1.1.1.1,75541.0,,,,0
+Quebec,"Agriculture, forestry, fishing and hunting",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006492,6.1.2.1.1,1691.0,,,,0
+Quebec,Crop production,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006532,6.1.3.1.1,603.0,,,,0
+Quebec,Animal production,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006572,6.1.4.1.1,904.0,,,,0
+Quebec,Forestry and logging,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006612,6.1.5.1.1,103.0,,,,0
+Quebec,"Fishing, hunting and trapping",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006652,6.1.6.1.1,16.0,,,,0
+Quebec,Support activities for agriculture and forestry,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006692,6.1.7.1.1,65.0,,,,0
+Quebec,"Mining, quarrying and oil and gas extraction",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006732,6.1.8.1.1,3787.0,,,,0
+Quebec,Conventional oil and gas extraction,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006772,6.1.9.1.1,2.0,,,,0
+Quebec,Non-conventional oil extraction,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006812,6.1.10.1.1,,..,,,0
+Quebec,Mining and quarrying (except oil and gas),2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006852,6.1.11.1.1,2949.0,,,,0
+Quebec,Support activities for mining and oil and gas extraction,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006892,6.1.12.1.1,837.0,,,,0
+Quebec,Utilities,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006932,6.1.13.1.1,5304.0,,,,0
+Quebec,Construction,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91006972,6.1.14.1.1,2282.0,,,,0
+Quebec,Manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007012,6.1.15.1.1,9420.0,,,,0
+Quebec,Food manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007052,6.1.16.1.1,755.0,,,,0
+Quebec,Beverage and tobacco products manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007092,6.1.17.1.1,203.0,,,,0
+Quebec,Textile and textile product mills,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007132,6.1.18.1.1,42.0,,,,0
+Quebec,Clothing and leather and allied product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007172,6.1.19.1.1,22.0,,,,0
+Quebec,Wood product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007212,6.1.20.1.1,422.0,,,,0
+Quebec,Paper manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007252,6.1.21.1.1,351.0,,,,0
+Quebec,Printing and related support activities,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007292,6.1.22.1.1,122.0,,,,0
+Quebec,Petroleum and coal products manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007332,6.1.23.1.1,135.0,,,,0
+Quebec,Chemical manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007372,6.1.24.1.1,998.0,,,,0
+Quebec,Plastics and rubber products manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007412,6.1.25.1.1,435.0,,,,0
+Quebec,Non-metallic mineral product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007452,6.1.26.1.1,134.0,,,,0
+Quebec,Primary metal manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007492,6.1.27.1.1,1677.0,,,,0
+Quebec,Fabricated metal product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007532,6.1.28.1.1,410.0,,,,0
+Quebec,Machinery manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007572,6.1.29.1.1,595.0,,,,0
+Quebec,Computer and electronic product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007612,6.1.30.1.1,379.0,,,,0
+Quebec,"Electrical equipment, appliance and component manufacturing",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007652,6.1.31.1.1,225.0,,,,0
+Quebec,Transportation equipment manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007692,6.1.32.1.1,2043.0,,,,0
+Quebec,Furniture and related product manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007732,6.1.33.1.1,144.0,,,,0
+Quebec,Miscellaneous manufacturing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007772,6.1.34.1.1,326.0,,,,0
+Quebec,Wholesale trade,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007812,6.1.35.1.1,2130.0,,,,0
+Quebec,Retail trade,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007852,6.1.36.1.1,2426.0,,,,0
+Quebec,Transportation and warehousing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007892,6.1.37.1.1,6913.0,,,,0
+Quebec,Information and cultural industries,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007932,6.1.38.1.1,4473.0,,,,0
+Quebec,"Finance, insurance, real estate, rental and leasing",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91007972,6.1.39.1.1,5425.0,,,,0
+Quebec,Finance and insurance,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008012,6.1.40.1.1,1710.0,,,,0
+Quebec,Real estate and rental and leasing,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008052,6.1.41.1.1,3357.0,,,,0
+Quebec,Holding companies,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008092,6.1.42.1.1,358.0,,,,0
+Quebec,"Professional, scientific and technical services",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008132,6.1.43.1.1,3834.0,,,,0
+Quebec,"Administrative and support, waste management and remediation services",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008172,6.1.44.1.1,916.0,,,,0
+Quebec,Educational services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008212,6.1.45.1.1,160.0,,,,0
+Quebec,Health care and social assistance,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008252,6.1.46.1.1,772.0,,,,0
+Quebec,"Arts, entertainment and recreation",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008292,6.1.47.1.1,971.0,,,,0
+Quebec,Accommodation and food services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008332,6.1.48.1.1,952.0,,,,0
+Quebec,Other services (except public administration),2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008372,6.1.49.1.1,305.0,,,,0
+Quebec,Non-profit institutions serving households,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008412,6.1.50.1.1,251.0,,,,0
+Quebec,Non-profit education services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008452,6.1.51.1.1,,..,,,0
+Quebec,Non-profit social assistance,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008492,6.1.52.1.1,,..,,,0
+Quebec,"Non-profit arts, entertainment and recreation",2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008532,6.1.53.1.1,,..,,,0
+Quebec,Religious organizations,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008572,6.1.54.1.1,,..,,,0
+Quebec,Other non-profit institutions serving households,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008612,6.1.55.1.1,,..,,,0
+Quebec,Government sector,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008652,6.1.56.1.1,23527.0,,,,0
+Quebec,Government educational services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008692,6.1.57.1.1,7908.0,,,,0
+Quebec,Hospitals,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008732,6.1.58.1.1,2403.0,,,,0
+Quebec,Nursing and residential care facilities,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008772,6.1.59.1.1,947.0,,,,0
+Quebec,Defence services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008812,6.1.60.1.1,367.0,,,,0
+Quebec,Other federal government services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008852,6.1.61.1.1,1581.0,,,,0
+Quebec,Other provincial and territorial government services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008892,6.1.62.1.1,4304.0,,,,0
+Quebec,Other municipal government services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008932,6.1.63.1.1,5800.0,,,,0
+Quebec,Other Indigenous government services,2022,2021A000224,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91008972,6.1.64.1.1,217.0,,,,0
+Ontario,Total all industries,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014132,7.1.1.1.1,137926.0,,,,0
+Ontario,"Agriculture, forestry, fishing and hunting",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014172,7.1.2.1.1,2507.0,,,,0
+Ontario,Crop production,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014212,7.1.3.1.1,1155.0,,,,0
+Ontario,Animal production,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014252,7.1.4.1.1,1218.0,,,,0
+Ontario,Forestry and logging,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014292,7.1.5.1.1,46.0,,,,0
+Ontario,"Fishing, hunting and trapping",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014332,7.1.6.1.1,1.0,,,,0
+Ontario,Support activities for agriculture and forestry,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014372,7.1.7.1.1,86.0,,,,0
+Ontario,"Mining, quarrying and oil and gas extraction",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014412,7.1.8.1.1,5810.0,,,,0
+Ontario,Conventional oil and gas extraction,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014452,7.1.9.1.1,74.0,,,,0
+Ontario,Non-conventional oil extraction,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014492,7.1.10.1.1,,..,,,0
+Ontario,Mining and quarrying (except oil and gas),2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014532,7.1.11.1.1,5146.0,,,,0
+Ontario,Support activities for mining and oil and gas extraction,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014572,7.1.12.1.1,590.0,,,,0
+Ontario,Utilities,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014612,7.1.13.1.1,10663.0,,,,0
+Ontario,Construction,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014652,7.1.14.1.1,3154.0,,,,0
+Ontario,Manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014692,7.1.15.1.1,14094.0,,,,0
+Ontario,Food manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014732,7.1.16.1.1,1446.0,,,,0
+Ontario,Beverage and tobacco products manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014772,7.1.17.1.1,349.0,,,,0
+Ontario,Textile and textile product mills,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014812,7.1.18.1.1,74.0,,,,0
+Ontario,Clothing and leather and allied product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014852,7.1.19.1.1,52.0,,,,0
+Ontario,Wood product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014892,7.1.20.1.1,150.0,,,,0
+Ontario,Paper manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014932,7.1.21.1.1,174.0,,,,0
+Ontario,Printing and related support activities,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91014972,7.1.22.1.1,136.0,,,,0
+Ontario,Petroleum and coal products manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015012,7.1.23.1.1,418.0,,,,0
+Ontario,Chemical manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015052,7.1.24.1.1,1639.0,,,,0
+Ontario,Plastics and rubber products manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015092,7.1.25.1.1,615.0,,,,0
+Ontario,Non-metallic mineral product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015132,7.1.26.1.1,429.0,,,,0
+Ontario,Primary metal manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015172,7.1.27.1.1,1553.0,,,,0
+Ontario,Fabricated metal product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015212,7.1.28.1.1,710.0,,,,0
+Ontario,Machinery manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015252,7.1.29.1.1,638.0,,,,0
+Ontario,Computer and electronic product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015292,7.1.30.1.1,672.0,,,,0
+Ontario,"Electrical equipment, appliance and component manufacturing",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015332,7.1.31.1.1,739.0,,,,0
+Ontario,Transportation equipment manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015372,7.1.32.1.1,3897.0,,,,0
+Ontario,Furniture and related product manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015412,7.1.33.1.1,131.0,,,,0
+Ontario,Miscellaneous manufacturing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015452,7.1.34.1.1,273.0,,,,0
+Ontario,Wholesale trade,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015492,7.1.35.1.1,5578.0,,,,0
+Ontario,Retail trade,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015532,7.1.36.1.1,4633.0,,,,0
+Ontario,Transportation and warehousing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015572,7.1.37.1.1,13690.0,,,,0
+Ontario,Information and cultural industries,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015612,7.1.38.1.1,13978.0,,,,0
+Ontario,"Finance, insurance, real estate, rental and leasing",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015652,7.1.39.1.1,14458.0,,,,0
+Ontario,Finance and insurance,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015692,7.1.40.1.1,6212.0,,,,0
+Ontario,Real estate and rental and leasing,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015732,7.1.41.1.1,7331.0,,,,0
+Ontario,Holding companies,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015772,7.1.42.1.1,915.0,,,,0
+Ontario,"Professional, scientific and technical services",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015812,7.1.43.1.1,6045.0,,,,0
+Ontario,"Administrative and support, waste management and remediation services",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015852,7.1.44.1.1,1313.0,,,,0
+Ontario,Educational services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015892,7.1.45.1.1,228.0,,,,0
+Ontario,Health care and social assistance,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015932,7.1.46.1.1,1105.0,,,,0
+Ontario,"Arts, entertainment and recreation",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91015972,7.1.47.1.1,1324.0,,,,0
+Ontario,Accommodation and food services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016012,7.1.48.1.1,1653.0,,,,0
+Ontario,Other services (except public administration),2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016052,7.1.49.1.1,494.0,,,,0
+Ontario,Non-profit institutions serving households,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016092,7.1.50.1.1,674.0,,,,0
+Ontario,Non-profit education services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016132,7.1.51.1.1,,..,,,0
+Ontario,Non-profit social assistance,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016172,7.1.52.1.1,,..,,,0
+Ontario,"Non-profit arts, entertainment and recreation",2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016212,7.1.53.1.1,,..,,,0
+Ontario,Religious organizations,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016252,7.1.54.1.1,,..,,,0
+Ontario,Other non-profit institutions serving households,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016292,7.1.55.1.1,,..,,,0
+Ontario,Government sector,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016332,7.1.56.1.1,36525.0,,,,0
+Ontario,Government educational services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016372,7.1.57.1.1,10249.0,,,,0
+Ontario,Hospitals,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016412,7.1.58.1.1,3330.0,,,,0
+Ontario,Nursing and residential care facilities,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016452,7.1.59.1.1,370.0,,,,0
+Ontario,Defence services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016492,7.1.60.1.1,1125.0,,,,0
+Ontario,Other federal government services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016532,7.1.61.1.1,5159.0,,,,0
+Ontario,Other provincial and territorial government services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016572,7.1.62.1.1,4571.0,,,,0
+Ontario,Other municipal government services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016612,7.1.63.1.1,11192.0,,,,0
+Ontario,Other Indigenous government services,2022,2021A000235,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91016652,7.1.64.1.1,528.0,,,,0
+Manitoba,Total all industries,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91021812,8.1.1.1.1,10544.0,,,,0
+Manitoba,"Agriculture, forestry, fishing and hunting",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91021852,8.1.2.1.1,604.0,,,,0
+Manitoba,Crop production,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91021892,8.1.3.1.1,426.0,,,,0
+Manitoba,Animal production,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91021932,8.1.4.1.1,153.0,,,,0
+Manitoba,Forestry and logging,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91021972,8.1.5.1.1,2.0,,,,0
+Manitoba,"Fishing, hunting and trapping",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022012,8.1.6.1.1,0.0,,,,0
+Manitoba,Support activities for agriculture and forestry,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022052,8.1.7.1.1,23.0,,,,0
+Manitoba,"Mining, quarrying and oil and gas extraction",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022092,8.1.8.1.1,911.0,,,,0
+Manitoba,Conventional oil and gas extraction,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022132,8.1.9.1.1,436.0,,,,0
+Manitoba,Non-conventional oil extraction,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022172,8.1.10.1.1,,..,,,0
+Manitoba,Mining and quarrying (except oil and gas),2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022212,8.1.11.1.1,353.0,,,,0
+Manitoba,Support activities for mining and oil and gas extraction,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022252,8.1.12.1.1,122.0,,,,0
+Manitoba,Utilities,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022292,8.1.13.1.1,728.0,,,,0
+Manitoba,Construction,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022332,8.1.14.1.1,355.0,,,,0
+Manitoba,Manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022372,8.1.15.1.1,894.0,,,,0
+Manitoba,Food manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022412,8.1.16.1.1,283.0,,,,0
+Manitoba,Beverage and tobacco products manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022452,8.1.17.1.1,21.0,,,,0
+Manitoba,Textile and textile product mills,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022492,8.1.18.1.1,2.0,,,,0
+Manitoba,Clothing and leather and allied product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022532,8.1.19.1.1,4.0,,,,0
+Manitoba,Wood product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022572,8.1.20.1.1,32.0,,,,0
+Manitoba,Paper manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022612,8.1.21.1.1,33.0,,,,0
+Manitoba,Printing and related support activities,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022652,8.1.22.1.1,22.0,,,,0
+Manitoba,Petroleum and coal products manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022692,8.1.23.1.1,2.0,,,,0
+Manitoba,Chemical manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022732,8.1.24.1.1,156.0,,,,0
+Manitoba,Plastics and rubber products manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022772,8.1.25.1.1,60.0,,,,0
+Manitoba,Non-metallic mineral product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022812,8.1.26.1.1,15.0,,,,0
+Manitoba,Primary metal manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022852,8.1.27.1.1,26.0,,,,0
+Manitoba,Fabricated metal product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022892,8.1.28.1.1,30.0,,,,0
+Manitoba,Machinery manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022932,8.1.29.1.1,67.0,,,,0
+Manitoba,Computer and electronic product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91022972,8.1.30.1.1,16.0,,,,0
+Manitoba,"Electrical equipment, appliance and component manufacturing",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023012,8.1.31.1.1,15.0,,,,0
+Manitoba,Transportation equipment manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023052,8.1.32.1.1,76.0,,,,0
+Manitoba,Furniture and related product manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023092,8.1.33.1.1,19.0,,,,0
+Manitoba,Miscellaneous manufacturing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023132,8.1.34.1.1,15.0,,,,0
+Manitoba,Wholesale trade,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023172,8.1.35.1.1,384.0,,,,0
+Manitoba,Retail trade,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023212,8.1.36.1.1,336.0,,,,0
+Manitoba,Transportation and warehousing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023252,8.1.37.1.1,1112.0,,,,0
+Manitoba,Information and cultural industries,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023292,8.1.38.1.1,733.0,,,,0
+Manitoba,"Finance, insurance, real estate, rental and leasing",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023332,8.1.39.1.1,1016.0,,,,0
+Manitoba,Finance and insurance,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023372,8.1.40.1.1,230.0,,,,0
+Manitoba,Real estate and rental and leasing,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023412,8.1.41.1.1,755.0,,,,0
+Manitoba,Holding companies,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023452,8.1.42.1.1,30.0,,,,0
+Manitoba,"Professional, scientific and technical services",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023492,8.1.43.1.1,246.0,,,,0
+Manitoba,"Administrative and support, waste management and remediation services",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023532,8.1.44.1.1,76.0,,,,0
+Manitoba,Educational services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023572,8.1.45.1.1,21.0,,,,0
+Manitoba,Health care and social assistance,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023612,8.1.46.1.1,171.0,,,,0
+Manitoba,"Arts, entertainment and recreation",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023652,8.1.47.1.1,165.0,,,,0
+Manitoba,Accommodation and food services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023692,8.1.48.1.1,85.0,,,,0
+Manitoba,Other services (except public administration),2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023732,8.1.49.1.1,50.0,,,,0
+Manitoba,Non-profit institutions serving households,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023772,8.1.50.1.1,70.0,,,,0
+Manitoba,Non-profit education services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023812,8.1.51.1.1,,..,,,0
+Manitoba,Non-profit social assistance,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023852,8.1.52.1.1,,..,,,0
+Manitoba,"Non-profit arts, entertainment and recreation",2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023892,8.1.53.1.1,,..,,,0
+Manitoba,Religious organizations,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023932,8.1.54.1.1,,..,,,0
+Manitoba,Other non-profit institutions serving households,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91023972,8.1.55.1.1,,..,,,0
+Manitoba,Government sector,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024012,8.1.56.1.1,2586.0,,,,0
+Manitoba,Government educational services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024052,8.1.57.1.1,654.0,,,,0
+Manitoba,Hospitals,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024092,8.1.58.1.1,351.0,,,,0
+Manitoba,Nursing and residential care facilities,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024132,8.1.59.1.1,10.0,,,,0
+Manitoba,Defence services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024172,8.1.60.1.1,50.0,,,,0
+Manitoba,Other federal government services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024212,8.1.61.1.1,158.0,,,,0
+Manitoba,Other provincial and territorial government services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024252,8.1.62.1.1,571.0,,,,0
+Manitoba,Other municipal government services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024292,8.1.63.1.1,390.0,,,,0
+Manitoba,Other Indigenous government services,2022,2021A000246,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91024332,8.1.64.1.1,403.0,,,,0
+Saskatchewan,Total all industries,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029492,9.1.1.1.1,16131.0,,,,0
+Saskatchewan,"Agriculture, forestry, fishing and hunting",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029532,9.1.2.1.1,1451.0,,,,0
+Saskatchewan,Crop production,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029572,9.1.3.1.1,1263.0,,,,0
+Saskatchewan,Animal production,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029612,9.1.4.1.1,151.0,,,,0
+Saskatchewan,Forestry and logging,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029652,9.1.5.1.1,5.0,,,,0
+Saskatchewan,"Fishing, hunting and trapping",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029692,9.1.6.1.1,0.0,,,,0
+Saskatchewan,Support activities for agriculture and forestry,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029732,9.1.7.1.1,31.0,,,,0
+Saskatchewan,"Mining, quarrying and oil and gas extraction",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029772,9.1.8.1.1,5455.0,,,,0
+Saskatchewan,Conventional oil and gas extraction,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029812,9.1.9.1.1,1926.0,,,,0
+Saskatchewan,Non-conventional oil extraction,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029852,9.1.10.1.1,462.0,,,,0
+Saskatchewan,Mining and quarrying (except oil and gas),2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029892,9.1.11.1.1,2644.0,,,,0
+Saskatchewan,Support activities for mining and oil and gas extraction,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029932,9.1.12.1.1,423.0,,,,0
+Saskatchewan,Utilities,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91029972,9.1.13.1.1,1297.0,,,,0
+Saskatchewan,Construction,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030012,9.1.14.1.1,252.0,,,,0
+Saskatchewan,Manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030052,9.1.15.1.1,897.0,,,,0
+Saskatchewan,Food manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030092,9.1.16.1.1,288.0,,,,0
+Saskatchewan,Beverage and tobacco products manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030132,9.1.17.1.1,12.0,,,,0
+Saskatchewan,Textile and textile product mills,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030172,9.1.18.1.1,1.0,,,,0
+Saskatchewan,Clothing and leather and allied product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030212,9.1.19.1.1,0.0,,,,0
+Saskatchewan,Wood product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030252,9.1.20.1.1,90.0,,,,0
+Saskatchewan,Paper manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030292,9.1.21.1.1,16.0,,,,0
+Saskatchewan,Printing and related support activities,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030332,9.1.22.1.1,8.0,,,,0
+Saskatchewan,Petroleum and coal products manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030372,9.1.23.1.1,117.0,,,,0
+Saskatchewan,Chemical manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030412,9.1.24.1.1,195.0,,,,0
+Saskatchewan,Plastics and rubber products manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030452,9.1.25.1.1,9.0,,,,0
+Saskatchewan,Non-metallic mineral product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030492,9.1.26.1.1,6.0,,,,0
+Saskatchewan,Primary metal manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030532,9.1.27.1.1,13.0,,,,0
+Saskatchewan,Fabricated metal product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030572,9.1.28.1.1,21.0,,,,0
+Saskatchewan,Machinery manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030612,9.1.29.1.1,94.0,,,,0
+Saskatchewan,Computer and electronic product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030652,9.1.30.1.1,14.0,,,,0
+Saskatchewan,"Electrical equipment, appliance and component manufacturing",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030692,9.1.31.1.1,6.0,,,,0
+Saskatchewan,Transportation equipment manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030732,9.1.32.1.1,3.0,,,,0
+Saskatchewan,Furniture and related product manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030772,9.1.33.1.1,2.0,,,,0
+Saskatchewan,Miscellaneous manufacturing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030812,9.1.34.1.1,3.0,,,,0
+Saskatchewan,Wholesale trade,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030852,9.1.35.1.1,438.0,,,,0
+Saskatchewan,Retail trade,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030892,9.1.36.1.1,313.0,,,,0
+Saskatchewan,Transportation and warehousing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030932,9.1.37.1.1,890.0,,,,0
+Saskatchewan,Information and cultural industries,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91030972,9.1.38.1.1,772.0,,,,0
+Saskatchewan,"Finance, insurance, real estate, rental and leasing",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031012,9.1.39.1.1,733.0,,,,0
+Saskatchewan,Finance and insurance,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031052,9.1.40.1.1,138.0,,,,0
+Saskatchewan,Real estate and rental and leasing,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031092,9.1.41.1.1,442.0,,,,0
+Saskatchewan,Holding companies,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031132,9.1.42.1.1,153.0,,,,0
+Saskatchewan,"Professional, scientific and technical services",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031172,9.1.43.1.1,165.0,,,,0
+Saskatchewan,"Administrative and support, waste management and remediation services",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031212,9.1.44.1.1,44.0,,,,0
+Saskatchewan,Educational services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031252,9.1.45.1.1,12.0,,,,0
+Saskatchewan,Health care and social assistance,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031292,9.1.46.1.1,91.0,,,,0
+Saskatchewan,"Arts, entertainment and recreation",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031332,9.1.47.1.1,136.0,,,,0
+Saskatchewan,Accommodation and food services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031372,9.1.48.1.1,141.0,,,,0
+Saskatchewan,Other services (except public administration),2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031412,9.1.49.1.1,32.0,,,,0
+Saskatchewan,Non-profit institutions serving households,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031452,9.1.50.1.1,58.0,,,,0
+Saskatchewan,Non-profit education services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031492,9.1.51.1.1,,..,,,0
+Saskatchewan,Non-profit social assistance,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031532,9.1.52.1.1,,..,,,0
+Saskatchewan,"Non-profit arts, entertainment and recreation",2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031572,9.1.53.1.1,,..,,,0
+Saskatchewan,Religious organizations,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031612,9.1.54.1.1,,..,,,0
+Saskatchewan,Other non-profit institutions serving households,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031652,9.1.55.1.1,,..,,,0
+Saskatchewan,Government sector,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031692,9.1.56.1.1,2953.0,,,,0
+Saskatchewan,Government educational services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031732,9.1.57.1.1,703.0,,,,0
+Saskatchewan,Hospitals,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031772,9.1.58.1.1,153.0,,,,0
+Saskatchewan,Nursing and residential care facilities,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031812,9.1.59.1.1,41.0,,,,0
+Saskatchewan,Defence services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031852,9.1.60.1.1,12.0,,,,0
+Saskatchewan,Other federal government services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031892,9.1.61.1.1,156.0,,,,0
+Saskatchewan,Other provincial and territorial government services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031932,9.1.62.1.1,587.0,,,,0
+Saskatchewan,Other municipal government services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91031972,9.1.63.1.1,1013.0,,,,0
+Saskatchewan,Other Indigenous government services,2022,2021A000247,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91032012,9.1.64.1.1,288.0,,,,0
+Alberta,Total all industries,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037172,10.1.1.1.1,80932.0,,,,0
+Alberta,"Agriculture, forestry, fishing and hunting",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037212,10.1.2.1.1,2291.0,,,,0
+Alberta,Crop production,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037252,10.1.3.1.1,1446.0,,,,0
+Alberta,Animal production,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037292,10.1.4.1.1,730.0,,,,0
+Alberta,Forestry and logging,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037332,10.1.5.1.1,38.0,,,,0
+Alberta,"Fishing, hunting and trapping",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037372,10.1.6.1.1,0.0,,,,0
+Alberta,Support activities for agriculture and forestry,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037412,10.1.7.1.1,76.0,,,,0
+Alberta,"Mining, quarrying and oil and gas extraction",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037452,10.1.8.1.1,30049.0,,,,0
+Alberta,Conventional oil and gas extraction,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037492,10.1.9.1.1,16707.0,,,,0
+Alberta,Non-conventional oil extraction,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037532,10.1.10.1.1,12332.0,,,,0
+Alberta,Mining and quarrying (except oil and gas),2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037572,10.1.11.1.1,105.0,,,,0
+Alberta,Support activities for mining and oil and gas extraction,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037612,10.1.12.1.1,905.0,,,,0
+Alberta,Utilities,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037652,10.1.13.1.1,6389.0,,,,0
+Alberta,Construction,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037692,10.1.14.1.1,1644.0,,,,0
+Alberta,Manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037732,10.1.15.1.1,4474.0,,,,0
+Alberta,Food manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037772,10.1.16.1.1,431.0,,,,0
+Alberta,Beverage and tobacco products manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037812,10.1.17.1.1,73.0,,,,0
+Alberta,Textile and textile product mills,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037852,10.1.18.1.1,9.0,,,,0
+Alberta,Clothing and leather and allied product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037892,10.1.19.1.1,2.0,,,,0
+Alberta,Wood product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037932,10.1.20.1.1,250.0,,,,0
+Alberta,Paper manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91037972,10.1.21.1.1,127.0,,,,0
+Alberta,Printing and related support activities,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038012,10.1.22.1.1,11.0,,,,0
+Alberta,Petroleum and coal products manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038052,10.1.23.1.1,839.0,,,,0
+Alberta,Chemical manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038092,10.1.24.1.1,2079.0,,,,0
+Alberta,Plastics and rubber products manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038132,10.1.25.1.1,75.0,,,,0
+Alberta,Non-metallic mineral product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038172,10.1.26.1.1,83.0,,,,0
+Alberta,Primary metal manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038212,10.1.27.1.1,58.0,,,,0
+Alberta,Fabricated metal product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038252,10.1.28.1.1,103.0,,,,0
+Alberta,Machinery manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038292,10.1.29.1.1,147.0,,,,0
+Alberta,Computer and electronic product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038332,10.1.30.1.1,96.0,,,,0
+Alberta,"Electrical equipment, appliance and component manufacturing",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038372,10.1.31.1.1,18.0,,,,0
+Alberta,Transportation equipment manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038412,10.1.32.1.1,24.0,,,,0
+Alberta,Furniture and related product manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038452,10.1.33.1.1,18.0,,,,0
+Alberta,Miscellaneous manufacturing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038492,10.1.34.1.1,31.0,,,,0
+Alberta,Wholesale trade,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038532,10.1.35.1.1,1397.0,,,,0
+Alberta,Retail trade,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038572,10.1.36.1.1,1511.0,,,,0
+Alberta,Transportation and warehousing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038612,10.1.37.1.1,12381.0,,,,0
+Alberta,Information and cultural industries,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038652,10.1.38.1.1,2196.0,,,,0
+Alberta,"Finance, insurance, real estate, rental and leasing",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038692,10.1.39.1.1,4286.0,,,,0
+Alberta,Finance and insurance,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038732,10.1.40.1.1,824.0,,,,0
+Alberta,Real estate and rental and leasing,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038772,10.1.41.1.1,3131.0,,,,0
+Alberta,Holding companies,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038812,10.1.42.1.1,332.0,,,,0
+Alberta,"Professional, scientific and technical services",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038852,10.1.43.1.1,1321.0,,,,0
+Alberta,"Administrative and support, waste management and remediation services",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038892,10.1.44.1.1,778.0,,,,0
+Alberta,Educational services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038932,10.1.45.1.1,48.0,,,,0
+Alberta,Health care and social assistance,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91038972,10.1.46.1.1,501.0,,,,0
+Alberta,"Arts, entertainment and recreation",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039012,10.1.47.1.1,606.0,,,,0
+Alberta,Accommodation and food services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039052,10.1.48.1.1,698.0,,,,0
+Alberta,Other services (except public administration),2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039092,10.1.49.1.1,205.0,,,,0
+Alberta,Non-profit institutions serving households,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039132,10.1.50.1.1,205.0,,,,0
+Alberta,Non-profit education services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039172,10.1.51.1.1,,..,,,0
+Alberta,Non-profit social assistance,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039212,10.1.52.1.1,,..,,,0
+Alberta,"Non-profit arts, entertainment and recreation",2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039252,10.1.53.1.1,,..,,,0
+Alberta,Religious organizations,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039292,10.1.54.1.1,,..,,,0
+Alberta,Other non-profit institutions serving households,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039332,10.1.55.1.1,,..,,,0
+Alberta,Government sector,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039372,10.1.56.1.1,9953.0,,,,0
+Alberta,Government educational services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039412,10.1.57.1.1,2820.0,,,,0
+Alberta,Hospitals,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039452,10.1.58.1.1,959.0,,,,0
+Alberta,Nursing and residential care facilities,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039492,10.1.59.1.1,217.0,,,,0
+Alberta,Defence services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039532,10.1.60.1.1,120.0,,,,0
+Alberta,Other federal government services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039572,10.1.61.1.1,227.0,,,,0
+Alberta,Other provincial and territorial government services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039612,10.1.62.1.1,1999.0,,,,0
+Alberta,Other municipal government services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039652,10.1.63.1.1,3321.0,,,,0
+Alberta,Other Indigenous government services,2022,2021A000248,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91039692,10.1.64.1.1,291.0,,,,0
+British Columbia,Total all industries,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91044852,11.1.1.1.1,66252.0,,,,0
+British Columbia,"Agriculture, forestry, fishing and hunting",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91044892,11.1.2.1.1,1148.0,,,,0
+British Columbia,Crop production,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91044932,11.1.3.1.1,362.0,,,,0
+British Columbia,Animal production,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91044972,11.1.4.1.1,280.0,,,,0
+British Columbia,Forestry and logging,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045012,11.1.5.1.1,409.0,,,,0
+British Columbia,"Fishing, hunting and trapping",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045052,11.1.6.1.1,8.0,,,,0
+British Columbia,Support activities for agriculture and forestry,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045092,11.1.7.1.1,88.0,,,,0
+British Columbia,"Mining, quarrying and oil and gas extraction",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045132,11.1.8.1.1,7159.0,,,,0
+British Columbia,Conventional oil and gas extraction,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045172,11.1.9.1.1,4367.0,,,,0
+British Columbia,Non-conventional oil extraction,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045212,11.1.10.1.1,,..,,,0
+British Columbia,Mining and quarrying (except oil and gas),2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045252,11.1.11.1.1,1981.0,,,,0
+British Columbia,Support activities for mining and oil and gas extraction,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045292,11.1.12.1.1,811.0,,,,0
+British Columbia,Utilities,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045332,11.1.13.1.1,5076.0,,,,0
+British Columbia,Construction,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045372,11.1.14.1.1,1641.0,,,,0
+British Columbia,Manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045412,11.1.15.1.1,2744.0,,,,0
+British Columbia,Food manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045452,11.1.16.1.1,403.0,,,,0
+British Columbia,Beverage and tobacco products manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045492,11.1.17.1.1,122.0,,,,0
+British Columbia,Textile and textile product mills,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045532,11.1.18.1.1,11.0,,,,0
+British Columbia,Clothing and leather and allied product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045572,11.1.19.1.1,7.0,,,,0
+British Columbia,Wood product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045612,11.1.20.1.1,437.0,,,,0
+British Columbia,Paper manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045652,11.1.21.1.1,305.0,,,,0
+British Columbia,Printing and related support activities,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045692,11.1.22.1.1,21.0,,,,0
+British Columbia,Petroleum and coal products manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045732,11.1.23.1.1,407.0,,,,0
+British Columbia,Chemical manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045772,11.1.24.1.1,210.0,,,,0
+British Columbia,Plastics and rubber products manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045812,11.1.25.1.1,53.0,,,,0
+British Columbia,Non-metallic mineral product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045852,11.1.26.1.1,98.0,,,,0
+British Columbia,Primary metal manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045892,11.1.27.1.1,108.0,,,,0
+British Columbia,Fabricated metal product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045932,11.1.28.1.1,80.0,,,,0
+British Columbia,Machinery manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91045972,11.1.29.1.1,89.0,,,,0
+British Columbia,Computer and electronic product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046012,11.1.30.1.1,130.0,,,,0
+British Columbia,"Electrical equipment, appliance and component manufacturing",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046052,11.1.31.1.1,118.0,,,,0
+British Columbia,Transportation equipment manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046092,11.1.32.1.1,90.0,,,,0
+British Columbia,Furniture and related product manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046132,11.1.33.1.1,20.0,,,,0
+British Columbia,Miscellaneous manufacturing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046172,11.1.34.1.1,37.0,,,,0
+British Columbia,Wholesale trade,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046212,11.1.35.1.1,1151.0,,,,0
+British Columbia,Retail trade,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046252,11.1.36.1.1,1988.0,,,,0
+British Columbia,Transportation and warehousing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046292,11.1.37.1.1,18889.0,,,,0
+British Columbia,Information and cultural industries,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046332,11.1.38.1.1,2970.0,,,,0
+British Columbia,"Finance, insurance, real estate, rental and leasing",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046372,11.1.39.1.1,2861.0,,,,0
+British Columbia,Finance and insurance,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046412,11.1.40.1.1,847.0,,,,0
+British Columbia,Real estate and rental and leasing,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046452,11.1.41.1.1,1928.0,,,,0
+British Columbia,Holding companies,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046492,11.1.42.1.1,86.0,,,,0
+British Columbia,"Professional, scientific and technical services",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046532,11.1.43.1.1,2797.0,,,,0
+British Columbia,"Administrative and support, waste management and remediation services",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046572,11.1.44.1.1,444.0,,,,0
+British Columbia,Educational services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046612,11.1.45.1.1,156.0,,,,0
+British Columbia,Health care and social assistance,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046652,11.1.46.1.1,575.0,,,,0
+British Columbia,"Arts, entertainment and recreation",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046692,11.1.47.1.1,578.0,,,,0
+British Columbia,Accommodation and food services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046732,11.1.48.1.1,606.0,,,,0
+British Columbia,Other services (except public administration),2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046772,11.1.49.1.1,200.0,,,,0
+British Columbia,Non-profit institutions serving households,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046812,11.1.50.1.1,197.0,,,,0
+British Columbia,Non-profit education services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046852,11.1.51.1.1,,..,,,0
+British Columbia,Non-profit social assistance,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046892,11.1.52.1.1,,..,,,0
+British Columbia,"Non-profit arts, entertainment and recreation",2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046932,11.1.53.1.1,,..,,,0
+British Columbia,Religious organizations,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91046972,11.1.54.1.1,,..,,,0
+British Columbia,Other non-profit institutions serving households,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047012,11.1.55.1.1,,..,,,0
+British Columbia,Government sector,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047052,11.1.56.1.1,15074.0,,,,0
+British Columbia,Government educational services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047092,11.1.57.1.1,3425.0,,,,0
+British Columbia,Hospitals,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047132,11.1.58.1.1,2215.0,,,,0
+British Columbia,Nursing and residential care facilities,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047172,11.1.59.1.1,51.0,,,,0
+British Columbia,Defence services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047212,11.1.60.1.1,1651.0,,,,0
+British Columbia,Other federal government services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047252,11.1.61.1.1,587.0,,,,0
+British Columbia,Other provincial and territorial government services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047292,11.1.62.1.1,2552.0,,,,0
+British Columbia,Other municipal government services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047332,11.1.63.1.1,4287.0,,,,0
+British Columbia,Other Indigenous government services,2022,2021A000259,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91047372,11.1.64.1.1,307.0,,,,0
+Yukon,Total all industries,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052532,12.1.1.1.1,1109.0,,,,0
+Yukon,"Agriculture, forestry, fishing and hunting",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052572,12.1.2.1.1,0.0,,,,0
+Yukon,Crop production,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052612,12.1.3.1.1,,..,,,0
+Yukon,Animal production,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052652,12.1.4.1.1,0.0,,,,0
+Yukon,Forestry and logging,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052692,12.1.5.1.1,0.0,,,,0
+Yukon,"Fishing, hunting and trapping",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052732,12.1.6.1.1,0.0,,,,0
+Yukon,Support activities for agriculture and forestry,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052772,12.1.7.1.1,0.0,,,,0
+Yukon,"Mining, quarrying and oil and gas extraction",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052812,12.1.8.1.1,339.0,,,,0
+Yukon,Conventional oil and gas extraction,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052852,12.1.9.1.1,0.0,,,,0
+Yukon,Non-conventional oil extraction,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052892,12.1.10.1.1,,..,,,0
+Yukon,Mining and quarrying (except oil and gas),2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052932,12.1.11.1.1,188.0,,,,0
+Yukon,Support activities for mining and oil and gas extraction,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91052972,12.1.12.1.1,151.0,,,,0
+Yukon,Utilities,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053012,12.1.13.1.1,60.0,,,,0
+Yukon,Construction,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053052,12.1.14.1.1,43.0,,,,0
+Yukon,Manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053092,12.1.15.1.1,3.0,,,,0
+Yukon,Food manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053132,12.1.16.1.1,0.0,,,,0
+Yukon,Beverage and tobacco products manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053172,12.1.17.1.1,1.0,,,,0
+Yukon,Textile and textile product mills,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053212,12.1.18.1.1,,..,,,0
+Yukon,Clothing and leather and allied product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053252,12.1.19.1.1,0.0,,,,0
+Yukon,Wood product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053292,12.1.20.1.1,0.0,,,,0
+Yukon,Paper manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053332,12.1.21.1.1,,..,,,0
+Yukon,Printing and related support activities,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053372,12.1.22.1.1,0.0,,,,0
+Yukon,Petroleum and coal products manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053412,12.1.23.1.1,,..,,,0
+Yukon,Chemical manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053452,12.1.24.1.1,0.0,,,,0
+Yukon,Plastics and rubber products manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053492,12.1.25.1.1,1.0,,,,0
+Yukon,Non-metallic mineral product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053532,12.1.26.1.1,0.0,,,,0
+Yukon,Primary metal manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053572,12.1.27.1.1,,..,,,0
+Yukon,Fabricated metal product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053612,12.1.28.1.1,1.0,,,,0
+Yukon,Machinery manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053652,12.1.29.1.1,,..,,,0
+Yukon,Computer and electronic product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053692,12.1.30.1.1,0.0,,,,0
+Yukon,"Electrical equipment, appliance and component manufacturing",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053732,12.1.31.1.1,,..,,,0
+Yukon,Transportation equipment manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053772,12.1.32.1.1,,..,,,0
+Yukon,Furniture and related product manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053812,12.1.33.1.1,0.0,,,,0
+Yukon,Miscellaneous manufacturing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053852,12.1.34.1.1,,..,,,0
+Yukon,Wholesale trade,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053892,12.1.35.1.1,18.0,,,,0
+Yukon,Retail trade,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053932,12.1.36.1.1,20.0,,,,0
+Yukon,Transportation and warehousing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91053972,12.1.37.1.1,15.0,,,,0
+Yukon,Information and cultural industries,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054012,12.1.38.1.1,29.0,,,,0
+Yukon,"Finance, insurance, real estate, rental and leasing",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054052,12.1.39.1.1,26.0,,,,0
+Yukon,Finance and insurance,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054092,12.1.40.1.1,3.0,,,,0
+Yukon,Real estate and rental and leasing,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054132,12.1.41.1.1,24.0,,,,0
+Yukon,Holding companies,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054172,12.1.42.1.1,0.0,,,,0
+Yukon,"Professional, scientific and technical services",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054212,12.1.43.1.1,4.0,,,,0
+Yukon,"Administrative and support, waste management and remediation services",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054252,12.1.44.1.1,4.0,,,,0
+Yukon,Educational services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054292,12.1.45.1.1,0.0,,,,0
+Yukon,Health care and social assistance,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054332,12.1.46.1.1,2.0,,,,0
+Yukon,"Arts, entertainment and recreation",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054372,12.1.47.1.1,1.0,,,,0
+Yukon,Accommodation and food services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054412,12.1.48.1.1,5.0,,,,0
+Yukon,Other services (except public administration),2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054452,12.1.49.1.1,1.0,,,,0
+Yukon,Non-profit institutions serving households,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054492,12.1.50.1.1,3.0,,,,0
+Yukon,Non-profit education services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054532,12.1.51.1.1,,..,,,0
+Yukon,Non-profit social assistance,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054572,12.1.52.1.1,,..,,,0
+Yukon,"Non-profit arts, entertainment and recreation",2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054612,12.1.53.1.1,,..,,,0
+Yukon,Religious organizations,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054652,12.1.54.1.1,,..,,,0
+Yukon,Other non-profit institutions serving households,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054692,12.1.55.1.1,,..,,,0
+Yukon,Government sector,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054732,12.1.56.1.1,534.0,,,,0
+Yukon,Government educational services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054772,12.1.57.1.1,9.0,,,,0
+Yukon,Hospitals,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054812,12.1.58.1.1,20.0,,,,0
+Yukon,Nursing and residential care facilities,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054852,12.1.59.1.1,0.0,,,,0
+Yukon,Defence services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054892,12.1.60.1.1,0.0,,,,0
+Yukon,Other federal government services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054932,12.1.61.1.1,7.0,,,,0
+Yukon,Other provincial and territorial government services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91054972,12.1.62.1.1,366.0,,,,0
+Yukon,Other municipal government services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91055012,12.1.63.1.1,53.0,,,,0
+Yukon,Other Indigenous government services,2022,2021A000260,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91055052,12.1.64.1.1,79.0,,,,0
+Northwest Territories including Nunavut,Total all industries,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060212,13.1.1.1.1,,..,,,0
+Northwest Territories including Nunavut,"Agriculture, forestry, fishing and hunting",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060252,13.1.2.1.1,,..,,,0
+Northwest Territories including Nunavut,Crop production,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060292,13.1.3.1.1,,..,,,0
+Northwest Territories including Nunavut,Animal production,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060332,13.1.4.1.1,,..,,,0
+Northwest Territories including Nunavut,Forestry and logging,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060372,13.1.5.1.1,,..,,,0
+Northwest Territories including Nunavut,"Fishing, hunting and trapping",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060412,13.1.6.1.1,,..,,,0
+Northwest Territories including Nunavut,Support activities for agriculture and forestry,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060452,13.1.7.1.1,,..,,,0
+Northwest Territories including Nunavut,"Mining, quarrying and oil and gas extraction",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060492,13.1.8.1.1,,..,,,0
+Northwest Territories including Nunavut,Conventional oil and gas extraction,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060532,13.1.9.1.1,,..,,,0
+Northwest Territories including Nunavut,Non-conventional oil extraction,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060572,13.1.10.1.1,,..,,,0
+Northwest Territories including Nunavut,Mining and quarrying (except oil and gas),2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060612,13.1.11.1.1,,..,,,0
+Northwest Territories including Nunavut,Support activities for mining and oil and gas extraction,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060652,13.1.12.1.1,,..,,,0
+Northwest Territories including Nunavut,Utilities,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060692,13.1.13.1.1,,..,,,0
+Northwest Territories including Nunavut,Construction,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060732,13.1.14.1.1,,..,,,0
+Northwest Territories including Nunavut,Manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060772,13.1.15.1.1,,..,,,0
+Northwest Territories including Nunavut,Food manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060812,13.1.16.1.1,,..,,,0
+Northwest Territories including Nunavut,Beverage and tobacco products manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060852,13.1.17.1.1,,..,,,0
+Northwest Territories including Nunavut,Textile and textile product mills,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060892,13.1.18.1.1,,..,,,0
+Northwest Territories including Nunavut,Clothing and leather and allied product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060932,13.1.19.1.1,,..,,,0
+Northwest Territories including Nunavut,Wood product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91060972,13.1.20.1.1,,..,,,0
+Northwest Territories including Nunavut,Paper manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061012,13.1.21.1.1,,..,,,0
+Northwest Territories including Nunavut,Printing and related support activities,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061052,13.1.22.1.1,,..,,,0
+Northwest Territories including Nunavut,Petroleum and coal products manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061092,13.1.23.1.1,,..,,,0
+Northwest Territories including Nunavut,Chemical manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061132,13.1.24.1.1,,..,,,0
+Northwest Territories including Nunavut,Plastics and rubber products manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061172,13.1.25.1.1,,..,,,0
+Northwest Territories including Nunavut,Non-metallic mineral product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061212,13.1.26.1.1,,..,,,0
+Northwest Territories including Nunavut,Primary metal manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061252,13.1.27.1.1,,..,,,0
+Northwest Territories including Nunavut,Fabricated metal product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061292,13.1.28.1.1,,..,,,0
+Northwest Territories including Nunavut,Machinery manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061332,13.1.29.1.1,,..,,,0
+Northwest Territories including Nunavut,Computer and electronic product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061372,13.1.30.1.1,,..,,,0
+Northwest Territories including Nunavut,"Electrical equipment, appliance and component manufacturing",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061412,13.1.31.1.1,,..,,,0
+Northwest Territories including Nunavut,Transportation equipment manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061452,13.1.32.1.1,,..,,,0
+Northwest Territories including Nunavut,Furniture and related product manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061492,13.1.33.1.1,,..,,,0
+Northwest Territories including Nunavut,Miscellaneous manufacturing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061532,13.1.34.1.1,,..,,,0
+Northwest Territories including Nunavut,Wholesale trade,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061572,13.1.35.1.1,,..,,,0
+Northwest Territories including Nunavut,Retail trade,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061612,13.1.36.1.1,,..,,,0
+Northwest Territories including Nunavut,Transportation and warehousing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061652,13.1.37.1.1,,..,,,0
+Northwest Territories including Nunavut,Information and cultural industries,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061692,13.1.38.1.1,,..,,,0
+Northwest Territories including Nunavut,"Finance, insurance, real estate, rental and leasing",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061732,13.1.39.1.1,,..,,,0
+Northwest Territories including Nunavut,Finance and insurance,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061772,13.1.40.1.1,,..,,,0
+Northwest Territories including Nunavut,Real estate and rental and leasing,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061812,13.1.41.1.1,,..,,,0
+Northwest Territories including Nunavut,Holding companies,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061852,13.1.42.1.1,,..,,,0
+Northwest Territories including Nunavut,"Professional, scientific and technical services",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061892,13.1.43.1.1,,..,,,0
+Northwest Territories including Nunavut,"Administrative and support, waste management and remediation services",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061932,13.1.44.1.1,,..,,,0
+Northwest Territories including Nunavut,Educational services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91061972,13.1.45.1.1,,..,,,0
+Northwest Territories including Nunavut,Health care and social assistance,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062012,13.1.46.1.1,,..,,,0
+Northwest Territories including Nunavut,"Arts, entertainment and recreation",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062052,13.1.47.1.1,,..,,,0
+Northwest Territories including Nunavut,Accommodation and food services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062092,13.1.48.1.1,,..,,,0
+Northwest Territories including Nunavut,Other services (except public administration),2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062132,13.1.49.1.1,,..,,,0
+Northwest Territories including Nunavut,Non-profit institutions serving households,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062172,13.1.50.1.1,,..,,,0
+Northwest Territories including Nunavut,Non-profit education services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062212,13.1.51.1.1,,..,,,0
+Northwest Territories including Nunavut,Non-profit social assistance,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062252,13.1.52.1.1,,..,,,0
+Northwest Territories including Nunavut,"Non-profit arts, entertainment and recreation",2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062292,13.1.53.1.1,,..,,,0
+Northwest Territories including Nunavut,Religious organizations,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062332,13.1.54.1.1,,..,,,0
+Northwest Territories including Nunavut,Other non-profit institutions serving households,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062372,13.1.55.1.1,,..,,,0
+Northwest Territories including Nunavut,Government sector,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062412,13.1.56.1.1,,..,,,0
+Northwest Territories including Nunavut,Government educational services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062452,13.1.57.1.1,,..,,,0
+Northwest Territories including Nunavut,Hospitals,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062492,13.1.58.1.1,,..,,,0
+Northwest Territories including Nunavut,Nursing and residential care facilities,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062532,13.1.59.1.1,,..,,,0
+Northwest Territories including Nunavut,Defence services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062572,13.1.60.1.1,,..,,,0
+Northwest Territories including Nunavut,Other federal government services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062612,13.1.61.1.1,,..,,,0
+Northwest Territories including Nunavut,Other provincial and territorial government services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062652,13.1.62.1.1,,..,,,0
+Northwest Territories including Nunavut,Other municipal government services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062692,13.1.63.1.1,,..,,,0
+Northwest Territories including Nunavut,Other Indigenous government services,2022,,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91062732,13.1.64.1.1,,..,,,0
+Northwest Territories,Total all industries,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91067892,14.1.1.1.1,913.0,,,,0
+Northwest Territories,"Agriculture, forestry, fishing and hunting",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91067932,14.1.2.1.1,0.0,,,,0
+Northwest Territories,Crop production,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91067972,14.1.3.1.1,,..,,,0
+Northwest Territories,Animal production,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068012,14.1.4.1.1,,..,,,0
+Northwest Territories,Forestry and logging,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068052,14.1.5.1.1,,..,,,0
+Northwest Territories,"Fishing, hunting and trapping",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068092,14.1.6.1.1,0.0,,,,0
+Northwest Territories,Support activities for agriculture and forestry,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068132,14.1.7.1.1,0.0,,,,0
+Northwest Territories,"Mining, quarrying and oil and gas extraction",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068172,14.1.8.1.1,219.0,,,,0
+Northwest Territories,Conventional oil and gas extraction,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068212,14.1.9.1.1,5.0,,,,0
+Northwest Territories,Non-conventional oil extraction,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068252,14.1.10.1.1,,..,,,0
+Northwest Territories,Mining and quarrying (except oil and gas),2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068292,14.1.11.1.1,124.0,,,,0
+Northwest Territories,Support activities for mining and oil and gas extraction,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068332,14.1.12.1.1,90.0,,,,0
+Northwest Territories,Utilities,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068372,14.1.13.1.1,56.0,,,,0
+Northwest Territories,Construction,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068412,14.1.14.1.1,19.0,,,,0
+Northwest Territories,Manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068452,14.1.15.1.1,1.0,,,,0
+Northwest Territories,Food manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068492,14.1.16.1.1,0.0,,,,0
+Northwest Territories,Beverage and tobacco products manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068532,14.1.17.1.1,,..,,,0
+Northwest Territories,Textile and textile product mills,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068572,14.1.18.1.1,,..,,,0
+Northwest Territories,Clothing and leather and allied product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068612,14.1.19.1.1,,..,,,0
+Northwest Territories,Wood product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068652,14.1.20.1.1,0.0,,,,0
+Northwest Territories,Paper manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068692,14.1.21.1.1,,..,,,0
+Northwest Territories,Printing and related support activities,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068732,14.1.22.1.1,0.0,,,,0
+Northwest Territories,Petroleum and coal products manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068772,14.1.23.1.1,,..,,,0
+Northwest Territories,Chemical manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068812,14.1.24.1.1,1.0,,,,0
+Northwest Territories,Plastics and rubber products manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068852,14.1.25.1.1,,..,,,0
+Northwest Territories,Non-metallic mineral product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068892,14.1.26.1.1,,..,,,0
+Northwest Territories,Primary metal manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068932,14.1.27.1.1,,..,,,0
+Northwest Territories,Fabricated metal product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91068972,14.1.28.1.1,,..,,,0
+Northwest Territories,Machinery manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069012,14.1.29.1.1,,..,,,0
+Northwest Territories,Computer and electronic product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069052,14.1.30.1.1,,..,,,0
+Northwest Territories,"Electrical equipment, appliance and component manufacturing",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069092,14.1.31.1.1,,..,,,0
+Northwest Territories,Transportation equipment manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069132,14.1.32.1.1,,..,,,0
+Northwest Territories,Furniture and related product manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069172,14.1.33.1.1,0.0,,,,0
+Northwest Territories,Miscellaneous manufacturing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069212,14.1.34.1.1,0.0,,,,0
+Northwest Territories,Wholesale trade,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069252,14.1.35.1.1,4.0,,,,0
+Northwest Territories,Retail trade,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069292,14.1.36.1.1,12.0,,,,0
+Northwest Territories,Transportation and warehousing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069332,14.1.37.1.1,72.0,,,,0
+Northwest Territories,Information and cultural industries,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069372,14.1.38.1.1,19.0,,,,0
+Northwest Territories,"Finance, insurance, real estate, rental and leasing",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069412,14.1.39.1.1,13.0,,,,0
+Northwest Territories,Finance and insurance,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069452,14.1.40.1.1,4.0,,,,0
+Northwest Territories,Real estate and rental and leasing,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069492,14.1.41.1.1,8.0,,,,0
+Northwest Territories,Holding companies,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069532,14.1.42.1.1,1.0,,,,0
+Northwest Territories,"Professional, scientific and technical services",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069572,14.1.43.1.1,4.0,,,,0
+Northwest Territories,"Administrative and support, waste management and remediation services",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069612,14.1.44.1.1,1.0,,,,0
+Northwest Territories,Educational services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069652,14.1.45.1.1,0.0,,,,0
+Northwest Territories,Health care and social assistance,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069692,14.1.46.1.1,1.0,,,,0
+Northwest Territories,"Arts, entertainment and recreation",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069732,14.1.47.1.1,1.0,,,,0
+Northwest Territories,Accommodation and food services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069772,14.1.48.1.1,8.0,,,,0
+Northwest Territories,Other services (except public administration),2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069812,14.1.49.1.1,1.0,,,,0
+Northwest Territories,Non-profit institutions serving households,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069852,14.1.50.1.1,7.0,,,,0
+Northwest Territories,Non-profit education services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069892,14.1.51.1.1,,..,,,0
+Northwest Territories,Non-profit social assistance,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069932,14.1.52.1.1,,..,,,0
+Northwest Territories,"Non-profit arts, entertainment and recreation",2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91069972,14.1.53.1.1,,..,,,0
+Northwest Territories,Religious organizations,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070012,14.1.54.1.1,,..,,,0
+Northwest Territories,Other non-profit institutions serving households,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070052,14.1.55.1.1,,..,,,0
+Northwest Territories,Government sector,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070092,14.1.56.1.1,475.0,,,,0
+Northwest Territories,Government educational services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070132,14.1.57.1.1,26.0,,,,0
+Northwest Territories,Hospitals,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070172,14.1.58.1.1,35.0,,,,0
+Northwest Territories,Nursing and residential care facilities,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070212,14.1.59.1.1,9.0,,,,0
+Northwest Territories,Defence services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070252,14.1.60.1.1,2.0,,,,0
+Northwest Territories,Other federal government services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070292,14.1.61.1.1,10.0,,,,0
+Northwest Territories,Other provincial and territorial government services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070332,14.1.62.1.1,303.0,,,,0
+Northwest Territories,Other municipal government services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070372,14.1.63.1.1,75.0,,,,0
+Northwest Territories,Other Indigenous government services,2022,2021A000261,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91070412,14.1.64.1.1,14.0,,,,0
+Nunavut,Total all industries,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075572,15.1.1.1.1,1411.0,,,,0
+Nunavut,"Agriculture, forestry, fishing and hunting",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075612,15.1.2.1.1,10.0,,,,0
+Nunavut,Crop production,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075652,15.1.3.1.1,,..,,,0
+Nunavut,Animal production,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075692,15.1.4.1.1,,..,,,0
+Nunavut,Forestry and logging,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075732,15.1.5.1.1,,..,,,0
+Nunavut,"Fishing, hunting and trapping",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075772,15.1.6.1.1,10.0,,,,0
+Nunavut,Support activities for agriculture and forestry,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075812,15.1.7.1.1,,..,,,0
+Nunavut,"Mining, quarrying and oil and gas extraction",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075852,15.1.8.1.1,1055.0,,,,0
+Nunavut,Conventional oil and gas extraction,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075892,15.1.9.1.1,,..,,,0
+Nunavut,Non-conventional oil extraction,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075932,15.1.10.1.1,,..,,,0
+Nunavut,Mining and quarrying (except oil and gas),2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91075972,15.1.11.1.1,699.0,,,,0
+Nunavut,Support activities for mining and oil and gas extraction,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076012,15.1.12.1.1,356.0,,,,0
+Nunavut,Utilities,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076052,15.1.13.1.1,28.0,,,,0
+Nunavut,Construction,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076092,15.1.14.1.1,2.0,,,,0
+Nunavut,Manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076132,15.1.15.1.1,0.0,,,,0
+Nunavut,Food manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076172,15.1.16.1.1,0.0,,,,0
+Nunavut,Beverage and tobacco products manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076212,15.1.17.1.1,,..,,,0
+Nunavut,Textile and textile product mills,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076252,15.1.18.1.1,,..,,,0
+Nunavut,Clothing and leather and allied product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076292,15.1.19.1.1,0.0,,,,0
+Nunavut,Wood product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076332,15.1.20.1.1,,..,,,0
+Nunavut,Paper manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076372,15.1.21.1.1,,..,,,0
+Nunavut,Printing and related support activities,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076412,15.1.22.1.1,,..,,,0
+Nunavut,Petroleum and coal products manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076452,15.1.23.1.1,,..,,,0
+Nunavut,Chemical manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076492,15.1.24.1.1,0.0,,,,0
+Nunavut,Plastics and rubber products manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076532,15.1.25.1.1,,..,,,0
+Nunavut,Non-metallic mineral product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076572,15.1.26.1.1,,..,,,0
+Nunavut,Primary metal manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076612,15.1.27.1.1,,..,,,0
+Nunavut,Fabricated metal product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076652,15.1.28.1.1,,..,,,0
+Nunavut,Machinery manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076692,15.1.29.1.1,,..,,,0
+Nunavut,Computer and electronic product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076732,15.1.30.1.1,,..,,,0
+Nunavut,"Electrical equipment, appliance and component manufacturing",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076772,15.1.31.1.1,,..,,,0
+Nunavut,Transportation equipment manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076812,15.1.32.1.1,,..,,,0
+Nunavut,Furniture and related product manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076852,15.1.33.1.1,,..,,,0
+Nunavut,Miscellaneous manufacturing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076892,15.1.34.1.1,,..,,,0
+Nunavut,Wholesale trade,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076932,15.1.35.1.1,5.0,,,,0
+Nunavut,Retail trade,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91076972,15.1.36.1.1,13.0,,,,0
+Nunavut,Transportation and warehousing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077012,15.1.37.1.1,41.0,,,,0
+Nunavut,Information and cultural industries,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077052,15.1.38.1.1,1.0,,,,0
+Nunavut,"Finance, insurance, real estate, rental and leasing",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077092,15.1.39.1.1,57.0,,,,0
+Nunavut,Finance and insurance,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077132,15.1.40.1.1,1.0,,,,0
+Nunavut,Real estate and rental and leasing,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077172,15.1.41.1.1,56.0,,,,0
+Nunavut,Holding companies,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077212,15.1.42.1.1,0.0,,,,0
+Nunavut,"Professional, scientific and technical services",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077252,15.1.43.1.1,1.0,,,,0
+Nunavut,"Administrative and support, waste management and remediation services",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077292,15.1.44.1.1,2.0,,,,0
+Nunavut,Educational services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077332,15.1.45.1.1,,..,,,0
+Nunavut,Health care and social assistance,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077372,15.1.46.1.1,0.0,,,,0
+Nunavut,"Arts, entertainment and recreation",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077412,15.1.47.1.1,0.0,,,,0
+Nunavut,Accommodation and food services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077452,15.1.48.1.1,5.0,,,,0
+Nunavut,Other services (except public administration),2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077492,15.1.49.1.1,0.0,,,,0
+Nunavut,Non-profit institutions serving households,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077532,15.1.50.1.1,2.0,,,,0
+Nunavut,Non-profit education services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077572,15.1.51.1.1,,..,,,0
+Nunavut,Non-profit social assistance,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077612,15.1.52.1.1,,..,,,0
+Nunavut,"Non-profit arts, entertainment and recreation",2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077652,15.1.53.1.1,,..,,,0
+Nunavut,Religious organizations,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077692,15.1.54.1.1,,..,,,0
+Nunavut,Other non-profit institutions serving households,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077732,15.1.55.1.1,,..,,,0
+Nunavut,Government sector,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077772,15.1.56.1.1,187.0,,,,0
+Nunavut,Government educational services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077812,15.1.57.1.1,1.0,,,,0
+Nunavut,Hospitals,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077852,15.1.58.1.1,0.0,,,,0
+Nunavut,Nursing and residential care facilities,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077892,15.1.59.1.1,30.0,,,,0
+Nunavut,Defence services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077932,15.1.60.1.1,0.0,,,,0
+Nunavut,Other federal government services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91077972,15.1.61.1.1,13.0,,,,0
+Nunavut,Other provincial and territorial government services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91078012,15.1.62.1.1,67.0,,,,0
+Nunavut,Other municipal government services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91078052,15.1.63.1.1,77.0,,,,0
+Nunavut,Other Indigenous government services,2022,2021A000262,Current prices,Investment,Total non-residential,Dollars,81,millions,6,v91078092,15.1.64.1.1,,..,,,0
