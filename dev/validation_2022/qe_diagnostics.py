@@ -75,6 +75,9 @@ def run(args):
                     cfg.household_closure.investment_benchmark_enabled=False
             sim=Simulation.from_datawrapper(data,config)
             holder['sim']=sim;holder['headline']=Headline(sim)
+            if args.arm in ['F_CFC','Q']:
+                from qe_wealth_audit import capture
+                holder['wealth']=capture(sim)
             return sim
     holder={};base.Simulation=Factory
     source=PICKLE if args.arm in ['F_CFC','Q','E'] else ROOT/'dev/pkl_files/io2022_household_agreed_bankcap_firmdebt.pkl'
@@ -101,6 +104,7 @@ def run(args):
         (target/'manifest.json').write_text(json.dumps(meta,indent=2)+'\n')
     else:base.run(params)
     pd.DataFrame(holder['headline'].rows).to_csv(target/'headline.csv',index=False)
+    if 'wealth' in holder:holder['wealth'].to_csv(target/'wealth_definition_audit.csv',index=False)
     pd.DataFrame([dict(region=str(n),**c.households.states.get('quintile_consumption_calibration',{})) for n,c in holder['sim'].countries.items()]).to_csv(target/'Q_calibration.csv',index=False)
     m=json.loads((target/'manifest.json').read_text());m['QE_sources']={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path(__file__),HERE/'qe_baseline.py',HERE/'benchmarks/QE/provenance.json']}
     (target/'manifest.json').write_text(json.dumps(m,indent=2)+'\n')

@@ -1,0 +1,8 @@
+{
+  "table": "SFS 2023 economic-family PUMF 13M0006X",
+  "vector": "PWASTDEP, PEFATINC, PWEIGHT, PAGEMIEG (no vector IDs)",
+  "date": "2026-10-25T01:26:05.306403+00:00",
+  "source_sha256": "958846bf6f72ab6cb85d1884e299fd675d04956135b9bbba27fc86650abe59af",
+  "extract_sha256": "3913aaa53efd054294eaa22f3ba0294ce88885d95f4d67f1f229557e55090867",
+  "method": "Same weighted medians, income deciles, age bands, family weights and fallback definition as BE, replacing L solely by PWASTDEP. 2023 family-vs-model-household scope gap retained."
+}

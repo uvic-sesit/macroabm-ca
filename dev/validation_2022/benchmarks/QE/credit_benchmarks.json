@@ -1,0 +1,89 @@
+{
+  "frozen_UTC": "2026-10-25T01:31:59.586216+00:00",
+  "CBA": {
+    "url": "https://cba.ca/Assets/CanadianBankersAssociation/Documents/Articles/Statistics/stat-mortgages-arrears-november-2025-en.pdf",
+    "retrieved_UTC": "2026-10-25T01:22:25.991158+00:00",
+    "sha256": "36c429e0278a5eb70dad0b4cd792a2e8ab113e2be5da1e713524ba9efac47246",
+    "table": "Canada monthly table, PDF page 3",
+    "vector": "not applicable",
+    "reference": "December 2022",
+    "mortgage_90plus_pct": 0.15,
+    "mortgages": 5106262,
+    "arrears_count": 7740,
+    "definition": "Three or more months overdue; account count, reporting CBA member banks."
+  },
+  "TransUnion": {
+    "source": "TransUnion Industry Insights Q3 2024",
+    "table": "Mortgage Loan Summary, printed page 12",
+    "vector": "not applicable",
+    "reference": "Q3 2024",
+    "url": "https://www.transunion.ca/content/dam/transunion/ca/business/collateral/report/q3_24_ciir_report.pdf",
+    "account_60plus_pct": 0.25,
+    "consumer_60plus_pct": 0.26,
+    "balance_60plus_pct": 0.23,
+    "checked_UTC": "2026-10-25T01:31:59.549005+00:00",
+    "access": "Verified through web PDF reader. Direct download returned HTTP 403; hash below covers this cached factual extract, not the inaccessible PDF bytes."
+  },
+  "RBC": {
+    "source": "RBC Annual Report 2023",
+    "url": "https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2023_e.pdf",
+    "reference": "Fiscal years ended 31 October 2022 and 2023",
+    "table": {
+      "wholesale_net_writeoffs": "Allowance for credit losses, printed/PDF page 178",
+      "total_PCL": "Table 77, page 126",
+      "net_writeoff_ratio": "Table 78, page 127"
+    },
+    "vector": "not applicable",
+    "verified_utc": "2026-10-24T04:49:47.274959+00:00",
+    "full_pdf_sha256": "e397264e0830325a8b99c6b93339a726f96b4a4898627cf75241a161b5f793c6",
+    "data": {
+      "2022": {
+        "wholesale_net_writeoffs_CAD": 136000000.0,
+        "total_net_writeoffs_CAD": 763000000.0,
+        "total_PCL_CAD": 484000000.0,
+        "net_writeoffs_percent_average_loans": 0.1,
+        "Canada_wholesale_impaired_PCL_CAD": 78000000.0
+      },
+      "2023": {
+        "wholesale_net_writeoffs_CAD": 293000000.0,
+        "total_net_writeoffs_CAD": 1213000000.0,
+        "total_PCL_CAD": 2468000000.0,
+        "net_writeoffs_percent_average_loans": 0.14,
+        "Canada_wholesale_impaired_PCL_CAD": 239000000.0
+      }
+    },
+    "scope": "RBC consolidated except specifically Canada-labeled PCL. One banking group, not Canada totals; net write-offs, provisions and fiscal recapitalisations are different measures. No model parameter fitted."
+  },
+  "file_hashes": {
+    "benchmarks\\QE\\raw\\CBA.pdf": "36c429e0278a5eb70dad0b4cd792a2e8ab113e2be5da1e713524ba9efac47246",
+    "benchmarks\\QE\\raw\\TransUnion_extract.json": "acc2cfc847823b8b86ea5e42d6bc435181efec16b0a256c9f7b62cc58b257b7d",
+    "benchmarks\\ABCD\\rbc_2023.pdf": "e397264e0830325a8b99c6b93339a726f96b4a4898627cf75241a161b5f793c6",
+    "benchmarks\\FE\\rbc_credit_quality_2022_2023.json": "c14555bcff15b114750ff703eea9171976c6287f16917a75580ba8f6eeae6556"
+  },
+  "scope_correction": "RBC .10% (2022) and .14% (2023) are consolidated ALL-loan net write-off ratios, not household-only ratios. Retain the requested range as an explicitly imperfect order-of-magnitude gate, not a validated household calibration target.",
+  "parameters": {
+    "N": {
+      "value": 3,
+      "unit": "consecutive distressed quarters",
+      "source": "labelled assumption retained from accepted F; no Canada-wide legal foreclosure time is asserted",
+      "uncertainty": "roughly 7-9 months from first missed instalment under quarterly buckets; provincial procedures vary"
+    },
+    "haircut": {
+      "value": 0.2,
+      "source": "labelled stress-sale discount assumption, not a measured transaction-cost rate",
+      "uncertainty": "10-30% illustrative uncertainty; not fitted"
+    },
+    "unsecured_recovery": {
+      "rule": "Existing non-pension financial assets are included in servicing resources first; residual formal unsecured principal written off after N quarters",
+      "source": "model accounting choice; no fitted recovery fraction"
+    },
+    "no_buyer": {
+      "rule": "Mortgage stays as encumbering bank claim in foreclosure queue, collateral legally retained pending sale; no cash recovery or mortgage write-off before executed sale",
+      "source": "explicit holding treatment; not bank REO ownership"
+    },
+    "arrears": {
+      "rule": "Interest first then principal, pro rata by lender/type. Non-accrual unpaid-interest memo; principal arrears remain in loan book. Monthly buckets inferred from equal monthly due dates and cash available first.",
+      "source": "quarterly timing assumption, not observed monthly income or loan-level data"
+    }
+  }
+}

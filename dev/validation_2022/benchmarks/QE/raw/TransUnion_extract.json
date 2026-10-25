@@ -1,0 +1,12 @@
+{
+  "source": "TransUnion Industry Insights Q3 2024",
+  "table": "Mortgage Loan Summary, printed page 12",
+  "vector": "not applicable",
+  "reference": "Q3 2024",
+  "url": "https://www.transunion.ca/content/dam/transunion/ca/business/collateral/report/q3_24_ciir_report.pdf",
+  "account_60plus_pct": 0.25,
+  "consumer_60plus_pct": 0.26,
+  "balance_60plus_pct": 0.23,
+  "checked_UTC": "2026-10-25T01:31:59.549005+00:00",
+  "access": "Verified through web PDF reader. Direct download returned HTTP 403; hash below covers this cached factual extract, not the inaccessible PDF bytes."
+}
