@@ -166,9 +166,9 @@ class HouseholdClosure:
         self.private_payers = private
         self.firm_weights = shares(output)
         self.mixed_payer_weights = shares(output * (f.states["Industry"] != 41))
-        self.mixed_weights = shares(h.states["self_employment_business_value"])
-        self.equity_weights = shares(h.states["distribution_equity_value"])
-        self.transfer_weights = shares(h.states["distribution_pension_value"])
+        self.mixed_weights = shares(h.states.get("cis_mixed_allocation",h.states["self_employment_business_value"]))
+        self.equity_weights = shares(h.states.get("cis_dividend_allocation",h.states["distribution_equity_value"]))
+        self.transfer_weights = shares(h.states.get("cis_pension_allocation",h.states["distribution_pension_value"]))
         profits = (np.maximum(0,f.ts.current("profits"))*private).sum() + np.maximum(0,b.ts.current("profits")).sum()
         capacity = profits * (1-g.states["Profit Tax"])
         target = config.dividends_by_region[str(country.country_name)] / config.periods_per_year

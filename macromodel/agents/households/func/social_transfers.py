@@ -89,6 +89,23 @@ class EqualSocialTransfersSetter(SocialTransfersSetter):
         return np.full(n_households, total_other_social_transfers / n_households)
 
 
+class InitialAllocationSocialTransfersSetter(SocialTransfersSetter):
+    """Use the new input's cash-transfer shares, keeping the public budget exact."""
+
+    def __init__(self, weights):
+        super().__init__([])
+        values = np.maximum(0.0, np.asarray(weights, float))
+        if not np.isfinite(values).all() or values.sum() <= 0:
+            raise ValueError("Finite positive aggregate transfer weights required")
+        self.weights = values / values.sum()
+
+    def get_social_transfers(self, n_households, total_other_social_transfers,
+                             current_independents, initial_independents, model):
+        if n_households != len(self.weights):
+            raise ValueError("Initial allocation length changed")
+        return self.weights * total_other_social_transfers
+
+
 class ConstantSocialTransfersSetter(SocialTransfersSetter):
     def get_social_transfers(
         self,

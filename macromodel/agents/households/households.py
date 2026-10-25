@@ -213,6 +213,11 @@ class Households(Agent):
         corr_renters = corr_renters.rename_axis("Household ID")
 
         functions = functions_from_model(model=configuration.functions, loc="macromodel.agents.households")
+        if "CIS government allocation" in synthetic_population.household_data:
+            from .func.social_transfers import InitialAllocationSocialTransfersSetter
+            functions["social_transfers"] = InitialAllocationSocialTransfersSetter(
+                synthetic_population.household_data["CIS government allocation"].to_numpy()
+            )
 
         hh_data = (
             synthetic_population.household_data.drop(
@@ -252,6 +257,13 @@ class Households(Agent):
             "coefficient_fa_income": synthetic_population.coefficient_fa_income,
             "investment_rate": synthetic_population.household_data["Investment Rate"].values,
         }
+
+        for source, target in [("CIS government allocation", "cis_government_allocation"),
+                               ("CIS mixed allocation", "cis_mixed_allocation"),
+                               ("CIS dividend allocation", "cis_dividend_allocation"),
+                               ("CIS pension allocation", "cis_pension_allocation")]:
+            if source in synthetic_population.household_data:
+                states[target] = synthetic_population.household_data[source].to_numpy().copy()
 
         # Additional states
         for state_name in [
@@ -400,6 +412,11 @@ class Households(Agent):
         """
         self.gen_reset()
         update_functions(functions=self.functions, model=configuration.functions, loc="macromodel.agents.households")
+        if "cis_government_allocation" in self.states:
+            from .func.social_transfers import InitialAllocationSocialTransfersSetter
+            self.functions["social_transfers"] = InitialAllocationSocialTransfersSetter(
+                self.states["cis_government_allocation"]
+            )
 
     def compute_employee_income(
         self,
