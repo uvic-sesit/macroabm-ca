@@ -34,7 +34,9 @@ def main():
             decomposition.append(dict(arm=arm,seed=seed,component=key,change_CAD=value,contribution_pp=100*value/n.loc[0,'gdp']))
         check=sum(r['change_CAD'] for r in decomposition if r['arm']==arm and r['seed']==seed)
         assert np.isclose(check,n.loc[12,'gdp_expenditure']-n.loc[0,'gdp_expenditure'],rtol=1e-10,atol=.1)
-        x=pd.read_csv(directory/'consumption_quintiles.csv')
+        corrected=OUT/'distribution_corrected'/directory.name/'consumption_quintiles.csv'
+        if not corrected.exists():raise FileNotFoundError('Corrected SHS replay missing: '+str(corrected))
+        x=pd.read_csv(corrected)
         for scheme,field in [('DHEA_equivalised_DI','primary_shares'),('SHS_gross_household_income','secondary_shares')]:
             target=bench[field]
             z=x[x.scheme==scheme].groupby(['quarter','quintile']).sum(numeric_only=True)
@@ -65,7 +67,9 @@ def main():
             if arm=='E':
                 arrears60=100*n.loc[1:12,'mortgage_60plus']/n.loc[1:12,'mortgage_borrowers']
                 arrears90=100*n.loc[1:12,'mortgage_90plus']/n.loc[1:12,'mortgage_borrowers']
-                debt_mean=n.household_debt.mean();loss=agg.household_writeoffs.sum()
+                formal_debt_mean=n.household_debt.mean()
+                od=pd.Series(0.,index=n.index);od.loc[1:12]=agg.overdraft_liability
+                debt_mean=(n.household_debt+od).mean();loss=agg.household_writeoffs.sum()
                 annual_ratio=100*(loss/3)/debt_mean
                 ratio_pass=.05<=annual_ratio<=.28
                 g1=bool(arrears60.between(.125,.5).all() and arrears90.between(.075,.3).all() and ratio_pass)
@@ -73,6 +77,7 @@ def main():
                 g2=bool(q1<=2*later+1e-3);g3=m['max_accounting_error']<=1e-8
                 gates.append(dict(arm=arm,seed=seed,E_G1=g1,E_G2=g2,E_G3=g3,passed=g1 and g2 and g3,
                     annual_writeoff_pct=annual_ratio,Q12_60plus_pct=arrears60.loc[12],Q12_90plus_pct=arrears90.loc[12],
+                    annual_writeoff_formal_denominator_pct=100*(loss/3)/formal_debt_mean,
                     min_60plus_pct=arrears60.min(),max_60plus_pct=arrears60.max(),Q1_writeoffs=q1,Q4_Q12_mean_writeoffs=later,max_accounting_error=m['max_accounting_error']))
                 for t in range(1,13):
                     e_metrics.append(dict(seed=seed,quarter=t,**{k:n.loc[t,k] for k in ['mortgage_borrowers','mortgage_30plus','mortgage_60plus','mortgage_90plus','defaults','foreclosure_pending','foreclosure_sales','mortgage_writeoffs','unsecured_writeoffs','household_overdraft_writeoffs','foreclosure_recoveries','foreclosure_surplus','interest_nonaccrual_memo','household_debt']},mortgage_60plus_pct=arrears60.loc[t],mortgage_90plus_pct=arrears90.loc[t]))

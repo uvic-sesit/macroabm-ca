@@ -514,3 +514,15 @@ Firm losses fall 48–60% under observed CFC; household write-offs stay about 23
 Full tests: 458 passed / 30 known failures / 488 cases; sampler one worker. Exact failure IDs checked against BE baseline in the final audit.
 
 [CLOSURE_B2_2026-10-24.md](CLOSURE_B2_2026-10-24.md) contains every gate, quarterly losses, resolutions, seed comparisons, quintile raw levels and shares, source definitions/hashes, and remaining limitations. Stop for review; not ready for Phase B.
+
+<!-- QE-2026-10-25 -->
+## QE review — 2026-10-25 UTC
+
+- Adopt F_CFC on accepted FE F lineage (9cc1563), P off; data improvement, not a margin-validation pass.
+- Q (f0b6aee) fails the DHEA-share construction gate on every seed. One common rescale and source C/DI ratios cannot reproduce DHEA shares on the different cash-income proxy. No tuning.
+- E (d23d31e), with rental-PIT fix f0fc613, occupancy fix 4ef8b68 and unsecured-overdraft resolution a1d55a6, is accounting-consistent but fails empirical arrears/loss gate. Old net-worth rule remains selectable. Failed and formal-only attempts retained/excluded.
+- Secondary SHS wage ranks corrected by payroll identity (840a97d); 15 serial replays preserve macro and DHEA paths and pass accounting.
+- FB data experiment (c89ea09) fails all 13 unchanged GDP initialization checks and has 102 above-price/nonnegative-GOS cells, despite a 0.000978 pp gross-margin residual. No FB dynamics or combined Q+E+B2 run.
+- New GDP diagnostic: t0 adds 64.132B of rent memos already in household IO; dynamic GDP omits that block. Both raw Q0 changes and scope-adjusted/Q1 diagnostics are reported. No GDP/cash plug or initializer tolerance change.
+- Phase B and C_dp_005 stay on hold. Full suite: 476 passed, 30 known failures; exact IDs audited.
+- [QE report](CLOSURE_QE_2026-10-25.md), [gates](outputs/QE/gates.csv), [audit](outputs/QE/audit.json).

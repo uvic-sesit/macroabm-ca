@@ -32,7 +32,10 @@ def failure_ids(path):
 def main():
     assert subprocess.check_output(['git','branch','--show-current'],cwd=ROOT,text=True).strip()=='feature/validation-2022'
     protected={n:sha(ROOT/'dev/pkl_files'/n) for n in EXPECTED};assert protected==EXPECTED
-    from qe_baseline import PICKLE,PICKLE_SHA256
+    from qe_baseline import PICKLE,PICKLE_SHA256,configuration
+    cfg=configuration()
+    assert cfg.firm_distress_periods==cfg.household_payment_default_periods==3
+    assert cfg.foreclosure_sale_haircut==.2 and not cfg.prudent_firm_payout_enabled
     assert sha(PICKLE)==PICKLE_SHA256
     protected[PICKLE.name]=PICKLE_SHA256
     primary=[];excluded=[];traces={}
@@ -40,7 +43,7 @@ def main():
         m=json.loads(p.read_text());valid=m['max_accounting_error']<=1e-8
         assert sha(Path(m['pickle']))==m['pickle_sha256']
         for source,digest in {**m.get('source_sha256',{}),**m.get('QE_sources',{})}.items():traces[source+' @ '+digest]=trace(source,digest)
-        selected=valid and m['quarters']==12 and ((m['arm']=='E' and m.get('variant')=='cashfix') or (m['arm']!='E' and m.get('variant','base')=='base'))
+        selected=valid and m['quarters']==12 and ((m['arm']=='E' and m.get('variant')=='complete') or (m['arm']!='E' and m.get('variant','base')=='base'))
         if not selected:
             excluded.append(dict(run=p.parent.name,valid_accounting=valid,error=m['max_accounting_error'],reason='pilot/debug or rejected pre-fix run'))
             continue
@@ -67,12 +70,17 @@ def main():
     assert len(primary)==15
     assert all(sorted(r['seed'] for r in primary if r['arm']==arm)==[0,1,2] for arm in ['C','F','F_CFC','Q','E'])
     for quarters in [2,4]:
-        a=pd.read_csv(OUT/'runs/E_cashfix_q12_s0/outcomes.csv').query('quarter<=@quarters').reset_index(drop=True)
-        b=pd.read_csv(OUT/'runs'/f'E_cashfix_q{quarters}_s0/outcomes.csv')
+        a=pd.read_csv(OUT/'runs/E_complete_q12_s0/outcomes.csv').query('quarter<=@quarters').reset_index(drop=True)
+        b=pd.read_csv(OUT/'runs'/f'E_complete_q{quarters}_s0/outcomes.csv')
         np.testing.assert_allclose(a.select_dtypes('number'),b.select_dtypes('number'),rtol=1e-12,atol=1e-3,equal_nan=True)
     for p in sorted((OUT/'C_bank_replays').glob('*/manifest.json')):
         m=json.loads(p.read_text());assert m['exact_macro_and_distribution_match'] and m['max_accounting_error']<=1e-8
     assert len(list((OUT/'C_bank_replays').glob('*/manifest.json')))==3
+    replay_manifests=list((OUT/'distribution_corrected').glob('*/manifest.json'))
+    assert len(replay_manifests)==15
+    for p in replay_manifests:
+        m=json.loads(p.read_text());assert m['all_macro_paths_match'] and m['primary_DHEA_unchanged'] and m['max_accounting_error']<=1e-8
+        for source,digest in m['source_sha256'].items():traces[source+' @ '+digest]=trace(source,digest)
     # New unaccepted FB input preserves all accepted balance-sheet stocks.
     from macro_data import DataWrapper
     old=DataWrapper.init_from_pickle(PICKLE)
@@ -93,14 +101,16 @@ def main():
     assert sha(HERE/'benchmarks/QE/sfs_deposit_buffers.csv')==sf['extract_sha256']
     credit=json.loads((HERE/'benchmarks/QE/credit_benchmarks.json').read_text())
     for name,digest in credit['file_hashes'].items():assert sha(HERE/name)==digest
+    index=json.loads((HERE/'benchmarks/QE/benchmark_index.json').read_text())
+    for name,digest in {**index['selected_files'],**index['inherited']}.items():assert sha(HERE/name)==digest
     if '--precheck' in sys.argv:
         (OUT/'precheck.json').write_text(json.dumps(dict(protected_inputs=protected,primary_runs=primary,excluded_diagnostics=excluded,traceable_sources=traces,
             F_and_F_CFC_match_accepted_macro_paths=True,C_bank_replays_match=True,E_prefixes_match=True,FB_financial_stocks_unchanged=True),indent=2)+'\n')
         print('Measurement/source/stock precheck passed; final full-test audit still pending',flush=True)
         return
-    tests=json.loads((OUT/'verification/full_test_execution.json').read_text())
+    tests=json.loads((OUT/'verification_complete/full_test_execution.json').read_text())
     assert len(tests['failures'])==30 and all(r['known_nan'] for r in tests['failures'])
-    assert failure_ids(OUT/'verification/full_tests.xml')==failure_ids(HERE/'outputs/B2/verification/full_tests.xml')
+    assert failure_ids(OUT/'verification_complete/full_tests.xml')==failure_ids(HERE/'outputs/B2/verification/full_tests.xml')
     assert any(p.get('name')=='sampler_n_cores' and p.get('value')=='1' for p in tests['sampler_properties'])
     continuation=json.loads((OUT/'continuation.json').read_text())
     assert not any(continuation.values())

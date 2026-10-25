@@ -1,0 +1,26 @@
+{
+  "checked_UTC": "2026-10-25T02:47:54.067431+00:00",
+  "selected_files": {
+    "benchmarks\\QE\\credit_benchmarks.json": "f56dfdaaa970636c95400341a37273fc795db95dddff86a8cb0ef0e5cc511960",
+    "benchmarks\\QE\\dhea_income_consumption_2022.csv": "913e2b1c9191cecc193801a9c888dc86c2e3126b0be889f27231b3ca3ef63d8f",
+    "benchmarks\\QE\\overdraft_resolution_assumption.json": "81a24844544631700449233d71a07881b99e328d5a1d5420d1093980272b6847",
+    "benchmarks\\QE\\provenance.json": "6b7921fa75863f82dc437fa294627ab767c0b50bd4f9efeaf5e529d6c81e8389",
+    "benchmarks\\QE\\sfs_deposit_buffers.csv": "3913aaa53efd054294eaa22f3ba0294ce88885d95f4d67f1f229557e55090867",
+    "benchmarks\\QE\\sfs_deposit_provenance.json": "6c6ce4f9d8c89095f815c0acb7f12835d7d263d1c5ae44b66460cf74195e86ef",
+    "benchmarks\\QE\\raw\\CBA.json": "9c73d9b9b9cd42ff18231eb3a63790d49dce8de24fad6c382e44ca0a7182061e",
+    "benchmarks\\QE\\raw\\RBC.json": "174cd73efe3e5a0c2d41a75f3bb95fcac3b9c258c9385d0d2e663d29afebfccf",
+    "benchmarks\\QE\\raw\\TransUnion_extract.json": "acc2cfc847823b8b86ea5e42d6bc435181efec16b0a256c9f7b62cc58b257b7d"
+  },
+  "inherited": {
+    "benchmarks/B2/distribution_provenance.json": "71e093f495f826ae1da12c559b79f8b485cb6784d559535246269803f88dfebd",
+    "benchmarks/B2/dhea_hfce_2022.csv": "94f0dd9a519b925c5c8b4aa8e3010a9280d644ca609643cbf478e5fd9fe232df",
+    "benchmarks/B2/shs_consumption_2023.csv": "80fdd69a4e325b6daa1abe4650224dd24fbeaf32cae1ce50c48bafed7cf159c6",
+    "benchmarks/B2/raw/table_definitions_provenance.json": "5a45514dc044c551da924d2fff9ec5d4fd40d01e728f95803cd52503eb8005f0",
+    "benchmarks/BE/sfs_liquid_buffers.csv": "393e772d9d32577a0c3bf02f28c1a4cea7d3c37c47f7f04717754ce0706065aa",
+    "benchmarks/BE/buffer_provenance.json": "8b4575e2ca301701049e08aad27388cc72ee4d97657c0958d718edf7f69d6877",
+    "outputs/B2/firm_data/cfc_build_provenance.json": "b234922c50846705d2a183f2ebb62ddf7e55917ea19a4064fa15ff5668e6d2e7",
+    "outputs/B2/firm_data/cfc_allocation.csv": "39192be70965086892d6554f8861f123b11442781f30765db5c0165fa3b7298a",
+    "outputs/B2/firm_data/observed_nonres_CFC_2022.csv": "b2e16ddf161b5cf76965b9c39b6ce5edf62bfb81c63b3282fbf7910ee26436fe"
+  },
+  "notes": "Frozen source vintages; data-input hashes, table/vector/date references live in the linked provenance files. Raw public PDFs remain in local cache and are identified by source hashes; no accepted pickle was modified."
+}

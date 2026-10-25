@@ -3,6 +3,6 @@ from pathlib import Path
 import run_be_full_tests as runner
 
 if __name__=='__main__':
-    runner.OUT=Path(__file__).resolve().parent/'outputs/QE/verification_final'
+    runner.OUT=Path(__file__).resolve().parent/'outputs/QE/verification_complete'
     runner.OUT.mkdir(parents=True,exist_ok=True)
     runner.main()
