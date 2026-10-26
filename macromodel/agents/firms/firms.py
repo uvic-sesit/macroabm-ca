@@ -818,12 +818,27 @@ class Firms(Agent):
             prev_supply = self.ts.current("production") + self.ts.current("inventory")
         else:
             prev_supply = self.ts.current("production") + self.ts.prev("inventory")
-        growth = self.functions["growth_estimator"].compute_growth(
+        estimator = self.functions["growth_estimator"]
+        extra = {}
+        if float(getattr(estimator, "unit_cost_change_growth", 0.0) or 0.0) > 0.0:
+            # OWN-COST-keyed growth rule (doc 5o): the firm's unit cost at the last completed
+            # step deflated by the province's production-weighted price level (the sector
+            # average prices weighted by each firm's production), so nominal inflation does
+            # not read as a cost change.
+            sectors = np.asarray(self.states["Industry"])
+            prod = np.asarray(self.ts.current("production"), dtype=float)
+            avg_by_firm = np.asarray(previous_average_good_prices, dtype=float)[sectors]
+            level = float(np.average(avg_by_firm, weights=prod)) if prod.sum() > 0 else float(np.mean(avg_by_firm))
+            if not np.isfinite(level) or level <= 0.0:
+                level = 1.0
+            extra["prev_real_unit_costs"] = np.asarray(self.ts.current("unit_costs"), dtype=float) / level
+        growth = estimator.compute_growth(
             prev_average_good_prices=previous_average_good_prices,
             prev_firm_prices=self.ts.current("price"),
             prev_supply=prev_supply,
             prev_demand=self.ts.current("demand"),
             current_firm_sectors=self.states["Industry"],
+            **extra,
         )
         return np.maximum(min_growth, np.minimum(max_growth, growth))
 
@@ -2669,8 +2684,14 @@ class Firms(Agent):
         linkage_owns_coefficients: bool = False,
         additive_intensity: bool = False,
         transition_capital=None,
+        excluded_pairs: set[tuple[str, str]] | None = None,
     ) -> None:
         """Adjust productivity matrices using CIMS linkage data (no file I/O).
+
+        ``excluded_pairs``: (industry code, energy code) pairs the linkage must NOT
+        write -- feedstock purchases (refinery <- crude, chemicals <- gas) whose IO
+        coefficient is mostly non-energy input and must scale with output, not with
+        the source's end-use FUEL path.  See ``feedstock_pairs`` in run_cims_linkage.
 
         Directly *sets* each comparable industry's energy-per-unit-output
         coefficient toward the CIMS engineering result, index-anchored to a
@@ -2715,6 +2736,7 @@ class Firms(Agent):
             linkage_owns_coefficients=linkage_owns_coefficients,
             additive_intensity=additive_intensity,
             transition_capital=transition_capital,
+            excluded_pairs=excluded_pairs,
         )
 
     def _link_intensity_target(
@@ -2731,6 +2753,7 @@ class Firms(Agent):
         linkage_owns_coefficients: bool = False,
         additive_intensity: bool = False,
         transition_capital=None,
+        excluded_pairs: set[tuple[str, str]] | None = None,
     ) -> None:
         """Set energy/capital productivity toward the CIMS intensity target.
 
@@ -2785,6 +2808,8 @@ class Firms(Agent):
                 i = industries_list.index(i_code)
                 firms_i = np.where(industry_idx == i)[0]
                 for j_code in valid_energy:
+                    if excluded_pairs and (i_code, j_code) in excluded_pairs:
+                        continue  # feedstock pair: the IO coefficient stays, scales with output
                     if j_code not in getattr(anchor_intensity, "columns", []):
                         continue
                     if i_code not in anchor_intensity.index:
@@ -3085,6 +3110,61 @@ class Firms(Agent):
             )
             if multipliers is not None:
                 multipliers[firms_i, j] = 1.0
+
+    def realised_vs_written_intensity(
+        self,
+        pairs: list[tuple[str, str]],
+        industries: list[str],
+    ) -> dict[str, dict[str, float]]:
+        """Realised energy per unit of output over the written coefficient, per pair.
+
+        The open-loop check for rows that keep the linkage's intensity target but are
+        exempt from the quantity anchor (``intensity_only_sectors`` in
+        ``run_cims_linkage``): ``sum(bought[firms_i, j]) / sum(production[firms_i])``
+        last step, divided by the production-weighted effective input coefficient
+        (the reciprocal of productivity) the linkage wrote.  A ratio of 1 means the
+        firms bought exactly the written intensity; the same ratio across fuels means
+        the MIX is the written one even where the level is not (stock timing or
+        rationing scale every fuel alike).  Returns ``{industry: {fuel: ratio}}``;
+        pairs with no production, no purchase or no coefficient are left out.
+        """
+        out: dict[str, dict[str, float]] = {}
+        try:
+            bought = np.asarray(
+                self.ts.current("real_amount_bought_as_intermediate_inputs"), dtype=float
+            )
+            production = np.asarray(self.ts.current("production"), dtype=float).ravel()
+        except Exception:  # noqa: BLE001 - before the first step there is nothing to read
+            return out
+        if bought.ndim != 2 or bought.size == 0:
+            return out
+        eff = np.asarray(self.get_effective_intermediate_coefficients(), dtype=float)
+        industry_idx = np.asarray(self.states["Industry"])
+        for i_code, j_code in pairs:
+            if i_code not in industries or j_code not in industries:
+                continue
+            i, j = industries.index(i_code), industries.index(j_code)
+            if j >= bought.shape[1] or j >= eff.shape[1]:
+                continue
+            firms_i = np.where(industry_idx == i)[0]
+            if firms_i.size == 0:
+                continue
+            prod = production[firms_i]
+            tot = float(np.nansum(prod))
+            if not np.isfinite(tot) or tot <= 0.0:
+                continue
+            realised = float(np.nansum(bought[firms_i, j])) / tot
+            if not np.isfinite(realised) or realised <= 0.0:
+                continue  # nothing bought yet (first step) or a pair the model does not buy
+            prodv = eff[firms_i, j]
+            ok = np.isfinite(prodv) & (prodv > 0.0) & np.isfinite(prod)
+            if not ok.any():
+                continue
+            written = float(np.sum(prod[ok] / prodv[ok])) / float(np.sum(prod[ok]))
+            if not np.isfinite(written) or written <= 0.0 or not np.isfinite(realised):
+                continue
+            out.setdefault(i_code, {})[j_code] = realised / written
+        return out
 
     def _apply_transition_capital(
         self,

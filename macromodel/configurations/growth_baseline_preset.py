@@ -284,7 +284,13 @@ def apply_candidate_growth_baseline(
     fc.target_capital_inputs.parameters.update(capital_params)
 
     country_config.government_entities.functions.consumption.name = p["government_consumption_setter"]
-    country_config.households.functions.consumption.name = p["household_consumption_setter"]
+    if (country_config.households.functions.consumption.name == "CESHouseholdConsumption"
+            and p["household_consumption_setter"] == "ExogenousHouseholdConsumption"):
+        # A household substitution bundle was configured (household_bundles +
+        # elasticity): keep it, on top of the preset's exogenous total.
+        country_config.households.functions.consumption.name = "CESExogenousHouseholdConsumption"
+    else:
+        country_config.households.functions.consumption.name = p["household_consumption_setter"]
     country_config.households.functions.investment.name = p["household_investment_setter"]
 
     if labour_force_index is None and use_observed_labour_path:

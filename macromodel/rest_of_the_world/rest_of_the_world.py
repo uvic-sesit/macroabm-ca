@@ -418,6 +418,158 @@ class RestOfTheWorld(Agent):
         """
         self._real_terms_export_industries = {int(i) for i in (industry_indices or [])}
 
+    def set_export_price_elasticity(self, industry_indices, epsilon: float | None) -> None:
+        """Opt in selected industries to a PRICE-ELASTIC export demand (WTC 2026-10-17).
+
+        ROW's desired imports from the home economy are a NOMINAL budget per industry,
+        split from its aggregate import forecast by frozen base-year shares, so a cheaper
+        Canadian chemical does not sell more chemicals abroad.  For the industries listed
+        here the simulation supplies, each step, a scale M_i = sum_p s_p,i m_p,i, where
+        m_p,i = (P_p,i / P_ref,i)^(-epsilon) is province p's relative price change against
+        the national production-weighted price (both indexed to their own first-step
+        value, so M = 1 at the start and whenever every province moves together) and
+        s_p,i the province's lagged share of realised exports.  The budget is multiplied
+        by M_i (:meth:`_apply_export_price_elasticity`); the goods market re-divides it
+        between provinces with the same m_p,i (clearer.set_row_origin_multipliers).
+
+        Applied to ROW's own import-model budget only: an industry whose export demand
+        is a PRODUCTION-mode residual pin (target production minus lagged absorption)
+        is skipped with a warning, because that target is itself last period's realised
+        exports plus a correction and a multiplier on it would compound every step.
+        Empty / None clears the overlay.
+        """
+        idx = {int(i) for i in (industry_indices or [])}
+        if not idx or epsilon is None:
+            self._export_price_elasticity = None
+        else:
+            self._export_price_elasticity = (idx, float(epsilon))
+        self._export_elasticity_scale = None
+        self._epx_skipped_warned = False
+
+    def set_export_elasticity_scale(self, scale: "np.ndarray | None") -> None:
+        """Per-industry multiplier M_i for the price-elastic export demand, supplied each step."""
+        self._export_elasticity_scale = None if scale is None else np.asarray(scale, dtype=float)
+
+    def _apply_export_price_elasticity(self) -> None:
+        """Multiply the listed industries' desired imports (nominal budget) by M_i."""
+        cfg = getattr(self, "_export_price_elasticity", None)
+        scale = getattr(self, "_export_elasticity_scale", None)
+        if cfg is None or scale is None:
+            return
+        indices, _eps = cfg
+        current = np.array(self.ts.current("desired_imports_in_lcu"), dtype=float)
+        if scale.shape != current.shape:
+            logger.warning("export price elasticity scale shape %s != %s; not applied.",
+                           scale.shape, current.shape)
+            return
+        prod_pinned = getattr(self, "_last_prod_pinned", None)
+        skipped = []
+        for i in sorted(indices):
+            if not (0 <= i < current.size):
+                continue
+            if prod_pinned is not None and prod_pinned.shape == current.shape and prod_pinned[i]:
+                skipped.append(i)
+                continue
+            m = scale[i]
+            if np.isfinite(m) and m > 0.0:
+                current[i] *= m
+        if skipped and not getattr(self, "_epx_skipped_warned", False):
+            logger.warning(
+                "export price elasticity: industries %s are production-mode export pins "
+                "(residual targets); the overlay is NOT applied to them.", skipped)
+            self._epx_skipped_warned = True
+        self.ts.desired_imports_in_lcu[-1] = current
+
+    def set_row_export_elasticity(
+        self,
+        sigma_by_industry: "dict[int, float] | None",
+        *,
+        reference: str = "row",
+        cap: float = 1.5,
+        reference_step: int = 0,
+    ) -> None:
+        """Opt in selected industries to a REAL-price-elastic export demand (WTC 2026-10-17, doc 5m).
+
+        ``reference_step`` (doc 5r): the overlay is inert (M = 1, no origin factors) until
+        ``steps_completed`` reaches it, and the reference prices are captured there instead of
+        at the first step, so the baseline's own start-up re-pricing before that step does not
+        become an export cut.  0 = the 5m behaviour.
+
+        For each listed industry s the quantity ROW buys from province p becomes
+
+            Q_s,p = Q_s,p_base x (P_s,p / P_world,s) ** (-sigma_s)
+
+        where Q_s,p_base is what the unmodified nominal budget (``compute_imports``, frozen
+        base-year sector shares) would have bought from p, P_s,p is the province's
+        production-weighted firm price and P_world,s the world price of the good: ROW's own
+        offered price for s (``reference="row"``: ``price_in_lcu``, which follows the
+        countries' aggregate price index, so a sector that becomes cheaper relative to the
+        whole economy sells more abroad in total) or the national production-weighted price
+        (``reference="national"``: the 5g form, in which the national purchase cannot grow
+        when every province moves together).  Both prices are divided by their own value at
+        the first step, so Q = Q_base at equal prices by construction.
+
+        In nominal terms this is a budget multiplier M_s = sum_p s_p (P_s,p / P_world,s)^-sigma
+        (s_p the province's lagged share of realised ROW sales of s), supplied each step by the
+        simulation (:meth:`set_row_export_elasticity_scale`) and applied in
+        :meth:`_apply_row_export_elasticity`, and the same per-province factor on ROW's origin
+        shares in the goods market (clearer.set_row_origin_multipliers), so province p's
+        quantity moves by (P_s,p / P_world,s)^-sigma relative to the unscaled split.  M_s is
+        bounded to [1/cap, cap]: the national ROW purchase of a sector cannot exceed ``cap``
+        times (or fall below 1/cap of) its base path.  Production-mode export pins are skipped
+        with a warning, as in :meth:`set_export_price_elasticity`.  None / {} clears it.
+        """
+        sig = {int(i): float(v) for i, v in (sigma_by_industry or {}).items() if float(v) > 0.0}
+        ref = str(reference or "row").lower()
+        if ref not in ("row", "national"):
+            raise ValueError(f"row export elasticity reference must be 'row' or 'national', got {reference!r}")
+        cap_f = float(cap) if cap is not None else 1.5
+        if not np.isfinite(cap_f) or cap_f < 1.0:
+            raise ValueError(f"row export elasticity cap must be >= 1, got {cap!r}")
+        step0 = int(reference_step or 0)
+        if step0 < 0:
+            raise ValueError(f"row export elasticity reference_step must be >= 0, got {reference_step!r}")
+        self._row_export_elasticity = (sig, ref, cap_f) if sig else None
+        self._row_export_elasticity_reference_step = step0
+        self._row_export_elasticity_scale = None
+        self._rowe_skipped_warned = False
+
+    def set_row_export_elasticity_scale(self, scale: "np.ndarray | None") -> None:
+        """Per-industry budget multiplier M_s for the real-price-elastic export demand, per step."""
+        self._row_export_elasticity_scale = None if scale is None else np.asarray(scale, dtype=float)
+
+    def _apply_row_export_elasticity(self) -> None:
+        """Multiply the listed industries' desired imports (nominal budget) by the bounded M_s."""
+        cfg = getattr(self, "_row_export_elasticity", None)
+        scale = getattr(self, "_row_export_elasticity_scale", None)
+        if cfg is None or scale is None:
+            return
+        sigma_by_industry, _ref, cap = cfg
+        current = np.array(self.ts.current("desired_imports_in_lcu"), dtype=float)
+        if scale.shape != current.shape:
+            logger.warning("row export elasticity scale shape %s != %s; not applied.",
+                           scale.shape, current.shape)
+            return
+        prod_pinned = getattr(self, "_last_prod_pinned", None)
+        skipped = []
+        for i in sorted(sigma_by_industry):
+            if not (0 <= i < current.size):
+                continue
+            if prod_pinned is not None and prod_pinned.shape == current.shape and prod_pinned[i]:
+                skipped.append(i)
+                continue
+            m = scale[i]
+            if np.isfinite(m) and m > 0.0:
+                # The bound is ROW's: whatever the simulation sends, the national purchase
+                # of the sector stays within [1/cap, cap] of its base path.
+                current[i] *= float(np.clip(m, 1.0 / cap, cap))
+        if skipped and not getattr(self, "_rowe_skipped_warned", False):
+            logger.warning(
+                "row export elasticity: industries %s are production-mode export pins "
+                "(residual targets); the overlay is NOT applied to them.", skipped)
+            self._rowe_skipped_warned = True
+        self.ts.desired_imports_in_lcu[-1] = current
+
     def _apply_export_demand_index(self) -> None:
         """Set pinned industries' desired imports to the residual export target."""
         index = getattr(self, "_export_demand_index", None)
@@ -469,6 +621,9 @@ class RestOfTheWorld(Agent):
             # guard at the end of this method was written to catch.
             base_exports_real[ok] = init_nom[ok] / init_p[ok]
         exp_pinned = (index > 0.0) & priced & export_mode & (base_exports_real > 0.0)
+        # Remembered for the price-elastic export overlay, which must not multiply a
+        # residual (production-mode) target: see set_export_price_elasticity.
+        self._last_prod_pinned = prod_pinned
 
         if not prod_pinned.any() and not exp_pinned.any():
             return
@@ -582,6 +737,11 @@ class RestOfTheWorld(Agent):
         # Pin before converting to USD, so the pinned path flows through everything
         # downstream (USD demand, goods-to-buy, realised exports) unchanged.
         self._apply_export_demand_index()
+        # Price-elastic export demand for opted-in industries (after the pin, so a
+        # production-mode pin can be recognised and left alone).
+        self._apply_export_price_elasticity()
+        # Real-price-elastic export demand (doc 5m): the bounded budget multiplier M_s.
+        self._apply_row_export_elasticity()
         self.ts.desired_imports_in_usd.append(
             1.0 / self.exchange_rate_usd_to_lcu * self.ts.current("desired_imports_in_lcu")
         )

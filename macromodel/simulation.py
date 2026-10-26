@@ -600,6 +600,27 @@ class Simulation:
             # not depend on which milestones the linkage happens to write.
             if getattr(row, "_production_base", None) is None:
                 row.set_production_base(production.copy())
+            # Export overlays: 5g (province price relative to the NATIONAL price of the good)
+            # and 5m (relative to the WORLD price; the national purchase can grow).  Each
+            # returns its per-province origin multipliers; the goods market gets their
+            # product, so the two can be on together (they then compound on the split).
+            row_mults = []
+            if getattr(row, "_export_price_elasticity", None) is not None:
+                m = self._update_export_price_elasticity(production, price_num)
+                if m:
+                    row_mults.append(m)
+            if getattr(row, "_row_export_elasticity", None) is not None:
+                m = self._update_row_export_elasticity(production, price_num)
+                if m:
+                    row_mults.append(m)
+            if row_mults:
+                combined = {}
+                for m in row_mults:
+                    for name, arr in m.items():
+                        combined[name] = combined[name] * arr if name in combined else np.array(arr, dtype=float)
+                clearer = self.goods_market.functions.get("clearing")
+                if clearer is not None and hasattr(clearer, "set_row_origin_multipliers"):
+                    clearer.set_row_origin_multipliers(combined)
             if getattr(row, "_export_demand_index", None) is None:
                 return
             # Countries' EXPORTS, deflated to real. NOT `row.ts.exports_real`, which is
@@ -637,6 +658,212 @@ class Simulation:
         except Exception as exc:  # noqa: BLE001 - never break the run for a diagnostic input
             logging.getLogger(__name__).warning(
                 "Could not compute domestic absorption for export pinning: %s", exc)
+
+    def _update_export_price_elasticity(self, production: np.ndarray, price_num: np.ndarray) -> None:
+        """Per-province multipliers for the price-elastic export demand (WTC 2026-10-17).
+
+        For each opted-in industry i (``RestOfTheWorld.set_export_price_elasticity``) and
+        province p:  m_p,i = (P_p,i / P_ref,i) ** (-epsilon), with P_p,i the province's
+        production-weighted firm price this step and P_ref,i the national
+        production-weighted price, BOTH divided by their own value at the first step this
+        ran -- so m = 1 at the start and in any run where every province's price moves
+        together.  M_i = sum_p s_p,i m_p,i with s_p,i the province's share of last step's
+        realised real exports of i (production share until exports exist).  M scales ROW's
+        nominal budget for i; the m_p,i re-divide it between provinces through the goods
+        market's ROW-destination origin shares (``set_row_origin_multipliers``), so
+        province p's export quantity moves by m_p,i relative to the un-scaled split.
+        Same one-step lag as the absorption above.  Never breaks the run: errors are
+        logged and the previous multipliers stay.
+        """
+        row = self.rest_of_the_world
+        log = logging.getLogger(__name__)
+        cfg = getattr(row, "_export_price_elasticity", None)
+        if cfg is None:
+            return
+        indices, epsilon = cfg
+        n = production.shape[0]
+        sel = np.zeros(n, dtype=bool)
+        for i in indices:
+            if 0 <= int(i) < n:
+                sel[int(i)] = True
+        if not sel.any():
+            return
+        # National reference price (production-weighted), 1.0 where nothing is produced.
+        p_ref = np.divide(price_num, production, out=np.ones(n), where=production > 0)
+        names = list(self.countries.keys())
+        p_prov = {}
+        prod_prov = {}
+        exports_prov = {}
+        for name, country in self.countries.items():
+            industry = np.asarray(country.firms.states["Industry"])
+            prod_f = np.asarray(country.firms.ts.current("production"), dtype=float).ravel()
+            price_f = np.asarray(country.firms.ts.current("price"), dtype=float).ravel()
+            num = np.zeros(n)
+            den = np.zeros(n)
+            np.add.at(num, industry, prod_f * price_f)
+            np.add.at(den, industry, prod_f)
+            p_prov[name] = np.divide(num, den, out=np.ones(n), where=den > 0)
+            prod_prov[name] = den
+            x = np.zeros(n)
+            try:
+                sold = np.nan_to_num(np.asarray(
+                    country.firms.ts.current("real_amount_sold_to_ROW"), dtype=float).ravel())
+                np.add.at(x, industry, sold)
+            except Exception:  # noqa: BLE001 - series absent on an old checkpoint
+                pass
+            exports_prov[name] = x
+        refs = getattr(self, "_epx_reference_prices", None)
+        if refs is None:
+            refs = {"__national__": p_ref.copy(), **{k: v.copy() for k, v in p_prov.items()}}
+            self._epx_reference_prices = refs
+            log.info(
+                "export price elasticity: reference prices captured at step %d for industries %s",
+                self.steps_completed, sorted(int(i) for i in indices))
+        rel_ref = np.divide(p_ref, refs["__national__"], out=np.ones(n),
+                            where=refs["__national__"] > 0)
+        mult = {}
+        for name in names:
+            rel_p = np.divide(p_prov[name], refs.get(name, p_prov[name]), out=np.ones(n),
+                              where=refs.get(name, p_prov[name]) > 0)
+            ratio = np.divide(rel_p, rel_ref, out=np.ones(n), where=rel_ref > 0)
+            m = np.ones(n)
+            ok = sel & np.isfinite(ratio) & (ratio > 0.0) & (prod_prov[name] > 0.0)
+            # Bounded: a province whose price index has drifted far from the national one
+            # (the small chemicals producers, 1.2-1.5x) must not go to zero or to 100x.
+            m[ok] = np.clip(ratio[ok] ** (-float(epsilon)), 0.2, 5.0)
+            mult[name] = m
+        # National scale: export-share-weighted mean of the province multipliers.
+        tot_x = np.zeros(n)
+        for name in names:
+            tot_x += exports_prov[name]
+        scale = np.ones(n)
+        for g in np.flatnonzero(sel):
+            if tot_x[g] > 0.0:
+                scale[g] = sum(exports_prov[nm][g] / tot_x[g] * mult[nm][g] for nm in names)
+            elif production[g] > 0.0:
+                scale[g] = sum(prod_prov[nm][g] / production[g] * mult[nm][g] for nm in names)
+        row.set_export_elasticity_scale(scale)
+        self._epx_calls = getattr(self, "_epx_calls", 0) + 1
+        if self._epx_calls % 4 == 1:
+            codes = list(next(iter(self.countries.values())).firms.industries)
+            for g in np.flatnonzero(sel):
+                log.info(
+                    "export price elasticity %s (eps=%.2f): M=%.4f, m by province %s",
+                    codes[g] if g < len(codes) else g, float(epsilon), float(scale[g]),
+                    {nm[-2:]: round(float(mult[nm][g]), 3) for nm in names})
+        return mult
+
+    def _update_row_export_elasticity(self, production: np.ndarray, price_num: np.ndarray) -> dict:
+        """Per-province multipliers for the REAL-price-elastic export demand (WTC 2026-10-17, doc 5m).
+
+        For each opted-in industry s (``RestOfTheWorld.set_row_export_elasticity``) and
+        province p:  m_p,s = (P_p,s / P_world,s) ** (-sigma_s), with P_p,s the province's
+        production-weighted firm price this step and P_world,s the world price of the good --
+        ROW's own offered price ``price_in_lcu[s]`` (reference "row"; it follows the countries'
+        aggregate price index, so the ratio is the sector's price relative to the economy's)
+        or the national production-weighted price (reference "national", the 5g form) -- BOTH
+        divided by their own value at the first step this ran, so m = 1 at the start and
+        wherever the two have moved together.  M_s = sum_p s_p,s m_p,s with s_p,s the
+        province's share of last step's realised real ROW sales of s (production share until
+        sales exist), bounded to [1/cap, cap].  M_s scales ROW's nominal budget for s (so the
+        national real purchase is M_s times its base path); the m_p,s re-divide it between
+        provinces through the goods market's ROW-destination origin shares, so province p's
+        quantity moves by m_p,s relative to the unscaled split.  Same one-step lag as the
+        absorption above.  Returns the per-province multipliers for the clearer; the budget
+        scale goes to ROW directly.  Logged per sector every four steps (M raw and bounded,
+        the reference index, m by province).
+        """
+        row = self.rest_of_the_world
+        log = logging.getLogger(__name__)
+        cfg = getattr(row, "_row_export_elasticity", None)
+        if cfg is None:
+            return {}
+        sigma_by_industry, reference, cap = cfg
+        n = production.shape[0]
+        sigma = np.zeros(n)
+        for i, v in sigma_by_industry.items():
+            if 0 <= int(i) < n:
+                sigma[int(i)] = float(v)
+        sel = sigma > 0.0
+        if not sel.any():
+            return {}
+        # Doc 5r: inert until the reference step (references captured there, not at step 0).
+        ref_step = int(getattr(row, "_row_export_elasticity_reference_step", 0) or 0)
+        if self.steps_completed < ref_step:
+            row.set_row_export_elasticity_scale(None)
+            return {}
+        # World price per industry.
+        if reference == "row":
+            try:
+                p_world = np.asarray(row.ts.current("price_in_lcu"), dtype=float).ravel()
+            except Exception:  # noqa: BLE001 - before the first ROW price exists
+                p_world = np.ones(n)
+            if p_world.shape[0] != n:
+                p_world = np.ones(n)
+        else:
+            p_world = np.divide(price_num, production, out=np.ones(n), where=production > 0)
+        p_world = np.where(np.isfinite(p_world) & (p_world > 0.0), p_world, 1.0)
+        names = list(self.countries.keys())
+        p_prov, prod_prov, exports_prov = {}, {}, {}
+        for name, country in self.countries.items():
+            industry = np.asarray(country.firms.states["Industry"])
+            prod_f = np.asarray(country.firms.ts.current("production"), dtype=float).ravel()
+            price_f = np.asarray(country.firms.ts.current("price"), dtype=float).ravel()
+            num = np.zeros(n)
+            den = np.zeros(n)
+            np.add.at(num, industry, prod_f * price_f)
+            np.add.at(den, industry, prod_f)
+            p_prov[name] = np.divide(num, den, out=np.ones(n), where=den > 0)
+            prod_prov[name] = den
+            x = np.zeros(n)
+            try:
+                sold = np.nan_to_num(np.asarray(
+                    country.firms.ts.current("real_amount_sold_to_ROW"), dtype=float).ravel())
+                np.add.at(x, industry, sold)
+            except Exception:  # noqa: BLE001 - series absent on an old checkpoint
+                pass
+            exports_prov[name] = x
+        refs = getattr(self, "_rowe_reference_prices", None)
+        if refs is None:
+            refs = {"__world__": p_world.copy(), **{k: v.copy() for k, v in p_prov.items()}}
+            self._rowe_reference_prices = refs
+            log.info(
+                "row export elasticity: reference prices captured at step %d for industries %s "
+                "(world price = %s)", self.steps_completed,
+                sorted(int(i) for i in sigma_by_industry), reference)
+        rel_world = np.divide(p_world, refs["__world__"], out=np.ones(n), where=refs["__world__"] > 0)
+        mult = {}
+        for name in names:
+            ref_p = refs.get(name, p_prov[name])
+            rel_p = np.divide(p_prov[name], ref_p, out=np.ones(n), where=ref_p > 0)
+            ratio = np.divide(rel_p, rel_world, out=np.ones(n), where=rel_world > 0)
+            m = np.ones(n)
+            ok = sel & np.isfinite(ratio) & (ratio > 0.0) & (prod_prov[name] > 0.0)
+            # Bounded per province as in 5g: a drifted small producer must not go to 0 or 100x.
+            m[ok] = np.clip(ratio[ok] ** (-sigma[ok]), 0.2, 5.0)
+            mult[name] = m
+        tot_x = np.zeros(n)
+        for name in names:
+            tot_x += exports_prov[name]
+        raw = np.ones(n)
+        for g in np.flatnonzero(sel):
+            if tot_x[g] > 0.0:
+                raw[g] = sum(exports_prov[nm][g] / tot_x[g] * mult[nm][g] for nm in names)
+            elif production[g] > 0.0:
+                raw[g] = sum(prod_prov[nm][g] / production[g] * mult[nm][g] for nm in names)
+        scale = np.where(sel, np.clip(raw, 1.0 / cap, cap), 1.0)
+        row.set_row_export_elasticity_scale(scale)
+        self._rowe_calls = getattr(self, "_rowe_calls", 0) + 1
+        if self._rowe_calls % 4 == 1:
+            codes = list(next(iter(self.countries.values())).firms.industries)
+            for g in np.flatnonzero(sel):
+                log.info(
+                    "row export elasticity %s (sigma=%.2f, ref=%s): M=%.4f (raw %.4f, bound [%.3f, %.3f]), "
+                    "world index %.4f, m by province %s",
+                    codes[g] if g < len(codes) else g, float(sigma[g]), reference, float(scale[g]),
+                    float(raw[g]), 1.0 / cap, cap, float(rel_world[g]),
+                    {nm[-2:]: round(float(mult[nm][g]), 3) for nm in names})
+        return mult
 
     def shallow_df_dict(self):
         """Create a dictionary of shallow (summary) DataFrames for each country.

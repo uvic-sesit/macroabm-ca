@@ -388,6 +388,7 @@ def build_link_prehook(
     capacity_factor_from_cer: bool = False,
     electricity_own_use: bool = False,
     household_energy_quantities: bool = False,
+    household_quantity_conserve_budget: bool = False,
     firm_energy_quantities: bool = False,
     quantity_anchor_floor: float = 0.0,
     quantity_anchor_conserve_total: bool = False,
@@ -407,8 +408,40 @@ def build_link_prehook(
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
     extra_export_mode_industries: set[str] | None = None,
+    feedstock_pairs: set[tuple[str, str]] | None = None,
+    intensity_only_sectors: set[str] | None = None,
 ):
     """Create a simulation pre-hook that calls firms.link() at milestone years.
+
+    ``intensity_only_sectors``: buyer industries EXEMPT from the firm quantity anchor
+    (the LEVEL pin) while keeping the intensity target ``link()`` writes for every fuel
+    (the per-unit LEVEL and MIX of the source).  Their energy purchases then scale
+    with their own output at the source's intensity and mix: the source sets energy
+    per unit of output, the model sets output.  Opt-in (WTC supply-side sensitivity,
+    doc 5h).  The exempt rows are also left out of the source-side totals the anchor
+    conserves (``quantity_anchor_conserve_total``), on both sides of the ratio, so
+    the anchored total of the REMAINING rows still grows at the source's rate over
+    those same rows.  Measured on the WTC ``_CP_TT_EX`` pair (2026-10-17): the
+    conserve step holds Alberta's anchored electricity total to the source's index
+    (model 1.150 vs CIMS 1.159 in 2040), but land transport's electricity base in
+    the model is 4.5% of Alberta's industrial electricity against 0.5% for CIMS's
+    freight, so CIMS's 7-15x freight electrification lands on a 9x oversized base
+    and the rescale pushes every other anchored row to 0.78-0.80 of its baseline
+    purchases in the arm -- chemicals' electricity at 0.72 of 2022 against CIMS's
+    1.15.  Feedstock pairs are unaffected (still exempt from both channels).
+
+    ``feedstock_pairs``: (buyer industry, energy good) pairs exempt from BOTH the
+    intensity target and the firm quantity anchor.  A refinery's B06 column is
+    crude feedstock, chemicals' B06 column is gas feedstock; neither is end-use
+    energy, neither appears in the source's demand file, yet the anchor was
+    scaling the whole coefficient by the source's industrial natural-gas path
+    (2022 scheme: "Natural Gas" -> B06).  Measured on the 2026-08-25 CORE pair at
+    2050: NB C19 crude input 6.0 -> 1.7 $bn at flat output under the Net-zero
+    demand path (value added +$6.3bn), while AB/BC/SK refineries ran crude inputs
+    ABOVE output (0.51 -> 1.14 of output in AB, GVA -$5.2bn).  Exempt pairs keep
+    their IO coefficient and scale with output; the small genuine energy part of
+    the purchase (refinery fuel gas) no longer follows the source.  Opt-in; None
+    is bit-identical.
 
     The hook loads the anchor-year and current-year energy/capital intensity
     matrices and passes them to ``firms.link()`` so it can set energy-per-output
@@ -421,6 +454,26 @@ def build_link_prehook(
     the C10T12 flat export pin, arm IESP).
     """
     export_mode_excluded = _PRODUCTION_TARGET_EXCLUDED | set(extra_export_mode_industries or ())
+    feedstock_pairs = set(feedstock_pairs or ())
+    if feedstock_pairs:
+        logger.info("feedstock pairs exempt from the linkage: %s", sorted(feedstock_pairs))
+    intensity_only_sectors = {str(c).strip() for c in (intensity_only_sectors or ()) if str(c).strip()}
+    if intensity_only_sectors:
+        _unknown = sorted(c for c in intensity_only_sectors if c not in industries)
+        if _unknown:
+            raise ValueError(
+                f"intensity_only_sectors names industries the model does not have: {_unknown}"
+            )
+        if not firm_energy_quantities:
+            logger.warning(
+                "intensity_only_sectors=%s set without firm_energy_quantities: nothing is "
+                "anchored by level anyway, the key has NO effect.", sorted(intensity_only_sectors)
+            )
+        logger.info(
+            "INTENSITY-ONLY sectors (exempt from the firm quantity anchor; CIMS intensity and "
+            "mix per fuel kept, level follows their own output; excluded from the "
+            "conserve-total set on both sides): %s", sorted(intensity_only_sectors)
+        )
     energy_codes = sector_map.energy_bundle_for(industries)
     comparable_codes = sector_map.comparable_for(industries)
     energy_indices = [industries.index(code) for code in energy_codes if code in industries]
@@ -847,6 +900,7 @@ def build_link_prehook(
                         px,
                         increments=hh_increments or None,
                         energy_indices=energy_indices,
+                        conserve_budget=household_quantity_conserve_budget,
                     )
                     logger.info(
                         "household quantity anchor: region=%s year=%s targets=%s "
@@ -884,6 +938,7 @@ def build_link_prehook(
                 linkage_owns_coefficients=linkage_owns_coefficients,
                 additive_intensity=additive_intensity,
                 transition_capital=tc,
+                excluded_pairs=feedstock_pairs or None,
             )
 
             # AFTER link(), which has just rewritten these same capital coefficients
@@ -1048,10 +1103,21 @@ def build_link_prehook(
                 # left the other two thirds to grow with whatever the model did --
                 # which is why the anchored pairs hit 96-98% of target while provincial
                 # demand still ran -31% to +126% against CER.
+                exempt_pairs_seen = 0
                 for i_code in rq.index:
                     if i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries:
                         continue
                     if i_code not in rq_anchor_f.index:
+                        continue
+                    if i_code in intensity_only_sectors:
+                        # Intensity-only: link() has written the source's per-fuel
+                        # intensity for this row; no level pin on top of it.
+                        exempt_pairs_seen += sum(
+                            1 for j_code in energy_codes
+                            if j_code in industries and j_code != i_code
+                            and (i_code, j_code) not in feedstock_pairs
+                            and j_code in rq.columns and j_code in rq_anchor_f.columns
+                        )
                         continue
                     # Denominator for the negligible-pair guard: this industry's TOTAL
                     # anchor-year energy demand.  See `_quantity_anchor_spec`.
@@ -1065,6 +1131,8 @@ def build_link_prehook(
                             # purchase before producing), the failure mode
                             # `set_transmission_loss_rate` documents.
                             continue
+                        if (i_code, j_code) in feedstock_pairs:
+                            continue  # feedstock, not fuel: see build_link_prehook
                         if j_code not in rq.columns or j_code not in rq_anchor_f.columns:
                             continue
                         spec = _quantity_anchor_spec(
@@ -1096,7 +1164,11 @@ def build_link_prehook(
                         cur = base = 0.0
                         for i_code in rq.index:
                             if (i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries
-                                    or i_code == j_code or i_code not in rq_anchor_f.index):
+                                    or i_code == j_code or i_code not in rq_anchor_f.index
+                                    or (i_code, j_code) in feedstock_pairs
+                                    or i_code in intensity_only_sectors):
+                                # Intensity-only rows are not in the anchored set, so
+                                # they must not be in the total it is conserved to.
                                 continue
                             if j_code not in rq.columns or j_code not in rq_anchor_f.columns:
                                 continue
@@ -1128,6 +1200,30 @@ def build_link_prehook(
                         {k: round(float(np.median(v)), 5)
                          for k, v in sorted(inc_by_fuel.items())},
                     )
+                    if intensity_only_sectors:
+                        # Open-loop check for the exempt rows: realised energy per unit
+                        # of output last step against the coefficient link() wrote.
+                        # A ratio near 1 for every fuel means the written intensity
+                        # (and so the mix) is what the firms buy; a uniform shortfall
+                        # across fuels is stock timing or rationing, not a mix drift.
+                        _pairs = [
+                            (i_code, j_code)
+                            for i_code in sorted(intensity_only_sectors)
+                            for j_code in energy_codes
+                            if j_code in industries and j_code != i_code
+                            and (i_code, j_code) not in feedstock_pairs
+                        ]
+                        _ratios = country.firms.realised_vs_written_intensity(
+                            _pairs, industries
+                        )
+                        logger.info(
+                            "intensity-only rows: region=%s year=%s exempt pairs=%d "
+                            "(left out of the level anchor and the conserve set); "
+                            "realised/written energy intensity last step by row and fuel=%s",
+                            cims_region, year, exempt_pairs_seen,
+                            {i: {j: round(v, 3) for j, v in d.items()}
+                             for i, d in _ratios.items()},
+                        )
                 else:
                     logger.warning(
                         "firm_energy_quantities is ENABLED but no (industry, energy) "
@@ -1225,6 +1321,181 @@ def apply_import_limits(
         )
 
 
+# Energy goods never get the price-elastic export overlay: their prices are exogenous
+# CIMS paths (regional by construction) and their quantities are CIMS-anchored.
+EXPORT_PRICE_ELASTICITY_EXCLUDED = ("D", "C19", "B06")
+
+
+def apply_export_price_elasticity(
+    sim: Simulation, codes: str | None, epsilon: float | None, industries: list[str]
+) -> list[int]:
+    """Opt selected trade-exposed sectors into a price-elastic export demand (WTC, doc 5g).
+
+    ROW's import budget for a listed sector is scaled each step by
+    M_i = sum_p s_p,i (P_p,i / P_ref,i)^(-epsilon) and re-divided between provinces with
+    the same per-province factor, where P_p,i is the province's production-weighted firm
+    price and P_ref,i the national one, both relative to their first-step value (see
+    ``Simulation._update_export_price_elasticity``).  Energy goods (D, C19, B06) are
+    excluded; unknown codes are skipped with a warning.  A no-op when nothing is listed
+    or epsilon is None.  Applied after build or restore, like the import limits.
+    """
+    wanted = [c.strip() for c in str(codes or "").split(",") if c.strip()]
+    if not wanted or epsilon is None:
+        return []
+    excluded = [c for c in wanted if c in EXPORT_PRICE_ELASTICITY_EXCLUDED]
+    unknown = [c for c in wanted if c not in industries and c not in excluded]
+    kept = [c for c in wanted if c in industries and c not in excluded]
+    if excluded:
+        logger.warning("Export price elasticity: energy goods %s excluded by design.", excluded)
+    if unknown:
+        logger.warning("Export price elasticity: sectors %s not in model industries; ignoring.", unknown)
+    indices = [industries.index(c) for c in kept]
+    if not indices:
+        logger.warning("Export price elasticity requested but no eligible sector remains; OFF.")
+        return []
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is None or not hasattr(clearer, "set_row_origin_multipliers"):
+        raise RuntimeError(
+            "export price elasticity needs a goods-market clearer with "
+            "set_row_origin_multipliers; without it the national budget would be scaled "
+            "but never re-divided between provinces."
+        )
+    sim.rest_of_the_world.set_export_price_elasticity(indices, float(epsilon))
+    logger.info(
+        "Export price elasticity overlay ON: epsilon=%.3f, sectors=%s (indices %s); "
+        "excluded energy goods=%s; ROW budget x M_i and ROW origin shares x m_p,i "
+        "(prices relative to first step; (P_p/P_ref)^-eps clipped to [0.2, 5]).",
+        float(epsilon), kept, indices, excluded,
+    )
+    return indices
+
+
+def parse_row_export_sigma(spec, codes: list[str]) -> dict[str, float]:
+    """Per-sector sigma for the real-price-elastic export demand (doc 5m).
+
+    ``spec`` is one number (the same sigma for every listed sector), a mapping
+    ``{code: sigma}``, or a string ``"3"`` / ``"C20:3,C23:1.5"``.  Sectors listed without a
+    sigma of their own take the single number if one was given; a sector with no sigma at
+    all is an error, so a typo cannot silently leave a sector out.
+    """
+    default = None
+    per: dict[str, float] = {}
+    if spec is None:
+        return {}
+    if isinstance(spec, dict):
+        per = {str(k).strip(): float(v) for k, v in spec.items()}
+    elif isinstance(spec, (int, float)):
+        default = float(spec)
+    else:
+        for part in str(spec).split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if ":" in part:
+                k, v = part.split(":", 1)
+                per[k.strip()] = float(v)
+            else:
+                default = float(part)
+    out = {}
+    for c in codes:
+        if c in per:
+            out[c] = per[c]
+        elif default is not None:
+            out[c] = default
+        else:
+            raise ValueError(f"row export elasticity: no sigma for sector {c!r} in {spec!r}")
+    extra = sorted(set(per) - set(codes))
+    if extra:
+        logger.warning("row export elasticity: sigma given for sectors not listed (%s); ignored.", extra)
+    return out
+
+
+def apply_row_export_elasticity(
+    sim: Simulation, codes: str | None, sigma, reference: str | None, cap: float | None,
+    industries: list[str], reference_step: int = 0,
+) -> dict[int, float]:
+    """Opt selected trade-exposed sectors into a REAL-price-elastic export demand (WTC, doc 5m).
+
+    The quantity ROW buys from province p of sector s becomes
+    Q_s,p = Q_s,p_base x (P_s,p / P_world,s)^(-sigma_s), with P_world,s ROW's own offered price
+    for s (``reference="row"``, default: the sector's price relative to the economy's, so the
+    national purchase can grow) or the national production-weighted price (``"national"``,
+    the 5g form).  Both are indexed to their first-step value (no change at equal prices by
+    construction); the national ROW purchase of a sector is bounded to [1/cap, cap] of its
+    base path.  See ``Simulation._update_row_export_elasticity`` and
+    ``RestOfTheWorld.set_row_export_elasticity``.  Energy goods (D, C19, B06) are excluded;
+    unknown codes are skipped with a warning.  A no-op when nothing is listed or sigma is
+    None.  Applied after build or restore, like the 5g overlay.
+    """
+    wanted = [c.strip() for c in str(codes or "").split(",") if c.strip()]
+    if not wanted or sigma is None:
+        return {}
+    excluded = [c for c in wanted if c in EXPORT_PRICE_ELASTICITY_EXCLUDED]
+    unknown = [c for c in wanted if c not in industries and c not in excluded]
+    kept = [c for c in wanted if c in industries and c not in excluded]
+    if excluded:
+        logger.warning("Row export elasticity: energy goods %s excluded by design.", excluded)
+    if unknown:
+        logger.warning("Row export elasticity: sectors %s not in model industries; ignoring.", unknown)
+    if not kept:
+        logger.warning("Row export elasticity requested but no eligible sector remains; OFF.")
+        return {}
+    sigma_by_code = parse_row_export_sigma(sigma, kept)
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is None or not hasattr(clearer, "set_row_origin_multipliers"):
+        raise RuntimeError(
+            "row export elasticity needs a goods-market clearer with "
+            "set_row_origin_multipliers; without it the national budget would be scaled "
+            "but never re-divided between provinces."
+        )
+    ref = str(reference or "row").lower()
+    cap_f = 1.5 if cap is None else float(cap)
+    sigma_by_index = {industries.index(c): v for c, v in sigma_by_code.items()}
+    step0 = int(reference_step or 0)
+    sim.rest_of_the_world.set_row_export_elasticity(
+        sigma_by_index, reference=ref, cap=cap_f, reference_step=step0)
+    if getattr(sim.rest_of_the_world, "_export_price_elasticity", None) is not None:
+        logger.warning(
+            "Row export elasticity (5m) is ON together with the 5g export_price_elasticity "
+            "overlay: the two compound on ROW's origin split (sigma + eps on the province "
+            "relative price)."
+        )
+    logger.info(
+        "REAL-price-elastic export demand ON (doc 5m): sigma by sector %s (indices %s), "
+        "world price = %s, national purchase bounded to [%.3f, %.3f] x base path; "
+        "excluded energy goods=%s; ROW budget x M_s and ROW origin shares x m_p,s "
+        "(prices relative to step %d, inert before it; (P_p/P_world)^-sigma clipped to [0.2, 5] per province).",
+        sigma_by_code, sigma_by_index, ref, 1.0 / cap_f, cap_f, excluded, step0,
+    )
+    return sigma_by_index
+
+
+def apply_row_first_clearing(sim: Simulation, codes: str | None, industries: list[str], mode: str = "all") -> list[int]:
+    """Serve ROW's directed orders for the listed sectors before domestic buyers (WTC, doc 5r).
+
+    See ``WaterBucketGoodsMarketClearer.set_row_first_industries``: a pre-pass in which each
+    province offers all its supply of the sector to ROW's orders directed at it, ahead of
+    the province-to-province passes.  Unknown codes are skipped with a warning; a no-op
+    when nothing is listed.  Raises if the clearer has no such hook.  Applied after build or
+    restore, like the export overlays.
+    """
+    wanted = [c.strip() for c in str(codes or "").split(",") if c.strip()]
+    if not wanted:
+        return []
+    unknown = [c for c in wanted if c not in industries]
+    if unknown:
+        logger.warning("ROW-first clearing: sectors %s not in model industries; ignoring.", unknown)
+    idx = [industries.index(c) for c in wanted if c in industries]
+    clearer = sim.goods_market.functions.get("clearing")
+    if clearer is None or not hasattr(clearer, "set_row_first_industries"):
+        raise RuntimeError("ROW-first clearing needs a goods-market clearer with set_row_first_industries.")
+    clearer.set_row_first_industries(idx, mode=mode)
+    logger.info(
+        "ROW-first clearing ON (doc 5r, mode=%s): ROW's directed orders for %s (indices %s) are served "
+        "before the province-to-province passes.", mode, [c for c in wanted if c in industries], idx)
+    return idx
+
+
 def industry_indices_for(codes: str | None, industries: list[str]) -> list[int]:
     """Resolve a comma-separated list of macro sector codes to industry indices.
 
@@ -1320,6 +1591,9 @@ def build_simulation(
     seed: int,
     firms_bundles: list[list[int]] | None = None,
     use_obps_reg: bool = False,
+    household_bundles: list[list[int]] | None = None,
+    household_elasticity: float | None = None,
+    household_income_driven: bool = False,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     labour_force_cap: dict[str, float] | None = None,
@@ -1334,6 +1608,19 @@ def build_simulation(
     tfp_investment_effectiveness: float | None = None,
     price_setting_noise_std: float | None = None,
     price_setting_speed_gf: float | None = None,
+    price_setting_speed_cp: float | None = None,
+    price_setting_speed_dp: float | None = None,
+    price_setting_cost_push_basis: str | None = None,
+    trade_temperature: float | None = None,
+    firm_growth_ignore_price: bool = False,
+    origin_shortfall_signal: float | None = None,
+    domestic_only_industries: list[str] | None = None,
+    firm_price_advantage_growth: float | None = None,
+    origin_shortfall_relative: bool = False,
+    firm_price_advantage_change_growth: float | None = None,
+    firm_price_advantage_window: int | None = None,
+    firm_unit_cost_change_growth: float | None = None,
+    firm_unit_cost_window: int | None = None,
     labour_index_base_year: int | None = None,
 ) -> Simulation:
     """Build a provincial Simulation, optionally with the candidate growth baseline.
@@ -1349,7 +1636,8 @@ def build_simulation(
     """
     config = build_simulation_configuration(
         len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles,
-        use_obps_reg=use_obps_reg,
+        use_obps_reg=use_obps_reg, household_bundles=household_bundles,
+        household_elasticity=household_elasticity,
     )
 
     if use_candidate_baseline:
@@ -1369,6 +1657,16 @@ def build_simulation(
                 unmet_demand_weight=unmet_demand_weight,
                 demand_smoothing=demand_smoothing,
             )
+    if household_income_driven:
+        # Opt-in (2026-09-20, Atlantic intertie alternatives): households' consumption
+        # follows their income instead of the candidate baseline's exogenous total path.
+        # The exogenous total pins REAL consumption, so a price cut cannot raise real
+        # spending by construction; this releases that pin (and with it the household
+        # part of the growth calibration -- compare pairs on this setting, not levels).
+        name = "CESHouseholdConsumption" if household_bundles else "DefaultHouseholdConsumption"
+        for province in CANADIAN_PROVINCES:
+            config.country_configurations[province].households.functions.consumption.name = name
+        logger.info("Household consumption INCOME-DRIVEN (%s), exogenous total released.", name)
     if exogenous_energy_prices:
         # CER supplies price trajectories for the energy bundle; pin those industries'
         # prices to them so the endogenous price channel cannot feed back into demand.
@@ -1424,6 +1722,37 @@ def build_simulation(
             price_setting_speed_gf,
         )
 
+    if (price_setting_speed_cp is not None or price_setting_speed_dp is not None
+            or price_setting_cost_push_basis is not None):
+        # Cost-push and demand-pull terms of `DefaultPriceSetter`, both shipped at 0.0.
+        # cost_push = unit_cost / sector_average_price - 1 (clipped +/-10% per step), so a
+        # positive speed pulls every firm's price LEVEL toward its unit cost (wages +
+        # intermediates + capital inputs + production taxes per unit): a cheaper input is
+        # passed on instead of widening the margin, and a sector priced below cost reprices
+        # upward. demand_pull = demand / supply - 1 on the CANVAS condition (below-average
+        # price with excess demand, or above-average with excess supply). Sectors on an
+        # exogenous price path (SectorExogenousPriceSetter, e.g. D under
+        # --exogenous-energy-prices) are unaffected. Added for the WTC pass-through
+        # sensitivity (2026-10-16).
+        for province in CANADIAN_PROVINCES:
+            prices_fn = config.country_configurations[province].firms.functions.prices
+            if price_setting_speed_cp is not None:
+                prices_fn.parameters["price_setting_speed_cp"] = float(price_setting_speed_cp)
+            if price_setting_speed_dp is not None:
+                prices_fn.parameters["price_setting_speed_dp"] = float(price_setting_speed_dp)
+            if price_setting_cost_push_basis is not None:
+                # "level" (shipped): price pulled toward unit cost, which excludes the operating
+                # surplus -- at cp=0.5 the whole economy deflated and collapsed (2026-10-16).
+                # "change": price follows the firm's own unit-cost change; margins are kept.
+                prices_fn.parameters["cost_push_basis"] = str(price_setting_cost_push_basis)
+        logger.info(
+            "Price adjustment speeds overridden: price_setting_speed_cp=%s price_setting_speed_dp=%s "
+            "cost_push_basis=%s (shipped 0.0 / 0.0 / level)",
+            price_setting_speed_cp,
+            price_setting_speed_dp,
+            price_setting_cost_push_basis,
+        )
+
     if price_setting_noise_std is not None:
         # Idiosyncratic price noise. `DefaultPriceSetter` multiplies each firm's PREVIOUS
         # price by (1 + N(0, std)) every step, and both economic terms that could pull a
@@ -1449,7 +1778,199 @@ def build_simulation(
             price_setting_noise_std,
         )
 
+    if firm_growth_ignore_price:
+        # Firm-specific growth for ANY sold-out firm (WTC 2026-10-17, doc 5i). The shipped
+        # DefaultGrowthEstimator grants growth to a sold-out firm only when its price is at
+        # or above the sector average, so a firm that is sold out because it is CHEAPER gets
+        # no growth signal: the cost advantage reaches its price and its order book and is
+        # discarded at the planning step. Measured 5c-5h: Alberta's electricity-intensive
+        # sectors are sold out and 1-2% cheaper in the noREM arm and never expand.
+        for province in config.country_configurations:
+            ge = config.country_configurations[province].firms.functions.growth_estimator
+            if ge.name != "DefaultGrowthEstimator":
+                raise RuntimeError(
+                    f"firm_growth_ignore_price needs DefaultGrowthEstimator, got {ge.name} in {province}")
+            ge.parameters["ignore_price_when_sold_out"] = True
+        logger.info(
+            "Firm growth rule overridden: sold-out firms grow by demand/supply - 1 regardless "
+            "of their price relative to the sector average (shipped: only if price >= average).")
+
+    if firm_price_advantage_growth is not None and float(firm_price_advantage_growth) > 0.0:
+        # RELATIVE form of the sold-out growth signal (WTC 2026-10-17, doc 5j). A sold-out
+        # firm priced BELOW the sector average grows by k x (average / price - 1) x
+        # (demand / supply): zero at the average price, so firms that are merely sold out
+        # (the model's normal state, doc 5i) are untouched and only a firm that became
+        # cheaper than its competitors expands, in proportion to its advantage.
+        for province in config.country_configurations:
+            ge = config.country_configurations[province].firms.functions.growth_estimator
+            if ge.name != "DefaultGrowthEstimator":
+                raise RuntimeError(
+                    f"firm_price_advantage_growth needs DefaultGrowthEstimator, got {ge.name} in {province}")
+            ge.parameters["price_advantage_growth"] = float(firm_price_advantage_growth)
+        logger.info(
+            "Firm growth rule (relative): a sold-out firm priced below the sector average grows "
+            "by %.3f x (average / price - 1) x (demand / supply); shipped 0.0 (no growth for a "
+            "cheap sold-out firm).", float(firm_price_advantage_growth))
+
+    if firm_price_advantage_change_growth is not None and float(firm_price_advantage_change_growth) > 0.0:
+        # CHANGE-keyed form of the sold-out growth signal (WTC 2026-10-17, doc 5k). Doc 5j
+        # measured that the LEVEL of a firm's relative price is not a calibration state
+        # (two-thirds of firms are cheaper than average AND sold out in the baseline, median
+        # advantage 1.6-1.8%, the cost pass-through's own cross-province dispersion), so the
+        # level form reproduces half of 5i's boom. This form keys on the CHANGE of the
+        # firm's position over a window of L steps: growth = k x max(adv_t - adv_{t-L}, 0)
+        # x (demand / supply) with adv = average / price - 1, for a sold-out firm priced
+        # below the average. Zero in a stationary baseline by construction; an impulse of L
+        # steps after a relative price fall in the arm.
+        _window = int(firm_price_advantage_window) if firm_price_advantage_window is not None else 4
+        if _window < 1:
+            raise RuntimeError(f"firm_price_advantage_window must be >= 1, got {_window}")
+        for province in config.country_configurations:
+            ge = config.country_configurations[province].firms.functions.growth_estimator
+            if ge.name != "DefaultGrowthEstimator":
+                raise RuntimeError(
+                    f"firm_price_advantage_change_growth needs DefaultGrowthEstimator, got {ge.name} in {province}")
+            ge.parameters["price_advantage_change_growth"] = float(firm_price_advantage_change_growth)
+            ge.parameters["price_advantage_window"] = _window
+        logger.info(
+            "Firm growth rule (CHANGE-keyed, doc 5k): a sold-out firm priced below the sector "
+            "average grows by %.3f x max(adv_t - adv_{t-%d}, 0) x (demand / supply), adv = "
+            "average / price - 1; shipped 0.0 (no growth for a cheap sold-out firm).",
+            float(firm_price_advantage_change_growth), _window)
+    elif firm_price_advantage_window is not None:
+        raise RuntimeError("firm_price_advantage_window needs firm_price_advantage_change_growth > 0")
+
+    if firm_unit_cost_change_growth is not None and float(firm_unit_cost_change_growth) > 0.0:
+        # OWN-COST-keyed form of the sold-out growth signal (WTC 2026-10-17, doc 5o): a
+        # sold-out firm grows by k x max(1 - c_t / mean(c_{t-L..t-1}), 0) x (demand / supply)
+        # with c its REAL unit cost (unit cost over the province's production-weighted price
+        # level).  Fires for exactly the firms whose real unit cost is falling; zero for a
+        # flat or rising cost, so the baseline is touched only where its own costs fall.
+        _ucw = int(firm_unit_cost_window) if firm_unit_cost_window is not None else 4
+        if _ucw < 1:
+            raise RuntimeError(f"firm_unit_cost_window must be >= 1, got {_ucw}")
+        for province in config.country_configurations:
+            ge = config.country_configurations[province].firms.functions.growth_estimator
+            if ge.name != "DefaultGrowthEstimator":
+                raise RuntimeError(
+                    f"firm_unit_cost_change_growth needs DefaultGrowthEstimator, got {ge.name} in {province}")
+            ge.parameters["unit_cost_change_growth"] = float(firm_unit_cost_change_growth)
+            ge.parameters["unit_cost_window"] = _ucw
+        logger.info(
+            "Firm growth rule (OWN-COST-keyed, doc 5o): a sold-out firm grows by %.3f x "
+            "max(1 - c_t / mean(c_{t-%d..t-1}), 0) x (demand / supply), c = real unit cost; "
+            "shipped 0.0.", float(firm_unit_cost_change_growth), _ucw)
+    elif firm_unit_cost_window is not None:
+        raise RuntimeError("firm_unit_cost_window needs firm_unit_cost_change_growth > 0")
+
+    if trade_temperature is not None:
+        # Price sensitivity of the goods market's ORIGIN shares. `get_trade_proportions`
+        # (lib_water_bucket.py) scales each origin's default share of a buyer's purchases
+        # by exp(-trade_temperature x origin_price) and renormalises; the clearer divides
+        # each origin's price by its own price at the first clearing (ROW's offered price
+        # carries the data's exchange rate, ~1.3-1.5x the provinces' 1.0 index), so a
+        # relative price change dp of one origin moves its share w by about
+        # -T x dp x w(1-w). Shipped 0.0: origin shares frozen at the base-year IO split,
+        # so no buyer switches supplier on price. One goods market for the whole
+        # simulation (one parameter, not per province). Only meaningful with
+        # price_setting_noise_std = 0: same-industry prices across provinces random-walk
+        # 10-17% apart by 2040 on the shipped noise, several times any cost signal.
+        # Added for the WTC origin-switching sensitivity (2026-10-17).
+        config.goods_market_configuration.functions.clearing.parameters["trade_temperature"] = (
+            float(trade_temperature)
+        )
+        logger.info(
+            "Trade temperature overridden: trade_temperature=%s (shipped 0.0)", trade_temperature,
+        )
+
     sim = Simulation.from_datawrapper(datawrapper=data, simulation_configuration=config)
+    if origin_shortfall_signal is not None and float(origin_shortfall_signal) > 0.0:
+        # Orders DIRECTED at an origin that the origin could not fill are booked as that
+        # origin's excess demand (damped by this fraction), instead of vanishing into the
+        # pool that fills them from whichever province has slack (WTC 2026-10-17, doc 5i).
+        # Without it a sold-out province never sees the orders the goods market tried to
+        # place with it, so its demand estimate -- and its plan -- cannot grow.
+        clearer = sim.goods_market.functions.get("clearing")
+        if clearer is None or not hasattr(clearer, "set_origin_shortfall_signal"):
+            raise RuntimeError("origin_shortfall_signal needs a clearer with set_origin_shortfall_signal")
+        clearer.set_origin_shortfall_signal(float(origin_shortfall_signal), relative=bool(origin_shortfall_relative))
+        if origin_shortfall_relative:
+            if not getattr(clearer, "_origin_shortfall_relative", False):
+                raise RuntimeError("origin_shortfall_relative did not reach the clearer")
+            logger.info(
+                "Origin shortfall signal ON (RELATIVE, doc 5j): %.2f x min(orders the price-adjusted "
+                "origin shares moved toward the origin beyond its default share, unfilled directed "
+                "orders) booked as its sellers' excess demand; zero where the shares sit at their "
+                "calibrated defaults.", float(origin_shortfall_signal))
+        else:
+            logger.info(
+                "Origin shortfall signal ON: %.2f of each origin's unfilled directed orders booked "
+                "as its sellers' excess demand (shipped 0.0: pooled, no signal to the origin).",
+                float(origin_shortfall_signal))
+    elif origin_shortfall_relative:
+        raise RuntimeError("origin_shortfall_relative needs origin_shortfall_signal > 0")
+    if domestic_only_industries:
+        # Non-tradable goods (WTC Atlantic PEI artefact, doc 5x): every participant buys them
+        # only from itself, in the pair passes, the pool and the ROW backstop.
+        clearer = sim.goods_market.functions.get("clearing")
+        if clearer is None or not hasattr(clearer, "set_domestic_only_industries"):
+            raise RuntimeError("domestic_only_industries needs a clearer with set_domestic_only_industries")
+        missing = [c for c in domestic_only_industries if c not in data.industries]
+        if missing:
+            raise RuntimeError(f"domestic_only_industries: unknown industries {missing}")
+        clearer.set_domestic_only_industries([data.industries.index(c) for c in domestic_only_industries])
+        logger.info("Domestic-only (non-tradable) industries: %s", list(domestic_only_industries))
+    if firm_growth_ignore_price:
+        _ge = next(iter(sim.countries.values())).firms.functions.get("growth_estimator")
+        if not getattr(_ge, "ignore_price_when_sold_out", False):
+            raise RuntimeError("firm_growth_ignore_price did not reach the growth estimator")
+        logger.info("Growth estimator %s built with ignore_price_when_sold_out=True", type(_ge).__name__)
+    if firm_price_advantage_growth is not None and float(firm_price_advantage_growth) > 0.0:
+        _ge = next(iter(sim.countries.values())).firms.functions.get("growth_estimator")
+        _got = float(getattr(_ge, "price_advantage_growth", 0.0) or 0.0)
+        if abs(_got - float(firm_price_advantage_growth)) > 1e-12:
+            raise RuntimeError(
+                f"firm_price_advantage_growth did not reach the growth estimator (got {_got})")
+        logger.info("Growth estimator %s built with price_advantage_growth=%s", type(_ge).__name__, _got)
+    if firm_price_advantage_change_growth is not None and float(firm_price_advantage_change_growth) > 0.0:
+        _ge = next(iter(sim.countries.values())).firms.functions.get("growth_estimator")
+        _got = float(getattr(_ge, "price_advantage_change_growth", 0.0) or 0.0)
+        _got_w = int(getattr(_ge, "price_advantage_window", 0) or 0)
+        _want_w = int(firm_price_advantage_window) if firm_price_advantage_window is not None else 4
+        if abs(_got - float(firm_price_advantage_change_growth)) > 1e-12 or _got_w != _want_w:
+            raise RuntimeError(
+                "firm_price_advantage_change_growth / window did not reach the growth estimator "
+                f"(got k={_got}, window={_got_w}; wanted k={firm_price_advantage_change_growth}, window={_want_w})")
+        logger.info("Growth estimator %s built with price_advantage_change_growth=%s, price_advantage_window=%d",
+                    type(_ge).__name__, _got, _got_w)
+    if trade_temperature is not None:
+        clearer = sim.goods_market.functions.get("clearing")
+        got = getattr(clearer, "trade_temperature", None)
+        logger.info(
+            "Goods-market clearer %s built with trade_temperature=%s",
+            type(clearer).__name__, got,
+        )
+        if got is None or abs(float(got) - float(trade_temperature)) > 1e-12:
+            raise RuntimeError(
+                f"trade_temperature={trade_temperature} did not reach the goods-market clearer (got {got})"
+            )
+        if exogenous_energy_prices and hasattr(clearer, "set_trade_temperature_neutral_industries"):
+            # Sectors on an exogenous (CIMS) price path keep their default origin split:
+            # their provincial price LEVELS differ by construction (regional fuel and
+            # power prices), their quantities are anchored, and D's origin shares are
+            # written from COPPER's interchange -- a price-driven re-sourcing of those
+            # would double count the supply channel, not test buyer switching.
+            pinned: set[str] = set()
+            for name, country in data.synthetic_countries.items():
+                exo = getattr(country, "firm_exo_prices", None)
+                if exo is not None and getattr(exo, "prices", None) is not None:
+                    pinned.update(str(c) for c in exo.prices.columns)
+            idx = [data.industries.index(c) for c in sorted(pinned) if c in data.industries]
+            clearer.set_trade_temperature_neutral_industries(idx)
+            logger.info(
+                "Trade temperature neutral (origin shares not price-adjusted) for exogenously "
+                "priced industries: %s", sorted(pinned),
+            )
     if use_candidate_baseline:
         _extend_exogenous_national_accounts(sim, required_length=timesteps + 1)
         # The overlay's default (+2%/yr) outruns labour-supply growth (~0.72%/yr), so firms

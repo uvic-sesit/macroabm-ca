@@ -39,6 +39,32 @@ class BuyerSourcing:
         self.tables = tables  # destination -> {"firm_intermediate", "gfcf", "households", "government"}
         # (destination, buyer kind, industry or None, good index) -> import share target
         self.import_share_targets: dict[tuple[str, str, Optional[int], int], float] = {}
+        # (destination, buyer kind, industry or None, good index) -> {origin index: share}
+        # Domestic-origin targets (2026-10-16, CIMS-COPPER linkage): a buyer's share of a
+        # good sourced from a NAMED origin province, e.g. BC's electricity from CAN_AB at
+        # COPPER's import share.  Applied after the import-share targets.
+        self.origin_share_targets: dict[tuple[str, str, Optional[int], int], dict[int, float]] = {}
+
+    @classmethod
+    def neutral(cls, participant_names: list[str], n_goods: int, n_industries: int,
+                destinations: Optional[list[str]] = None, mode: str = "relative") -> "BuyerSourcing":
+        """A BuyerSourcing with NO buyer-specific IO information (every table NaN).
+
+        ``_multipliers`` treats a NaN target as "no information" (ratio 1), so every
+        buyer keeps the market's own origin split and ONLY the share targets act --
+        the way to use the origin-share machinery without an IO-derived npz.
+        """
+        n = len(participant_names)
+        tables = {}
+        for dest in (destinations or [p for p in participant_names if p != "ROW"]):
+            tables[dest] = {
+                "firm_intermediate": np.full((n, n_industries, n_goods), np.nan),
+                "gfcf": np.full((n, n_goods), np.nan),
+                "households": np.full((n, n_goods), np.nan),
+                "government": np.full((n, n_goods), np.nan),
+                "average": np.full((n, n_goods), np.nan),
+            }
+        return cls(participant_names, tables, mode=mode)
 
     @classmethod
     def from_npz(cls, path: str | Path, participant_names: list[str], mode: str = "relative") -> "BuyerSourcing":
@@ -75,11 +101,31 @@ class BuyerSourcing:
         else:
             self.import_share_targets[key] = float(min(max(share, 0.0), 1.0))
 
+    def set_origin_shares(self, destination: str, buyer: str, good: int,
+                          shares: Optional[dict[str, float]], industry: Optional[int] = None) -> None:
+        """Target shares of *good* that (destination, buyer kind, [industry]) sources from
+        NAMED origins, e.g. ``{"CAN_AB": 0.11}``; None clears the key.
+
+        The named origins are set to their shares and every other origin (the
+        destination itself, other provinces, ROW) is rescaled proportionally to fill
+        the remainder.  Shares are clipped so the named origins sum to at most 0.95,
+        leaving the buyer's own province a residual.
+        """
+        key = (destination, buyer, industry, int(good))
+        if not shares:
+            self.origin_share_targets.pop(key, None)
+            return
+        tgt = {self.names.index(o): float(max(s, 0.0)) for o, s in shares.items() if o in self.names}
+        total = sum(tgt.values())
+        if total > 0.95:
+            tgt = {o: s * 0.95 / total for o, s in tgt.items()}
+        self.origin_share_targets[key] = tgt
+
     # ------------------------------------------------------------------ market
     def _apply_targets(self, shares: np.ndarray, dest: str, buyer: str,
                        industries: Optional[np.ndarray]) -> np.ndarray:
         """shares: (origin, good) or (origin, row, good); returns a copy with targets applied."""
-        if not self.import_share_targets:
+        if not self.import_share_targets and not self.origin_share_targets:
             return shares
         out = shares.copy()
         dom = np.ones(len(self.names), dtype=bool)
@@ -100,6 +146,31 @@ class BuyerSourcing:
                 new = v.copy()
                 new[dom] = v[dom] / d_sum * (1.0 - target)
                 new[self.row] = target
+                if out.ndim == 3:
+                    out[:, c[0], g] = new
+                else:
+                    out[:, g] = new
+        for (d, b, ind, g), origins in self.origin_share_targets.items():
+            if d != dest or b != buyer or not origins:
+                continue
+            named = np.zeros(len(self.names), dtype=bool)
+            for o in origins:
+                named[o] = True
+            named_total = float(sum(origins.values()))
+            if out.ndim == 2:
+                cols = [(slice(None), g)]
+            else:
+                rows = np.arange(out.shape[1]) if ind is None else np.flatnonzero(industries == ind)
+                cols = [(r, g) for r in rows]
+            for c in cols:
+                v = out[(slice(None),) + c] if out.ndim == 3 else out[:, g]
+                rest = np.nansum(v[~named])
+                if not np.isfinite(v).any() or rest <= 0.0:
+                    continue
+                new = v.copy()
+                new[~named] = v[~named] / rest * (1.0 - named_total)
+                for o, s in origins.items():
+                    new[o] = s
                 if out.ndim == 3:
                     out[:, c[0], g] = new
                 else:

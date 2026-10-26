@@ -142,6 +142,7 @@ class Country:
     assume_zero_noise: bool
     configuration: CountryConfiguration
 
+
     def __init__(
         self,
         country_name: str,

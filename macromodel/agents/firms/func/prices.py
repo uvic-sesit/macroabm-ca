@@ -37,6 +37,7 @@ class PriceSetter(ABC):
         price_setting_speed_gf: float,
         price_setting_speed_dp: float,
         price_setting_speed_cp: float,
+        cost_push_basis: str = "level",
     ):
         """Initialize the price setter with adjustment parameters.
 
@@ -57,6 +58,16 @@ class PriceSetter(ABC):
         self.price_setting_speed_dp = price_setting_speed_dp
         self.price_setting_speed_cp = max(0.0, min(1.0, price_setting_speed_cp))
         self.price_setting_speed_cp = price_setting_speed_cp
+        # "level": cost-push term = unit_cost / sector_average_price - 1, i.e. the price LEVEL
+        #   is pulled toward unit cost (the shipped rule; unit cost excludes the operating
+        #   surplus, so with any positive speed every margin is competed away and the
+        #   economy deflates -- measured 2026-10-16: CPI at 0.25x the reference by 2030 and
+        #   a full collapse by 2050 at speed 0.5).
+        # "change": cost-push term = unit_cost_t / unit_cost_{t-1} - 1, i.e. the price moves
+        #   with the firm's own unit-cost CHANGE and the baseline margin structure is kept.
+        if cost_push_basis not in ("level", "change"):
+            raise ValueError(f"cost_push_basis must be 'level' or 'change', got {cost_push_basis!r}")
+        self.cost_push_basis = cost_push_basis
 
     @abstractmethod
     def compute_price(
@@ -198,18 +209,30 @@ class DefaultPriceSetter(PriceSetter):
 
         # Cost-push inflation: include the tax in unit costs so positive tax raises prices
         total_unit_costs = curr_unit_costs + tax_by_firm
-        cost_push_inflation = (
-            np.divide(
-                total_unit_costs,
-                average_price_by_firm,
-                out=np.ones_like(total_unit_costs),
-                where=average_price_by_firm != 0.0,
+        if self.cost_push_basis == "change":
+            prev_total_unit_costs = prev_unit_costs + tax_by_firm
+            cost_push_inflation = (
+                np.divide(
+                    total_unit_costs,
+                    prev_total_unit_costs,
+                    out=np.ones_like(total_unit_costs),
+                    where=(prev_total_unit_costs != 0.0) & (total_unit_costs != 0.0),
+                )
+                - 1.0
             )
-            - 1.0
-        )
+        else:
+            cost_push_inflation = (
+                np.divide(
+                    total_unit_costs,
+                    average_price_by_firm,
+                    out=np.ones_like(total_unit_costs),
+                    where=average_price_by_firm != 0.0,
+                )
+                - 1.0
+            )
         cost_push_inflation = np.maximum(min_inflation, np.minimum(max_inflation, cost_push_inflation))
 
-        return np.maximum(
+        price = np.maximum(
             1e-2,
             prev_prices
             * (1 + np.random.normal(0.0, self.price_setting_noise_std, prev_prices.shape))
@@ -217,6 +240,17 @@ class DefaultPriceSetter(PriceSetter):
             * (1 + self.price_setting_speed_dp * demand_pull_inflation)
             * (1 + self.price_setting_speed_cp * cost_push_inflation),
         )
+        # Opt-in per-firm price override (WTC 2026-10-18, doc 5s: trade-exposed price-takers
+        # follow an external sector price path instead of their own cost-push; set each step
+        # by a prehook as (mask, prices), None = shipped behaviour).  Applied after the rule
+        # above so the random draw is consumed as before and the RNG stream is unchanged.
+        override = getattr(self, "firm_price_override", None)
+        if override is not None:
+            mask, values = override
+            mask = np.asarray(mask, dtype=bool)
+            if mask.shape == price.shape:
+                price = np.where(mask, np.maximum(1e-2, np.asarray(values, dtype=float)), price)
+        return price
 
 
 
@@ -373,7 +407,12 @@ class SectorExogenousPriceSetter(DefaultPriceSetter):
             ratio = self._normalised_price(industry_name, current_quarter=current_time)
             # Optional price-level scale set by the caller (see SectorExoPrices.nominal_scale);
             # 1.0 by default, so untouched runs are bit-identical.
-            ratio *= float(getattr(self.firm_exo_prices, "nominal_scale", 1.0) or 1.0)
+            # Optional per-industry override of that scale (nominal_scale_by_industry, a dict):
+            # world-priced commodities can follow a reference price level instead of the
+            # province's own CPI (WTC 2026-10-19). Absent, every industry uses nominal_scale.
+            _by_ind = getattr(self.firm_exo_prices, "nominal_scale_by_industry", None) or {}
+            ratio *= float(_by_ind.get(industry_name,
+                                       getattr(self.firm_exo_prices, "nominal_scale", 1.0)) or 1.0)
             for idx in self._indices_for(industry_name):
                 # DELIBERATE DEVIATION from the upstream OBPS branch, which adds
                 # ``+ tax_by_firm[idx]`` here.  These sectors' prices are pinned to CER's

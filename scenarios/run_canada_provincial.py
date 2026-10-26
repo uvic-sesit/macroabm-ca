@@ -113,6 +113,8 @@ def build_simulation_configuration(
     seed: int,
     firms_bundles: list[list[int]] | None = None,
     use_obps_reg: bool = False,
+    household_bundles: list[list[int]] | None = None,
+    household_elasticity: float | None = None,
 ) -> SimulationConfiguration:
     """Build the provincial simulation configuration.
 
@@ -151,12 +153,25 @@ def build_simulation_configuration(
         seed=seed,
         country_configurations={
             province: CountryConfiguration.n_industry_default(
-                n_industries=n_industries, firms_bundles=firms_bundles
+                n_industries=n_industries, firms_bundles=firms_bundles,
+                household_bundles=household_bundles,
             )
             for province in CANADIAN_PROVINCES
         },
         t_max=timesteps,
     )
+    if household_bundles and household_elasticity is not None:
+        # n_industry_default switches households to CESHouseholdConsumption whenever a
+        # bundle is given; the elasticity is its own parameter (default 1.0).  Within a
+        # bundle the nominal budget share of good i scales as p_i^(-sigma), renormalised
+        # so the bundle's total share is unchanged: sigma = 0 reproduces the default
+        # fixed-share behaviour (quantities unit-elastic, no switching); sigma > 0 moves
+        # spending toward the cheaper carrier.
+        for province in CANADIAN_PROVINCES:
+            cons = config.country_configurations[province].households.functions.consumption
+            params = dict(cons.parameters)
+            params["elasticity_of_substitution"] = float(household_elasticity)
+            cons.parameters = params
 
     if use_obps_reg:
         # Canada's Output-Based Pricing System: covered sectors pay the carbon price on
