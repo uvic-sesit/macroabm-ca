@@ -703,8 +703,21 @@ class Households(Agent):
         energy_indices: list[int] | None = None,
         basis: str = "realised",
         order_margin: float = 0.1,
+        conserve_budget: bool = False,
     ) -> None:
         """Pin households' REAL consumption of a good to an external quantity path.
+
+        ``conserve_budget`` (opt-in, 2026-10-16, WTC BC-AB intertie; ported to the BDA
+        runs 2026-10-26): after the correction rescales an anchored good's weight,
+        rescale the NON-energy weights so the vector keeps its total.  Without it the
+        correction only multiplies the anchored good's weight, so a good that gets
+        cheaper at a pinned quantity shrinks the vector's sum and that budget is simply
+        not spent -- under ``ExogenousHouseholdConsumption`` the total is re-normalised
+        to the exogenous path anyway, and under the income-driven rules the saving
+        leaks out of consumption into deposits (measured: a 12% electricity price cut
+        left real household consumption flat under BOTH rules).  With True the freed
+        budget goes to the other goods in proportion to their weights.  False is
+        bit-identical.
 
         ``apply_energy_share_increments`` sets a nominal budget weight, which does not
         pin a real quantity once relative prices move -- and under CER's exogenous price
@@ -773,6 +786,8 @@ class Households(Agent):
         weights = np.array(self.consumption_weights, dtype=float, copy=True)
         by_income = np.array(self.consumption_weights_by_income, dtype=float, copy=True)
         n_industries = int(weights.shape[0])
+        weights_total_before = float(np.nansum(weights))
+        by_income_before = by_income.copy()
 
         # One entry per good.  An increment WINS over an index for the same good: the
         # index is precisely what the caller's guard rejected for it.
@@ -859,6 +874,28 @@ class Households(Agent):
                 moved = np.moveaxis(by_income, axes[0], 0)
                 moved[j] *= mult
                 by_income = np.moveaxis(moved, 0, axes[0])
+
+        if conserve_budget:
+            energy_set = {int(k) for k in (energy_indices or [])} | set(specs)
+            other = np.array([j for j in range(n_industries) if j not in energy_set], dtype=int)
+            if other.size:
+                energy_sum = float(np.nansum(weights[sorted(energy_set)]))
+                other_sum = float(np.nansum(weights[other]))
+                target_other = weights_total_before - energy_sum
+                if other_sum > 0.0 and target_other > 0.0:
+                    weights[other] *= target_other / other_sum
+                axes = [a for a, size in enumerate(by_income.shape) if size == n_industries]
+                if axes:
+                    moved = np.moveaxis(by_income, axes[0], 0)
+                    before = np.moveaxis(by_income_before, axes[0], 0)
+                    tot_before = np.nansum(before, axis=0)
+                    e_sum = np.nansum(moved[sorted(energy_set)], axis=0)
+                    o_sum = np.nansum(moved[other], axis=0)
+                    with np.errstate(divide="ignore", invalid="ignore"):
+                        scale = np.where((o_sum > 0.0) & (tot_before - e_sum > 0.0),
+                                         (tot_before - e_sum) / o_sum, 1.0)
+                    moved[other] *= scale
+                    by_income = np.moveaxis(moved, 0, axes[0])
 
         self.consumption_weights = weights
         self.consumption_weights_by_income = by_income

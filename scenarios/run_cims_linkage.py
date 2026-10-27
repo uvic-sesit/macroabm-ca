@@ -397,6 +397,7 @@ def build_link_prehook(
     household_energy_quantities: bool = False,
     household_energy_anchor_basis: str = "realised",
     household_energy_order_margin: float = 0.1,
+    household_quantity_conserve_budget: bool = False,
     firm_energy_quantities: bool = False,
     firm_energy_multiplier_cap: float | None = None,
     firm_energy_target_mode: str = "quantity",
@@ -862,6 +863,7 @@ def build_link_prehook(
                         energy_indices=energy_indices,
                         basis=household_energy_anchor_basis,
                         order_margin=household_energy_order_margin,
+                        conserve_budget=household_quantity_conserve_budget,
                     )
                     logger.info(
                         "household quantity anchor: region=%s year=%s targets=%s "

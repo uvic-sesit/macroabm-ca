@@ -107,3 +107,27 @@ def test_bounded_basis_matches_realised_without_rationing():
     Households.anchor_energy_quantities(hh, {1: 2.0}, PRICES, 10.0, basis="bounded", order_margin=0.1)
     # Orders 1.0 -> cap 2.2x, above the 2x the realised basis asks for: no bite.
     assert hh._energy_quantity_multiplier[1] == pytest.approx(2.0)
+
+
+def test_conserve_budget_keeps_the_weight_total_and_scales_only_non_energy_goods():
+    hh = _fake_households()
+    # per-income-group weights equal to the flat vector, so the conserve step has room
+    hh.consumption_weights_by_income = np.array([[0.5, 0.2, 0.3], [0.5, 0.2, 0.3]])
+    # electricity index 2.0 doubles weight 1 (0.2 -> 0.4); gas untouched (0.3)
+    Households.anchor_energy_quantities(hh, {1: 2.0}, PRICES, 10.0, energy_indices=ENERGY,
+                                        conserve_budget=True)
+    assert hh.consumption_weights[1] == pytest.approx(0.4)
+    assert hh.consumption_weights[2] == pytest.approx(0.3)
+    assert hh.consumption_weights[0] == pytest.approx(0.3)   # 1.0 - 0.4 - 0.3
+    assert hh.consumption_weights.sum() == pytest.approx(1.0)
+    assert hh.consumption_weights_by_income.sum(axis=1) == pytest.approx(np.array([1.0, 1.0]))
+    assert hh.consumption_weights_by_income[:, 0] == pytest.approx(np.array([0.3, 0.3]))
+
+
+def test_conserve_budget_off_is_bit_identical_to_before():
+    a, b = _fake_households(), _fake_households()
+    Households.anchor_energy_quantities(a, {1: 2.0}, PRICES, 10.0, energy_indices=ENERGY)
+    Households.anchor_energy_quantities(b, {1: 2.0}, PRICES, 10.0, energy_indices=ENERGY,
+                                        conserve_budget=False)
+    assert np.array_equal(a.consumption_weights, b.consumption_weights)
+    assert a.consumption_weights.sum() == pytest.approx(1.2)
