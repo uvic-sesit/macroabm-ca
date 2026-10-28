@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import Any, Callable, Optional
 
 import h5py
+import logging
 import numpy as np
 import pandas as pd
 
@@ -24,6 +25,15 @@ from macromodel.util.function_mapping import functions_from_model, update_functi
 # (see :meth:`Firms.industry_timeseries_dataframes`).
 _INDUSTRY_TS_SUM_FIELDS = (
     "production",
+    # Emissions by industry and by fuel (tCO2e per period): the base of the OBPS charge
+    # and the first thing to check when a sector's carbon cost looks wrong.
+    "inputs_emissions",
+    "inputs_emissions_ch4",
+    "capital_emissions",
+    "coal_inputs_emissions",
+    "gas_inputs_emissions",
+    "oil_inputs_emissions",
+    "refined_products_inputs_emissions",
     "estimated_demand",
     "real_amount_sold",
     "inventory",
@@ -681,9 +691,15 @@ class Firms(Agent):
         cols = list(self.industries)
         frames: dict[str, pd.DataFrame] = {}
         for field in _INDUSTRY_TS_SUM_FIELDS:
-            frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
+            try:
+                frames[field] = pd.DataFrame(agg_sum(field), columns=cols)
+            except Exception as exc:  # noqa: BLE001 - one missing series must not drop the rest
+                logging.warning("per-industry export: field %r skipped (%s: %s)", field, type(exc).__name__, exc)
         for field, weight_field in _INDUSTRY_TS_WEIGHTED_FIELDS.items():
-            frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+            try:
+                frames[field] = pd.DataFrame(agg_weighted(field, weight_field), columns=cols)
+            except Exception as exc:  # noqa: BLE001
+                logging.warning("per-industry export: field %r skipped (%s: %s)", field, type(exc).__name__, exc)
 
         # Gross value added, derived: nominal output less intermediate consumption.
         # Exported rather than left to the consumer because getting it wrong is easy --
@@ -2469,8 +2485,24 @@ class Firms(Agent):
         self.ts.capital_emissions.append(capital_emissions)
 
         if emitting_indices_ch4 is not None and readjusted_factors_ch4 is not None:
-            inputs_emissions_ch4 = used_intermediate_inputs[:, emitting_indices_ch4] @ readjusted_factors_ch4
-            capital_emissions_ch4 = used_capital_inputs[:, emitting_indices_ch4] @ readjusted_factors_ch4
+            # CH4 factors are tCO2e per unit of the EMITTING sector's OWN production
+            # (agriculture's enteric and manure methane, landfills, oil-and-gas fugitives:
+            # CH4EmissionsDataCAN.from_reader divides the inventory by that sector's
+            # production). They belong to the producer. Until 2026-10-28 they were applied
+            # like the fuel factors, to every firm's PURCHASES of those sectors' output, so
+            # food processing inherited agriculture's methane (~18 Mt/yr in Ontario, the
+            # largest OBPS charge in the province) and buyers of waste services inherited
+            # landfill methane, while the emitters themselves carried none.
+            production = np.asarray(self.ts.current("production"), dtype=float)
+            firm_industry = np.asarray(self.states["Industry"])
+            inputs_emissions_ch4 = np.zeros(len(production))
+            for k, j in enumerate(np.asarray(emitting_indices_ch4).ravel()):
+                mask = firm_industry == int(j)
+                # Factor per base-year LCU of production x REAL production: methane
+                # scales with the sector's real output (the country passes the
+                # unadjusted factors for CH4).
+                inputs_emissions_ch4[mask] = production[mask] * float(readjusted_factors_ch4[k])
+            capital_emissions_ch4 = np.zeros(len(production))
             self.ts.inputs_emissions_ch4.append(inputs_emissions_ch4)
             self.ts.capital_emissions_ch4.append(capital_emissions_ch4)
 

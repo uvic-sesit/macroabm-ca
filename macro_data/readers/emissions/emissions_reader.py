@@ -496,6 +496,10 @@ class CH4EmissionsDataCAN:
 
     emission_factors: np.ndarray
     emitting_indices: np.ndarray
+    # True once the denominator is ANNUAL production (2026-10-28). Pickles built
+    # before carry factors on one model period's production (a quarter), i.e. four
+    # times too large; Country.from_pickled_country rescales those on load.
+    annualised: bool = False
 
     @classmethod
     def from_reader(
@@ -504,19 +508,28 @@ class CH4EmissionsDataCAN:
         industries: list[str],
         production_by_industry: np.ndarray,
         year: int = 2014,
+        production_periods_per_year: float = 1.0,
     ) -> "CH4EmissionsDataCAN":
         """Compute per-unit CH4 factors from inventory totals and firm production.
 
-        Divides observed total CH4 emissions (tCO2e) by total industry production
-        (LCU) to get a factor in tCO2e/LCU, consistent with the CO2 factor approach.
+        Divides observed total ANNUAL CH4 emissions (tCO2e) by total ANNUAL industry
+        production (LCU) to get a factor in tCO2e per LCU of production; applied to a
+        period's real production it yields that period's methane. The emitting sector
+        itself carries the methane (agriculture's enteric and manure emissions,
+        landfills, oil-and-gas fugitives), not the buyers of its output.
         Industries in the CH4 emitting list absent from the StatsCan CSV receive
         a factor of zero.
 
         Args:
             reader: Loaded CH4EmissionsReaderCAN
             industries: Ordered ICIO industry code list for the country
-            production_by_industry: Total production per industry in LCU, shape (n_industries,)
+            production_by_industry: Total production per industry in LCU for ONE
+                model period, shape (n_industries,)
             year: Base year for the emissions data
+            production_periods_per_year: model periods per year (4 for a quarterly
+                build), used to annualise the production denominator. The default
+                1.0 reproduces the pre-2026-10-28 behaviour (a per-period
+                denominator) and is wrong for anything but an annual build.
         """
         ch4_by_code = reader.get_ch4_by_industry_code(year)
 
@@ -540,9 +553,10 @@ class CH4EmissionsDataCAN:
             [list(industries).index(ind) for ind in _EMISSION_INDUSTRIES_CH4 if ind in industries]
         )
 
-        prod = production_by_industry[emitting_indices]
+        prod = production_by_industry[emitting_indices] * float(production_periods_per_year)
         emission_factors = np.zeros_like(prod)
         mask = prod > 0
         emission_factors[mask] = ch4[emitting_indices][mask] / prod[mask]
 
-        return cls(emission_factors=emission_factors, emitting_indices=emitting_indices)
+        return cls(emission_factors=emission_factors, emitting_indices=emitting_indices,
+                   annualised=True)

@@ -374,11 +374,16 @@ class DataWrapper:
                     .reindex(range(len(industries)), fill_value=0.0)
                     .values
                 )
+            # firm_data Production is ONE model period (time_unit months); the inventory
+            # is annual, so the denominator is annualised here. Without this the factors
+            # were 4x too large on a quarterly build (measured 2026-10-28: 400 Mt of
+            # modelled methane against the inventory's 109 Mt).
             _national_ch4 = CH4EmissionsDataCAN.from_reader(
                 reader=readers.ch4_emissions,
                 industries=industries,
                 production_by_industry=_national_production,
                 year=year,
+                production_periods_per_year=12.0 / float(configuration.time_unit),
             )
             for _c in _ch4_countries:
                 synthetic_countries[_c].emission_factors_ch4 = _national_ch4

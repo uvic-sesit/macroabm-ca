@@ -308,8 +308,19 @@ class Country:
             _b06_share = None
 
         if synthetic_country.emission_factors_ch4 is not None:
-            emission_factors_lcu_ch4 = synthetic_country.emission_factors_ch4.emission_factors
-            emitting_indices_ch4 = synthetic_country.emission_factors_ch4.emitting_indices
+            _ch4 = synthetic_country.emission_factors_ch4
+            emission_factors_lcu_ch4 = np.asarray(_ch4.emission_factors, dtype=float)
+            emitting_indices_ch4 = _ch4.emitting_indices
+            if not getattr(_ch4, "annualised", False):
+                # Pickles built before 2026-10-28 divided annual inventory methane by ONE
+                # period's production, so their factors are periods-per-year too large.
+                _months = float(getattr(synthetic_country, "time_unit", None) or 3.0)
+                _ppy = 12.0 / _months
+                emission_factors_lcu_ch4 = emission_factors_lcu_ch4 / _ppy
+                logging.warning(
+                    "CH4 factors in the pickled %s data are on a per-period production "
+                    "denominator; rescaled by 1/%.0f to annual (rebuild the pickle to "
+                    "silence this).", country_name, _ppy)
         else:
             emission_factors_lcu_ch4 = None
             emitting_indices_ch4 = None
@@ -1329,8 +1340,11 @@ class Country:
             readjusted_factors = (
                 self.emission_factors_lcu / self.economy.ts.current("good_prices")[self.emitting_indices]
             )
+            # CH4 is producer-based (tCO2e per base-year LCU of the emitting sector's
+            # own production, applied to its real output in Firms.update_emissions), so
+            # the factors are passed unadjusted -- no division by the good's price.
             readjusted_factors_ch4 = (
-                self.emission_factors_lcu_ch4 / self.economy.ts.current("good_prices")[self.emitting_indices_ch4]
+                np.asarray(self.emission_factors_lcu_ch4, dtype=float)
                 if self.emission_factors_lcu_ch4 is not None
                 else None
             )

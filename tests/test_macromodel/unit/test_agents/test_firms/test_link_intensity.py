@@ -223,6 +223,10 @@ def test_industry_timeseries_dataframes_aggregates_by_industry():
         "price": [np.array([10.0, 20.0, 7.0]), np.array([10.0, 10.0, 5.0])],
         "used_intermediate_inputs_costs": [np.array([1.0, 2.0, 4.0]), np.array([2.0, 3.0, 5.0])],
         "taxes_paid_on_production": [np.array([0.5, 0.5, 1.0]), np.array([1.0, 1.0, 2.0])],
+        # Emissions by industry and fuel (exported since 2026-10-28).
+        **{k: [np.array([1.0, 2.0, 3.0]), np.array([1.5, 2.5, 3.5])] for k in (
+            "inputs_emissions", "inputs_emissions_ch4", "capital_emissions", "coal_inputs_emissions",
+            "gas_inputs_emissions", "oil_inputs_emissions", "refined_products_inputs_emissions")},
     }
     # The fixture has to cover every exported field, and drifted out of date once already:
     # adding `used_intermediate_inputs_costs` to the export left this test failing with a
