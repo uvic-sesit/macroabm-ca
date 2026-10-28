@@ -449,11 +449,14 @@ class Country:
         )
 
         obps = None
-        if add_emissions and country_configuration.use_obps_reg and synthetic_country.obps_data is not None:
+        if add_emissions and country_configuration.use_obps_reg:
+            # obps_data may be None: the raw-data OBPS tables are no longer required.
+            # The linkage's policy prehook writes the price schedule and benchmark
+            # table from the policies database before the first charge.
             obps = OutputBasedPriceSystemCAN(
                 country_name=country_name,
                 industries=list(industries),
-                obps_data=synthetic_country.obps_data,
+                obps_data=getattr(synthetic_country, "obps_data", None),
                 initial_year=initial_year,
             )
 

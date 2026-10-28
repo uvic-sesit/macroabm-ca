@@ -95,20 +95,31 @@ class OutputBasedPriceSystemCAN:
     current_t: int = 0
     current_year: int = 2014
 
+    # Industries charged on their INPUT emissions only (fuel burned), never on the
+    # emissions embodied in their capital purchases: electricity generation. Under the
+    # OECD-50 scheme the single D row holds every generator, so its benchmark is the
+    # fleet-average fossil-input intensity x the reduction factor; clean provinces fall
+    # under the facility threshold and pay nothing.
+    INPUT_ONLY_INDUSTRIES = ("D",)
+
     def __init__(
         self,
         country_name: str,
         industries: list[str],
-        obps_data: OBPSCANData,
+        obps_data: "OBPSCANData | None" = None,
         coverage_threshold_tco2_per_year: float = OBPS_COVERAGE_THRESHOLD_TCO2_PER_YEAR,
         initial_year: int = 2014,
     ):
-        """Initialise the OBPS from a loaded OBPSCANData container.
+        """Initialise the OBPS, with or without loaded tables.
 
         Args:
             country_name: Jurisdiction code matching a column in obps_data.df_rates.
             industries: Ordered list of all model industry names.
-            obps_data: Loaded OBPS CSV data.
+            obps_data: Loaded OBPS CSV data, or None: the price schedule and the
+                per-industry benchmark table then start EMPTY and must be written by
+                the linkage's policy prehook (M3-linkages policy_obps_prehook.py,
+                from the policies database) before the first charge. An empty price
+                schedule prices at zero and warns once.
         """
         self.country_name = country_name
         self.industries = industries
@@ -143,9 +154,15 @@ class OutputBasedPriceSystemCAN:
             "C24B",
             "C301",
             "C302T309",
+            # Electricity (OECD-50 single row; 43-scheme runs regulate D01b/D01c
+            # above). Charged on fossil-input emissions only, see INPUT_ONLY_INDUSTRIES.
+            "D",
         ]
         self.regulated_indices = np.array(
             [list(industries).index(ind) for ind in self.regulated_industries if ind in industries]
+        )
+        self.input_only_mask = np.array(
+            [ind in self.INPUT_ONLY_INDUSTRIES for ind in industries], dtype=bool
         )
 
         skipped = [ind for ind in self.regulated_industries if ind not in industries]
@@ -178,11 +195,23 @@ class OutputBasedPriceSystemCAN:
         self.reference_production = np.zeros(n)
         self.emission_limit = np.zeros(n)
 
-        self.df_policy = obps_data.df_policy
-        self.df_policy_elec = obps_data.df_policy_elec if obps_data.df_policy_elec is not None else pd.DataFrame()
-        self.df_rates = obps_data.df_rates
+        if obps_data is None:
+            self.df_policy = pd.DataFrame(columns=["Industry", "reduction_factor", "tightening_rate"])
+            self.df_policy_elec = pd.DataFrame()
+            self.df_rates = pd.DataFrame(columns=["Date", country_name])
+            self.price_by_year = {}
+        else:
+            self.df_policy = obps_data.df_policy
+            self.df_policy_elec = (obps_data.df_policy_elec
+                                   if obps_data.df_policy_elec is not None else pd.DataFrame())
+            self.df_rates = obps_data.df_rates
+            self.price_by_year = dict(zip(self.df_rates["Date"], self.df_rates[self.country_name]))
+        self._empty_price_logged = False
 
-        self.price_by_year = dict(zip(self.df_rates["Date"], self.df_rates[self.country_name]))
+    def covered_emissions(self, input_em: np.ndarray, capital_em: np.ndarray) -> np.ndarray:
+        """Emissions the system sees per industry: inputs + capital, inputs only for
+        INPUT_ONLY_INDUSTRIES (electricity)."""
+        return np.asarray(input_em) + np.asarray(capital_em) * (~self.input_only_mask)
 
     def compute_obps(
         self,
@@ -242,8 +271,9 @@ class OutputBasedPriceSystemCAN:
             reference_years = (self.initial_year,)
         baseline_year = reference_years[-1]
 
+        covered = self.covered_emissions(input_em, capital_em)
         if record_obps_reference and self.current_year in reference_years:
-            self.reference_emission += input_em + capital_em
+            self.reference_emission += covered
             self.reference_production += (
                 production if initial_production is None else initial_production
             )
@@ -263,7 +293,7 @@ class OutputBasedPriceSystemCAN:
         current_price = self.get_price()
         steps_per_year = 4.0
         for i in self.regulated_indices:
-            annual_emissions = (input_em[i] + capital_em[i]) * steps_per_year
+            annual_emissions = covered[i] * steps_per_year
             if annual_emissions < self.coverage_threshold_tco2_per_year:
                 if i not in self._excluded_logged:
                     self._excluded_logged.add(i)
@@ -277,7 +307,7 @@ class OutputBasedPriceSystemCAN:
             if production[i] > 0:
                 limit = self.get_limit(i, production[i])
                 self.emission_limit[i] = limit
-                gross = input_em[i] + capital_em[i]
+                gross = covered[i]
                 # Exogenous sequestration (CCS) reduces the emissions the system
                 # charges for -- and only that. Clamped at zero: a program cannot
                 # capture more than the sector emitted this period.
@@ -328,6 +358,13 @@ class OutputBasedPriceSystemCAN:
         """
         year = self.current_year
         available_years = sorted(self.price_by_year.keys())
+        if not available_years:
+            if not self._empty_price_logged:
+                self._empty_price_logged = True
+                logging.warning(
+                    "OBPS (%s): no carbon-price schedule set (no obps_data and no policy "
+                    "prehook wrote one) -- pricing at zero.", self.country_name)
+            return 0.0
 
         if year in self.price_by_year:
             return self.price_by_year[year]

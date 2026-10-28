@@ -158,11 +158,10 @@ class DataPaths:
             oecd_econ_path=raw_data_path / "oecd_econ",
             oecd_econ_mapping_path=raw_data_path / "oecd_econ" / "mappings.json",
             policy_rates_path=raw_data_path / "policy_rates" / "bis_cb_policy_rates.csv",
-            obps_path=OBPSPaths(
-                rates_path=raw_data_path / "policy" / "output_based_price_system_rates.csv",
-                policy_path=raw_data_path / "policy" / "output_based_price_system_policy_values_disagg.csv",
-                policy_elec_path=raw_data_path / "policy" / "output_based_price_system_policy_values_elec.csv",
-            ),
+            # OBPS tables are no longer read from raw_data (2026-10-28): the linkage
+            # supplies the price schedule and benchmarks from its policies database at
+            # run time. Pass an OBPSPaths explicitly to keep loading them.
+            obps_path=None,
             country_codes_path=raw_data_path / "notation" / "wikipedia-iso-country-codes.csv",
             imf_path=raw_data_path / "imf",
             ons_path=raw_data_path / "ons",
