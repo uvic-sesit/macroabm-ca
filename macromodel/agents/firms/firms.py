@@ -3282,6 +3282,10 @@ class Firms(Agent):
         equipment and construction, so productivity (its reciprocal) is divided by
         ``1 + uplift``.
 
+        A NEGATIVE uplift (the linkage's premium-based switching cost, when the electric
+        option is cheaper than the incumbent) raises productivity, i.e. lowers the
+        requirement; the composed factor ``1 + uplift`` is kept above 0.05.
+
         Crucially this needs no new rate rule: the model's existing capital machinery does
         the pacing.  ``compute_target_capital_inputs`` already applies firms' own financial
         constraints and ``limiting_capital_inputs`` already gates production on installed
@@ -3304,7 +3308,10 @@ class Firms(Agent):
                 if j_code not in industries_list:
                     continue
                 uplift = float(transition_capital.loc[j_code, i_code])
-                if not np.isfinite(uplift) or uplift <= 0.0:
+                # Negative uplifts are allowed (2026-10-28): under the premium-based
+                # switching-cost reference a cheaper electric option LOWERS the capital
+                # requirement. The composed factor stays strictly positive.
+                if not np.isfinite(uplift) or uplift == 0.0 or 1.0 + uplift <= 0.05:
                     continue
                 j = industries_list.index(j_code)
                 key = (i_code, j_code)
