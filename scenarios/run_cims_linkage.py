@@ -1422,6 +1422,7 @@ def build_simulation(
     seed: int,
     firms_bundles: list[list[int]] | None = None,
     use_obps_reg: bool = False,
+    obps_charge_mode: str = "markup",
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     labour_force_cap: dict[str, float] | None = None,
@@ -1451,7 +1452,7 @@ def build_simulation(
     """
     config = build_simulation_configuration(
         len(data.industries), timesteps=timesteps, seed=seed, firms_bundles=firms_bundles,
-        use_obps_reg=use_obps_reg,
+        use_obps_reg=use_obps_reg, obps_charge_mode=obps_charge_mode,
     )
 
     if use_candidate_baseline:

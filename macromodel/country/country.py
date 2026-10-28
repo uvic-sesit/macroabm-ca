@@ -612,6 +612,54 @@ class Country:
         """
         self._emissions_capture = dict(capture_by_industry) if capture_by_industry else None
 
+    @property
+    def obps_charge_mode(self) -> str:
+        # getattr: configurations pickled before the field existed.
+        return str(getattr(self.configuration, "obps_charge_mode", "markup") or "markup").lower()
+
+    def _obps_emission_inputs(self) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
+        """Current-period CO2e (+CH4) input and capital emissions and the exogenous
+        capture wedge, per industry, as the OBPS consumes them."""
+        input_em_ch4 = self.firms.ts.current("inputs_emissions_ch4")
+        if input_em_ch4 is None:
+            input_em_ch4 = np.zeros_like(self.firms.ts.current("inputs_emissions"))
+        capital_em_ch4 = self.firms.ts.current("capital_emissions_ch4")
+        if capital_em_ch4 is None:
+            capital_em_ch4 = np.zeros_like(self.firms.ts.current("capital_emissions"))
+        # getattr: checkpoints saved before the capture wedge existed have no
+        # _emissions_capture attribute (the pre-obps_data shim precedent).
+        capture = getattr(self, "_emissions_capture", None)
+        sequestered = None
+        if capture:
+            sequestered = np.zeros(self.firms.n_industries)
+            for _idx, _tonnes in capture.items():
+                sequestered[int(_idx)] = float(_tonnes)
+        return (self.firms.ts.current("inputs_emissions") + input_em_ch4,
+                self.firms.ts.current("capital_emissions") + capital_em_ch4,
+                sequestered)
+
+    def obps_cash_charge_by_firm(self) -> np.ndarray:
+        """The period's OBPS charge as a production tax on the emitting firms.
+
+        Uses the period's REALISED emissions (C3) and production (C1): the charge per
+        industry is allocated to that industry's firms by their production share.
+        Positive = paid, negative = rebate. Recorded per industry on
+        ``obps_cash_by_industry`` for reporting.
+        """
+        n_ind = self.firms.n_industries
+        self.obps_cash_by_industry = np.zeros(n_ind)
+        if not (self.use_obps_reg and self.obps is not None and self.obps_charge_mode == "cash"):
+            return np.zeros(len(self.firms.states["Industry"]))
+        input_em, capital_em, sequestered = self._obps_emission_inputs()
+        production = np.asarray(self.firms.ts.current("production"), dtype=float)
+        cost = self.obps.compute_charge(production, input_em, capital_em, sequestered)
+        self.obps_cash_by_industry = cost
+        ind = np.asarray(self.firms.states["Industry"])
+        ind_prod = np.bincount(ind, weights=production, minlength=n_ind)
+        share = np.divide(production, ind_prod[ind], out=np.zeros_like(production),
+                          where=ind_prod[ind] > 0)
+        return cost[ind] * share
+
     def update_extra_taxes(self, record_obps_reference: bool = True) -> None:
         """Compute extra marginal taxes for firms from active policy instruments.
 
@@ -633,31 +681,21 @@ class Country:
             )
 
         if self.use_obps_reg and self.obps is not None:
-            input_em_ch4 = self.firms.ts.current("inputs_emissions_ch4")
-            if input_em_ch4 is None:
-                input_em_ch4 = np.zeros_like(self.firms.ts.current("inputs_emissions"))
-            capital_em_ch4 = self.firms.ts.current("capital_emissions_ch4")
-            if capital_em_ch4 is None:
-                capital_em_ch4 = np.zeros_like(self.firms.ts.current("capital_emissions"))
-
-            # getattr: checkpoints saved before the capture wedge existed have no
-            # _emissions_capture attribute (the pre-obps_data shim precedent).
-            capture = getattr(self, "_emissions_capture", None)
-            sequestered = None
-            if capture:
-                sequestered = np.zeros(self.firms.n_industries)
-                for _idx, _tonnes in capture.items():
-                    sequestered[int(_idx)] = float(_tonnes)
-
+            input_em, capital_em, sequestered = self._obps_emission_inputs()
             sectoral_tax = self.obps.compute_obps(
                 use_obps_reg=self.use_obps_reg,
                 record_obps_reference=record_obps_reference,
                 production=self.firms.ts.current("production"),
-                input_em=self.firms.ts.current("inputs_emissions") + input_em_ch4,
-                capital_em=self.firms.ts.current("capital_emissions") + capital_em_ch4,
+                input_em=input_em,
+                capital_em=capital_em,
                 initial_production=self.firms.ts.initial("production"),
                 sequestered=sequestered,
             )
+            if self.obps_charge_mode == "cash":
+                # The charge is levied as a production tax on the emitting firms at
+                # the end of the period (see update_firm_financials); buyers see no
+                # markup.
+                return
             self.extra_marginal_taxes_firm = np.divide(
                 sectoral_tax,
                 self.firms.ts.current("production"),
@@ -1353,6 +1391,10 @@ class Country:
             self.firms.compute_taxes_paid_on_production(
                 taxes_less_subsidies_rates=self.central_government.states["Taxes Less Subsidies Rates"],
             )
+            # OBPS in "cash" mode: the emitting firms pay the period's charge (or
+            # receive the rebate) as a production tax, so it reaches profits, unit
+            # costs, deposits and -- through taxes_production -- government revenue.
+            + self.obps_cash_charge_by_firm()
         )
         self.firms.ts.profits.append(self.firms.compute_profits())
         self.firms.ts.unit_costs.append(self.firms.compute_unit_costs())
@@ -1547,6 +1589,7 @@ class Country:
             taxes_less_subsidies_rates=self.central_government.states["Taxes Less Subsidies Rates"],
             current_household_new_real_wealth=self.households.ts.current("investment"),
             current_total_exports=self.economy.ts.current("exports_before_taxes").sum(),
+            extra_production_taxes=float(np.sum(getattr(self, "obps_cash_by_industry", 0.0))),
         )
 
         # General government fields

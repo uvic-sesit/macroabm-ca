@@ -113,6 +113,7 @@ def build_simulation_configuration(
     seed: int,
     firms_bundles: list[list[int]] | None = None,
     use_obps_reg: bool = False,
+    obps_charge_mode: str = "markup",
 ) -> SimulationConfiguration:
     """Build the provincial simulation configuration.
 
@@ -165,6 +166,7 @@ def build_simulation_configuration(
         # are all present -- true for the 43-industry provincial model.
         for province in CANADIAN_PROVINCES:
             config.country_configurations[province].use_obps_reg = True
+            config.country_configurations[province].obps_charge_mode = obps_charge_mode
 
     for province in CANADIAN_PROVINCES:
         firms = config.country_configurations[province].firms

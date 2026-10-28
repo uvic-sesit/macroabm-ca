@@ -255,6 +255,7 @@ class CentralGovernment(Agent):
         current_household_new_real_wealth: np.ndarray,
         taxes_less_subsidies_rates: np.ndarray,
         current_total_exports: float,
+        extra_production_taxes: float = 0.0,
     ) -> None:
         """Calculate all tax revenues for the current period.
 
@@ -279,9 +280,12 @@ class CentralGovernment(Agent):
             taxes_less_subsidies_rates (np.ndarray): Net tax rates
             current_total_exports (float): Total exports
         """
-        # Taxes on production
+        # Taxes on production (plus any extra production-tax cash the policies levy on
+        # firms this period, e.g. the OBPS charge in "cash" mode, so it is revenue here
+        # exactly as it is a cost on the firms' side).
         self.ts.taxes_production.append(
-            [np.sum(taxes_less_subsidies_rates[current_firm_industries] * current_firm_production * current_firm_price)]
+            [np.sum(taxes_less_subsidies_rates[current_firm_industries] * current_firm_production * current_firm_price)
+             + float(extra_production_taxes)]
         )
 
         # Value-added taxes

@@ -290,7 +290,52 @@ class OutputBasedPriceSystemCAN:
         if self.current_year < max(2019, baseline_year + 1):
             return np.zeros(len(self.industries))
 
+        obps_cost = self.compute_charge(production, input_em, capital_em, sequestered)
+        current_price = self.get_price()
+        covered = self.covered_emissions(input_em, capital_em)
+
+        # Yearly diagnostic (first period of each year): what the system charged.
+        if self.current_year != self._last_logged_year:
+            self._last_logged_year = self.current_year
+            charged = [(self.industries[i], obps_cost[i], covered[i], self.emission_limit[i])
+                       for i in self.regulated_indices if obps_cost[i] != 0.0]
+            total = float(sum(c for _, c, _, _ in charged))
+            top = sorted(charged, key=lambda t: -abs(t[1]))[:4]
+            logging.info(
+                "OBPS (%s) %d: price %.0f/t, net charge this period %.3g (%s)",
+                self.country_name, self.current_year, current_price, total,
+                "; ".join(f"{n} {c:.3g} on {e:.3g} t vs limit {l:.3g}" for n, c, e, l in top) or "nothing charged",
+            )
+
+        return obps_cost
+
+    def charging(self) -> bool:
+        """True once the reference period is over and the system charges."""
+        if self.initial_year <= 2017:
+            baseline_year = 2018
+        else:
+            baseline_year = self.initial_year
+        return self.current_year >= max(2019, baseline_year + 1)
+
+    def compute_charge(
+        self,
+        production: np.ndarray,
+        input_em: np.ndarray,
+        capital_em: np.ndarray,
+        sequestered: np.ndarray | None = None,
+    ) -> np.ndarray:
+        """Signed OBPS cost (dollars) per industry for ONE period, from the current
+        state (baseline intensities, benchmark table, price), without touching the
+        reference bookkeeping. Positive above the limit, negative (a rebate) below;
+        zero for unregulated industries, sub-threshold industries and before charging
+        starts. ``compute_obps`` uses it after the reference accumulation; the "cash"
+        charge mode calls it again at the end of the period with that period's
+        realised emissions.
+        """
         obps_cost = np.zeros(len(self.industries))
+        if not self.charging():
+            return obps_cost
+        covered = self.covered_emissions(input_em, capital_em)
         current_price = self.get_price()
         steps_per_year = 4.0
         for i in self.regulated_indices:
@@ -316,20 +361,6 @@ class OutputBasedPriceSystemCAN:
                 net = max(0.0, gross - seq)
                 difference = net - limit
                 obps_cost[i] = difference * current_price
-
-        # Yearly diagnostic (first period of each year): what the system charged.
-        if self.current_year != self._last_logged_year:
-            self._last_logged_year = self.current_year
-            charged = [(self.industries[i], obps_cost[i], covered[i], self.emission_limit[i])
-                       for i in self.regulated_indices if obps_cost[i] != 0.0]
-            total = float(sum(c for _, c, _, _ in charged))
-            top = sorted(charged, key=lambda t: -abs(t[1]))[:4]
-            logging.info(
-                "OBPS (%s) %d: price %.0f/t, net charge this period %.3g (%s)",
-                self.country_name, self.current_year, current_price, total,
-                "; ".join(f"{n} {c:.3g} on {e:.3g} t vs limit {l:.3g}" for n, c, e, l in top) or "nothing charged",
-            )
-
         return obps_cost
 
     def get_limit(self, industry_idx: int, production: float) -> float:

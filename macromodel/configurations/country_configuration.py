@@ -40,6 +40,16 @@ class CountryConfiguration(BaseModel):
     use_emission_multiplier: bool = False
     CH4_production_emissions_only: bool = False
     use_obps_reg: bool = False
+    # How the OBPS charge reaches the economy:
+    #   "markup": the legacy treatment -- a per-unit markup on the regulated good that
+    #             firm BUYERS see in planning and purchase costs (no cash moves, no
+    #             government revenue).
+    #   "cash":   a production tax on the EMITTING firms (allocated by production
+    #             share within the industry) -- it lowers their profits, deposits and
+    #             raises their unit costs, flows into government revenue through
+    #             taxes_production, and rebates (emissions below the benchmark) are
+    #             negative taxes. Buyers see no markup.
+    obps_charge_mode: str = "markup"
 
     @classmethod
     def n_industry_default(

@@ -44,6 +44,22 @@ def _make_obps(year: int = 2020) -> OutputBasedPriceSystemCAN:
     return obps
 
 
+def test_compute_charge_is_stateless_and_matches_compute_obps():
+    obps = _make_obps(2020)
+    production = np.array([100.0, 50.0])
+    em = np.array([REFERENCE_INTENSITY * 100.0 * 1.5, 0.0])  # 50 % above baseline intensity
+    via_obps = obps.compute_obps(use_obps_reg=True, record_obps_reference=False,
+                                 production=production, input_em=em,
+                                 capital_em=np.zeros(2))
+    ref_before = obps.reference_emission.copy()
+    direct = obps.compute_charge(production, em, np.zeros(2))
+    assert np.allclose(direct, via_obps)
+    assert direct[0] > 0.0
+    assert np.array_equal(obps.reference_emission, ref_before)
+    obps.current_year = 2016  # before charging starts
+    assert np.all(obps.compute_charge(production, em, np.zeros(2)) == 0.0)
+
+
 def _call(obps, input_em, capital_em=None, production=None, record_reference=False):
     if production is None:
         production = np.array([100.0, 50.0])
