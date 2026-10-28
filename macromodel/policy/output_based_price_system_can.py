@@ -207,6 +207,7 @@ class OutputBasedPriceSystemCAN:
             self.df_rates = obps_data.df_rates
             self.price_by_year = dict(zip(self.df_rates["Date"], self.df_rates[self.country_name]))
         self._empty_price_logged = False
+        self._last_logged_year = None
 
     def covered_emissions(self, input_em: np.ndarray, capital_em: np.ndarray) -> np.ndarray:
         """Emissions the system sees per industry: inputs + capital, inputs only for
@@ -315,6 +316,19 @@ class OutputBasedPriceSystemCAN:
                 net = max(0.0, gross - seq)
                 difference = net - limit
                 obps_cost[i] = difference * current_price
+
+        # Yearly diagnostic (first period of each year): what the system charged.
+        if self.current_year != self._last_logged_year:
+            self._last_logged_year = self.current_year
+            charged = [(self.industries[i], obps_cost[i], covered[i], self.emission_limit[i])
+                       for i in self.regulated_indices if obps_cost[i] != 0.0]
+            total = float(sum(c for _, c, _, _ in charged))
+            top = sorted(charged, key=lambda t: -abs(t[1]))[:4]
+            logging.info(
+                "OBPS (%s) %d: price %.0f/t, net charge this period %.3g (%s)",
+                self.country_name, self.current_year, current_price, total,
+                "; ".join(f"{n} {c:.3g} on {e:.3g} t vs limit {l:.3g}" for n, c, e, l in top) or "nothing charged",
+            )
 
         return obps_cost
 
