@@ -102,6 +102,15 @@ class OutputBasedPriceSystemCAN:
     # under the facility threshold and pay nothing.
     INPUT_ONLY_INDUSTRIES = ("D",)
 
+    # Exogenous ANNUAL (emissions_t, limit_t) schedules per industry, written by the
+    # linkage's policy prehook: {industry: {year: (emissions, limit)}}. For such an
+    # industry-year the charge is (emissions - limit) / periods_per_year x price,
+    # the model's own emissions, baseline intensity, benchmark row and coverage
+    # threshold are not consulted, and exogenous capture is not applied (the
+    # schedule is net already). Used for electricity: per-fuel generation standards
+    # on COPPER's physical generation (M3-linkages policy_obps_electricity.py).
+    # (An instance attribute: the class is a dataclass with defaulted fields above.)
+
     def __init__(
         self,
         country_name: str,
@@ -182,6 +191,10 @@ class OutputBasedPriceSystemCAN:
 
         self.coverage_threshold_tco2_per_year = float(coverage_threshold_tco2_per_year)
         self._excluded_logged: set[int] = set()
+        self.exogenous_emissions = {}
+        # Emissions the last compute_charge priced per industry (the model's covered
+        # emissions, or the exogenous schedule's), for the yearly diagnostic.
+        self.charged_emissions = np.zeros(len(industries))
         # The simulation clock's year zero -- the wrapper's base year.  Previously
         # hardcoded to 2014; a 2022-base run would otherwise sit 8 years behind on the
         # price schedule and tightening arithmetic.
@@ -292,7 +305,9 @@ class OutputBasedPriceSystemCAN:
 
         obps_cost = self.compute_charge(production, input_em, capital_em, sequestered)
         current_price = self.get_price()
-        covered = self.covered_emissions(input_em, capital_em)
+        covered = getattr(self, "charged_emissions", None)
+        if covered is None:
+            covered = self.covered_emissions(input_em, capital_em)
 
         # Yearly diagnostic (first period of each year): what the system charged.
         if self.current_year != self._last_logged_year:
@@ -338,7 +353,20 @@ class OutputBasedPriceSystemCAN:
         covered = self.covered_emissions(input_em, capital_em)
         current_price = self.get_price()
         steps_per_year = 4.0
+        # getattr: OBPS objects restored from checkpoints saved before the attribute.
+        exogenous = getattr(self, "exogenous_emissions", None) or {}
+        charged = np.array(covered, dtype=float, copy=True)
+        self.charged_emissions = charged
         for i in self.regulated_indices:
+            schedule = exogenous.get(self.industries[i])
+            if schedule and self.current_year in schedule:
+                annual_em, annual_limit = schedule[self.current_year]
+                period_em = float(annual_em) / steps_per_year
+                period_limit = float(annual_limit) / steps_per_year
+                self.emission_limit[i] = period_limit
+                charged[i] = period_em
+                obps_cost[i] = (period_em - period_limit) * current_price
+                continue
             annual_emissions = covered[i] * steps_per_year
             if annual_emissions < self.coverage_threshold_tco2_per_year:
                 if i not in self._excluded_logged:
@@ -436,3 +464,6 @@ class OutputBasedPriceSystemCAN:
         self.reference_production = np.zeros(len(self.industries))
         self.baseline_emission_intensity = np.zeros(len(self.industries))
         self.emission_limit = np.zeros(len(self.industries))
+        self.charged_emissions = np.zeros(len(self.industries))
+        # exogenous_emissions is policy input, not state: the prehook that wrote it
+        # writes it again each January, so it is left in place.
