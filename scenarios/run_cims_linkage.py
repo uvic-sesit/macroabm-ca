@@ -55,6 +55,12 @@ _HH_DEMAND_COLS = [
     "Household Investment (Value)",
 ]
 _HOUSEHOLD_DEMAND_GROWTH = 0.02
+# Government demand overlay (2026-10-29): real government consumption follows the same
+# per-province labour-force index as household demand (population only, no autonomous term).
+_GOV_DEMAND_COLS = [
+    "Real Government Consumption (Value)",
+    "Government Consumption (Value)",
+]
 
 # Reuse the proven provincial configuration helpers.  Support running both as a
 # module (``python -m scenarios.run_cims_linkage``) and as a file
@@ -1359,6 +1365,46 @@ def _extend_exogenous_national_accounts(model: Simulation, required_length: int)
         )
 
 
+def _index_factor(path: list[float], n_quarters: int) -> np.ndarray:
+    """A per-province index as a growth factor over *n_quarters*, normalised to 1 at the
+    first quarter; the last value is held rather than truncating the tail to zero."""
+    fac = np.asarray(path, dtype=float)
+    if len(fac) < n_quarters:
+        fac = np.concatenate([fac, np.full(n_quarters - len(fac), fac[-1])])
+    fac = fac[:n_quarters]
+    return fac / fac[0]
+
+
+def _apply_government_demand_overlay(
+    model: Simulation, index_by_province: dict[str, list[float]]
+) -> None:
+    """Grow real government consumption along each province's labour-force index.
+
+    `_extend_exogenous_national_accounts` holds the exogenous accounts flat past the data
+    tail, so under `ExogenousGovernmentConsumptionSetter` real government consumption --
+    about a fifth of GDP -- stays at its last observed level for the whole projection
+    while the labour force and household demand grow. Measured on the 2026-10-28 baseline
+    (seed 4): real government consumption +0.3 %/yr against real GDP +1.0 %/yr, its share
+    of GDP income falling from 22 % to 19 % by 2050, and `household_demand_growth` having
+    to carry the public sector's missing growth (household consumption rising from 57 % to
+    61 % of GDP income).
+
+    This applies the SAME normalised index the household overlay uses -- population growth
+    only, no autonomous per-head term -- so government consumption per labour-force member
+    is held constant, as household demand is before its autonomous term.
+    """
+    for name, country in model.countries.items():
+        frame = country.exogenous.national_accounts_during
+        path = index_by_province.get(str(name))
+        if path is None:
+            logger.warning("government demand overlay: no index for %s; leaving it flat.", name)
+            continue
+        fac = _index_factor(path, len(frame))
+        for col in _GOV_DEMAND_COLS:
+            if col in frame.columns:
+                frame[col] = frame[col].values * fac
+
+
 def _apply_household_demand_overlay(
     model: Simulation,
     growth_rate: float = _HOUSEHOLD_DEMAND_GROWTH,
@@ -1392,13 +1438,9 @@ def _apply_household_demand_overlay(
             if path is None:
                 logger.warning("household demand overlay: no index for %s; leaving it flat.", name)
                 continue
-            fac = np.asarray(path, dtype=float)
             # The index is built for timesteps+1 quarters and the accounts frame need not
             # match; hold the last value rather than truncating the tail to zero.
-            if len(fac) < len(frame):
-                fac = np.concatenate([fac, np.full(len(frame) - len(fac), fac[-1])])
-            fac = fac[:len(frame)]
-            fac = fac / fac[0]
+            fac = _index_factor(path, len(frame))
             # The provincial index carries POPULATION growth only. `growth_rate` is the
             # autonomous component on top of it -- demand per head rising over time -- and
             # it used to be discarded here, which made the parameter a silent no-op in every
@@ -1432,6 +1474,7 @@ def build_simulation(
     demand_smoothing: float | None = None,
     household_demand_growth: float | None = None,
     household_demand_from_labour_force: bool = False,
+    government_demand_from_labour_force: bool = False,
     exogenous_energy_prices: bool = False,
     tfp_base_growth_rate: float | None = None,
     tfp_investment_effectiveness: float | None = None,
@@ -1559,12 +1602,15 @@ def build_simulation(
         # bid wages up against a hard supply limit and the labour share climbs without
         # bound.  Overridable so the two can be tested at compatible rates.
         _hh_index = None
-        if household_demand_from_labour_force:
-            _hh_index = observed_labour_force_index(
+        _lf_index = None
+        if household_demand_from_labour_force or government_demand_from_labour_force:
+            _lf_index = observed_labour_force_index(
                 n_quarters=timesteps + 1, post_sample_growth=labour_force_growth,
                 growth_cap=labour_force_cap,
                 **({"base_year": labour_index_base_year}
                    if labour_index_base_year is not None else {}))
+        if household_demand_from_labour_force:
+            _hh_index = _lf_index
             logger.info(
                 "Household demand follows each province's OWN labour-force index "
                 "(2050 index: %s)",
@@ -1577,6 +1623,11 @@ def build_simulation(
             ),
             index_by_province=_hh_index,
         )
+        if government_demand_from_labour_force:
+            _apply_government_demand_overlay(sim, _lf_index)
+            logger.info(
+                "Real government consumption follows each province's OWN labour-force "
+                "index (population only; otherwise flat past the data tail)")
     return sim
 
 
