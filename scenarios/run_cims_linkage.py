@@ -1737,6 +1737,11 @@ def build_simulation(
     household_bundles: list[list[int]] | None = None,
     household_elasticity: float | None = None,
     household_income_driven: bool = False,
+    firm_price_advantage_symmetric: bool = False,
+    firm_price_advantage_deadband: float | None = None,
+    firm_price_advantage_smoothing: float | None = None,
+    wage_cpi_indexation: float | None = None,
+    wage_cpi_lag: int | None = None,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     labour_force_cap: dict[str, float] | None = None,
@@ -1977,11 +1982,22 @@ def build_simulation(
                     f"firm_price_advantage_change_growth needs DefaultGrowthEstimator, got {ge.name} in {province}")
             ge.parameters["price_advantage_change_growth"] = float(firm_price_advantage_change_growth)
             ge.parameters["price_advantage_window"] = _window
+            # noise-robust options (2026-10-30): signed change, deadband, EMA-smoothed advantage
+            if firm_price_advantage_symmetric:
+                ge.parameters["price_advantage_symmetric"] = True
+            if firm_price_advantage_deadband is not None:
+                ge.parameters["price_advantage_deadband"] = float(firm_price_advantage_deadband)
+            if firm_price_advantage_smoothing is not None:
+                ge.parameters["price_advantage_smoothing"] = float(firm_price_advantage_smoothing)
         logger.info(
             "Firm growth rule (CHANGE-keyed, doc 5k): a sold-out firm priced below the sector "
             "average grows by %.3f x max(adv_t - adv_{t-%d}, 0) x (demand / supply), adv = "
             "average / price - 1; shipped 0.0 (no growth for a cheap sold-out firm).",
             float(firm_price_advantage_change_growth), _window)
+        if firm_price_advantage_symmetric or firm_price_advantage_deadband or firm_price_advantage_smoothing:
+            logger.info(
+                "  noise-robust form: symmetric=%s (signed change), deadband=%s, EMA smoothing lambda=%s",
+                bool(firm_price_advantage_symmetric), firm_price_advantage_deadband, firm_price_advantage_smoothing)
     elif firm_price_advantage_window is not None:
         raise RuntimeError("firm_price_advantage_window needs firm_price_advantage_change_growth > 0")
 
@@ -2148,6 +2164,18 @@ def build_simulation(
             logger.info(
                 "Real government consumption follows each province's OWN labour-force "
                 "index (population only; otherwise flat past the data tail)")
+    if wage_cpi_indexation is not None:
+        # Partial / lagged CPI indexation of nominal wages (2026-10-30): wages paid at
+        # a x CPI_t + (1 - a) x CPI_{t-L} instead of CPI_t (Country.wage_price_index).
+        # Set on the country objects after build or restore, like the overlays above.
+        _a = float(wage_cpi_indexation)
+        _l = int(wage_cpi_lag) if wage_cpi_lag is not None else 4
+        if not 0.0 <= _a <= 1.0 or _l < 1:
+            raise RuntimeError(f"wage_cpi_indexation must be in [0, 1] and wage_cpi_lag >= 1 (got {_a}, {_l})")
+        for _c in sim.countries.values():
+            _c.wage_cpi_indexation = _a
+            _c.wage_cpi_lag = _l
+        logger.info("Nominal wages paid at %.2f x CPI_t + %.2f x CPI_{t-%d} (partial indexation ON)", _a, 1.0 - _a, _l)
     return sim
 
 

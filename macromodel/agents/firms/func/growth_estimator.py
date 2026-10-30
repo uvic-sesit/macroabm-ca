@@ -117,7 +117,21 @@ class DefaultGrowthEstimator(GrowthEstimator):
         price_advantage_window: int = 4,
         unit_cost_change_growth: float = 0.0,
         unit_cost_window: int = 4,
+        price_advantage_symmetric: bool = False,
+        price_advantage_deadband: float = 0.0,
+        price_advantage_smoothing: float = 0.0,
     ):
+        # Noise-robust options for the CHANGE-keyed rule (2026-10-30, epm-wtc doc 3.13).  With
+        # the shipped firm price noise (1 % a quarter, a random walk) the 4-quarter change of a
+        # firm's advantage is mostly the draws, and max(change, 0) rectifies that symmetric
+        # noise into growth (+2-3 % of GDP in a reference run).  ``symmetric``: use the signed
+        # change (a falling advantage shrinks the plan), so the draws average out;
+        # ``deadband``: ignore |change| below this (and shift by it); ``smoothing``: an
+        # exponential average of the advantage (lambda, 0 = raw) before differencing.
+        self.price_advantage_symmetric = bool(price_advantage_symmetric)
+        self.price_advantage_deadband = max(0.0, float(price_advantage_deadband or 0.0))
+        self.price_advantage_smoothing = min(1.0, max(0.0, float(price_advantage_smoothing or 0.0)))
+        self._advantage_ema = None
         self.ignore_price_when_sold_out = bool(ignore_price_when_sold_out)
         self.unit_cost_change_growth = max(0.0, float(unit_cost_change_growth))
         self.unit_cost_window = max(1, int(unit_cost_window))
@@ -224,15 +238,32 @@ class DefaultGrowthEstimator(GrowthEstimator):
                 out=np.ones_like(prev_firm_prices),
                 where=prev_firm_prices > 0.0,
             ) - 1.0
+            lam = float(getattr(self, "price_advantage_smoothing", 0.0) or 0.0)
+            if lam > 0.0:
+                ema = getattr(self, "_advantage_ema", None)
+                if ema is None or ema.shape != advantage_now.shape:
+                    ema = np.array(advantage_now, copy=True)
+                else:
+                    ema = (1.0 - lam) * ema + lam * advantage_now
+                self._advantage_ema = ema
+                signal_now = ema
+            else:
+                signal_now = advantage_now
             history = getattr(self, "_advantage_history", None)
-            if history is None or (history and history[-1].shape != advantage_now.shape):
+            if history is None or (history and history[-1].shape != signal_now.shape):
                 history = []
-            history.append(np.array(advantage_now, copy=True))
+            history.append(np.array(signal_now, copy=True))
             if len(history) > window + 1:
                 del history[: len(history) - (window + 1)]
             self._advantage_history = history
             if len(history) == window + 1:
-                change = advantage_now - history[0]
+                change = signal_now - history[0]
+                deadband = float(getattr(self, "price_advantage_deadband", 0.0) or 0.0)
+                if getattr(self, "price_advantage_symmetric", False):
+                    signal = np.where(change > deadband, change - deadband,
+                                      np.where(change < -deadband, change + deadband, 0.0))
+                else:
+                    signal = np.maximum(change - deadband, 0.0)
                 cheap_sold_out = np.logical_and(
                     np.logical_and(prev_supply <= prev_demand, prev_firm_prices < average_price_by_firm),
                     np.logical_not(ind_canvas),
@@ -245,7 +276,7 @@ class DefaultGrowthEstimator(GrowthEstimator):
                         where=prev_supply != 0.0,
                     )
                     firm_growth_rates[cheap_sold_out] += (
-                        k_change * np.maximum(change[cheap_sold_out], 0.0) * demand_over_supply[cheap_sold_out]
+                        k_change * signal[cheap_sold_out] * demand_over_supply[cheap_sold_out]
                     )
         k_cost = float(getattr(self, "unit_cost_change_growth", 0.0) or 0.0)
         if k_cost > 0.0 and prev_real_unit_costs is not None:

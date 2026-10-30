@@ -907,6 +907,7 @@ class Country:
                 expected_firm_profits=self.firms.ts.current("expected_profits"),
                 expected_bank_profits=self.banks.ts.current("expected_profits"),
                 cpi=self.economy.ts.current("cpi")[0],
+                wage_cpi=self.wage_price_index(),
                 expected_inflation=self.economy.ts.current("estimated_cpi_inflation")[0],
                 income_taxes=self.central_government.states["Income Tax"],
                 tau_firm=self.central_government.states["Profit Tax"],
@@ -1333,7 +1334,7 @@ class Country:
             income_taxes=self.central_government.states["Income Tax"],
             employee_social_insurance_tax=self.central_government.states["Employee Social Insurance Tax"],
             employer_social_insurance_tax=self.central_government.states["Employer Social Insurance Tax"],
-            cpi=self.economy.ts.current("cpi")[0],
+            cpi=self.wage_price_index(),
         )
 
         # C3. EMISSIONS AND INVENTORY
@@ -1449,6 +1450,7 @@ class Country:
                 firm_profits=self.firms.ts.current("profits"),
                 bank_profits=self.banks.ts.current("profits"),
                 cpi=self.economy.ts.current("cpi")[0],
+                wage_cpi=self.wage_price_index(),
                 income_taxes=self.central_government.states["Income Tax"],
                 tau_firm=self.central_government.states["Profit Tax"],
             )
@@ -1761,6 +1763,28 @@ class Country:
                 {i: {"per_step_$": round(c, 1), "prod_value": round(v, 1),
                      "net_rate": round(r, 6)} for i, (c, v, r) in applied.items()},
             )
+
+    def wage_price_index(self) -> float:
+        """The price index nominal wages are paid at (2026-10-30, opt-in partial indexation).
+
+        Shipped: the current CPI, so a change in the price level reaches every pay cheque one
+        for one within the quarter (real wages are set by the wage rule; a cheaper basket
+        therefore leaves real income unchanged).  With ``wage_cpi_indexation`` = a in [0, 1)
+        and ``wage_cpi_lag`` = L quarters set on the country (the linkage sets them after
+        build / restore), wages are paid at a x CPI_t + (1 - a) x CPI_{t-L}: only the share a
+        of a price-level change reaches wages within the quarter, the rest after L quarters,
+        so a price cut raises real incomes for L quarters.  Used for employee income
+        (expected and realised) and the firms' wage bill; social benefits stay on the CPI.
+        """
+        cpi_now = float(self.economy.ts.current("cpi")[0])
+        a = getattr(self, "wage_cpi_indexation", None)
+        if a is None or float(a) >= 1.0:
+            return cpi_now
+        lag = max(1, int(getattr(self, "wage_cpi_lag", 4) or 4))
+        hist = self.economy.ts.historic("cpi")
+        n = len(hist)
+        cpi_lag = float(np.asarray(hist[max(0, n - 1 - lag)]).ravel()[0])
+        return float(a) * cpi_now + (1.0 - float(a)) * cpi_lag
 
     def shallow_output(self) -> pd.DataFrame:
         """Create summary DataFrame of key economic indicators.

@@ -14,6 +14,7 @@ The implementation handles:
 - Activity status impacts
 """
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -140,6 +141,7 @@ class DefaultIncomeSetter(IncomeSetter):
         dividend_payout_ratio: float,
         income_taxes: float,
         tau_firm: float,
+        wage_cpi: float | None = None,
     ) -> np.ndarray:
         """Calculate expected future income for individuals.
 
@@ -173,7 +175,8 @@ class DefaultIncomeSetter(IncomeSetter):
 
         # Employed individuals
         emp_ind = current_individual_activity_status == ActivityStatus.EMPLOYED
-        income[emp_ind] = (1 + expected_inflation) * cpi * current_wage[emp_ind]
+        # wage_cpi: the wage price index (partial / lagged CPI indexation, opt-in); None = CPI
+        income[emp_ind] = (1 + expected_inflation) * (cpi if wage_cpi is None else wage_cpi) * current_wage[emp_ind]
 
         # Unemployed individuals
         unemp_ind = current_individual_activity_status == ActivityStatus.UNEMPLOYED
@@ -215,6 +218,7 @@ class DefaultIncomeSetter(IncomeSetter):
         dividend_payout_ratio: float,
         income_taxes: float,
         tau_firm: float,
+        wage_cpi: float | None = None,
     ) -> np.ndarray:
         """Calculate current period income for individuals.
 
@@ -246,7 +250,7 @@ class DefaultIncomeSetter(IncomeSetter):
 
         # Employed individuals
         emp_ind = current_individual_activity_status == ActivityStatus.EMPLOYED
-        income[emp_ind] = cpi * current_wage[emp_ind]
+        income[emp_ind] = (cpi if wage_cpi is None else wage_cpi) * current_wage[emp_ind]
 
         # Unemployed individuals
         unemp_ind = current_individual_activity_status == ActivityStatus.UNEMPLOYED

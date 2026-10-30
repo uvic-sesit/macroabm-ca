@@ -23,6 +23,7 @@ Individuals are the fundamental microeconomic units that:
 - Hold investments in firms/banks
 """
 
+from __future__ import annotations
 import warnings
 from typing import Any
 
@@ -249,6 +250,7 @@ class Individuals(Agent):
         expected_inflation: float,
         income_taxes: float,
         tau_firm: float,
+        wage_cpi: float | None = None,
     ) -> np.ndarray:
         """Calculate expected future income for individuals.
 
@@ -282,6 +284,7 @@ class Individuals(Agent):
                 expected_bank_profits=expected_bank_profits,
                 corr_invested_banks=self.states["Corresponding Invested Bank"],
                 cpi=cpi,
+                wage_cpi=wage_cpi,
                 expected_inflation=expected_inflation,
                 dividend_payout_ratio=self.states["Dividend Payout Ratio"],
                 income_taxes=income_taxes,
@@ -296,6 +299,7 @@ class Individuals(Agent):
         cpi: float,
         income_taxes: float,
         tau_firm: float,
+        wage_cpi: float | None = None,
     ) -> np.ndarray:
         """Calculate current period income for individuals.
 
@@ -327,6 +331,7 @@ class Individuals(Agent):
                 bank_profits=bank_profits,
                 corr_invested_banks=self.states["Corresponding Invested Bank"],
                 cpi=cpi,
+                wage_cpi=wage_cpi,
                 dividend_payout_ratio=self.states["Dividend Payout Ratio"],
                 income_taxes=income_taxes,
                 tau_firm=tau_firm,
