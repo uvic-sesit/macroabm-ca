@@ -489,6 +489,67 @@ class CESHouseholdConsumption(HouseholdConsumption):
         return np.maximum(0.0, target_consumption)
 
 
+class CESExogenousHouseholdConsumption(CESHouseholdConsumption):
+    """Exogenous TOTAL consumption (the candidate growth baseline's household
+    demand path) split across goods with CES substitution within bundles.
+
+    ``ExogenousHouseholdConsumption`` pins the household total to the exogenous
+    path and splits it by the fixed ``consumption_weights``; that is what the
+    candidate growth baseline installs, and it silently discards any household
+    substitution bundle.  This variant keeps the same total and the same
+    income-proportional split across households, but forms the goods split
+    from ``_compute_ces_weights`` (nominal share of good i within its bundle
+    scales as p_i^-sigma, bundle totals held) so households can shift spending
+    between energy carriers when their relative prices move.  Falls back to
+    the fixed weights whenever the price/tax/bundle inputs are missing.
+    """
+
+    def compute_target_consumption(
+        self,
+        expected_inflation: float,
+        current_cpi: float,
+        initial_cpi: float,
+        historic_consumption_sum: np.ndarray,
+        saving_rates: np.ndarray,
+        income: np.ndarray,
+        household_benefits: np.ndarray,
+        consumption_weights: np.ndarray,
+        consumption_weights_by_income: np.ndarray,
+        exogenous_total_consumption: np.ndarray,
+        current_time: int,
+        take_consumption_weights_by_income_quantile: bool,
+        tau_vat: float,
+        prices: np.ndarray = None,
+        initial_prices: np.ndarray = None,
+        taxes: np.ndarray = None,
+        initial_taxes: np.ndarray = None,
+        bundle_matrix: np.ndarray = None,
+        **kwargs,
+    ) -> np.ndarray:
+        weights = consumption_weights
+        if not any(x is None for x in [prices, initial_prices, taxes, initial_taxes, bundle_matrix]):
+            weights = self._compute_ces_weights(
+                consumption_weights, prices, initial_prices, taxes, initial_taxes, bundle_matrix
+            )
+        target_consumption = np.maximum(
+            0.0,
+            (1.0 / (1 + tau_vat) * np.outer(weights, (1 - saving_rates) * income).T),
+        )
+        total = target_consumption.sum()
+        if not np.isfinite(total) or total <= 0.0:
+            return target_consumption
+        return (
+            (1 + expected_inflation)
+            * current_cpi
+            / initial_cpi
+            * 1.0
+            / (1 + tau_vat)
+            * exogenous_total_consumption[current_time]
+            * target_consumption
+            / total
+        )
+
+
 class ExogenousHouseholdConsumption(HouseholdConsumption):
     """Exogenous household consumption implementation.
 

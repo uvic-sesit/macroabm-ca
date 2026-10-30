@@ -91,6 +91,7 @@ class ConsumptionFunction(BaseModel):
         "DefaultHouseholdConsumption",
         "ExogenousHouseholdConsumption",
         "CESHouseholdConsumption",
+        "CESExogenousHouseholdConsumption",
         "DisposableIncomeHouseholdConsumption",
     ] = "DefaultHouseholdConsumption"
     parameters: dict[str, Any] = {

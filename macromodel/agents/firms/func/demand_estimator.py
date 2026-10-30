@@ -125,8 +125,19 @@ class DefaultDemandEstimator(DemandEstimator):
                 1.0 - self.demand_smoothing
             ) * self._smoothed_demand + self.demand_smoothing * previous_demand
 
-        return (
+        estimated = (
             (1 + self.sectoral_growth_adjustment_speed * current_estimated_growth)
             * (1 + self.firm_growth_adjustment_speed * estimated_growth_by_firm)
             * self._smoothed_demand
         )
+        # Opt-in per-firm multiplier on the estimate (WTC 2026-10-17, doc 5n: the
+        # electricity-price competitiveness response sets it each step from a prehook;
+        # None = shipped behaviour).  Applied AFTER the growth terms so the plan, not the
+        # recorded demand, carries it; the next step's previous_demand is what buyers
+        # actually ordered, so the multiplier does not compound through this estimate.
+        mult = getattr(self, "firm_demand_multiplier", None)
+        if mult is not None:
+            mult = np.asarray(mult, dtype=float)
+            if mult.shape == estimated.shape:
+                estimated = estimated * mult
+        return estimated
