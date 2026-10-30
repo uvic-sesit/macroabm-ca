@@ -568,25 +568,29 @@ def apply_reference_gap(
     exogenous_total_consumption: np.ndarray,
     tau_vat: float,
 ) -> np.ndarray:
-    """Opt-in marginal-income / price-gap overlay on an exogenous household total (2026-10-30).
+    """Opt-in marginal-income overlay on an exogenous household total (2026-10-30).
 
     The exogenous setters pin the household total to a path: income only splits it across
-    households, so neither a higher income nor a cheaper basket can raise real spending.
-    When the linkage sets ``setter.reference_gap`` (a dict, see
-    ``M3-linkages/scripts/household_gap_prehook.py``) the total is scaled by
+    households, so a higher real income cannot raise real spending.  When the linkage sets
+    ``setter.reference_gap`` (a dict, see ``M3-linkages/scripts/household_gap_prehook.py``)
+    the total is scaled by
 
-        1 + (mpc x (Y - Y_ref) + s_p x G_p) / ((1 + VAT) x base_total)
+        1 + mpc x (Y - Y_ref x P / P_ref) / ((1 + VAT) x base_total)
 
     with Y this province's total expected income this step, Y_ref the same-seed reference
-    run's at the same row (``income`` by row), G_p = exog_real[t] x (CPI_ref - CPI) / CPI_0
-    x (1 + pi_e) the nominal saving on the exogenous real basket when this run's prices are
-    below the reference's (``cpi`` by row, the last completed step), mpc the propensity to
-    spend income gains, s_p the share of the price saving spent on top of the pinned real
-    path.  In the reference run itself both gaps are zero, so the path is unchanged (the
-    multiplier is forced to exactly 1 when both relative gaps are below 1e-9, so a run
-    on its own reference reproduces it bit for bit).  Inactive before ``start_step`` (the
-    row index; the start-up re-pricing moves every income), clipped to +/- ``cap``.
-    Returns ``target`` unchanged when no reference is set.
+    run's at the same row (``income`` by row), P / P_ref this run's CPI over the reference
+    run's at the last completed step (``cpi`` by row), and mpc the propensity to spend the
+    gain.  Y - Y_ref x P / P_ref is the REAL income gap valued at this run's prices: a run
+    whose nominal incomes fall with its price level (the wage rule indexes offered wages
+    to expected inflation, so a cheaper basket lowers nominal incomes about one for one)
+    has no gain to spend, and a run whose incomes rise faster than its prices does.  A
+    nominal formulation (income gap plus the saving on the basket, tried first) double
+    counts the price level and ranks a higher mpc as a smaller effect.  In the reference run
+    the gap is zero, so the path is unchanged (the multiplier is forced to exactly 1 below
+    1e-9 relative gap, so a run on its own reference reproduces it bit for bit).  Inactive
+    before ``start_step`` (the row index), clipped to +/- ``cap``.  Returns ``target``
+    unchanged when no reference is set.  ``setter.reference_gap["last"]`` keeps
+    (row, nominal income gap, price gap, real gap, multiplier) for the hook's log.
     """
     gap = getattr(setter, "reference_gap", None)
     if not gap:
@@ -600,23 +604,23 @@ def apply_reference_gap(
     c_row = min(max(row - 1, 0), len(ref_cpi) - 1)
     y_ref = float(ref_income[i_row])
     cpi_ref = float(ref_cpi[c_row])
+    cpi_now = float(current_cpi)
     base = float(target.sum())
-    if not (np.isfinite(y_ref) and np.isfinite(cpi_ref) and np.isfinite(base)) or base <= 0.0 or y_ref <= 0.0:
+    if (not (np.isfinite(y_ref) and np.isfinite(cpi_ref) and np.isfinite(base))
+            or base <= 0.0 or y_ref <= 0.0 or cpi_ref <= 0.0):
         return target
     y_now = float(np.asarray(income, dtype=float).sum())
-    income_gap = y_now - y_ref
-    exog = float(exogenous_total_consumption[min(row, len(exogenous_total_consumption) - 1)])
-    price_gap = exog * (cpi_ref - float(current_cpi)) / float(initial_cpi) * (1.0 + float(expected_inflation))
-    rel_i = abs(income_gap) / y_ref
-    rel_p = abs(cpi_ref - float(current_cpi)) / cpi_ref if cpi_ref > 0 else 0.0
-    if rel_i < 1e-9 and rel_p < 1e-9:
-        gap["last"] = (row, 0.0, 0.0, 1.0)
+    rel_nominal = (y_now - y_ref) / y_ref
+    rel_price = (cpi_ref - cpi_now) / cpi_ref
+    real_gap = y_now - y_ref * cpi_now / cpi_ref
+    rel_real = real_gap / y_ref
+    if abs(rel_real) < 1e-9:
+        gap["last"] = (row, rel_nominal, rel_price, rel_real, 1.0)
         return target
-    add = float(gap.get("mpc", 0.0)) * income_gap + float(gap.get("price_share", 0.0)) * price_gap
-    factor = 1.0 + add / (1.0 + tau_vat) / base
+    factor = 1.0 + float(gap.get("mpc", 0.0)) * real_gap / (1.0 + tau_vat) / base
     cap = float(gap.get("cap", 0.25))
     factor = min(1.0 + cap, max(1.0 - cap, factor))
-    gap["last"] = (row, income_gap / y_ref, (cpi_ref - float(current_cpi)) / cpi_ref, factor)
+    gap["last"] = (row, rel_nominal, rel_price, rel_real, factor)
     return target * factor
 
 
