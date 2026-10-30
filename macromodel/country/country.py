@@ -1781,6 +1781,10 @@ class Country:
             "Profits": self.firms.total_profits(),
             "Capital Bought": self.firms.total_capital_bought(),
             "Household Consumption": self.households.total_consumption(),
+            # Total expected income of households by row (the income the consumption setter
+            # splits the exogenous total by); the household reference-gap overlay reads it
+            # from a reference run (2026-10-30).
+            "Household Expected Income": self.households.ts.get_aggregate("expected_income"),
             "Government Consumption": self.government_entities.total_consumption(),
             "Taxes on Products": self.central_government.total_taxes(),
             "Imports": self.economy.total_imports(),

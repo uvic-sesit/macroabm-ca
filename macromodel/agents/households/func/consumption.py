@@ -538,7 +538,7 @@ class CESExogenousHouseholdConsumption(CESHouseholdConsumption):
         total = target_consumption.sum()
         if not np.isfinite(total) or total <= 0.0:
             return target_consumption
-        return (
+        result = (
             (1 + expected_inflation)
             * current_cpi
             / initial_cpi
@@ -548,6 +548,76 @@ class CESExogenousHouseholdConsumption(CESHouseholdConsumption):
             * target_consumption
             / total
         )
+        return apply_reference_gap(
+            self, result, current_time=current_time, income=income, current_cpi=current_cpi,
+            initial_cpi=initial_cpi, expected_inflation=expected_inflation,
+            exogenous_total_consumption=exogenous_total_consumption, tau_vat=tau_vat,
+        )
+
+
+
+def apply_reference_gap(
+    setter,
+    target: np.ndarray,
+    *,
+    current_time: int,
+    income: np.ndarray,
+    current_cpi: float,
+    initial_cpi: float,
+    expected_inflation: float,
+    exogenous_total_consumption: np.ndarray,
+    tau_vat: float,
+) -> np.ndarray:
+    """Opt-in marginal-income / price-gap overlay on an exogenous household total (2026-10-30).
+
+    The exogenous setters pin the household total to a path: income only splits it across
+    households, so neither a higher income nor a cheaper basket can raise real spending.
+    When the linkage sets ``setter.reference_gap`` (a dict, see
+    ``M3-linkages/scripts/household_gap_prehook.py``) the total is scaled by
+
+        1 + (mpc x (Y - Y_ref) + s_p x G_p) / ((1 + VAT) x base_total)
+
+    with Y this province's total expected income this step, Y_ref the same-seed reference
+    run's at the same row (``income`` by row), G_p = exog_real[t] x (CPI_ref - CPI) / CPI_0
+    x (1 + pi_e) the nominal saving on the exogenous real basket when this run's prices are
+    below the reference's (``cpi`` by row, the last completed step), mpc the propensity to
+    spend income gains, s_p the share of the price saving spent on top of the pinned real
+    path.  In the reference run itself both gaps are zero, so the path is unchanged (the
+    multiplier is forced to exactly 1 when both relative gaps are below 1e-9, so a run
+    on its own reference reproduces it bit for bit).  Inactive before ``start_step`` (the
+    row index; the start-up re-pricing moves every income), clipped to +/- ``cap``.
+    Returns ``target`` unchanged when no reference is set.
+    """
+    gap = getattr(setter, "reference_gap", None)
+    if not gap:
+        return target
+    row = int(current_time)
+    if row < int(gap.get("start_step", 0)):
+        return target
+    ref_income = gap["income"]
+    ref_cpi = gap["cpi"]
+    i_row = min(row, len(ref_income) - 1)
+    c_row = min(max(row - 1, 0), len(ref_cpi) - 1)
+    y_ref = float(ref_income[i_row])
+    cpi_ref = float(ref_cpi[c_row])
+    base = float(target.sum())
+    if not (np.isfinite(y_ref) and np.isfinite(cpi_ref) and np.isfinite(base)) or base <= 0.0 or y_ref <= 0.0:
+        return target
+    y_now = float(np.asarray(income, dtype=float).sum())
+    income_gap = y_now - y_ref
+    exog = float(exogenous_total_consumption[min(row, len(exogenous_total_consumption) - 1)])
+    price_gap = exog * (cpi_ref - float(current_cpi)) / float(initial_cpi) * (1.0 + float(expected_inflation))
+    rel_i = abs(income_gap) / y_ref
+    rel_p = abs(cpi_ref - float(current_cpi)) / cpi_ref if cpi_ref > 0 else 0.0
+    if rel_i < 1e-9 and rel_p < 1e-9:
+        gap["last"] = (row, 0.0, 0.0, 1.0)
+        return target
+    add = float(gap.get("mpc", 0.0)) * income_gap + float(gap.get("price_share", 0.0)) * price_gap
+    factor = 1.0 + add / (1.0 + tau_vat) / base
+    cap = float(gap.get("cap", 0.25))
+    factor = min(1.0 + cap, max(1.0 - cap, factor))
+    gap["last"] = (row, income_gap / y_ref, (cpi_ref - float(current_cpi)) / cpi_ref, factor)
+    return target * factor
 
 
 class ExogenousHouseholdConsumption(HouseholdConsumption):
@@ -619,7 +689,7 @@ class ExogenousHouseholdConsumption(HouseholdConsumption):
                 ).T
             ),
         )
-        return (
+        result = (
             (1 + expected_inflation)
             * current_cpi
             / initial_cpi
@@ -628,4 +698,9 @@ class ExogenousHouseholdConsumption(HouseholdConsumption):
             * exogenous_total_consumption[current_time]
             * target_consumption
             / target_consumption.sum()
+        )
+        return apply_reference_gap(
+            self, result, current_time=current_time, income=income, current_cpi=current_cpi,
+            initial_cpi=initial_cpi, expected_inflation=expected_inflation,
+            exogenous_total_consumption=exogenous_total_consumption, tau_vat=tau_vat,
         )
