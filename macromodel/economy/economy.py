@@ -316,6 +316,30 @@ class Economy:
             force_reset=["growth", "house_price_index", "inflation"],
         )
 
+    def _anchor_expectation(self, forecast: float) -> float:
+        """Blend the AR forecast of inflation with a fixed anchor (2026-10-30, opt-in).
+
+        expected = a x target + (1 - a) x forecast, with a = `inflation_expectation_anchor`
+        (0 = shipped adaptive forecast, bit-identical; 1 = expectations fully anchored) and
+        `inflation_expectation_target` a QUARTERLY rate.  Both attributes are set on the
+        Economy by the scenario driver; absent, nothing changes.
+
+        Why: the firms' price rule passes gf x expected inflation into prices, and under
+        cost-push pricing (cp) costs grow at the realised inflation rate, so in steady state
+        pi = gf x pi_e + cp x pi.  With the adaptive forecast (pi_e -> pi) any inflation rate
+        is self-fulfilling at gf + cp = 1 and the price level follows a random walk; with
+        pi_e = target the fixed point is pi = gf x target / (1 - cp), i.e. the target itself
+        at gf = cp = 0.5.  Applied to the CPI and PPI expectations alike so wages, the
+        exogenous household totals, government and the rest of the world see one anchor.
+        """
+        a = float(getattr(self, "inflation_expectation_anchor", 0.0) or 0.0)
+        if a <= 0.0:
+            return forecast
+        target = getattr(self, "inflation_expectation_target", None)
+        if target is None:
+            return forecast
+        return a * float(target) + (1.0 - a) * float(forecast)
+
     def set_estimates(
         self,
         exogenous_growth: np.ndarray,
@@ -394,6 +418,7 @@ class Economy:
                     np.minimum(max_inflation, estimated_cpi_inflation),
                 )
                 assert not np.isnan(estimated_cpi_inflation)
+                estimated_cpi_inflation = self._anchor_expectation(estimated_cpi_inflation)
                 self.ts.estimated_cpi_inflation.append([estimated_cpi_inflation])
 
         # Forecast PPI inflation
@@ -425,6 +450,7 @@ class Economy:
                     np.minimum(max_inflation, estimated_ppi_inflation),
                 )
                 assert not np.isnan(estimated_ppi_inflation)
+                estimated_ppi_inflation = self._anchor_expectation(estimated_ppi_inflation)
                 self.ts.estimated_ppi_inflation.append([estimated_ppi_inflation])
 
         # Forecast growth

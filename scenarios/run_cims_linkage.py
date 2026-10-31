@@ -1742,6 +1742,8 @@ def build_simulation(
     firm_price_advantage_smoothing: float | None = None,
     wage_cpi_indexation: float | None = None,
     wage_cpi_lag: int | None = None,
+    inflation_expectation_anchor: float | None = None,
+    inflation_expectation_target: float | None = None,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     labour_force_cap: dict[str, float] | None = None,
@@ -2176,6 +2178,27 @@ def build_simulation(
             _c.wage_cpi_indexation = _a
             _c.wage_cpi_lag = _l
         logger.info("Nominal wages paid at %.2f x CPI_t + %.2f x CPI_{t-%d} (partial indexation ON)", _a, 1.0 - _a, _l)
+    if inflation_expectation_anchor is not None:
+        # Anchored inflation expectations (2026-10-30): expected = a x target + (1 - a) x AR
+        # forecast, for the CPI and PPI expectations of every province
+        # (Economy._anchor_expectation).  The target is given as an ANNUAL rate (0.02 = 2 %)
+        # and converted to the model's quarterly rate here.  The central bank's own Taylor-rule
+        # target (synthetic data, `targeted_inflation_rate`) is logged for comparison only:
+        # the policy rate reaches interest paid, not prices, so it is not the anchor.
+        _a = float(inflation_expectation_anchor)
+        _t_annual = float(inflation_expectation_target) if inflation_expectation_target is not None else 0.02
+        if not 0.0 <= _a <= 1.0:
+            raise RuntimeError(f"inflation_expectation_anchor must be in [0, 1] (got {_a})")
+        _t_q = (1.0 + _t_annual) ** 0.25 - 1.0
+        for _c in sim.countries.values():
+            _c.economy.inflation_expectation_anchor = _a
+            _c.economy.inflation_expectation_target = _t_q
+        try:
+            _cb_t = float(next(iter(sim.countries.values())).central_bank.states["targeted_inflation_rate"])
+        except Exception:  # noqa: BLE001
+            _cb_t = float("nan")
+        logger.info("Inflation expectations anchored: a=%.2f target=%.4f/yr (%.5f/quarter); central bank Taylor target stored as %.5f",
+                    _a, _t_annual, _t_q, _cb_t)
     return sim
 
 
