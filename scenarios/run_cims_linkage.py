@@ -506,7 +506,7 @@ def build_link_prehook(
     # (CODERS/ATB capex x statutory rate, ~2021 CAD at face value) while the production
     # value it is divided by in apply_investment_tax_credit is NOMINAL, so under an
     # inflating reference the subsidy rate falls every year for a credit that has not
-    # changed (at 2 %/yr, 19 % of the 2026-50 credit's real value). With the flag each
+    # changed (at 2 %/yr, 21 % of the 2026-50 credit's real value). With the flag each
     # province's credit is scaled by CPI(t-1) / CPI(first linkage milestone), the
     # exogenous energy prices' convention. Bit-identical when False.
     itc_cpi_base: dict[str, float] = {}
