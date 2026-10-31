@@ -1744,6 +1744,8 @@ def build_simulation(
     wage_cpi_lag: int | None = None,
     inflation_expectation_anchor: float | None = None,
     inflation_expectation_target: float | None = None,
+    rent_inflation_indexation: float | None = None,
+    rent_inflation_delay: int | None = None,
     use_candidate_baseline: bool = False,
     labour_force_growth: float | None = None,
     labour_force_cap: dict[str, float] | None = None,
@@ -2199,6 +2201,23 @@ def build_simulation(
             _cb_t = float("nan")
         logger.info("Inflation expectations anchored: a=%.2f target=%.4f/yr (%.5f/quarter); central bank Taylor target stored as %.5f",
                     _a, _t_annual, _t_q, _cb_t)
+    if rent_inflation_indexation is not None:
+        # Rent indexation (2026-10-30): existing rents are raised each quarter by
+        # a x CPI inflation of L quarters ago (households property function
+        # `partial_rent_inflation_indexation` / `_delay`, shipped 0.0 / 1, i.e. rents are
+        # nominally rigid until a property is re-let).  Under a 2 %/yr price path that
+        # rigidity erodes real rents and house values by ~40 % by 2050 and moves the
+        # housing block (L, F, G, K) and the rent share of GDP; a = 1 makes rents a
+        # relative price like any other.
+        _ri = float(rent_inflation_indexation)
+        _rl = int(rent_inflation_delay) if rent_inflation_delay is not None else 1
+        if not 0.0 <= _ri <= 1.0 or _rl < 1:
+            raise RuntimeError(f"rent_inflation_indexation must be in [0, 1] and rent_inflation_delay >= 1 (got {_ri}, {_rl})")
+        for _c in sim.countries.values():
+            _pf = _c.households.functions["property"]
+            _pf.partial_rent_inflation_indexation = _ri
+            _pf.partial_rent_inflation_delay = _rl
+        logger.info("Rents indexed to CPI inflation: a=%.2f, delay %d quarter(s) (shipped 0.0)", _ri, _rl)
     return sim
 
 
