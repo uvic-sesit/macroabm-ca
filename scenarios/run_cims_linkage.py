@@ -423,6 +423,7 @@ def build_link_prehook(
     export_demand_pinning: bool = False,
     exogenous_fossil_production: bool = False,
     investment_tax_credit: bool = False,
+    investment_tax_credit_cpi_index: bool = False,
     steps_per_year: int = 4,
     additive_intensity: bool = False,
     household_energy_shares: bool = False,
@@ -500,6 +501,25 @@ def build_link_prehook(
     milestone = set(years)
     if anchor_year is None and years:
         anchor_year = min(years)
+
+    # ITC CPI indexation (2026-10-31, opt-in). The credit table is CONSTANT dollars
+    # (CODERS/ATB capex x statutory rate, ~2021 CAD at face value) while the production
+    # value it is divided by in apply_investment_tax_credit is NOMINAL, so under an
+    # inflating reference the subsidy rate falls every year for a credit that has not
+    # changed (at 2 %/yr, 19 % of the 2026-50 credit's real value). With the flag each
+    # province's credit is scaled by CPI(t-1) / CPI(first linkage milestone), the
+    # exogenous energy prices' convention. Bit-identical when False.
+    itc_cpi_base: dict[str, float] = {}
+
+    def _itc_cpi_scale(country, code: str) -> float:
+        try:
+            arr = np.asarray(country.economy.ts.current("cpi"), dtype=float).ravel()
+        except Exception:  # noqa: BLE001 -- never let a diagnostic scale break a run
+            return 1.0
+        if arr.size == 0 or not np.isfinite(arr[0]) or arr[0] <= 0.0:
+            return 1.0
+        base = itc_cpi_base.setdefault(code, float(arr[0]))
+        return float(arr[0]) / base
 
     def link_prehook(sim: Simulation, year: int, month: int) -> None:
         if month != 1 or year not in milestone:
@@ -776,6 +796,10 @@ def build_link_prehook(
                 # no per-province file exists, so an older processed directory still runs --
                 # with the old, wrong behaviour, which the log line below makes visible.
                 itc_region = demand_region
+                # Base captured at every milestone (the first one fixes CPI(0)), not only
+                # when a credit exists, so a late-starting table still indexes from the start.
+                _itc_scale = (_itc_cpi_scale(country, province_code)
+                              if investment_tax_credit_cpi_index else 1.0)
                 if reader.investment_tax_credit_available(itr, year, province_code):
                     itc_region = province_code
                 elif investment_tax_credit and itc_region != province_code:
@@ -793,6 +817,10 @@ def build_link_prehook(
                     credits = {industries.index(code): float(itc.loc[code, col])
                                for code in itc.index
                                if code in industries and float(itc.loc[code, col]) > 0.0}
+                    if investment_tax_credit_cpi_index and credits:
+                        credits = {k: v * _itc_scale for k, v in credits.items()}
+                        logger.info("investment tax credit (%s %s): constant-dollar credit "
+                                    "CPI-indexed x %.3f", province_code, year, _itc_scale)
                     country.apply_investment_tax_credit(credits, steps_per_year)
                 elif investment_tax_credit:
                     logger.warning(
@@ -2370,6 +2398,14 @@ def parse_args() -> argparse.Namespace:
              "Rates are headline statutory rates: treat the fiscal cost as an upper bound.",
     )
     p.add_argument(
+        "--investment-tax-credit-cpi-index",
+        action="store_true",
+        help="Scale each province's credit by CPI(t-1)/CPI(first milestone): the credit table "
+             "is constant dollars and the production value it is spread over is nominal, so "
+             "under an inflating reference the subsidy would otherwise shrink in real terms "
+             "(2026-10-31; the exogenous energy prices' convention).",
+    )
+    p.add_argument(
         "--exogenous-fossil-production",
         action="store_true",
         help="Drive the export-pinned industries' PRODUCTION to the linkage's path "
@@ -2560,6 +2596,7 @@ def main() -> None:
         export_demand_pinning=args.export_demand_pinning,
         exogenous_fossil_production=args.exogenous_fossil_production,
         investment_tax_credit=args.investment_tax_credit,
+        investment_tax_credit_cpi_index=args.investment_tax_credit_cpi_index,
         steps_per_year=args.steps_per_year,
         additive_intensity=args.additive_intensity,
         household_energy_shares=args.household_energy_shares,
