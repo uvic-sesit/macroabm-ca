@@ -924,7 +924,7 @@ class Firms(Agent):
         self.ts.limiting_intermediate_inputs.append(limiting)
         self.ts.limiting_capital_inputs.append(
             self.functions["production"].compute_limiting_capital_inputs_stock(
-                capital_inputs_productivity_matrix=self.get_effective_capital_coefficients(),
+                capital_inputs_productivity_matrix=self._capital_coefficients_for_limit(),
                 capital_inputs_stock=self.ts.current("capital_inputs_stock"),
                 capital_inputs_utilisation_rate=self.capital_inputs_utilisation_rate,
                 goods_criticality_matrix=self.goods_criticality_matrix,
@@ -2189,6 +2189,17 @@ class Firms(Agent):
             np.zeros_like(current_good_prices) if extra_marginal_taxes is None else extra_marginal_taxes
         )
         return (1 + estimated_inflation) * (self.ts.current("capital_inputs_stock") * (current_good_prices + _emt)).sum(axis=1)
+
+    def _capital_coefficients_for_limit(self) -> np.ndarray:
+        """Opt-in (CEC runs): goods named by index in CEC_NONBINDING_CAPITAL never cap production."""
+        import os
+        cap = self.get_effective_capital_coefficients()
+        raw = os.environ.get("CEC_NONBINDING_CAPITAL")
+        if not raw:
+            return cap
+        cap = np.array(cap, dtype=float)
+        cap[:, [int(x) for x in raw.split(",")]] = np.inf
+        return cap
 
     def compute_capital_inputs_stock(self) -> np.ndarray:
         """Calculate end-of-period capital input stocks.
