@@ -472,6 +472,7 @@ class Country:
                 initial_year=initial_year,
             )
 
+        firms._industry_names = list(industries)  # needed by the PMD hook
         return cls(
             country_name=country_name,
             scale=scale,
@@ -1414,11 +1415,18 @@ class Country:
         )
         self.firms.ts.profits.append(self.firms.compute_profits())
         self.firms.ts.unit_costs.append(self.firms.compute_unit_costs())
-        self.firms.ts.corporate_taxes_paid.append(
-            self.firms.compute_corporate_taxes_paid(
-                tau_firm=self.central_government.states["Profit Tax"],
+        # opt-in Productivity Mega Deduction tax base (None -> base = profits).
+        self._pmd_tax_base = self._pmd_taxable_profits()
+        if self._pmd_tax_base is None:
+            self.firms.ts.corporate_taxes_paid.append(
+                self.firms.compute_corporate_taxes_paid(
+                    tau_firm=self.central_government.states["Profit Tax"],
+                )
             )
-        )
+        else:
+            self.firms.ts.corporate_taxes_paid.append(
+                self.central_government.states["Profit Tax"] * np.maximum(0.0, self._pmd_tax_base)
+            )
 
         # D2. FIRM BALANCE SHEETS
         self.firms.ts.gross_operating_surplus_mixed_income.append(
@@ -1601,7 +1609,10 @@ class Country:
             current_bank_profits=self.banks.ts.current("profits"),
             current_firm_production=self.firms.ts.current("production"),
             current_firm_price=self.firms.ts.current("price"),
-            current_firm_profits=self.firms.ts.current("profits"),
+            # PMD: government taxes the same base the firms paid on.
+            current_firm_profits=(self.firms.ts.current("profits")
+                                  if getattr(self, "_pmd_tax_base", None) is None
+                                  else self._pmd_tax_base),
             current_firm_industries=self.firms.states["Industry"],
             taxes_less_subsidies_rates=self.central_government.states["Taxes Less Subsidies Rates"],
             current_household_new_real_wealth=self.households.ts.current("investment"),
@@ -1709,6 +1720,29 @@ class Country:
         self.housing_market.save_to_h5(group)
 
         self.exogenous.save_to_h5(group)
+
+    def _pmd_taxable_profits(self):
+        """PMD tax base for this step, or None when the experiment is off.
+
+        Also advances the PMD step counter and switches on the desired-capital hook, so
+        it runs whenever PMD_EPS > 0 even with PMD_TAX off (the base then equals profits).
+        """
+        from macromodel.policy import pmd
+
+        cfg = pmd.config()
+        if cfg is None:
+            return None
+        state = getattr(self, "_pmd_state", None)
+        if state is None:
+            state = self._pmd_state = pmd.PMDCountryState(
+                cfg, self.firms._industry_names, self.country_name)
+        base = state.taxable_profits(
+            self.firms,
+            good_prices=np.asarray(self.economy.ts.current("good_prices"), dtype=float),
+            profits=self.firms.ts.current("profits"),
+            tau=float(self.central_government.states["Profit Tax"]),
+        )
+        return base if cfg.tax else None
 
     def apply_investment_tax_credit(self, credits_by_industry: dict[int, float],
                                     steps_per_year: int) -> None:

@@ -428,6 +428,18 @@ class FinancialTargetCapitalInputsSetter(TargetCapitalInputsSetter):
         reference_capital_stock = self._apply_minimum_capital_stock(
             reference_capital_stock, initial_capital_inputs_stock
         )
+        # PMD: opt-in desired-capital uplift (no-op unless the PMD hook set it).
+        if getattr(self, "_pmd_uplift", None) is not None:
+            from macromodel.policy.pmd import apply_capital_target
+
+            reference_capital_stock = apply_capital_target(
+                self, reference_capital_stock, prev_capital_inputs_stock, prev_production,
+                unconstrained_target_production,
+            )
+            # Re-apply floor/ceiling so exogenous caps still win over the uplift.
+            reference_capital_stock = self._apply_minimum_capital_stock(
+                reference_capital_stock, initial_capital_inputs_stock
+            )
 
         # Take current stock of capital inputs into accounts
         target_capital_inputs = np.maximum(
