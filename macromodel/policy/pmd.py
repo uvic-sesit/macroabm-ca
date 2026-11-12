@@ -21,11 +21,13 @@ CEC_NONBINDING_CAPITAL):
    change in capital productivity) * Q_desired).
 
 Tables (PMD_TABLES_DIR): pmd_goods.csv (good, asset_class, weight) and
-pmd_buyer.csv (industry, me_incremental, f_eligible, dln_user_cost, invest_hook).
-Eligibility of good g bought by industry i:
-    asset_class ME   -> weight_g * me_incremental_i
-    asset_class F    -> weight_g * f_eligible_i   (engineering share of construction)
+pmd_buyer.csv (industry, me_incremental, f_eligible, dln_user_cost, invest_hook,
+taxable_share, small_business_share).
+Eligibility of good g bought by industry i (t_i = taxable_share_i):
+    asset_class ME   -> weight_g * me_incremental_i * t_i
+    asset_class F    -> weight_g * f_eligible_i * t_i   (engineering share of construction)
     asset_class NONE -> 0
+The logged federal cost uses 15% less 6 points on the small-business share.
 PMD_START_STEP: first model step the policy is active (counted from 0 per country).
 PMD_LOG: CSV path; one row per province per step is appended.
 """
@@ -44,10 +46,16 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Quarterly depreciation of the PMD-expensed stocks (≈17%/yr M&E, ≈5%/yr structures).
-_DEP_ME = 0.045
-_DEP_F = 0.0125
+# Quarterly write-off of the PMD-expensed stocks at TAX depreciation (CCA) rates, not
+# economic ones: the policy's cost is expensing MINUS the CCA the same assets would have
+# claimed under the existing rules. M&E ≈30%/yr declining balance (classes 8 20%, 10 30%,
+# 43 30%, 50 55%, 12 100%); engineering structures ≈8%/yr (classes 1, 17, 47, 49; 41 is 25%).
+# (Before 2026-11-11 these were economic rates, 17%/yr and 5%/yr, which overstated the
+# incremental deduction relative to Finance's costing.)
+_DEP_ME = 0.085
+_DEP_F = 0.02
 FEDERAL_RATE = 0.15
+SMALL_BUSINESS_FEDERAL_RATE = 0.09
 
 
 @dataclass
@@ -93,11 +101,33 @@ def config() -> Optional[PMDConfig]:
     return _CONFIG
 
 
+def _buyer_value(cfg: PMDConfig, industry: str, column: str, default: float) -> float:
+    if industry not in cfg.buyer.index or column not in cfg.buyer.columns:
+        return default
+    return float(cfg.buyer.at[industry, column])
+
+
+def taxable_share(cfg: PMDConfig, industries: list[str]) -> np.ndarray:
+    """Share of each industry's investment made by federally taxable corporations."""
+    return np.array([_buyer_value(cfg, b, "taxable_share", 1.0) for b in industries])
+
+
+def federal_rate(cfg: PMDConfig, industries: list[str]) -> np.ndarray:
+    """Federal corporate rate per industry: 15%, less 6 points on the small-business share."""
+    sbs = np.array([_buyer_value(cfg, b, "small_business_share", 0.0) for b in industries])
+    return FEDERAL_RATE - (FEDERAL_RATE - SMALL_BUSINESS_FEDERAL_RATE) * sbs
+
+
 def eligibility(cfg: PMDConfig, industries: list[str]) -> tuple[np.ndarray, np.ndarray]:
-    """(industry x good) eligible shares, split into the M&E and structures parts."""
+    """(industry x good) eligible shares, split into the M&E and structures parts.
+
+    Includes the buyer's taxable share: investment by Crowns, governments and non-profits
+    earns no federal deduction.
+    """
     n = len(industries)
     me = np.zeros((n, n))
     f = np.zeros((n, n))
+    tshare = taxable_share(cfg, industries)
     for gi, g in enumerate(industries):
         if g not in cfg.goods.index:
             continue
@@ -107,9 +137,9 @@ def eligibility(cfg: PMDConfig, industries: list[str]) -> tuple[np.ndarray, np.n
             if b not in cfg.buyer.index:
                 continue
             if cls == "ME":
-                me[bi, gi] = w * float(cfg.buyer.at[b, "me_incremental"])
+                me[bi, gi] = w * float(cfg.buyer.at[b, "me_incremental"]) * tshare[bi]
             elif cls == "F":
-                f[bi, gi] = w * float(cfg.buyer.at[b, "f_eligible"])
+                f[bi, gi] = w * float(cfg.buyer.at[b, "f_eligible"]) * tshare[bi]
     return me, f
 
 
@@ -117,10 +147,11 @@ def capital_uplift(cfg: PMDConfig, industries: list[str]) -> np.ndarray:
     """(industry x good) proportional rise in desired capital: eps * dlnUC on eligible goods."""
     me, f = eligibility(cfg, industries)
     elig = (me + f) > 0.0
+    tshare = taxable_share(cfg, industries)   # only taxable investors respond to the tax cut
     g = np.zeros(len(industries))
     for bi, b in enumerate(industries):
         if b in cfg.buyer.index and int(cfg.buyer.at[b, "invest_hook"]) == 1:
-            g[bi] = cfg.eps * float(cfg.buyer.at[b, "dln_user_cost"])
+            g[bi] = cfg.eps * float(cfg.buyer.at[b, "dln_user_cost"]) * tshare[bi]
     return np.where(elig, g[:, None], 0.0)
 
 
@@ -133,6 +164,8 @@ class PMDCountryState:
         self.name = country_name
         self.step = -1
         self.me, self.f = eligibility(cfg, self.industries)
+        self.fed_rate = federal_rate(cfg, self.industries)
+        self._ind = None
         self.uplift = capital_uplift(cfg, self.industries) if cfg.eps > 0 else None
         self.stock_me = None
         self.stock_f = None
@@ -144,6 +177,7 @@ class PMDCountryState:
         self.step += 1
         active = self.step >= self.cfg.start_step
         ind = np.asarray(firms.states["Industry"], dtype=int)
+        self._ind = ind
         profits = np.asarray(profits, dtype=float)
         nf = profits.shape[0]
         if self.stock_me is None:
@@ -188,7 +222,9 @@ class PMDCountryState:
         path = self.cfg.log_path
         if path is None:
             return
-        base_loss = float(np.maximum(profits, 0).sum() - np.maximum(taxable, 0).sum())
+        firm_loss = np.maximum(profits, 0) - np.maximum(taxable, 0)
+        base_loss = float(firm_loss.sum())
+        federal = float((self.fed_rate[self._ind] * firm_loss).sum())
         row = {
             "province": self.name, "step": self.step,
             "capital_purchases": float(value.sum()),
@@ -196,7 +232,7 @@ class PMDCountryState:
             "addback": float(addback.sum()),
             "tax_base_reduction": base_loss,
             "revenue_forgone_model_rate": float(tau) * base_loss,
-            "revenue_forgone_federal": FEDERAL_RATE * base_loss,
+            "revenue_forgone_federal": federal,
             "stock_me": float(self.stock_me.sum()), "stock_f": float(self.stock_f.sum()),
             "profits_pos": float(np.maximum(profits, 0).sum()),
         }
