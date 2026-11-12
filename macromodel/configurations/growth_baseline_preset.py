@@ -21,10 +21,14 @@ path, demography falls back to the shipped `NoAging` default (fixed labour force
 from __future__ import annotations
 
 import json
+import logging
+import os
 from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # Bundled observed provincial labour-force index (annual, base 1.0 at 2014), built from
 # StatCan LFS 14-10-0327 by scripts/build_labour_force_index.py. Small (~4 KB) so the
@@ -220,6 +224,31 @@ CANDIDATE_GROWTH_BASELINE: dict[str, Any] = {
 }
 
 
+def _apply_training_uplift(index: list[float], province: str) -> list[float]:
+    """Labour-SUPPLY uplift from a training programme (env TRAINING_LS_CSV), policy arms only.
+
+    The linkage writes a table (province, step, uplift): the cumulative extra labour force
+    as a fraction of the province's starting labour force, by quarter. The demography's
+    target becomes index[t] x (1 + uplift[t]); quarters past the table hold its last
+    value. Only the supply path is touched: the household / government demand overlays
+    build their own copy of the labour-force index, so trainees add workers, not people.
+    """
+    path = os.environ.get("TRAINING_LS_CSV")
+    if not path:
+        return index
+    import pandas as pd
+    tab = pd.read_csv(path)
+    rows = tab[tab.province == province].sort_values("step")
+    if rows.empty:
+        return index
+    up = dict(zip(rows.step.astype(int), rows.uplift.astype(float)))
+    last_step, last = int(rows.step.max()), float(rows.uplift.iloc[-1])
+    out = [v * (1.0 + (up.get(t, last if t > last_step else 0.0))) for t, v in enumerate(index)]
+    logger.info("Training labour-supply uplift for %s: %.4f%% at the end of the table",
+                province, 100.0 * last)
+    return out
+
+
 def apply_candidate_growth_baseline(
     country_config,
     labour_force_index: Optional[list[float]] = None,
@@ -301,6 +330,9 @@ def apply_candidate_growth_baseline(
             post_sample_growth=labour_force_growth, growth_cap=labour_force_cap,
             **({"base_year": labour_index_base_year}
                if labour_index_base_year is not None else {}))
+
+    if labour_force_index is not None and province is not None:
+        labour_force_index = _apply_training_uplift(list(labour_force_index), province)
 
     if labour_force_index is not None:
         country_config.individuals.functions.demography.name = p["demography"]
