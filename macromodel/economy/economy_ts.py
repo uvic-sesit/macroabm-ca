@@ -79,6 +79,7 @@ def create_economy_timeseries(
     export_taxes: float,
     initial_total_growth: float,
     initial_npl_ratio: float,
+    housing_services_in_household_io: bool = False,
 ) -> TimeSeries:
     """Create and initialize economy-wide time series data.
 
@@ -201,8 +202,8 @@ def create_economy_timeseries(
             - initial_sectoral_firm_used_ii.sum()
             + initial_total_taxes_on_products
             - initial_total_taxes_on_production
-            + initial_real_rent_paid.sum()
-            + initial_imp_rent_paid.sum()
+            + (0.0 if housing_services_in_household_io else initial_real_rent_paid.sum())
+            + (0.0 if housing_services_in_household_io else initial_imp_rent_paid.sum())
         ],
         gdp_output_growth=[np.nan],
         total_output=[initial_firm_total_sales],
@@ -259,8 +260,8 @@ def create_economy_timeseries(
             + initial_gov_consumption
             + (1 + export_taxes) * initial_exports.sum()
             - initial_imports.sum()
-            + initial_real_rent_paid.sum()
-            + initial_imp_rent_paid.sum()
+            + (0.0 if housing_services_in_household_io else initial_real_rent_paid.sum())
+            + (0.0 if housing_services_in_household_io else initial_imp_rent_paid.sum())
         ],
         gdp_expenditure_growth=[np.nan],
         total_household_fce=[initial_hh_consumption],
@@ -282,10 +283,10 @@ def create_economy_timeseries(
             initial_total_operating_surplus
             + initial_total_wages
             + initial_total_taxes_on_products
-            + initial_hh_rental_income.sum()
-            + initial_cg_rent_received
-            + initial_cg_taxes_rental_income
-            + initial_imp_rent_paid.sum(),
+            + (0.0 if housing_services_in_household_io else initial_hh_rental_income.sum())
+            + (0.0 if housing_services_in_household_io else initial_cg_rent_received)
+            + (0.0 if housing_services_in_household_io else initial_cg_taxes_rental_income)
+            + (0.0 if housing_services_in_household_io else initial_imp_rent_paid.sum()),
         ],
         gdp_income_growth=[np.nan],
         total_gross_operating_surplus_and_mixed_income=[initial_total_operating_surplus],
