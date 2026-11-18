@@ -312,6 +312,8 @@ _SELF_FUEL_CODES = {"B05", "B06", "C19"}
 _FEEDSTOCK_PAIRS = {("C19", "B06")}
 # Minimum anchor-year share of generation for a fuel's COPPER ratio to be applied.
 _GENMIX_MIN_SHARE = 0.05
+_PHYS_MIX_MIN_SHARE = 0.01  # FIRM_ENERGY_MIX_BASIS=physical: min base energy share (CIMS units) for a ratio
+_PHYS_MIX_MAX_RATIO = 2.0  # above this (strongly rising fuel, e.g. electrification) keep the value-share shift
 
 
 def _quantity_anchor_spec(base_q, now_q, base_total: float, floor: float):
@@ -1150,6 +1152,15 @@ def build_link_prehook(
                     # growth ratios, rescale or increments.
                     px = (firm_energy_fuel_prices or {}).get(province, {})
                     shifts: dict[tuple[int, int], float] = {}
+                    # FIRM_ENERGY_MIX_BASIS=physical (opt-in, set by the linkage from config):
+                    # fuels with a real share of the source's base bundle (>= 1% in energy units)
+                    # follow the source's PHYSICAL energy per unit of activity, as a ratio on the
+                    # model's own base purchase -- no prices, so a cheap fuel inside a group (coke in
+                    # C19) cannot inflate another fuel's share, and no additive shift on a small
+                    # model base. Tiny-base fuels keep the value-share shift, not renormalised.
+                    import os as _os
+                    _phys_mix = _os.environ.get("FIRM_ENERGY_MIX_BASIS", "").strip().lower() == "physical"
+                    phys: dict[tuple[int, int], tuple[float, float]] = {}
                     for i_code in rq.index:
                         if (i_code == _HOUSEHOLD_PROXY_ROW or i_code not in industries
                                 or i_code not in rq_anchor_f.index):
@@ -1170,6 +1181,13 @@ def build_link_prehook(
                         if w_now is None or w_0 is None:
                             continue
                         ii = industries.index(i_code)
+                        if _phys_mix:
+                            q_now = {j: max(0.0, float(np.nan_to_num(rq.loc[i_code, j]))) for j in fuels}
+                            q_0 = {j: max(0.0, float(np.nan_to_num(rq_anchor_f.loc[i_code, j]))) for j in fuels}
+                            t_now, t_0 = sum(q_now.values()), sum(q_0.values())
+                            if t_now > 0.0 and t_0 > 0.0:
+                                for j in fuels:
+                                    phys[(ii, industries.index(j))] = (q_0[j] / t_0, q_now[j] / t_now)
                         for j in fuels:
                             shifts[(ii, industries.index(j))] = w_now[j] - w_0[j]
                     _eii = (reader.get_energy_intensity_index(itr, year, demand_region)
@@ -1199,8 +1217,29 @@ def build_link_prehook(
                                 # COPPER has none of this fuel at the anchor or now (e.g. AB coal,
                                 # retired before 2022 in COPPER but in the IO-2022 recipe): zero.
                                 ratios[(industries.index("D"), industries.index(j_code))] = 0.0
+                    n_phys = 0
+                    for (ii, jj), (p0, p1) in phys.items():
+                        if p0 < _PHYS_MIX_MIN_SHARE or (ii, jj) in ratios:
+                            continue
+                        ei = float((e_index or {}).get(ii, 1.0))
+                        ei = min(max(ei, 0.2), 3.0) if np.isfinite(ei) and ei > 0.0 else 1.0
+                        r_phys = ei * p1 / p0
+                        if r_phys > _PHYS_MIX_MAX_RATIO:
+                            # Strong growth from a model base that may already be larger than the
+                            # source's (MB manufacturing electricity): a ratio overshoots, the
+                            # additive shift does not.
+                            continue
+                        ratios[(ii, jj)] = r_phys
+                        n_phys += 1
+                    if _phys_mix:
+                        _de = [v for (_i, _j), v in ratios.items() if "D" in industries and _j == industries.index("D")]
+                        logger.info("firm intensity anchor: province=%s year=%s physical fuel ratios=%d | "
+                                    "electricity ratio median=%.3f max=%.3f", province, year, n_phys,
+                                    float(np.median(_de)) if _de else float("nan"),
+                                    float(np.max(_de)) if _de else float("nan"))
                     summary = country.firms.anchor_energy_intensity(
                         shifts, energy_indices, max_multiplier=firm_energy_multiplier_cap,
+                        mix_renormalise=not _phys_mix,
                         energy_index=e_index,
                         include_self={industries.index(c) for c in _SELF_FUEL_CODES if c in industries},
                         pair_ratio=ratios or None,

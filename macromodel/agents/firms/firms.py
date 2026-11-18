@@ -2962,6 +2962,7 @@ class Firms(Agent):
         include_self: set[int] | None = None,
         pair_ratio: dict[tuple[int, int], float] | None = None,
         exclude_pairs: set[tuple[int, int]] | None = None,
+        mix_renormalise: bool = True,
     ) -> dict[str, float]:
         """Pin each industry's energy use PER UNIT OF ITS OWN OUTPUT, fuel mix from the source.
 
@@ -3088,7 +3089,12 @@ class Firms(Agent):
             # The mix-shift fuels share what the ratio-set fuels do not take of the anchor bundle.
             share_left = max(0.0, 1.0 - sum(v0.get(k, 0.0) for k in row_ratio_fuels))
             for k in mix_fuels:
-                write(i, k, firms_i, out_i * e_per_y * share_left * v[k] / s_v)
+                if mix_renormalise:
+                    write(i, k, firms_i, out_i * e_per_y * share_left * v[k] / s_v)
+                else:
+                    # Physical-ratio mode: the other fuels are set by their own ratios, so a
+                    # tiny-base fuel takes its own shifted share, not a renormalised remainder.
+                    write(i, k, firms_i, out_i * e_per_y * v[k])
         return {"pairs": n_written, "capped": n_capped}
 
     def anchor_energy_quantities(
