@@ -1,867 +1,238 @@
-# MacroABM-CA Onboarding Guide
+# MacroABM-CA: getting started
 
-This guide is a practical orientation for groups who want to run, inspect, and
-interpret the current Canada MacroABM workflow. It is intentionally
-code-referenced: the goal is not only to explain what the model does, but to show where the
-main pieces live and how data moves from raw files into simulated agents, markets, and
-results.
+This guide gets you from nothing to running the Canadian provincial model, defining your
+own scenarios and reading the results. The hands-on part is the notebook
+`MacroABM-CA_quickstart.ipynb` at the repository root; this page explains what it does
+and what to know around it.
 
-> **Experimental status.** The current Canada workflow should be treated as an
-> experimental research model. It is runnable, inspectable, and useful for diagnosis and
-> scenario prototyping, but the data pipeline, sector matching, run presets, and
-> validation workflow are still being actively refined. Outputs should be interpreted as
-> beta-run evidence, not as a finalized production baseline.
+MacroABM-CA is a research model under active development. Treat its results as model
+evidence to be checked, not as forecasts.
 
-Public repository:
+## 1. What the model is
 
-- [`uvic-sesit/macroabm-ca`](https://github.com/uvic-sesit/macroabm-ca)
+MacroABM-CA is an agent-based macroeconomic model of Canada's ten provinces. Each
+province is an economy of its own, linked to the others and to a rest-of-the-world block
+through trade:
 
-Main-branch documentation:
+- **Firms:** one per industry and province, 50 industries (the OECD input-output
+  classification: `A01` agriculture, `B06` oil and gas, `D` electricity, `F` construction,
+  `L` real estate, ...). Firms set prices, hire, buy intermediate inputs and capital, and
+  produce with fixed input recipes taken from the 2022 input-output tables.
+- **Households:** a sample of a few thousand households per province, built from Statistics
+  Canada surveys (income, wealth, housing tenure, consumption patterns). They work, earn,
+  pay taxes, consume, and buy or rent housing.
+- **Banks, governments and a central bank:** one bank and one government buyer per
+  province; a central government collecting taxes and paying transfers; a central bank
+  setting the policy rate.
+- **Markets:** goods (including trade between provinces and with the rest of the world),
+  labour, credit and housing.
 
-- [Project documentation index](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/index.md)
-- [Installation guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/installation.md)
-- [Quickstart guide](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/getting_started/quickstart.md)
+The model starts from the economy of 2022Q1 and steps forward one quarter at a time. Nothing
+is solved for an equilibrium: each quarter, agents decide from what they see, markets match
+buyers and sellers, and the outcome is next quarter's starting point. Aggregates (GDP,
+unemployment, prices) are the sum of what the agents did.
 
-The examples below use repository-relative paths. Raw data, generated pickles, H5 outputs,
-and validation artifacts are intentionally treated as local files outside the committed
-public repository unless explicitly noted.
+Some paths are set from outside rather than by the agents:
 
----
+- the labour force of each province (observed to 2024, then a fixed annual growth rate);
+- the growth of household and government demand (tied to the labour force);
+- the rest of the world's demand and prices.
 
-## 0. Suggested Starting Point
+Energy use, electricity supply, carbon pricing and clean-technology investment come from
+the CIMS-COPPER linkage (section 7), not from the model on its own.
 
-This guide is the conceptual map. The notebooks are the shortest path to actually running
-the current Canada provincial model.
+## 2. What is where
 
-| Start here | Use it for | What it produces |
-|------------|------------|------------------|
-| `scenarios/Sample_macroabm-Canada_provincial_run.ipynb` | One basic end-to-end provincial run | A local `DataWrapper` pickle, one H5 result file, and basic GDP/production plots |
-| `scenarios/Sample_macroabm-CANADA_run_time_iteration.ipynb` | Scenario comparison | In-memory scenario results and comparison plots for GDP, emissions, and prices |
-| `scenarios/run_canada_provincial.py` | Same end-to-end provincial run as the basic notebook | Same outputs as the provincial notebook, runnable from the command line |
+| Folder | Contents |
+|---|---|
+| `macro_data/` | Turns raw data into the model's starting point (the pickle, section 3.3). Only needed to rebuild that file. |
+| `macromodel/` | The simulation: `agents/` (firms, households, banks, governments), `markets/`, `configurations/` (settings and their defaults). |
+| `scenarios/` | Run scripts. `macro_only.py` runs the model on its own (the notebook uses it); `run_cims_linkage.py` builds the simulation, for the notebook and for the linkage. |
+| `MacroABM-CA_quickstart.ipynb` | The hands-on notebook. |
+| `dev/` | Local working files, mostly ignored by git: the pickle goes in `dev/pkl_files/`. `dev/io2022/` holds the scripts that build the pickle. |
+| `tests/` | Automated tests (`uv run pytest tests/`). |
 
-Recommended order for beta testers:
+## 3. Setup
 
-1. Read Sections 1-6 of this guide to understand the data/model contract.
-2. Run `scenarios/Sample_macroabm-Canada_provincial_run.ipynb` (or `scenarios/run_canada_provincial.py`) to confirm the provincial model can
-   build, run, save, and plot results on your machine.
-3. Run `scenarios/Sample_macroabm-CANADA_run_time_iteration.ipynb` if you want to compare scenario
-   behaviour across price-setting assumptions or repeated random-seed trials.
-4. Use the deeper documentation links in each section below when you need API-level or
-   implementation detail.
+### 3.1 What you need
 
-The notebooks intentionally keep explanations short. This guide provides the model context
-behind them.
+- **Git**, and access to the GitHub repository `uvic-sesit/macroabm-ca`.
+- **uv**, the Python package manager the project uses
+  ([install instructions](https://docs.astral.sh/uv/getting-started/installation/);
+  on Windows: `winget install astral-sh.uv`). uv installs the right Python (3.12) itself.
+- **Access to the SESIT SharePoint** folder `Projects - Shared/SESIT - MacroABM data`.
+- About 3 GB of free disk space (mostly Python packages) and 8 GB of memory (a run to
+  2030 uses about 4 GB).
 
-### Notebook Settings And Local Outputs
+### 3.2 Get the code and install
 
-The sample notebooks are runnable demonstrations, not canonical validation runs. In the
-current branch they use a short quarterly-style demo setup, including `time_unit = 3`,
-`seed = 0`, and a limited timestep horizon. Validation and policy runs may use different
-time units, seeds, productivity settings, and horizons, so do not compare notebook outputs
-to other results unless those settings are aligned.
-
-The basic provincial notebook writes a local `DataWrapper` pickle and an H5 result file.
-The scenario comparison notebook is lighter: it compares behaviour across scenario/trial
-settings and mainly keeps result arrays and plots in memory. Here, a "trial" means one full
-model run, usually with a distinct random seed; `n_trials = 1` means the reported path is a
-single run, not an average over repeated runs.
-
-Generated notebook outputs, pickles, H5 files, plots, and validation folders can be large
-and should stay local unless a team explicitly decides to share them. H5 files from even
-short provincial runs can reach multiple gigabytes.
-
----
-
-## 1. What MacroABM-CA Is
-
-MacroABM-CA is the Canada-specific provincial version of the broader MacroABM framework. The
-model combines:
-
-- a data preprocessing stack in `macro_data`
-- a dynamic simulation engine in `macromodel`
-- Canada-specific raw data, IO tables, policy inputs, and validation scripts
-
-Conceptually, the current Canada beta model starts with a 2014 economic structure and builds
-ten provincial economies:
-
-- `CAN_AB`
-- `CAN_BC`
-- `CAN_MB`
-- `CAN_NB`
-- `CAN_NL`
-- `CAN_NS`
-- `CAN_ON`
-- `CAN_PE`
-- `CAN_QC`
-- `CAN_SK`
-
-Each province is represented as an interacting economy with firms, households, banks,
-government entities, markets, and sectoral production structures. The provinces are linked
-through a provincial IO-style trade and production network, plus a simplified `ROW` external
-sector.
-
----
-
-## 2. Main Repository Areas
-
-### `macro_data/`
-
-This package turns raw datasets into the model-ready `DataWrapper` object. It handles:
-
-- raw-data readers
-- IO table loading and transformation
-- WIOD SEA / socioeconomic matching
-- synthetic firms, households, banks, government entities
-- trade proportions and exogenous data
-- final pickled data object used by the simulation
-
-Key entry point:
-
-- [`macro_data/data_wrapper.py`](../macro_data/data_wrapper.py)
-
-Further documentation:
-
-- [Macro data overview](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macro_data/index.md)
-- [DataWrapper API documentation](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macro_data/api/data_wrapper.md)
-- [Reader API documentation](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macro_data/api/readers/index.md)
-- synthetic data processing pages under `docs/macro_data/api/processing/`
-
-### `macromodel/`
-
-This package is the dynamic simulation engine. It handles:
-
-- countries / provincial economies
-- firms, households, banks, governments
-- goods, labour, credit, housing, and trade markets
-- simulation time stepping
-- H5 result writing
-
-Key entry point:
-
-- [`macromodel/simulation.py`](../macromodel/simulation.py)
-
-Further documentation:
-
-- [Macromodel overview](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macromodel/index.md)
-- [Macromodel API documentation](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macromodel/api/index.md)
-- [Agent API documentation](https://github.com/uvic-sesit/macroabm-ca/blob/main/docs/macromodel/api/agents/index.md)
-- market pages under `docs/macromodel/api/markets/`
-
-### Run Scripts And Presets
-
-The public code path for building the provincial model starts from:
-
-- [`macro_data/data_wrapper.py`](../macro_data/data_wrapper.py)
-- [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
-- [`macromodel/simulation.py`](../macromodel/simulation.py)
-
-Canadian model teams should keep runnable scenario scripts and notebooks in the
-[`scenarios/`](../../scenarios/) folder. See [Section 11](#11-team-workflow-scenarios-and-upstream-sync)
-for naming conventions and upstream-sync guidance.
-
-Project teams may keep local run scripts around these entry points. Those scripts should set
-the raw data path, build a `DataWrapper` pickle, configure the provincial simulation, and
-save H5 outputs.
-
-Runnable examples:
-
-- see the notebooks and scripts listed in [Section 0](#0-suggested-starting-point)
-
-### External Raw Data Folder
-
-The public repository does not commit raw data. Users provide a local raw-data folder and
-pass it as `raw_data_path` to `DataWrapper.from_config(...)`. To read more about the raw data used
-in the Canadian model, please refer to the [raw data documentation file](https://github.com/uvic-sesit/macroabm-ca/blob/documentation_updates/docs/canada/raw_data_reference.md).
-
-Common convention:
-
-```text
-path/to/raw_data/
+```console
+git clone https://github.com/uvic-sesit/macroabm-ca.git
+cd macroabm-ca
+git checkout epm
+uv sync
 ```
 
-Important subfolders include:
+`epm` is the branch the current project runs use. `uv sync` creates a `.venv` folder with
+every package at its tested version; the first time takes a few minutes.
 
-- `icio/`
-- `wiod_sea/`
-- `exchange_rates/`
-- `emission_factors/`
-- `policy/`
-- household and population inputs used by HFCS readers
+### 3.3 Get the starting data (the pickle)
 
-### Local Pickle And Output Folders
+The model starts from one file, the pickle: the 2022 input-output tables and the firms,
+households, banks and governments of every province, already built. It is not in the
+repository. Copy
 
-Generated model artifacts should be kept outside committed source control. Typical local
-outputs include:
-
-```text
-path/to/outputs/disagg_sectorprovs_2014.pkl
-path/to/outputs/results_provinces_current_table.h5
+```
+io2022_10prov_2022_v2_pumf_built-2026-08-18.pkl   (20 MB)
 ```
 
-Longer policy runs may also create CSV summaries, plots, assumptions files, and run-status
-files. These are local run products, not required source files.
+from the SharePoint folder above into `dev/pkl_files/` in your clone (create the folder).
+Everyone uses this same file, so results compare across machines. It can be rebuilt from
+raw data (see `docs/cims_copper_macro_labour/setup.md` in M3-linkages), but you don't need
+to, and a rebuild is not identical because households are sampled at random.
 
----
+### 3.4 Check it works
 
-## 3. The Current Provincial Workflow
+```console
+uv run python -c "from scenarios.macro_only import load_data; print(load_data('dev/pkl_files/io2022_10prov_2022_v2_pumf_built-2026-08-18.pkl').all_country_names)"
+```
 
-The current beta workflow has two stages. In the public repository, these stages are exposed
-through the core `DataWrapper` and `Simulation` APIs. Teams can wrap these APIs in their own
-local run scripts.
+After about a minute this prints the ten provinces (`CAN_AB` ... `CAN_SK`) and `ROW`.
 
-### Stage A: Build the data pickle
+## 4. Run the model
 
-The build step:
+Open the notebook:
 
-1. creates a default data configuration for Canada
-2. enables Canada disaggregation
-3. defines the ten Canadian provinces
-4. sets the aggregation structure `{CAN: provinces}`
-5. calls `DataWrapper.from_config(...)`
-6. writes a local `DataWrapper` pickle
+```console
+uv run --with jupyterlab python -m jupyterlab MacroABM-CA_quickstart.ipynb
+```
 
-Code reference:
+`--with jupyterlab` adds Jupyter for this command only (`python -m` avoids launcher
+programs that managed Windows machines sometimes block). In VS Code you can instead open the
+notebook and choose `.venv` as the kernel. If uv stops with "failed to hardlink file"
+(common when folders sit on OneDrive or a network drive), set `UV_LINK_MODE=copy` and
+rerun (PowerShell: `$env:UV_LINK_MODE="copy"`; bash: `export UV_LINK_MODE=copy`). Run the cells from the top: the notebook runs
+the baseline from 2022 to 2030 (about 3 minutes, after a minute of loading), shows the
+results, then runs one scenario and compares it with the baseline.
+
+The same in a script:
 
 ```python
-data_config = configuration_utils.default_data_configuration(
-    countries=["CAN"],
-    aggregate_industries=False,
-    proxy_country_dict={"CAN": "FRA"},
-)
+from scenarios.macro_only import load_data, build, run, results, annual
 
-data_config.can_disaggregation = True
-data_config.aggregation_structure = {CountryCode("CAN"): provinces}
-
-creator = DataWrapper.from_config(
-    configuration=data_config,
-    raw_data_path=Path("path/to/raw_data"),
-    single_hfcs_survey=True,
-)
-
-creator.save(Path("path/to/outputs/disagg_sectorprovs_2014.pkl"))
+data = load_data("dev/pkl_files/io2022_10prov_2022_v2_pumf_built-2026-08-18.pkl")
+sim = build(data, end_year=2030)
+run(sim)
+df = results(sim)
+print(annual(df, ["Real GDP", "Unemployment Rate"], national=True))
 ```
 
-Source:
+**What "the baseline" is.** `BASELINE` in `scenarios/macro_only.py` copies the macro
+settings of the linkage's EPM baseline: labour force growth by province, productivity
+growth, how prices and wages adjust. It leaves out the energy and policy layers that need
+the linkage's inputs. So this is the macro model's own baseline, and its numbers are not
+those of a linkage run.
 
-- [`macro_data/data_wrapper.py`](../macro_data/data_wrapper.py)
-- [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
+A run to 2050 takes roughly 10 minutes. A run holds its whole history in memory, about
+4 GB to 2030 and more for longer runs, until you delete it (`del sim`).
 
-Notebook reference: see the basic provincial run notebook listed in [Section 0](#0-suggested-starting-point).
+## 5. Read the results
 
-### Stage B: Run the model
+`results(sim)` returns a table with one row per province and quarter, from 2022Q1. Main
+columns:
 
-The model run step does not read raw IO or SEA data directly. It loads the existing pickle:
+| Column | Meaning |
+|---|---|
+| `GDP Output` | Nominal GDP (production side), CAD per quarter |
+| `Real GDP` | `GDP Output` deflated by the province's CPI (2022Q1 = 1) |
+| `Household Consumption`, `Government Consumption`, `Capital Bought`, `Exports`, `Imports` | Nominal spending, CAD per quarter |
+| `Production`, `Gross Output` | Real and nominal output of all firms |
+| `Unemployment Rate` | Share of the labour force (0.06 = 6%) |
+| `CPI`, `PPI`, `CPI Inflation Rate` | Price indices and quarterly inflation |
+| `Wages`, `Profits`, `Operating Surplus` | Incomes, CAD per quarter |
+
+`annual(df, columns)` sums flows and averages rates per year, by province or for Canada
+(`national=True`). `industry_output(sim)` gives real production by industry.
+`save(sim, folder)` writes `simulation_shallow.h5`, the same summary file the linkage
+writes. Read it back with `pd.read_hdf(path, key="CAN_BC")`; the keys are the provinces,
+plus `CAN_BC_industries` and `CAN_BC_firms_<variable>` for industry detail.
+
+**Read with care:**
+
+- **The first quarter jumps.** In 2022Q1 the model adjusts away from its data starting
+  point (prices rise about 5%). Compare scenarios with a baseline rather than with data,
+  and look at paths from 2023 on.
+- **One run is one draw.** Prices and some decisions have random parts. A scenario and its
+  baseline with the same seed differ because of the scenario, but small differences can
+  still flip with another seed: check two or three seeds before reporting one.
+- **Construction is often rationed.** Government purchases of construction (`F`) are
+  only about 55% filled on average, and in some quarters not at all, so anything bought
+  from construction jumps around from quarter to quarter. Health, education and public
+  administration are filled 90-100%.
+- **Unemployment and the policy rate are crude.** In longer linkage runs, unemployment
+  has sat at zero in some provinces for long stretches, and the policy rate barely moves.
+  Rely on output, prices and incomes first.
+
+## 6. Define and run scenarios
+
+A scenario is the baseline with something changed, run with the same seed and horizon,
+and compared with the baseline. `run_scenario` builds, runs and returns the results table
+in one call, then lets go of the simulation, so memory stays low:
 
 ```python
-data = DataWrapper.init_from_pickle(Path("path/to/outputs/disagg_sectorprovs_2014.pkl"))
+from scenarios.macro_only import run_scenario, annual
+
+base = run_scenario(data, end_year=2030)
+scenario = run_scenario(data, end_year=2030, household_demand_growth=0.02)
+
+columns = ["Real GDP", "Household Consumption"]
+print((annual(scenario, columns, national=True) / annual(base, columns, national=True) - 1) * 100)
 ```
 
-Then it creates a provincial `SimulationConfiguration`, builds the model from the
-`DataWrapper`, runs it, and saves an H5 file:
-
-```python
-model = Simulation.from_datawrapper(
-    datawrapper=data,
-    simulation_configuration=config,
-)
-
-model.run()
-model.save(
-    save_dir=Path("path/to/outputs"),
-    file_name="results_provinces_current_table.h5",
-)
-```
-
-Source:
-
-- [`macromodel/simulation.py`](../macromodel/simulation.py)
-- [`macromodel/configurations/simulation_configuration.py`](../macromodel/configurations/simulation_configuration.py)
-
-Notebook reference: see the runnable notebooks listed in [Section 0](#0-suggested-starting-point).
-
----
-
-## 4. Where Raw Data Enters the Model
-
-Raw data enters through `DataWrapper.from_config(...)`. The model run script only sees the
-already-processed pickle.
-
-### Step 1: `DataWrapper.from_config`
-
-The relevant routing logic is in:
-
-- [`macro_data/data_wrapper.py`](../macro_data/data_wrapper.py)
-
-The Canada provincial case is activated when the configuration contains Canada as an
-aggregated country with provinces:
-
-```python
-if configuration.aggregation_structure:
-    regions_dict = configuration.aggregation_structure
-    if Country("CAN") in configuration.countries and configuration.is_aggregated(Country("CAN")):
-        use_provincial_can_reader = True
-```
-
-Then `DataReaders.from_raw_data(...)` is called with:
-
-```python
-use_disagg_can_2014_reader=configuration.can_disaggregation,
-use_provincial_can_reader=use_provincial_can_reader,
-regions_dict=regions_dict,
-```
-
-This is the point where the model switches from a national Canada run to the provincial
-Canada reader path.
-
-### Step 2: `DataReaders.from_raw_data`
-
-The core reader orchestration is in:
-
-- [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
-
-This object loads:
-
-- OECD ICIO tables
-- the provincial Canada IO override
-- WIOD SEA socioeconomic data
-- exchange rates
-- policy data
-- emissions data
-- household / population data
-- finance and macroeconomic auxiliary data
-
-The provincial IO table is loaded in the `use_provincial_can_reader` branch:
-
-```python
-disagg_path = raw_data_path / "icio" / "icio_2014_can_provinces.csv"
-df = pd.read_csv(disagg_path, header=[0, 1], index_col=[0, 1])
-
-df *= 1e6
-```
-
-For the current Canada provincial workflow, `icio_2014_can_provinces.csv` should be supplied
-in **million USD**. The reader multiplies the table by `1e6` so the model receives full-unit
-USD values.
-
----
-
-## 5. Main Data Inputs and How They Are Used
-
-### 5.1 Provincial IO table
-
-Runtime path:
-
-```text
-path/to/raw_data/icio/icio_2014_can_provinces.csv
-```
-
-Loaded in:
-
-- [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
-
-Used to initialize:
-
-- sectoral output
-- intermediate input use
-- value added
-- taxes less subsidies
-- household consumption by sector
-- government consumption by sector
-- fixed capital formation
-- exports and imports
-- interprovincial and external trade shares
-
-The provincial reader replaces the 2014 ICIO reader’s internal IO matrix:
-
-```python
-icio[simulation_year].iot = df.sort_index()
-icio[simulation_year].considered_countries = countries_and_regions
-```
-
-After this override, calls like:
-
-```python
-current_icio_reader.get_total_output(country_name)
-current_icio_reader.get_value_added(country_name)
-current_icio_reader.get_exports(country_name)
-```
-
-are reading from the provincial IO table.
-
-### 5.2 WIOD SEA socioeconomic data
-
-Runtime path:
-
-```text
-path/to/raw_data/wiod_sea/wiod_sea.csv
-```
-
-Loaded in:
-
-- [`macro_data/readers/socioeconomic_data/wiod_sea_data.py`](../macro_data/readers/socioeconomic_data/wiod_sea_data.py)
-- [`macro_data/readers/default_readers.py`](../macro_data/readers/default_readers.py)
-
-SEA provides:
-
-- value added
-- labour compensation
-- capital compensation
-- capital stock
-
-The SEA reader converts raw monetary values to USD-like full-unit values:
-
-```python
-stacked["Value"] /= stacked["country"].map(exchange_rates.exchange_rates_dict(year))
-stacked["Value"] *= 1e6
-```
-
-In the current provincial model, SEA values are then bridged to the IO sector list and
-province structure. The current bridge logic lives in:
-
-- [`macro_data/readers/io_tables/sector_contracts.py`](../macro_data/readers/io_tables/sector_contracts.py)
-
-### 5.3 Exchange rates
-
-Runtime path:
-
-```text
-path/to/raw_data/exchange_rates/exchange_rates.csv
-```
-
-Loaded by:
-
-- [`macro_data/readers/economic_data/exchange_rates.py`](../macro_data/readers/economic_data/exchange_rates.py)
-
-Exchange rates are stored as:
-
-```text
-LCU per USD
-```
-
-For Canada in 2014, the important value used in the current discussion is approximately:
-
-```text
-1.104747 CAD per USD
-```
-
-### 5.4 Emissions and policy data
-
-Important folders:
-
-```text
-path/to/raw_data/emission_factors/
-path/to/raw_data/policy/
-```
-
-These feed:
-
-- firm input emissions
-- household consumption emissions
-- household investment emissions
-- consumer carbon-price schedules
-- output-based pricing schedules
-- sector exogenous price paths where configured
-
-For public sharing, raw-data inventories should be distributed as separate documentation or
-alongside the private raw-data bundle, not committed with the source repository.
-
-### 5.5 Household and population data
-
-The Canada beta workflow uses household and individual inputs to build synthetic households,
-wealth, income, debt, deposits, and consumption behaviour. These data pass through HFCS and
-synthetic population readers.
-
-Relevant code areas:
-
-- [`macro_data/readers/population_data/hfcs_reader.py`](../macro_data/readers/population_data/hfcs_reader.py)
-- [`macro_data/processing/synthetic_population/`](../macro_data/processing/synthetic_population/)
-- [`macro_data/processing/synthetic_matching/`](../macro_data/processing/synthetic_matching/)
-
----
-
-## 6. Currency and Unit Contract
-
-For the current Canada provincial workflow, the IO table input is expected in **million
-USD**. During reading, the table is converted to full-unit USD. Downstream model data then
-stores both USD and local-currency versions for the main monetary variables.
-
-Relevant code:
-
-- [`macro_data/readers/util/industry_extraction.py`](../macro_data/readers/util/industry_extraction.py)
-
-```python
-"Output in USD": current_icio_reader.get_total_output(country_name),
-"Output in LCU": current_icio_reader.get_total_output(country_name) * exchange_rate,
-
-"Value Added in USD": current_icio_reader.get_value_added(country_name),
-"Value Added in LCU": exchange_rate * current_icio_reader.get_value_added(country_name),
-```
-
-For Canada, local-currency values are CAD. The exchange-rate reader stores exchange rates as
-`LCU per USD`, so Canada LCU fields are obtained by multiplying USD fields by the CAD/USD
-exchange rate. Output plots in the sample notebooks should be read as model diagnostics
-unless the notebook explicitly labels the plotted series as USD or CAD.
-
----
-
-## 7. How the Model Object Is Built
-
-After readers load raw data, the model constructs synthetic countries. For the provincial
-Canada case, each province becomes a `SyntheticCountry` before it becomes a runtime
-`Country` inside the simulation.
-
-Important path:
-
-```text
-Raw data
-  -> DataReaders
-  -> industry vectors and matrices
-  -> SyntheticCountry objects
-  -> DataWrapper pickle
-  -> Simulation.from_datawrapper(...)
-  -> runtime Country objects
-```
-
-The `DataWrapper` pickle does not simply store raw tables. It stores the initialized model
-state needed to construct:
-
-- firms
-- households
-- banks
-- central bank
-- governments
-- goods market
-- labour market
-- housing market
-- credit market
-- trade proportions
-- exogenous time series
-- emissions factors
-
----
-
-## 8. Key Model Components
-
-### Firms
-
-Firms are initialized by sector. In the current beta configuration, the script uses:
-
-```python
-base_config.single_firm_per_industry = True
-base_config.firms_configuration.constructor = "Default"
-```
-
-Each province therefore has one representative firm per sector in the current simplified
-provincial beta run.
-
-Firms use:
-
-- sectoral output
-- intermediate inputs
-- labour compensation
-- capital input structures
-- inventories
-- deposits, debt, equity
-- taxes
-- productivity and technical-coefficient functions
-
-Relevant code:
-
-- [`macro_data/processing/synthetic_firms/`](../macro_data/processing/synthetic_firms/)
-- [`macromodel/agents/firms/`](../macromodel/agents/firms/)
-
-### Households and individuals
-
-Households and individuals are initialized from household finance and population data.
-
-They carry:
-
-- income
-- consumption
-- deposits
-- debt
-- housing-related balance sheet variables
-- consumption weights
-- investment behaviour
-
-Relevant code:
-
-- [`macro_data/processing/synthetic_population/`](../macro_data/processing/synthetic_population/)
-- [`macromodel/agents/households/`](../macromodel/agents/households/)
-- [`macromodel/agents/individuals/`](../macromodel/agents/individuals/)
-
-### Banks and credit
-
-Banks are initialized as financial intermediaries and participate in the credit market.
-
-The beta provincial script currently uses:
-
-```python
-base_config.single_bank = True
-```
-
-Relevant code:
-
-- [`macro_data/processing/synthetic_banks/`](../macro_data/processing/synthetic_banks/)
-- [`macromodel/agents/banks/`](../macromodel/agents/banks/)
-- [`macromodel/markets/credit_market/`](../macromodel/markets/credit_market/)
-
-### Governments
-
-The current beta setup uses one government entity per province:
-
-```python
-base_config.single_government_entity = True
-```
-
-Government entities consume goods, collect/pay taxes, and can be used for policy experiments.
-
-Relevant code:
-
-- [`macro_data/processing/synthetic_government_entities/`](../macro_data/processing/synthetic_government_entities/)
-- [`macromodel/agents/government_entities/`](../macromodel/agents/government_entities/)
-
-### Markets
-
-The runtime model includes:
-
-- goods market
-- labour market
-- credit market
-- housing market
-
-Relevant code:
-
-- [`macromodel/markets/goods_market/`](../macromodel/markets/goods_market/)
-- [`macromodel/markets/labour_market/`](../macromodel/markets/labour_market/)
-- [`macromodel/markets/credit_market/`](../macromodel/markets/credit_market/)
-- [`macromodel/markets/housing_market/`](../macromodel/markets/housing_market/)
-
----
-
-## 9. Running and Inspecting Outputs
-
-### Simple beta run
-
-Local run scripts commonly write an H5 file such as:
-
-```text
-path/to/outputs/results_provinces_current_table.h5
-```
-
-Notebook reference: see the runnable notebooks listed in [Section 0](#0-suggested-starting-point).
-
-The output is an H5 file with one top-level group per province plus `ROW` and global market
-groups. A typical top-level structure is:
-
-```text
-CAN_AB
-CAN_BC
-CAN_MB
-CAN_NB
-CAN_NL
-CAN_NS
-CAN_ON
-CAN_PE
-CAN_QC
-CAN_SK
-GM
-ROW
-```
-
-Inside a province group, common components include:
-
-```text
-economy
-firms
-households
-labour_market
-housing_market
-banks
-central_government
-government_entities
-```
-
-Useful economy-level fields include:
-
-- `gdp_output`
-- `gdp_income`
-- `gdp_expenditure`
-- `exports`
-- `imports`
-- `cpi`
-- `firm_insolvency_rate`
-- `household_insolvency_rate`
-
-Useful firm-level fields include:
-
-- `production`
-- `demand`
-- `gross_fixed_capital_formation`
-- `profits`
-- `labour_inputs`
-- `capital_inputs_stock_value`
-
-Useful household-level fields include:
-
-- `consumption`
-- `income`
-- `investment`
-- `debt`
-
-### Example inspection snippet
-
-```python
-import h5py
-import numpy as np
-
-path = "path/to/outputs/results_provinces_current_table.h5"
-provinces = [
-    "CAN_AB", "CAN_BC", "CAN_MB", "CAN_NB", "CAN_NL",
-    "CAN_NS", "CAN_ON", "CAN_PE", "CAN_QC", "CAN_SK",
-]
-
-with h5py.File(path, "r") as f:
-    national_gdp = []
-    for t in range(f["CAN_ON"]["economy"]["gdp_output"].shape[0]):
-        total = sum(
-            float(np.nansum(f[p]["economy"]["gdp_output"][t]))
-            for p in provinces
-        )
-        national_gdp.append(total)
-
-print(national_gdp)
-```
-
----
-
-## 10. Final Note On Testing And Policy Runs
-
-MacroABM-CA results, like other similar models, are sensitive to model settings, input data, and policy assumptions. When using the model for beta testing or policy
-simulation, document the raw data version, IO table, run script or notebook, timestep,
-random seed or trial design, policy settings, and any code or parameter changes made for
-the run. This makes results easier to interpret, compare, reproduce, and revise as the
-model continues to develop.
-
----
-
-## 11. Team Workflow: Scenarios and Upstream Sync
-
-This section covers two practical conventions for the Canadian model team: where to keep
-scenario scripts, and how to pull framework updates from the upstream INET repository without
-losing Canada-specific work.
-
-### 11.1 Keep scenario scripts in `scenarios/`
-
-All Canadian model run scripts and notebooks should live in the [`scenarios/`](../../scenarios/)
-folder at the repository root. Do not leave one-off runs at the repo root or in unrelated
-directories — that makes scripts harder to find, reuse, and hand off to other team members.
-
-**Naming.** Use descriptive filenames that make the purpose of the run obvious at a glance.
-Good names include the geography, policy or behavioural assumption, and horizon where
-relevant. Examples:
-
-```text
-scenarios/run_canada_provincial.py
-scenarios/Sample_macroabm-Canada_provincial_run.ipynb
-scenarios/scenario_carbon_price_ramp_2025_2030.py
-scenarios/scenario_tfp_growth_sensitivity_16q.py
-```
-
-Avoid generic names like `run.py`, `test.ipynb`, or `new_scenario_v2.py`. The goal is that
-someone returning to the repository months later can tell what each script does without
-opening it.
-
-**Reuse.** When adapting an existing scenario, copy and rename the closest script rather
-than editing a shared baseline in place. Keep the original smoke-test scripts
-(`run_canada_provincial.py`, the sample notebooks) as stable reference runs.
-
-**What belongs in `scenarios/`.** End-to-end run scripts, scenario-comparison notebooks,
-and small wrappers around `DataWrapper.from_config(...)` and `Simulation.from_datawrapper(...)`.
-Analysis-only post-processing can live in a separate project repository if it is not meant
-to be rerun as part of the model workflow.
-
-### 11.2 Pulling changes from the upstream INET repository
-
-MacroABM-CA is a Canada-specific adaptation built on top of the shared MacroABM framework.
-The upstream source of truth for core framework code is the INET repository:
-
-- [inet-complexity/macro-main](https://github.com/inet-complexity/macro-main)
-
-When the INET team releases new model features, bug fixes, or refactors, the Canadian team
-needs to pull those changes into `macroabm-ca` while preserving Canada-only additions that
-the upstream repo does not carry.
-
-#### Canada-only folders to preserve
-
-Two folders were added for the Canadian workflow and are **not** expected to exist in the
-upstream INET repository:
-
-| Folder | Purpose |
-|--------|---------|
-| [`docs/canada/`](./) | Canada-specific onboarding, raw-data, and provincial IO documentation |
-| [`scenarios/`](../../scenarios/) | Canadian team run scripts, notebooks, and scenario presets |
-
-Whoever performs an upstream pull should treat these folders as **keep-local** content. Do
-not delete or overwrite them when merging upstream changes. If Git reports conflicts inside
-these folders, resolve them in favour of the Canadian team's version unless you are
-deliberately replacing that documentation or script.
-
-All other shared framework code — principally `macro_data/`, `macromodel/`, `macrocalib/`,
-`tests/`, and top-level project files — should be updated from upstream.
-
-#### Upstream first, then pull
-
-To avoid messy merges, **aim to land Canadian model features in the INET repository before
-pulling upstream changes** whenever those features touch shared framework code. Examples
-include provincial IO reader changes, Canada-specific configuration paths, or new agent
-behaviour intended for the general model.
-
-The preferred sequence is:
-
-1. **Identify overlap.** Before pulling, list changes in `macroabm-ca` that modify shared
-   packages (`macro_data/`, `macromodel/`, etc.) rather than `docs/canada/` or `scenarios/`.
-2. **Upstream what you can.** Open a pull request or coordinate with the INET team to merge
-   reusable Canada work into `inet-complexity/macro-main` first.
-3. **Pull once upstream is aligned.** After shared features are accepted upstream (or
-   consciously deferred), fetch and merge the latest INET changes into `macroabm-ca`.
-4. **Resolve conflicts in shared code only.** Keep `docs/canada/` and `scenarios/` intact;
-   carefully reconcile conflicts in framework packages and tests.
-5. **Verify locally.** Rebuild or reuse an existing provincial pickle, run
-   `scenarios/run_canada_provincial.py` (or the basic provincial notebook), and run the
-   test suite before pushing the merged branch.
-
-Skipping step 2 and pulling a large upstream diff while carrying unmerged Canadian edits in
-the same files often produces painful three-way conflicts that are much slower to untangle
-than upstreaming first.
-
-#### Suggested git workflow
-
-These steps assume `origin` points at the Canadian repository
-([uvic-sesit/macroabm-ca](https://github.com/uvic-sesit/macroabm-ca)) and that you add the
-INET repository as a separate remote (typically named `upstream`):
-
-```bash
-# One-time setup
-git remote add upstream https://github.com/inet-complexity/macro-main.git
-
-# Before each sync
-git status                          # working tree should be clean
-git fetch upstream
-
-# Merge upstream main into your current branch
-git merge upstream/main
-
-# Or, if your team prefers rebasing:
-# git rebase upstream/main
-```
-
-During conflict resolution:
-
-- **`docs/canada/` and `scenarios/`** — keep the Canadian versions unless intentionally updating them.
-- **`macro_data/`, `macromodel/`, `tests/`** — merge upstream improvements with any remaining Canada-specific logic; run tests after resolving.
-- **Lockfiles and config** (`pyproject.toml`, `uv.lock`) — reconcile carefully; reinstall with `uv sync` and rerun tests.
-
-If you are unsure whether a conflict hunk is Canada-specific or shared framework code, check
-whether the same file exists in the upstream repository and whether the Canadian change has
-already been merged there.
+**Change a setting** by passing it by name, as above. Any key of `BASELINE` works, and so
+does any other argument of `build_simulation` in `scenarios/run_cims_linkage.py`; each is
+explained where that function uses it. Good ones to start with:
+
+| Setting | Baseline | What it does |
+|---|---|---|
+| `household_demand_growth` | 0.01 | Annual growth of household demand on top of the labour force |
+| `labour_force_growth` | per province | Annual labour force growth after 2024 |
+| `tfp_base_growth_rate` | 0.001 | Productivity growth per quarter |
+| `wage_cpi_indexation` | 0.5 | Share of past inflation passed into wages |
+| `price_setting_noise_std` | 0.01 | Size of random price changes |
+| `seed` | 4 | Random seed |
+
+**Change the economy during the run** (a policy from a given year, a purchase programme)
+with a *hook*: a function `hook(sim, year, month)` the model calls at the start of every
+quarter, passed as `run_scenario(data, hooks=[hook])`. It can change any part of the
+model; `sim.countries["CAN_BC"]` is British Columbia, with its `firms`, `households`,
+`central_government`, `government_entities` and `banks`. `extra_government_purchases` in
+`scenarios/macro_only.py` (about 20 lines) is an example to copy, and
+`government_purchases(sim, "BC")` shows what the government actually bought, to check a
+purchase took hold.
+
+**Checklist for a scenario:**
+
+1. Same `seed` and `end_year` as the baseline it is compared with.
+2. Check the change took hold: the variable you changed moves as intended.
+3. Check the sign of the main effects before reading magnitudes.
+4. Repeat the pair with two or three other seeds before reporting a result.
+
+## 7. Running with the linkage
+
+Project runs couple this model with CIMS (energy demand and technology), COPPER
+(electricity supply) and LabourABM (occupations). That workflow lives in the GitLab
+repository `sesit/M3-linkages`, which clones this repository into
+`dependencies/macroabm-ca` and runs it from a scenario's `config.toml`. Once you are
+comfortable with the model on its own, start with its
+`docs/cims_copper_macro_labour/setup.md` and `quickstart.md`. The settings in `BASELINE`
+here are the `[Models.MacroABM.Config]` section of its `scenarios/baseline/config.toml`.
+
+## 8. Further reading
+
+- `dev/io2022/README.md`: how the 2022 pickle was built (2022 input-output tables,
+  Canadian households, labour force calibration).
+- `docs/canada/raw_data_reference.md` and `canada_provincial_io_development.md`: the
+  earlier 2014 build (43 industries). Background only; the runs here use the 2022 pickle.
+- `docs/macromodel/`: reference pages for the agents and markets.
+- `README.md`: other install options (conda, pip) and development tools.

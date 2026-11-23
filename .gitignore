@@ -78,6 +78,7 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+!/MacroABM-CA_quickstart.ipynb
 
 # IPython
 profile_default/

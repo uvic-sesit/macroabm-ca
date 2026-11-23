@@ -79,7 +79,7 @@ The project is designed for use by multiple teams. Please read our [repository g
 
 Documentation specific to the Canada MacroABM adaptation:
 
-- [MacroABM-CA Onboarding Guide](canada/canada_beta_model_onboarding_guide.md) - Practical orientation for running and interpreting the Canada model
+- [MacroABM-CA: getting started](canada/canada_beta_model_onboarding_guide.md) - Set up, run the model on its own, define scenarios (with `MacroABM-CA_quickstart.ipynb`)
 - [Canada Provincial IO Development](canada/canada_provincial_io_development.md) - Preparing the repository for the updated provincial IO table
 - [Raw Data Reference](canada/raw_data_reference.md) - Description of all raw data sources used by the Canada model
 

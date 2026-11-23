@@ -1,5 +1,10 @@
 # Macromodel
 
+> **New to MacroABM-CA (the Canadian provincial model)?** Start with
+> [`docs/canada/canada_beta_model_onboarding_guide.md`](docs/canada/canada_beta_model_onboarding_guide.md)
+> and the notebook `MacroABM-CA_quickstart.ipynb`: setup, a first run, and how to define
+> and run scenarios.
+
 ## Introduction
 
 This repository contains a comprehensive macroeconomic simulation framework consisting of two main packages:

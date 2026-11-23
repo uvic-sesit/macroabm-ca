@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the Canada provincial MacroABM workflow (equivalent to Sample_macroabm-Canada_provincial_run.ipynb).
+"""Build the provincial data pickle from raw inputs and run a basic provincial simulation (2014 data).
 
 End-to-end steps:
 1. Build the data pickle from raw inputs (skipped if the pickle already exists).
@@ -443,7 +443,7 @@ def plot_results(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run the Canada provincial MacroABM demo (see Sample_macroabm-Canada_provincial_run.ipynb).",
+        description="Build the provincial data pickle from raw data and run a basic provincial simulation.",
     )
     parser.add_argument(
         "--input-path",

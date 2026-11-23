@@ -87,7 +87,7 @@ nav:
       - Labour Market: macromodel/api/markets/labour_market.md
 - macrocalib: macrocalib/index.md
 - Canada:
-  - Onboarding Guide: canada/canada_beta_model_onboarding_guide.md
+  - Getting Started: canada/canada_beta_model_onboarding_guide.md
   - Provincial IO Development: canada/canada_provincial_io_development.md
   - Raw Data Reference: canada/raw_data_reference.md
 
