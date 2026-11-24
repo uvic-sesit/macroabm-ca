@@ -1,0 +1,194 @@
+# Powering Canada Strong arm as run on 2026-11-20 (CIMS-COPPER EPM_11_20 delivery, seed 4). See README.md.
+# Linkage scenario config (M3-linkages); based on its scenarios/baseline/config.toml.
+[General]
+base_env = "m3linkages_env"
+models_to_run = [ "CIMSCOPPER", "MacroABM",]
+sim_end_year = 2050
+
+[Models.CIMSCOPPER]
+cims_results_general = "cims/outputs/EPM_PCS_6_results_general.csv"
+copper_csv = "copper/outputs/EPM_PCS_6_output_summary_IDEA.csv"
+cims_results_tech = "cims/outputs/results_tech.csv"
+scenario_label = "EPM_PCS_6"
+utility_basket = true
+rates_feed_csv = "iterations/cims-copper/EPM_PCS_6_cims_prices.csv"
+build_cost_table = true
+build_capex_override = true
+capex_override_csv = "data/copper_capex.csv"
+build_switching_cost = true
+switching_cost_anchor_year = 2025
+build_obps_electricity = true
+investment_baseline_scenario = "EPM1120_B7"
+policy_start_year = 2026  # PCS program start: before this the PCS investment inputs equal Ref's
+
+[Models.EnergyData]
+scenario_name = "EPM_PCS_6"
+end_use_csv = "data/end_use_demand_utility_basket.csv"
+capacity_csv = "data/electricity-capacity.csv"
+generation_csv = "data/electricity-generation.csv"
+crude_oil_csv = "data/crude-oil-production.csv"
+natural_gas_csv = "data/natural-gas-production.csv"
+end_use_prices_csv = "data/end-use-prices.csv"
+benchmark_prices_csv = "data/benchmark-prices.csv"
+sector_map = "scripts/data/cims_copper_sector_map.csv"
+transition_allocation = "scripts/data/cims_copper_allocation.csv"
+technology_cost_reference = "data/cims_copper_cost_reference.csv"
+switching_cost_reference = "data/cims_switching_cost_reference.csv"
+transition_composition = "scripts/data/cims_copper_transition_composition.csv"
+flat_export_pins = [ "D",]
+
+[Models.MacroABM]
+repo_path = "dependencies/macroabm-ca"
+runner = "uv"
+python_version = "3.12"
+warm_start = false
+save_h5 = false
+h5_filename = "simulation_results.h5"
+save_shallow_h5 = true
+shallow_h5_filename = "simulation_shallow.h5"
+trim_agent_history = 4
+
+[Models.MacroABM.Config]
+sim_start_year = 2022
+steps_per_year = 4
+cims_base_year = 2017
+cims_year_step = 5
+seed = 4
+use_candidate_baseline = true
+household_demand_from_labour_force = true
+household_demand_growth = 0.01
+government_demand_from_labour_force = true
+tfp_base_growth_rate = 0.001
+tfp_investment_effectiveness = 0.01
+price_setting_noise_std = 0.01
+national_inflation_expectation = true
+price_setting_speed_gf = 0.5
+price_setting_speed_cp = 0.5
+price_setting_speed_dp = 0.0
+price_setting_cost_push_basis = "change"
+inflation_expectation_anchor = 1.0
+inflation_expectation_target = 0.02
+rent_inflation_indexation = 1.0
+rent_inflation_delay = 1
+wage_cpi_indexation = 0.5
+wage_cpi_lag = 4
+firm_price_advantage_change_growth = 1.0
+firm_price_advantage_window = 4
+firm_price_advantage_symmetric = true
+firm_price_advantage_smoothing = 0.25
+force_rebuild_pickle = false
+use_provincial_data = true
+pkl_path = "dependencies/macroabm-ca/dev/pkl_files/io2022_10prov_2022_v2_pumf_built-2026-08-18.pkl"
+
+[Models.MacroABM.Config.labour_force_growth]
+CAN_AB = 0.01334
+CAN_BC = 0.00418
+CAN_MB = 0.00672
+CAN_NB = 0.00756
+CAN_NL = -0.00298
+CAN_NS = 0.00443
+CAN_ON = 0.00502
+CAN_PE = 0.00956
+CAN_QC = -0.00244
+CAN_SK = 0.00882
+
+[Models.MacroABM.Config.labour_force_cap]
+
+[Models.MacroABM.Config.Linkage]
+anchor_year = 2022
+reset_multipliers = true
+linkage_owns_coefficients = true
+additive_intensity = true
+annual_linkage = true
+energy_substitution = false
+household_energy_shares = true
+household_energy_quantities = true
+household_energy_anchor_basis = "bounded"
+household_energy_order_margin = 0.1
+household_quantity_conserve_budget = true
+firm_energy_target_mode = "intensity"
+firm_energy_multiplier_cap = 5.0
+firm_energy_quantities = true
+quantity_anchor_floor = 0.001
+quantity_anchor_conserve_total = true
+electricity_own_use = true
+loss_share_of_generation = 0.05
+capacity_floor = true
+capacity_floor_per_province = true
+capacity_index_basis = "capacity"
+capacity_factor_from_cer = true
+capacity_ceiling_margin = 1.3
+capacity_gate_margin = 1.1
+capacity_gate_provinces = "MB,QC,NL,BC,AB,ON"
+d_production_floor_provinces = "SK,MB,NL,NS,PE"
+d_production_floor_margin = 1.0
+linkage_data_per_province = true
+electricity_unmet_diag = true
+export_demand_pinning = true
+exogenous_fossil_production = true
+electricity_export_pinning = false
+electricity_row_split = false
+exogenous_energy_prices = true
+exogenous_price_nominal_anchor = "cpi"
+transition_capital = true
+investment_tax_credit = true
+investment_tax_credit_cpi_index = true
+itc_extension_2040 = true
+productivity_mega_deduction = true
+pmd_elasticity = 0.5
+pmd_tax_scale = 1.0
+pmd_start = "2026Q4"
+training_labour_supply = true
+training_workers = 92900
+training_additionality = 0.5
+training_start = "2026Q4"
+training_end = "2031Q1"
+nonbinding_capital_goods = ["D"]
+housing_services_in_household_io = true
+firm_energy_mix_basis = "physical"  # CIMS physical energy per activity per fuel (ratio on model base)
+generation_investment_multiplier = true
+use_obps_reg = true
+obps_charge_mode = "cash"
+obps_electricity_csv = "data/policy_obps_electricity.csv"
+household_transfers = true
+firm_grants = true
+policy_scenario_alias = "Current Measures"
+project_capex = true
+project_capex_csv = "scripts/data/policy_project_capex.csv"
+project_credits = true
+project_credits_csv = "scripts/data/policy_project_credits.csv"
+project_transfers = true
+project_transfers_csv = "scripts/data/policy_project_transfers.csv"
+project_capture = false
+feedstock_pairs = [ "C19<-B06", "C20<-B06",]
+generation_multiplier_csv = "<M3-linkages>/scenarios/EPM1120_PCS6/data/generation-investment-multiplier.csv"
+generation_multiplier_min = 1.0
+generation_multiplier_max = 2.0
+
+[Models.MacroABM.Config.Linkage.export_price_elasticity]
+sectors = [ "C20", "C23", "C24A", "C17_18", "B07",]
+epsilon = 3.0
+
+[Models.MacroABM.Config.Linkage.price_taker]
+sectors = [ "C20", "C23", "C24A", "C17_18", "B07",]
+national_price_csv = "scripts/data/baseline_refs/sector_price_seed4.csv"
+reference_step = 12
+
+[Models.MacroABM.Config.Linkage.margin_growth]
+sectors = [ "C20", "C23", "C24A", "C17_18", "B07",]
+k = 4.0
+damping = 0.25
+cap = 0.02
+start_step = 12
+reference_margin_csv = "scripts/data/baseline_refs/sector_margin_seed4.csv"
+
+[Models.MacroABM.Config.Linkage.row_world_price]
+sectors = [ "C20", "C23", "C24A", "C17_18", "B07",]
+cap = 0.25
+start_step = 12
+order = "before_pool"
+ordinary = "presplit"
+
+[Models.MacroABM.Config.Linkage.ImportLimits]
+sectors = [ "D",]
+mode = "level"
