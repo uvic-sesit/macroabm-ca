@@ -1325,6 +1325,9 @@ class Country:
                 central_bank_policy_rate=self.central_bank.ts.current("policy_rate"),
             )
         )
+        self.banks.ts.interest_received.append(
+            self.banks.ts.current("interest_received_on_loans") + self.banks.ts.current("interest_received_on_deposits")
+        )
         self.banks.ts.profits.append(self.banks.compute_profits())
         self.banks.ts.profits_histogram.append(get_histogram(self.banks.ts.current("profits"), self.scale))
 

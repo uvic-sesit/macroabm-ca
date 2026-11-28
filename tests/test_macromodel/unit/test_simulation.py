@@ -2,6 +2,7 @@ import tempfile
 from copy import deepcopy
 from pathlib import Path
 
+import h5py
 import numpy as np
 import pytest
 
@@ -39,6 +40,16 @@ def test_simulation(datawrapper, seed):
         simulation.shallow_hdf_save(save_dir=tmp, file_name="simulation_shallow.h5")
         dicts = simulation.shallow_df_dict()
         assert "FRA" in dicts
+
+        # Read the banks' series back from the file Simulation.save wrote.
+        with h5py.File(tmp / "simulation_long.h5") as f:
+            banks = f["FRA"]["banks"]
+            for field in ("interest_received", "interest_received_on_loans", "interest_received_on_deposits"):
+                assert banks[field].shape[0] == 11, f"{field} has {banks[field].shape[0]} rows, expected 11"
+            np.testing.assert_allclose(
+                banks["interest_received"][()],
+                banks["interest_received_on_loans"][()] + banks["interest_received_on_deposits"][()],
+            )
 
     france = simulation.countries[CountryName("FRA")]
 
@@ -151,6 +162,42 @@ def test_can_provincial(can_provincial_datawrapper):
     simulation.countries["CAN_AB"].shallow_output()
 
     assert True
+
+
+def test_can_provincial_banks_interest_received_is_appended(can_provincial_datawrapper, tmp_path):
+    """The banks' total interest-received series gains one row per step and equals its components."""
+    n_industries = can_provincial_datawrapper.n_industries
+    all_provs = can_provincial_datawrapper.synthetic_countries.keys()
+
+    configuration = SimulationConfiguration(
+        country_configurations={
+            province: CountryConfiguration.n_industry_default(n_industries=n_industries) for province in all_provs
+        }
+    )
+    configuration.seed = 0
+
+    simulation = Simulation.from_datawrapper(
+        datawrapper=can_provincial_datawrapper, simulation_configuration=configuration
+    )
+
+    for _ in range(12):
+        simulation.iterate()
+
+    # The writer Simulation.save calls per agent; a full save here is several gigabytes.
+    with h5py.File(tmp_path / "banks.h5", "w") as f:
+        for country, country_state in simulation.countries.items():
+            country_state.banks.ts.write_to_h5("banks", f.create_group(country))
+
+    with h5py.File(tmp_path / "banks.h5") as f:
+        for country in simulation.countries:
+            banks = f[country]["banks"]
+            total = banks["interest_received"][()]
+            loans = banks["interest_received_on_loans"][()]
+            deposits = banks["interest_received_on_deposits"][()]
+            assert total.shape[0] == 13, f"{country}: total has {total.shape[0]} rows, expected 13"
+            assert loans.shape[0] == 13, f"{country}: loans has {loans.shape[0]} rows, expected 13"
+            assert deposits.shape[0] == 13, f"{country}: deposits has {deposits.shape[0]} rows, expected 13"
+            np.testing.assert_allclose(total, loans + deposits)
 
 
 def test_tfp_growth_with_investment(datawrapper):
